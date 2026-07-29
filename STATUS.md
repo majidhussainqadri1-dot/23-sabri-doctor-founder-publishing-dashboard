@@ -8,23 +8,25 @@
 - Branch: `phase/23a-governance-contracts`
 - Production readiness: Not ready
 - Staging readiness: Not ready
-- Code status: Bootstrap and contracts in progress
+- Code status: Bootstrap and contracts committed; automated review pending
 
 ## Phase 23A Acceptance Gates
 
 - [x] Repository initialized
 - [x] Governing architecture recorded
-- [ ] Responsibility matrix committed
-- [ ] Native data-ownership matrix committed
-- [ ] Capability matrix committed
-- [ ] Versioned adapter contract committed
-- [ ] Four-dimensional state projection committed
-- [ ] Security threat model committed
-- [ ] Retention and background-job contract committed
-- [ ] Plugin bootstrap committed
-- [ ] Baseline CI committed
+- [x] Responsibility matrix committed
+- [x] Native data-ownership matrix committed
+- [x] Capability matrix committed
+- [x] Versioned adapter contract committed
+- [x] Four-dimensional state projection committed
+- [x] Security threat model committed
+- [x] Retention and background-job contract committed
+- [x] Analytics aggregate contract committed
+- [x] Plugin bootstrap committed
+- [x] Baseline CI committed
 - [ ] Automated checks green
 - [ ] Draft pull request opened
+- [ ] Founder review completed
 
 ## Non-Negotiable Restrictions
 
@@ -38,4 +40,4 @@
 
 ## Next Phase
 
-Phase 23B — Dashboard Core may begin only after Phase 23A contracts are reviewed and accepted.
+Phase 23B — Dashboard Core may begin only after Phase 23A contracts are reviewed, automated checks pass, and the pull request is accepted.
