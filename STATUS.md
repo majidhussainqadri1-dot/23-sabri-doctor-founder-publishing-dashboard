@@ -6,6 +6,7 @@
 - Specification: Harmonized Draft 2
 - Active phase: 23A — Governance and Contracts
 - Branch: `phase/23a-governance-contracts`
+- Pull request: Draft PR #1
 - Production readiness: Not ready
 - Staging readiness: Not ready
 - Code status: Bootstrap and contracts committed; automated review pending
@@ -25,7 +26,7 @@
 - [x] Plugin bootstrap committed
 - [x] Baseline CI committed
 - [ ] Automated checks green
-- [ ] Draft pull request opened
+- [x] Draft pull request opened
 - [ ] Founder review completed
 
 ## Non-Negotiable Restrictions
