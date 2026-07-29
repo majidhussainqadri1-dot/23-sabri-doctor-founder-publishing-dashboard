@@ -9,7 +9,7 @@
 - Pull request: Draft PR #1
 - Production readiness: Not ready
 - Staging readiness: Not ready
-- Code status: Bootstrap and contracts committed; automated review pending
+- Code status: Bootstrap and contracts committed; Baseline Integrity green
 
 ## Phase 23A Acceptance Gates
 
@@ -25,7 +25,7 @@
 - [x] Analytics aggregate contract committed
 - [x] Plugin bootstrap committed
 - [x] Baseline CI committed
-- [ ] Automated checks green
+- [x] Automated checks green
 - [x] Draft pull request opened
 - [ ] Founder review completed
 
