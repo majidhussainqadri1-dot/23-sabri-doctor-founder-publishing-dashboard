@@ -1,0 +1,32 @@
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Dependencies and generated files
+/vendor/
+/node_modules/
+coverage/
+build/
+dist/
+*.zip
+*.log
+
+# WordPress local runtime
+wp-config.php
+wp-content/uploads/
+wp-content/cache/
+
+# Test caches
+.phpunit.result.cache
+.phpcs-cache
