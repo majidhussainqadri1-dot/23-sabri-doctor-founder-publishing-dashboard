@@ -82,6 +82,17 @@ final class SPDB_Workspace_Resolver {
 				'label' => __( 'Content Inventory', 'sabri-publishing-dashboard' ),
 				'url'   => SPDB_Dashboard_Router::route_url( 'inventory' ),
 			);
+			$items['calendar'] = array(
+				'label' => __( 'Publishing Calendar', 'sabri-publishing-dashboard' ),
+				'url'   => SPDB_Dashboard_Router::route_url( 'calendar' ),
+			);
+		}
+
+		if ( SPDB_Capabilities::current_user_can( 'spdb_view_review_queue' ) ) {
+			$items['review'] = array(
+				'label' => __( 'Review Inbox', 'sabri-publishing-dashboard' ),
+				'url'   => SPDB_Dashboard_Router::route_url( 'review' ),
+			);
 		}
 
 		if ( ! in_array( $key, array( 'denied', 'dependency_unavailable' ), true ) ) {
