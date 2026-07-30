@@ -15,6 +15,7 @@ final class SPDB_Dashboard_Page {
 	private SPDB_Federated_Inventory $inventory;
 	private SPDB_Role_Workspace_Service $role_workspace_service;
 	private SPDB_Review_Calendar_Service $review_calendar_service;
+	private ?SPDB_Collections_Service $collections_service;
 	private bool $assets_localized = false;
 	private bool $shortcode_page_protected = false;
 	private int $render_count = 0;
@@ -26,7 +27,8 @@ final class SPDB_Dashboard_Page {
 		SPDB_Saved_Views $saved_views,
 		SPDB_Federated_Inventory $inventory,
 		SPDB_Role_Workspace_Service $role_workspace_service,
-		SPDB_Review_Calendar_Service $review_calendar_service
+		SPDB_Review_Calendar_Service $review_calendar_service,
+		?SPDB_Collections_Service $collections_service = null
 	) {
 		$this->workspace_resolver      = $workspace_resolver;
 		$this->overview_service        = $overview_service;
@@ -35,6 +37,7 @@ final class SPDB_Dashboard_Page {
 		$this->inventory               = $inventory;
 		$this->role_workspace_service  = $role_workspace_service;
 		$this->review_calendar_service = $review_calendar_service;
+		$this->collections_service     = $collections_service;
 	}
 
 	public function register(): void {
@@ -185,22 +188,18 @@ final class SPDB_Dashboard_Page {
 		return (string) ob_get_clean();
 	}
 
-	/** @return array<string,mixed> */
 	private function inventory_request_input(): array {
 		return $this->read_query( array( 'page', 'per_page', 'search', 'provider', 'object_type', 'lifecycle_state', 'review_state', 'visibility_state', 'operational_state', 'language', 'topic', 'date_from', 'date_to', 'sort', 'direction', 'scope' ) );
 	}
 
-	/** @return array<string,mixed> */
 	private function review_request_input(): array {
 		return $this->read_query( array( 'provider', 'review_state', 'assigned', 'due_from', 'due_to', 'page', 'per_page' ) );
 	}
 
-	/** @return array<string,mixed> */
 	private function calendar_request_input(): array {
 		return $this->read_query( array( 'provider', 'status', 'date_from', 'date_to', 'timezone', 'page', 'per_page' ) );
 	}
 
-	/** @return array<string,mixed> */
 	private function read_query( array $keys ): array {
 		$input = array();
 		foreach ( $keys as $key ) {
@@ -213,7 +212,6 @@ final class SPDB_Dashboard_Page {
 		return $input;
 	}
 
-	/** @return array<string,string>|null */
 	private function inspection_reference(): ?array {
 		$values = array();
 		foreach ( array( 'inspect_provider', 'inspect_type', 'inspect_id' ) as $key ) {
