@@ -26,9 +26,9 @@ eval( 'function smc_user_status( $user_id ) { return (string) $GLOBALS["spdb_tes
 eval( 'function smc_is_founder( $user_id ) { return (bool) $GLOBALS["spdb_test_founder"]; }' );
 eval( 'function smc_is_trusted_publisher( $user_id ) { return (bool) $GLOBALS["spdb_test_trusted"]; }' );
 
-$GLOBALS['spdb_test_capabilities']['spdb_view_dashboard'] = true;
+$GLOBALS['spdb_test_capabilities']['spdb_view_dashboard']   = true;
 $GLOBALS['spdb_test_capabilities']['spdb_run_system_check'] = true;
-$GLOBALS['spdb_test_member_status'] = 'approved';
+$GLOBALS['spdb_test_member_status']                         = 'approved';
 
 $resolver = new SPDB_Workspace_Resolver();
 
@@ -46,6 +46,10 @@ $GLOBALS['spdb_test_trusted'] = false;
 $workspace = $resolver->resolve( 7 );
 spdb_core_assert( 'doctor' === $workspace['key'], 'Approved doctor must receive the doctor workspace.' );
 
+$other_user_workspace = $resolver->resolve( 99 );
+spdb_core_assert( 'denied' === $other_user_workspace['key'], 'Current-user capability resolution must deny another user ID.' );
+spdb_core_assert( 'unknown' === $other_user_workspace['account_status'], 'Another user membership status must not be projected.' );
+
 $GLOBALS['spdb_test_member_status'] = 'submitted';
 $workspace = $resolver->resolve( 7 );
 spdb_core_assert( 'restricted' === $workspace['key'], 'Pending account must receive the restricted workspace.' );
@@ -62,6 +66,13 @@ spdb_core_assert( 'overview' === SPDB_Dashboard_Router::normalize_view( 'unknown
 spdb_core_assert( 'saved-views' === SPDB_Dashboard_Router::normalize_view( 'saved-views' ), 'Implemented saved-views route must be accepted.' );
 spdb_core_assert( 'https://example.test/publishing-dashboard/' === SPDB_Dashboard_Router::route_url(), 'Canonical dashboard URL must be stable.' );
 spdb_core_assert( false !== strpos( SPDB_Dashboard_Router::route_url( 'system-status' ), 'view=system-status' ), 'Implemented subview URL must use an allowlisted query value.' );
+
+$GLOBALS['wp']->query_vars[ SPDB_Dashboard_Router::QUERY_VAR ] = '1';
+spdb_core_assert( SPDB_Dashboard_Router::is_dashboard_request(), 'Early WordPress query vars must identify the protected dashboard route.' );
+$GLOBALS['wp']->query_vars = array();
+$GLOBALS['spdb_test_query_vars'][ SPDB_Dashboard_Router::QUERY_VAR ] = '1';
+spdb_core_assert( SPDB_Dashboard_Router::is_dashboard_request(), 'Final WP_Query vars must identify the protected dashboard route.' );
+$GLOBALS['spdb_test_query_vars'] = array();
 
 $invalid = SPDB_Saved_Views::normalize_definition( array( 'label' => '' ) );
 spdb_core_assert( 'spdb_invalid_saved_view_label' === spdb_core_error_code( $invalid ), 'Blank saved-view labels must be rejected.' );
@@ -96,10 +107,18 @@ $stored      = $saved_views->get_for_user( 7 );
 spdb_core_assert( 'My view' === $stored[0]['label'], 'Stored labels must be sanitized before projection.' );
 spdb_core_assert( ! isset( $stored[0]['filters']['patient_id'] ), 'Stored filters must be revalidated before projection.' );
 
-$registry = new SPDB_Adapter_Registry();
+$GLOBALS['spdb_test_member_status'] = 'submitted';
+spdb_core_assert( true === $saved_views->read_permission_check(), 'Restricted account may list existing saved views.' );
+$restricted_write = $saved_views->write_permission_check();
+spdb_core_assert( 'spdb_saved_views_read_only' === spdb_core_error_code( $restricted_write ), 'Restricted account must not create or delete saved views.' );
+
+$GLOBALS['spdb_test_member_status'] = 'approved';
+spdb_core_assert( true === $saved_views->write_permission_check(), 'Approved account may pass the personal saved-view mutation gate.' );
+
+$registry      = new SPDB_Adapter_Registry();
 $state_service = new SPDB_System_State( $registry );
-$workspace = $resolver->resolve( 7 );
-$state = $state_service->snapshot( $workspace );
+$workspace     = $resolver->resolve( 7 );
+$state         = $state_service->snapshot( $workspace );
 spdb_core_assert( 0 === $state['provider_count'], 'An empty registry must report zero providers without fabricated counts.' );
 spdb_core_assert( false === $state['production_writes'], 'Phase 23B system state must declare production writes disabled.' );
 spdb_core_assert( '23B' === $state['phase'], 'System state must identify the active implementation phase.' );
