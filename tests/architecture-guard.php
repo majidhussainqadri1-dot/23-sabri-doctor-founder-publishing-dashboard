@@ -8,15 +8,15 @@ $iterator   = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $ro
 $violations = array();
 
 $patterns = array(
-	'generic action endpoint'         => '/POST\s+\/spdb\/v1\/action/i',
-	'native post-type ownership'      => '/\bregister_post_type\s*\(/i',
-	'direct native post insertion'    => '/\bwp_insert_post\s*\(/i',
-	'direct native post mutation'     => '/\bwp_update_post\s*\(/i',
-	'direct native post deletion'     => '/\bwp_delete_post\s*\(/i',
-	'direct native attachment delete' => '/\bwp_delete_attachment\s*\(/i',
-	'direct posts table access'       => '/\$wpdb\s*->\s*(posts|postmeta|comments|commentmeta)\b/i',
-	'legacy provider maturity API'    => '/\bget_maturity_state\s*\(/i',
-	'caller-supplied environment gate'=> '/\bcan_write\s*\([^)]*is_production/i',
+	'generic action endpoint'          => '/POST\s+\/spdb\/v1\/action/i',
+	'native post-type ownership'       => '/\bregister_post_type\s*\(/i',
+	'direct native post insertion'     => '/\bwp_insert_post\s*\(/i',
+	'direct native post mutation'      => '/\bwp_update_post\s*\(/i',
+	'direct native post deletion'      => '/\bwp_delete_post\s*\(/i',
+	'direct native attachment delete'  => '/\bwp_delete_attachment\s*\(/i',
+	'direct posts table access'        => '/\$wpdb\s*->\s*(posts|postmeta|comments|commentmeta)\b/i',
+	'legacy provider maturity API'     => '/\bget_maturity_state\s*\(/i',
+	'caller-supplied environment gate' => '/\bcan_write\s*\([^)]*is_production/i',
 );
 
 foreach ( $iterator as $file ) {
@@ -47,8 +47,40 @@ foreach ( $iterator as $file ) {
 	}
 
 	$normalized = preg_replace( '/\s+/', ' ', $content ) ?? $content;
-	if ( preg_match( '/CREATE\s+TABLE[^;]*(publication|comment|correction|retraction|source|media|notification|appointment|clinical|prescription)/i', $normalized ) ) {
+	if ( preg_match( '/CREATE\s+TABLE[^;]*(publication|draft|review|schedule|comment|correction|retraction|source|media|notification|appointment|clinical|prescription|analytics_event)/i', $normalized ) ) {
 		$violations[] = "{$relative}: forbidden native-domain table ownership";
+	}
+}
+
+$inventory_controller = $root . '/includes/class-spdb-inventory-rest-controller.php';
+if ( is_file( $inventory_controller ) ) {
+	$inventory_content = file_get_contents( $inventory_controller );
+	if ( false === $inventory_content ) {
+		$violations[] = 'Unable to read includes/class-spdb-inventory-rest-controller.php';
+	} else {
+		if ( preg_match( '/WP_REST_Server::(?:CREATABLE|EDITABLE|DELETABLE)/', $inventory_content ) ) {
+			$violations[] = 'includes/class-spdb-inventory-rest-controller.php: Phase 23C inventory endpoints must remain read-only';
+		}
+		if ( preg_match( '/\b(?:POST|PUT|PATCH|DELETE)\b/i', $inventory_content ) ) {
+			$violations[] = 'includes/class-spdb-inventory-rest-controller.php: mutation HTTP method detected';
+		}
+	}
+}
+
+$inventory_service = $root . '/includes/class-spdb-federated-inventory.php';
+if ( is_file( $inventory_service ) ) {
+	$inventory_content = file_get_contents( $inventory_service );
+	if ( false === $inventory_content ) {
+		$violations[] = 'Unable to read includes/class-spdb-federated-inventory.php';
+	} else {
+		foreach ( array( 'execute_operation', 'wp_insert_post', 'wp_update_post', 'wp_delete_post' ) as $forbidden_call ) {
+			if ( preg_match( '/\b' . preg_quote( $forbidden_call, '/' ) . '\s*\(/', $inventory_content ) ) {
+				$violations[] = "includes/class-spdb-federated-inventory.php: forbidden mutation call {$forbidden_call}";
+			}
+		}
+		if ( ! str_contains( $inventory_content, "'execution_exposed'  => false" ) && ! str_contains( $inventory_content, "'execution_exposed' => false" ) ) {
+			$violations[] = 'includes/class-spdb-federated-inventory.php: mutation execution boundary marker missing';
+		}
 	}
 }
 
