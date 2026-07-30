@@ -6,7 +6,7 @@ All notable changes to File 23 are documented here.
 
 Phase 23F remains Draft, unmerged, not staging-accepted, and not production-ready.
 
-## [0.6.2] — Phase 23F Third Corrective Review and Read API
+## [0.6.2] — Phase 23F Third Corrective Review, Read API, and Read-Only Collections UI
 
 ### Fixed
 
@@ -21,17 +21,29 @@ Phase 23F remains Draft, unmerged, not staging-accepted, and not production-read
 - Added strict collection-item projection and lifecycle validation.
 - Enforced created, updated, archived, and status lifecycle consistency for collections and knowledge links.
 - Returned deterministic `409` conflicts for duplicate canonical knowledge relationships.
+- Corrected dashboard integration that initially left the new Collections view model and template unused.
+- Corrected stale Phase 23E labeling, missing Collections navigation, missing conditional CSS, and missing System Status readiness.
+- Made malformed array-valued view selectors fail closed without sanitization warnings.
+- Restricted institution scope presentation to the Founder workspace while retaining server-side authorization.
+- Preserved authorized scope in back navigation and removed direction-specific back symbols.
+- Replaced free-text status filtering and misleading mutation-readiness wording with bounded, truthful controls.
+- Corrected a dedicated workflow shell-quoting defect that had failed after the executable UI tests themselves passed.
 
 ### Added
 
 - Six explicit read-only REST routes for collections, collection details, collection items, item details, knowledge links, and link details.
 - Strict REST query allowlists, private/no-store protection, and truthful pagination headers.
-- Executable item-IDOR, malformed-persistence, continuation, lifecycle, duplicate-relation, health-cache, and read-REST tests.
+- A protected read-only Collections and Knowledge dashboard view.
+- `SPDB_Collections_View` with collection list/detail/item and knowledge list/detail modes.
+- Accessible captions, result summaries, definition lists, current-page semantics, pagination, focusable overflow regions, responsive behavior, RTL, reduced-motion, and forced-color controls.
+- Executable item-IDOR, malformed-persistence, continuation, lifecycle, duplicate-relation, health-cache, read-REST, UI-boundary, corrective-static, malformed-route, and no-mutation tests.
+- A dedicated exact-head PHP 8.0–8.3 Collections UI workflow with checksums and retained artifacts.
 - `docs/AUDIT-PHASE-23F-THIRD-REVIEW-2026-07-31.md`.
+- `docs/AUDIT-PHASE-23F-COLLECTIONS-UI-2026-07-31.md`.
 
 ### Restrictions retained
 
-- No Phase 23F REST mutation route.
+- No Phase 23F REST mutation route or mutation UI.
 - No production write enablement.
 - No collection update/archive, item create/reorder/update/archive, or knowledge-link update/archive execution.
 - No concrete native resolver before its separate review and staging gate.
