@@ -5,59 +5,57 @@
 - Phase: 23F — Collections, Campaigns, and Knowledge Links
 - Branch: `phase/23f-collections-knowledge`
 - Parent head: corrected Phase 23E commit `196b2b58e2b5b1da734fd8b19797058891151756`
-- Plugin development version: `0.6.0`
-- Metadata schema version: `2`
+- Plugin development version: `0.6.1`
+- Metadata schema version: `3`
 - Nature: stacked Draft candidate
 - Production readiness: not ready
 - Staging readiness: not ready
 - Merge readiness: blocked
 
-## Corrective Review Completed
+## Reviews and Corrections
 
-- [x] Independent review of the initial Phase 23F foundation
-- [x] Eighteen defects recorded in `docs/AUDIT-PHASE-23F-2026-07-30.md`
-- [x] Initial source defects corrected
-- [x] Corrective foundation source re-review completed
-- [x] Prior Phase 23A–23E architecture guards restored
-- [x] Phase 23F-specific architecture checks added
-- [x] Phase 23F executable tests wired into the PHP matrix
+- [x] Initial Phase 23F foundation independently reviewed
+- [x] Initial eighteen defects recorded and corrected
+- [x] Initial corrective source re-review completed
+- [x] Phase 23F runtime and persistence slice independently reviewed again
+- [x] Second eighteen defects recorded in `docs/AUDIT-PHASE-23F-RUNTIME-SECOND-REVIEW-2026-07-30.md`
+- [x] Second corrective source changes implemented
+- [ ] Second corrective exact-head PHP 8.0–8.3 QA pending
+- [ ] Second corrective source re-review evidence pending
 
-## Corrected Foundation
+## Corrected Foundation and Runtime
 
-- [x] Expanded metadata repository contract
 - [x] Exactly three File 23-owned metadata tables
-- [x] Post-install table verification before schema-version acceptance
-- [x] Removed `progress`, results, report URL, and every persisted native destination
-- [x] Actor-scoped idempotency uniqueness
-- [x] Owner/scope-scoped canonical relation hashes
-- [x] Approved-account and capability gates
-- [x] Founder-only institution collections, campaigns, and institution knowledge links
-- [x] Campaign-only fields isolated from ordinary collections
-- [x] Defense-in-depth anti-dark-pattern phrase screen accurately documented
+- [x] Schema Version 3 verifies required tables, columns, and indexes
+- [x] No persisted native destination, content body, result, report, clinical data, media, or raw analytics
+- [x] Persisted observed native versions for collection items and knowledge links
+- [x] Persisted bounded created/last audit reasons
+- [x] Actor-scoped idempotency and canonical request fingerprints
+- [x] Exact replay distinguished from same-key/different-payload conflict
+- [x] Approved-account, capability, scope, Founder, and object-level visibility gates
+- [x] Unauthorized institution reads fail closed and are never rewritten to own scope
+- [x] Record-type-specific status validation
 - [x] Unicode-aware bounded text and sensitive-data rejection
-- [x] Contributor shape validation separated from runtime eligibility validation
-- [x] Native-reference resolver interface
-
-## Next Coding Started
-
-- [x] Fail-closed `SPDB_Collections_Service`
-- [x] Truthful repository/resolver health projection
-- [x] Bounded read-query normalization
-- [x] Current-user record visibility boundary
-- [x] Contributor eligibility recheck contract
-- [x] Native reference existence, visibility, permission, version, and safe-destination re-resolution boundary
-- [x] Development/staging-only write constant with production denial
+- [x] Fail-closed native reference existence, visibility, permission, owner, version, and destination validation
+- [x] Read readiness separated from collection-write and knowledge-write readiness
+- [x] Concrete `SPDB_WP_Collections_Repository`
+- [x] Verified collection, collection-item, and knowledge-link repository reads
+- [x] Idempotent collection and knowledge-link create persistence
+- [x] Concrete repository injected for server-side collection reads
 - [x] No Phase 23F mutation REST route
-- [x] Schema lifecycle wired to activation and upgrade
+- [x] Production writes disabled
+- [x] Update, reorder, and archive repository operations explicitly disabled
+- [x] Corrective policy, runtime, schema, replay, and repository tests added to CI
 
 ## Still Not Implemented or Accepted
 
-- [ ] Concrete WordPress repository implementation
 - [ ] Concrete native-provider reference resolver
-- [ ] Collection-item create, reorder, update, and archive service execution
-- [ ] Knowledge-link persistence execution
-- [ ] Optimistic concurrency and replay persistence tests
-- [ ] Canonical audit-service integration
+- [ ] Collection-item create execution
+- [ ] Collection and campaign update/archive execution
+- [ ] Collection-item reorder/update/archive execution
+- [ ] Knowledge-link update/archive execution
+- [ ] Full optimistic-concurrency execution tests
+- [ ] Canonical shared audit-service integration
 - [ ] Explicit Phase 23F read REST routes
 - [ ] Explicit Phase 23F mutation REST routes and nonce callbacks
 - [ ] Dashboard Collections projection and accessible UI
@@ -69,4 +67,4 @@
 
 ## Governing Restriction
 
-No production mutation is enabled. The repository and resolver are deliberately not injected into the default runtime, and `SPDB_PHASE23F_WRITES_ENABLED` is false unless explicitly defined in an approved development or staging test. No phase or pull request may be merged before the complete gate in `docs/PHASE-23F-REVIEW-GATE.md` passes and merge is explicitly authorized.
+No production mutation is enabled. The concrete repository is injected for verified reads, but the native-reference resolver is deliberately absent. `SPDB_PHASE23F_WRITES_ENABLED` remains false unless explicitly defined in an approved local, development, or staging test. No update, reorder, archive, mutation REST, phase merge, or Pull Request merge is permitted before its complete review, correction, corrective re-review, exact-head QA, staging evidence, Founder acceptance, and explicit merge authorization.
