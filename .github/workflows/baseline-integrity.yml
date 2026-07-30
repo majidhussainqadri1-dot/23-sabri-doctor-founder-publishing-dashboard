@@ -58,8 +58,10 @@ jobs:
             docs/AUDIT-PHASE-23B-SECOND-REVIEW-2026-07-30.md docs/AUDIT-PHASE-23C-2026-07-30.md
             docs/AUDIT-PHASE-23D-2026-07-30.md docs/ROLE-WORKSPACES.md docs/PHASE-23D-REVIEW-GATE.md
             docs/AUDIT-PHASE-23E-2026-07-30.md docs/REVIEW-CALENDAR.md docs/PHASE-23E-REVIEW-GATE.md
+            docs/AUDIT-PHASE-23F-2026-07-30.md docs/COLLECTIONS-KNOWLEDGE.md docs/PHASE-23F-REVIEW-GATE.md docs/PHASE-23F-STATUS.md
             includes/interface-spdb-provider-adapter.php includes/interface-spdb-workspace-provider-adapter.php
-            includes/interface-spdb-review-calendar-provider-adapter.php
+            includes/interface-spdb-review-calendar-provider-adapter.php includes/interface-spdb-collections-repository.php
+            includes/interface-spdb-native-reference-resolver.php
             includes/class-spdb-adapter-registry.php includes/class-spdb-membership-guard.php
             includes/class-spdb-capabilities.php includes/class-spdb-capability-installer.php
             includes/class-spdb-operation-broker.php includes/class-spdb-provider-registration.php
@@ -68,6 +70,7 @@ jobs:
             includes/class-spdb-safe-destination.php includes/class-spdb-workspace-projection-validator.php
             includes/class-spdb-role-workspace-service.php includes/class-spdb-review-calendar-validator.php
             includes/class-spdb-review-calendar-service.php includes/class-spdb-review-calendar-rest-controller.php
+            includes/class-spdb-collections-schema.php includes/class-spdb-collections-policy.php includes/class-spdb-collections-service.php
             includes/class-spdb-dashboard-router.php includes/class-spdb-workspace-resolver.php
             includes/class-spdb-saved-views.php includes/class-spdb-rest-privacy.php
             includes/class-spdb-system-state.php includes/class-spdb-overview-service.php
@@ -78,7 +81,7 @@ jobs:
             tests/bootstrap.php tests/fixtures/class-test-adapter.php tests/fixtures/class-test-workspace-adapter.php
             tests/fixtures/class-test-review-calendar-adapter.php tests/contract-tests.php tests/dashboard-core-tests.php
             tests/rest-privacy-tests.php tests/capability-installer-tests.php tests/provider-registration-tests.php
-            tests/inventory-tests.php tests/workspace-tests.php tests/review-calendar-tests.php tests/architecture-guard.php
+            tests/inventory-tests.php tests/workspace-tests.php tests/review-calendar-tests.php tests/phase23f-policy-tests.php tests/architecture-guard.php
           )
           for file in "${required[@]}"; do test -s "$file" || { echo "Missing or empty: $file"; exit 1; }; done
 
@@ -115,54 +118,50 @@ jobs:
       - name: Run corrective review and calendar tests
         shell: bash
         run: set -o pipefail; php tests/review-calendar-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+      - name: Run corrective Phase 23F tests
+        shell: bash
+        run: set -o pipefail; php tests/phase23f-policy-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
       - name: Run architecture boundary guard
         shell: bash
         run: set -o pipefail; php tests/architecture-guard.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
 
-      - name: Verify corrective Phase 23E controls
+      - name: Verify corrective Phase 23F controls
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "SPDB_Review_Calendar_Provider_Adapter" includes/interface-spdb-review-calendar-provider-adapter.php
-          grep -q "normalize_query" includes/class-spdb-review-calendar-validator.php
-          grep -q "operation_contract" includes/class-spdb-review-calendar-validator.php
-          grep -q "MAX_REPORTED_TOTAL" includes/class-spdb-review-calendar-validator.php
-          grep -q "normalize_utc_timestamp" includes/class-spdb-review-calendar-validator.php
-          grep -q "authorize_operation" includes/class-spdb-review-calendar-service.php
-          grep -q "reviewer_target_is_eligible" includes/class-spdb-review-calendar-service.php
-          grep -q "provider_query" includes/class-spdb-review-calendar-service.php
-          grep -q "accessible_total" includes/class-spdb-review-calendar-service.php
-          grep -q "is_environment_write_eligible" includes/class-spdb-review-calendar-service.php
-          grep -q "valid_rest_nonce" includes/class-spdb-review-calendar-rest-controller.php
-          grep -q "spdb_operation_payload_field_invalid" includes/class-spdb-review-calendar-rest-controller.php
-          grep -q "spdb_native_confirmation_invalid" includes/class-spdb-review-calendar-rest-controller.php
-          grep -q "native_refetched" includes/class-spdb-review-calendar-rest-controller.php
-          grep -q "Accessible validated window" templates/review.php
-          grep -q "Accessible validated window" templates/calendar.php
-          grep -q "spdb-pagination" assets/css/review-calendar.css
-          grep -q "route_url( 'review'" includes/class-spdb-workspace-resolver.php
-          grep -q "route_url( 'calendar'" includes/class-spdb-workspace-resolver.php
-          ! grep -Eq '<form\b|<button\b' templates/review.php
-          ! grep -Eq '<form\b|<button\b' templates/calendar.php
+          grep -q "VERSION = '2'" includes/class-spdb-collections-schema.php
+          grep -q "table_exists" includes/class-spdb-collections-schema.php
+          grep -q "actor_idempotency" includes/class-spdb-collections-schema.php
+          grep -q "reference_hash" includes/class-spdb-collections-schema.php
+          grep -q "relation_hash" includes/class-spdb-collections-schema.php
+          ! grep -Eq 'native_destination|final_report_url|results_summary|progress' includes/class-spdb-collections-schema.php
+          grep -q "mutation_authority" includes/class-spdb-collections-policy.php
+          grep -q "spdb_manage_campaigns" includes/class-spdb-collections-policy.php
+          grep -q "spdb_manage_own_content" includes/class-spdb-collections-policy.php
+          grep -q "SPDB_Native_Reference_Resolver" includes/interface-spdb-native-reference-resolver.php
+          grep -q "SPDB_PHASE23F_WRITES_ENABLED" includes/class-spdb-collections-service.php
+          grep -q "resolve_reference" includes/class-spdb-collections-service.php
+          grep -q "validate_contributors" includes/class-spdb-collections-service.php
+          ! grep -Eq 'register_rest_route\s*\(' includes/class-spdb-collections-service.php
 
       - name: Verify version alignment
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "Version:[[:space:]]*0.5.1" sabri-publishing-dashboard.php
-          grep -q "Stable tag: 0.5.1" readme.txt
-          grep -q "SPDB_VERSION.*0.5.1" sabri-publishing-dashboard.php
-          grep -q "SPDB_VERSION.*0.5.1" tests/bootstrap.php
+          grep -q "Version:[[:space:]]*0.6.0" sabri-publishing-dashboard.php
+          grep -q "Stable tag: 0.6.0" readme.txt
+          grep -q "SPDB_VERSION.*0.6.0" sabri-publishing-dashboard.php
+          grep -q "SPDB_VERSION.*0.6.0" tests/bootstrap.php
           grep -q "SPDB_CONTRACT_VERSION.*2.0.0" sabri-publishing-dashboard.php
-          grep -q "'phase'[[:space:]]*=>[[:space:]]*'23E'" includes/class-spdb-system-state.php
+          grep -q "'phase'[[:space:]]*=>[[:space:]]*'23F'" includes/class-spdb-system-state.php
 
       - name: Verify audit and merge gates
         shell: bash
         run: |
           set -euo pipefail
-          grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23E-2026-07-30.md
-          grep -qi "twenty-four" docs/AUDIT-PHASE-23E-2026-07-30.md
-          grep -qi "Corrective source re-review completed" docs/PHASE-23E-REVIEW-GATE.md
+          grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23F-2026-07-30.md
+          grep -qi "eighteen" docs/AUDIT-PHASE-23F-2026-07-30.md
+          grep -qi "Corrective source re-review completed" docs/PHASE-23F-REVIEW-GATE.md
           grep -qi "Founder review completed" STATUS.md
           grep -qi "No Merge before Completed Review" DECISION-LOG.md
 
@@ -177,7 +176,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-23e-corrective-qa-php-${{ matrix.php }}-${{ github.run_id }}
+          name: phase-23f-corrective-qa-php-${{ matrix.php }}-${{ github.run_id }}
           path: qa-evidence/
           if-no-files-found: error
           retention-days: 30
