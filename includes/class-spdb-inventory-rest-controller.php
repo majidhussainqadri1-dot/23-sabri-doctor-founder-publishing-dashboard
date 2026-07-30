@@ -76,22 +76,21 @@ final class SPDB_Inventory_REST_Controller {
 	}
 
 	public function rest_item( WP_REST_Request $request ) {
-		return rest_ensure_response(
-			$this->inventory->inspect_item(
-				(string) $request['provider'],
-				(string) $request['object_type'],
-				(string) $request['object_id']
-			)
+		$result = $this->inventory->inspect_item(
+			(string) $request['provider'],
+			(string) $request['object_type'],
+			(string) $request['object_id']
 		);
+		return is_wp_error( $result ) ? $result : rest_ensure_response( $result );
 	}
 
 	/** @param mixed $value Raw value. */
 	public function validate_canonical_key( $value ): bool {
-		return SPDB_Adapter_Registry::is_canonical_key( (string) $value );
+		return ! is_array( $value ) && ! is_object( $value ) && SPDB_Adapter_Registry::is_canonical_key( (string) $value );
 	}
 
 	/** @param mixed $value Raw value. */
 	public function validate_object_id( $value ): bool {
-		return SPDB_Projection_Validator::valid_object_id( (string) $value );
+		return ! is_array( $value ) && ! is_object( $value ) && SPDB_Projection_Validator::valid_object_id( (string) $value );
 	}
 }
