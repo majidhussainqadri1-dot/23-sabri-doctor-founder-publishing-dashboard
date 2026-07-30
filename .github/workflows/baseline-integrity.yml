@@ -59,20 +59,24 @@ jobs:
             docs/AUDIT-2026-07-30.md docs/AUDIT-PHASE-23B-2026-07-30.md
             docs/AUDIT-PHASE-23B-SECOND-REVIEW-2026-07-30.md docs/AUDIT-PHASE-23C-2026-07-30.md
             docs/DASHBOARD-CORE.md docs/PHASE-23B-REVIEW-GATE.md docs/FEDERATED-INVENTORY.md docs/PHASE-23C-REVIEW-GATE.md
-            includes/interface-spdb-provider-adapter.php includes/class-spdb-adapter-registry.php
-            includes/class-spdb-membership-guard.php includes/class-spdb-capabilities.php
-            includes/class-spdb-capability-installer.php includes/class-spdb-operation-broker.php
-            includes/class-spdb-provider-registration.php includes/class-spdb-inventory-query.php
-            includes/class-spdb-projection-validator.php includes/class-spdb-federated-inventory.php
-            includes/class-spdb-inventory-rest-controller.php includes/class-spdb-dashboard-router.php
+            docs/ROLE-WORKSPACES.md docs/PHASE-23D-REVIEW-GATE.md
+            includes/interface-spdb-provider-adapter.php includes/interface-spdb-workspace-provider-adapter.php
+            includes/class-spdb-adapter-registry.php includes/class-spdb-membership-guard.php
+            includes/class-spdb-capabilities.php includes/class-spdb-capability-installer.php
+            includes/class-spdb-operation-broker.php includes/class-spdb-provider-registration.php
+            includes/class-spdb-inventory-query.php includes/class-spdb-projection-validator.php
+            includes/class-spdb-federated-inventory.php includes/class-spdb-inventory-rest-controller.php
+            includes/class-spdb-safe-destination.php includes/class-spdb-workspace-projection-validator.php
+            includes/class-spdb-role-workspace-service.php includes/class-spdb-dashboard-router.php
             includes/class-spdb-workspace-resolver.php includes/class-spdb-saved-views.php
             includes/class-spdb-rest-privacy.php includes/class-spdb-system-state.php
             includes/class-spdb-overview-service.php includes/class-spdb-dashboard-page.php includes/class-spdb-plugin.php
-            templates/dashboard.php templates/inventory.php
-            assets/css/dashboard.css assets/css/dashboard-corrections.css assets/css/inventory.css assets/js/dashboard.js
-            tests/bootstrap.php tests/fixtures/class-test-adapter.php tests/contract-tests.php
-            tests/dashboard-core-tests.php tests/rest-privacy-tests.php tests/capability-installer-tests.php
-            tests/provider-registration-tests.php tests/inventory-tests.php tests/architecture-guard.php
+            templates/dashboard.php templates/inventory.php templates/workspace.php
+            assets/css/dashboard.css assets/css/dashboard-corrections.css assets/css/inventory.css assets/css/workspace.css assets/js/dashboard.js
+            tests/bootstrap.php tests/fixtures/class-test-adapter.php tests/fixtures/class-test-workspace-adapter.php
+            tests/contract-tests.php tests/dashboard-core-tests.php tests/rest-privacy-tests.php
+            tests/capability-installer-tests.php tests/provider-registration-tests.php
+            tests/inventory-tests.php tests/workspace-tests.php tests/architecture-guard.php
           )
           for file in "${required[@]}"; do
             test -s "$file" || { echo "Missing or empty: $file"; exit 1; }
@@ -105,10 +109,13 @@ jobs:
       - name: Run corrective federated inventory tests
         run: php tests/inventory-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
 
+      - name: Run role-workspace tests
+        run: php tests/workspace-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+
       - name: Run architecture boundary guard
         run: php tests/architecture-guard.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
 
-      - name: Verify private route and inventory controls
+      - name: Verify private route and role-workspace controls
         shell: bash
         run: |
           set -euo pipefail
@@ -117,25 +124,28 @@ jobs:
           grep -q "private, no-store" includes/class-spdb-dashboard-router.php
           grep -q "rest_pre_serve_request" includes/class-spdb-rest-privacy.php
           grep -q "scope_allows_item" includes/class-spdb-federated-inventory.php
-          grep -q "item_matches_query" includes/class-spdb-federated-inventory.php
           grep -q "owner_user_id" includes/class-spdb-projection-validator.php
-          grep -q "public_projection" includes/class-spdb-inventory-query.php
-          grep -q "validated_window_count" includes/class-spdb-federated-inventory.php
-          grep -q "execution_exposed" includes/class-spdb-federated-inventory.php
-          grep -q "WP_REST_Server::READABLE" includes/class-spdb-inventory-rest-controller.php
-          ! grep -Eq "WP_REST_Server::(CREATABLE|EDITABLE|DELETABLE)" includes/class-spdb-inventory-rest-controller.php
+          grep -q "SPDB_Workspace_Provider_Adapter" includes/interface-spdb-workspace-provider-adapter.php
+          grep -q "is_environment_write_eligible" includes/class-spdb-role-workspace-service.php
+          grep -q "founder_only" includes/class-spdb-role-workspace-service.php
+          grep -q "official_create" includes/class-spdb-role-workspace-service.php
+          grep -q "spdb_workspace_owner_mismatch" includes/class-spdb-workspace-projection-validator.php
+          grep -q "SPDB_Safe_Destination::normalize" includes/class-spdb-workspace-projection-validator.php
+          grep -q "view=workspace\|route_url( 'workspace'" includes/class-spdb-workspace-resolver.php
+          ! grep -Eq "<form\b|<button\b" templates/workspace.php
           ! grep -Eq "nth-child\([456]\).*display:[[:space:]]*none" assets/css/inventory.css
 
       - name: Verify version alignment
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "Version:[[:space:]]*0.3.1" sabri-publishing-dashboard.php
-          grep -q "Stable tag: 0.3.1" readme.txt
-          grep -q "SPDB_VERSION.*0.3.1" sabri-publishing-dashboard.php
-          grep -q "SPDB_VERSION.*0.3.1" tests/bootstrap.php
+          grep -q "Version:[[:space:]]*0.4.0" sabri-publishing-dashboard.php
+          grep -q "Stable tag: 0.4.0" readme.txt
+          grep -q "SPDB_VERSION.*0.4.0" sabri-publishing-dashboard.php
+          grep -q "SPDB_VERSION.*0.4.0" tests/bootstrap.php
           grep -q "SPDB_CONTRACT_VERSION.*2.0.0" sabri-publishing-dashboard.php
           grep -q "Contract version: 2.0.0" includes/interface-spdb-provider-adapter.php
+          grep -q "'phase'[[:space:]]*=>[[:space:]]*'23D'" includes/class-spdb-system-state.php
 
       - name: Verify audit and merge gates
         shell: bash
@@ -145,10 +155,10 @@ jobs:
           grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23B-2026-07-30.md
           grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23B-SECOND-REVIEW-2026-07-30.md
           grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23C-2026-07-30.md
-          grep -qi "fourteen" docs/AUDIT-PHASE-23C-2026-07-30.md
+          grep -qi "DO NOT MERGE" docs/PHASE-23D-REVIEW-GATE.md
           grep -qi "Founder review completed" STATUS.md
           grep -qi "No Merge before Completed Review" DECISION-LOG.md
-          grep -qi "DO NOT MERGE" docs/PHASE-23C-REVIEW-GATE.md
+          grep -qi "Independent review" docs/PHASE-23D-REVIEW-GATE.md
 
       - name: Record source checksums
         if: always()
@@ -161,7 +171,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-23c-corrective-qa-php-${{ matrix.php }}-${{ github.run_id }}
+          name: phase-23d-initial-qa-php-${{ matrix.php }}-${{ github.run_id }}
           path: qa-evidence/
           if-no-files-found: error
           retention-days: 30
