@@ -94,3 +94,19 @@ A parent Master Plan amendment remains a project-governance task outside this re
 **Decision:** Phase 23B stores personal saved views in File 23-owned user meta under a versioned key. Only a narrow non-clinical filter allowlist is accepted, data is revalidated on read, and the limit is 25 views per user.
 
 **Reason:** A custom table is unnecessary at this scale, user meta follows account ownership naturally, and the bounded contract prevents patient or clinical data from entering dashboard preferences.
+
+## 2026-07-30 — D-015 — Phase 23C Runtime Projection, Not Content Import
+
+**Decision:** The federated inventory reads bounded runtime projections through Adapter Contract 2.0.0. It does not import, synchronize, or persist native publication bodies or workflow records in File 23.
+
+**Consequences:** Native providers remain responsible for ownership, privacy, query policy, and authoritative state. File 23 validates the returned projection before rendering it and isolates invalid or failed providers.
+
+**Test impact:** Inventory tests must prove malformed projections are omitted, provider failures degrade gracefully, current-user scope is server-injected, and no duplicate native-domain storage exists.
+
+## 2026-07-30 — D-016 — Phase 23C Inventory Is Read-Only
+
+**Decision:** Phase 23C exposes only inventory list and inspector reads. Native operation keys may be projected for inspection, but no REST mutation route, form, button, or direct adapter execution is exposed.
+
+**Reason:** Review, scheduling, correction, retraction, and other writes require later phase-specific UX, policy, concurrency, audit, provider acceptance, and staging review. Exposing writes early would bypass the approved phased architecture.
+
+**Security impact:** Native destinations must be same-origin and free of credentials, nonces, tokens, signatures, secrets, passwords, authorization fields, expiry fields, and key material. Mismatched native object IDs or undeclared privacy classifications are rejected.
