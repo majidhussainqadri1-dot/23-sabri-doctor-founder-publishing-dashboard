@@ -3,15 +3,21 @@
  * Main private dashboard template.
  *
  * Available variables: $workspace, $navigation, $current, $overview,
- * $system_state, and $saved_views.
+ * $system_state, $saved_views, and $instance_id.
  *
  * @package Sabri_Publishing_Dashboard
  */
 
 defined( 'ABSPATH' ) || exit;
+
+$main_id          = $instance_id . '-main';
+$saved_title_id   = $instance_id . '-saved-views-title';
+$system_title_id  = $instance_id . '-system-status-title';
+$overview_title_id = $instance_id . '-overview-title';
+$provider_title_id = $instance_id . '-provider-title';
 ?>
-<a class="spdb-skip-link" href="#spdb-main"><?php esc_html_e( 'Skip to dashboard content', 'sabri-publishing-dashboard' ); ?></a>
-<div class="spdb-shell" data-spdb-workspace="<?php echo esc_attr( (string) $workspace['key'] ); ?>">
+<a class="spdb-skip-link" href="#<?php echo esc_attr( $main_id ); ?>"><?php esc_html_e( 'Skip to dashboard content', 'sabri-publishing-dashboard' ); ?></a>
+<div class="spdb-shell" data-spdb-workspace="<?php echo esc_attr( (string) $workspace['key'] ); ?>" data-spdb-instance="<?php echo esc_attr( $instance_id ); ?>">
 	<header class="spdb-header">
 		<div>
 			<p class="spdb-eyebrow"><?php esc_html_e( 'Sabri Social Homeopathy Platform', 'sabri-publishing-dashboard' ); ?></p>
@@ -42,13 +48,13 @@ defined( 'ABSPATH' ) || exit;
 			</ul>
 		</nav>
 
-		<main id="spdb-main" class="spdb-main" tabindex="-1">
+		<main id="<?php echo esc_attr( $main_id ); ?>" class="spdb-main" tabindex="-1">
 			<?php if ( 'saved-views' === $current ) : ?>
-				<section aria-labelledby="spdb-saved-views-title">
+				<section aria-labelledby="<?php echo esc_attr( $saved_title_id ); ?>">
 					<div class="spdb-section-heading">
 						<div>
 							<p class="spdb-eyebrow"><?php esc_html_e( 'Personal workspace', 'sabri-publishing-dashboard' ); ?></p>
-							<h2 id="spdb-saved-views-title"><?php esc_html_e( 'Saved Views', 'sabri-publishing-dashboard' ); ?></h2>
+							<h2 id="<?php echo esc_attr( $saved_title_id ); ?>"><?php esc_html_e( 'Saved Views', 'sabri-publishing-dashboard' ); ?></h2>
 						</div>
 					</div>
 					<p><?php esc_html_e( 'Saved views contain only non-clinical dashboard filters. They never grant publishing authority and never store patient information.', 'sabri-publishing-dashboard' ); ?></p>
@@ -93,30 +99,27 @@ defined( 'ABSPATH' ) || exit;
 					<?php endif; ?>
 
 					<div class="spdb-live-region" role="status" aria-live="polite" data-spdb-status></div>
-					<?php if ( empty( $saved_views ) ) : ?>
-						<p class="spdb-empty-state"><?php esc_html_e( 'No saved views are available.', 'sabri-publishing-dashboard' ); ?></p>
-					<?php else : ?>
-						<ul class="spdb-saved-view-list" data-spdb-saved-view-list>
-							<?php foreach ( $saved_views as $saved_view ) : ?>
-								<li data-view-id="<?php echo esc_attr( $saved_view['id'] ); ?>">
-									<div>
-										<strong><?php echo esc_html( $saved_view['label'] ); ?></strong>
-										<small><?php echo esc_html( wp_json_encode( $saved_view['filters'] ) ); ?></small>
-									</div>
-									<?php if ( ! $workspace['read_only'] ) : ?>
-										<button type="button" class="spdb-button spdb-button--secondary" data-spdb-delete-view="<?php echo esc_attr( $saved_view['id'] ); ?>">
-											<?php esc_html_e( 'Delete', 'sabri-publishing-dashboard' ); ?>
-										</button>
-									<?php endif; ?>
-								</li>
-							<?php endforeach; ?>
-						</ul>
-					<?php endif; ?>
+					<p class="spdb-empty-state" <?php echo empty( $saved_views ) ? '' : 'hidden'; ?>><?php esc_html_e( 'No saved views are available.', 'sabri-publishing-dashboard' ); ?></p>
+					<ul class="spdb-saved-view-list" data-spdb-saved-view-list>
+						<?php foreach ( $saved_views as $saved_view ) : ?>
+							<li data-view-id="<?php echo esc_attr( $saved_view['id'] ); ?>">
+								<div>
+									<strong><?php echo esc_html( $saved_view['label'] ); ?></strong>
+									<small><?php echo esc_html( wp_json_encode( $saved_view['filters'] ) ); ?></small>
+								</div>
+								<?php if ( ! $workspace['read_only'] ) : ?>
+									<button type="button" class="spdb-button spdb-button--secondary" data-spdb-delete-view="<?php echo esc_attr( $saved_view['id'] ); ?>">
+										<?php esc_html_e( 'Delete', 'sabri-publishing-dashboard' ); ?>
+									</button>
+								<?php endif; ?>
+							</li>
+						<?php endforeach; ?>
+					</ul>
 				</section>
 			<?php elseif ( 'system-status' === $current ) : ?>
-				<section aria-labelledby="spdb-system-status-title">
+				<section aria-labelledby="<?php echo esc_attr( $system_title_id ); ?>">
 					<p class="spdb-eyebrow"><?php esc_html_e( 'Operational diagnostics', 'sabri-publishing-dashboard' ); ?></p>
-					<h2 id="spdb-system-status-title"><?php esc_html_e( 'System Status', 'sabri-publishing-dashboard' ); ?></h2>
+					<h2 id="<?php echo esc_attr( $system_title_id ); ?>"><?php esc_html_e( 'System Status', 'sabri-publishing-dashboard' ); ?></h2>
 					<div class="spdb-status-grid">
 						<article><span><?php esc_html_e( 'Environment', 'sabri-publishing-dashboard' ); ?></span><strong><?php echo esc_html( $system_state['environment'] ); ?></strong></article>
 						<article><span><?php esc_html_e( 'Plugin version', 'sabri-publishing-dashboard' ); ?></span><strong><?php echo esc_html( $system_state['plugin_version'] ); ?></strong></article>
@@ -128,9 +131,9 @@ defined( 'ABSPATH' ) || exit;
 					<p class="spdb-caption"><?php echo esc_html( sprintf( __( 'Generated at %s (GMT). No patient data or secrets are included.', 'sabri-publishing-dashboard' ), $system_state['generated_at_gmt'] ) ); ?></p>
 				</section>
 			<?php else : ?>
-				<section aria-labelledby="spdb-overview-title">
+				<section aria-labelledby="<?php echo esc_attr( $overview_title_id ); ?>">
 					<p class="spdb-eyebrow"><?php esc_html_e( 'Operational overview', 'sabri-publishing-dashboard' ); ?></p>
-					<h2 id="spdb-overview-title"><?php esc_html_e( 'Overview', 'sabri-publishing-dashboard' ); ?></h2>
+					<h2 id="<?php echo esc_attr( $overview_title_id ); ?>"><?php esc_html_e( 'Overview', 'sabri-publishing-dashboard' ); ?></h2>
 
 					<?php if ( ! empty( $overview['alerts'] ) ) : ?>
 						<div class="spdb-alerts" aria-label="<?php esc_attr_e( 'Priority notices', 'sabri-publishing-dashboard' ); ?>">
@@ -152,8 +155,8 @@ defined( 'ABSPATH' ) || exit;
 						<?php endforeach; ?>
 					</div>
 
-					<section class="spdb-provider-section" aria-labelledby="spdb-provider-title">
-						<h3 id="spdb-provider-title"><?php esc_html_e( 'Provider Readiness', 'sabri-publishing-dashboard' ); ?></h3>
+					<section class="spdb-provider-section" aria-labelledby="<?php echo esc_attr( $provider_title_id ); ?>">
+						<h3 id="<?php echo esc_attr( $provider_title_id ); ?>"><?php esc_html_e( 'Provider Readiness', 'sabri-publishing-dashboard' ); ?></h3>
 						<?php if ( empty( $overview['providers'] ) ) : ?>
 							<p><?php esc_html_e( 'No provider adapter is registered. Native content counts and actions remain unavailable by design.', 'sabri-publishing-dashboard' ); ?></p>
 						<?php else : ?>
