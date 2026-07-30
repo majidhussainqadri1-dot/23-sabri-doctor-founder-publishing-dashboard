@@ -75,6 +75,8 @@ jobs:
             docs/AUDIT-PHASE-23B-SECOND-REVIEW-2026-07-30.md
             docs/DASHBOARD-CORE.md
             docs/PHASE-23B-REVIEW-GATE.md
+            docs/FEDERATED-INVENTORY.md
+            docs/PHASE-23C-REVIEW-GATE.md
             includes/interface-spdb-provider-adapter.php
             includes/class-spdb-adapter-registry.php
             includes/class-spdb-membership-guard.php
@@ -82,6 +84,10 @@ jobs:
             includes/class-spdb-capability-installer.php
             includes/class-spdb-operation-broker.php
             includes/class-spdb-provider-registration.php
+            includes/class-spdb-inventory-query.php
+            includes/class-spdb-projection-validator.php
+            includes/class-spdb-federated-inventory.php
+            includes/class-spdb-inventory-rest-controller.php
             includes/class-spdb-dashboard-router.php
             includes/class-spdb-workspace-resolver.php
             includes/class-spdb-saved-views.php
@@ -91,8 +97,10 @@ jobs:
             includes/class-spdb-dashboard-page.php
             includes/class-spdb-plugin.php
             templates/dashboard.php
+            templates/inventory.php
             assets/css/dashboard.css
             assets/css/dashboard-corrections.css
+            assets/css/inventory.css
             assets/js/dashboard.js
             tests/bootstrap.php
             tests/fixtures/class-test-adapter.php
@@ -101,6 +109,7 @@ jobs:
             tests/rest-privacy-tests.php
             tests/capability-installer-tests.php
             tests/provider-registration-tests.php
+            tests/inventory-tests.php
             tests/architecture-guard.php
           )
           for file in "${required[@]}"; do
@@ -148,13 +157,19 @@ jobs:
           set -euo pipefail
           php tests/provider-registration-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
 
+      - name: Run federated inventory tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          php tests/inventory-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+
       - name: Run architecture boundary guard
         shell: bash
         run: |
           set -euo pipefail
           php tests/architecture-guard.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
 
-      - name: Verify private route controls
+      - name: Verify private route and inventory controls
         shell: bash
         run: |
           set -euo pipefail
@@ -169,14 +184,22 @@ jobs:
           grep -q "compare_and_store" includes/class-spdb-saved-views.php
           grep -q "SPDB_Capability_Installer" includes/class-spdb-plugin.php
           grep -q "SPDB_Provider_Registration::dispatch" includes/class-spdb-plugin.php
+          grep -q "SPDB_Federated_Inventory" includes/class-spdb-plugin.php
+          grep -q "spdb_view_own_content" includes/class-spdb-federated-inventory.php
+          grep -q "SPDB_Projection_Validator" includes/class-spdb-federated-inventory.php
+          grep -q "execution_exposed" includes/class-spdb-federated-inventory.php
+          grep -q "WP_REST_Server::READABLE" includes/class-spdb-inventory-rest-controller.php
+          ! grep -Eq "WP_REST_Server::(CREATABLE|EDITABLE|DELETABLE)" includes/class-spdb-inventory-rest-controller.php
           grep -q "DO NOT MERGE before review is complete" docs/PHASE-23B-REVIEW-GATE.md
+          grep -q "DO NOT MERGE before review is complete" docs/PHASE-23C-REVIEW-GATE.md
 
       - name: Verify version alignment
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "Version:[[:space:]]*0.2.1" sabri-publishing-dashboard.php
-          grep -q "Stable tag: 0.2.1" readme.txt
+          grep -q "Version:[[:space:]]*0.3.0" sabri-publishing-dashboard.php
+          grep -q "Stable tag: 0.3.0" readme.txt
+          grep -q "SPDB_VERSION.*0.3.0" sabri-publishing-dashboard.php
           grep -q "SPDB_CONTRACT_VERSION.*2.0.0" sabri-publishing-dashboard.php
           grep -q "Contract version: 2.0.0" includes/interface-spdb-provider-adapter.php
 
@@ -189,14 +212,14 @@ jobs:
           grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23B-SECOND-REVIEW-2026-07-30.md
           grep -qi "Founder review completed" STATUS.md
           grep -qi "No merge before completed review" DECISION-LOG.md
-          grep -qi "DO NOT MERGE before review is complete" docs/PHASE-23B-REVIEW-GATE.md
+          grep -qi "DO NOT MERGE" docs/PHASE-23C-REVIEW-GATE.md
 
       - name: Record source checksums
         if: always()
         shell: bash
         run: |
           set -euo pipefail
-          find includes templates assets tests -type f -print0 \
+          find includes templates assets tests docs -type f -print0 \
             | sort -z \
             | xargs -0 sha256sum \
             > "qa-evidence/source-checksums-php-${{ matrix.php }}.sha256"
@@ -205,7 +228,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-23b-qa-php-${{ matrix.php }}-${{ github.run_id }}
+          name: phase-23c-qa-php-${{ matrix.php }}-${{ github.run_id }}
           path: qa-evidence/
           if-no-files-found: error
           retention-days: 30
