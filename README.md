@@ -57,8 +57,8 @@ No native review or schedule mutation is performed by the projection service or 
 - Phase 23B Draft PR #2: unmerged
 - Phase 23C Draft PR #3: reviewed, corrected, QA-green, unmerged
 - Phase 23D Draft PR #4: source-reviewed, corrected, exact-head QA-green, unmerged
+- Phase 23E Draft PR #5: open, Draft, unmerged
 - Active stacked branch: `phase/23e-review-calendar`
-- Phase 23E Draft PR: to be opened after the initial candidate head is recorded
 - **No merge before completed review, correction, corrective re-review, exact-head QA, staging acceptance, rollback evidence, and Founder acceptance.**
 
 ## Versions
@@ -92,4 +92,4 @@ No native review or schedule mutation is performed by the projection service or 
 
 ## Status
 
-Phase 23E initial coding is in progress. Independent source review, defect correction, corrective re-review, exact-head QA, real File 21/File 22 adapters, Hostinger staging, real reviewer/Founder/doctor accounts, privacy/accessibility/rollback testing, and Founder acceptance remain mandatory. All pull requests remain Draft and unmerged.
+Phase 23E initial coding is complete as a Draft candidate. Independent source review, defect correction, corrective re-review, exact-head QA, real File 21/File 22 adapters, Hostinger staging, real reviewer/Founder/doctor accounts, privacy/accessibility/rollback testing, and Founder acceptance remain mandatory. All pull requests remain Draft and unmerged.
