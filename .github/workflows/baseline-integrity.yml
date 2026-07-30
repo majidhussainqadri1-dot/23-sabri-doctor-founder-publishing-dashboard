@@ -92,7 +92,7 @@ jobs:
             tests/phase23f-policy-tests.php tests/phase23f-runtime-tests.php tests/phase23f-repository-tests.php
             tests/phase23f-read-rest-tests.php tests/phase23f-collections-ui-tests.php
             tests/phase23f-collections-ui-corrective-tests.php tests/dashboard-router-malformed-view-tests.php
-            tests/phase23g-native-reference-tests.php tests/architecture-guard.php
+            tests/phase23g-native-reference-tests.php tests/phase23g-native-reference-drift-tests.php tests/architecture-guard.php
           )
           for file in "${required[@]}"; do test -s "$file" || { echo "Missing or empty: $file"; exit 1; }; done
 
@@ -137,6 +137,8 @@ jobs:
         run: set -o pipefail; php tests/dashboard-router-malformed-view-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
       - name: Run Phase 23G native resolver tests
         run: set -o pipefail; php tests/phase23g-native-reference-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+      - name: Run Phase 23G contract drift tests
+        run: set -o pipefail; php tests/phase23g-native-reference-drift-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
       - name: Run architecture boundary guard
         run: set -o pipefail; php tests/architecture-guard.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
 
@@ -157,6 +159,8 @@ jobs:
           grep -q 'adapter_acceptance_state' includes/class-spdb-native-reference-registry.php
           grep -q 'validated_context' includes/class-spdb-native-reference-registry.php
           grep -q 'spdb_native_resolver_provider_error' includes/class-spdb-native-reference-registry.php
+          grep -q 'provider_contract_is_current' includes/class-spdb-native-reference-registry.php
+          grep -q 'contract_drift' includes/class-spdb-native-reference-registry.php
           grep -q 'spdb/register_native_reference_resolvers' includes/class-spdb-native-reference-registration.php
           grep -q 'new SPDB_Native_Reference_Registry( \$this->adapter_registry, array() )' includes/class-spdb-plugin.php
           grep -q 'new SPDB_Collections_Service( \$this->collections_repository )' includes/class-spdb-plugin.php
