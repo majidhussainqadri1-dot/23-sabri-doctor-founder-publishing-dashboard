@@ -78,7 +78,7 @@ if ( is_file( $inventory_service ) ) {
 				$violations[] = "includes/class-spdb-federated-inventory.php: forbidden mutation call {$forbidden_call}";
 			}
 		}
-		if ( ! str_contains( $inventory_content, "'execution_exposed'  => false" ) && ! str_contains( $inventory_content, "'execution_exposed' => false" ) ) {
+		if ( ! preg_match( "/\['execution_exposed'\]\s*=\s*false\s*;/", $inventory_content ) && ! preg_match( "/'execution_exposed'\s*=>\s*false/", $inventory_content ) ) {
 			$violations[] = 'includes/class-spdb-federated-inventory.php: mutation execution boundary marker missing';
 		}
 	}
