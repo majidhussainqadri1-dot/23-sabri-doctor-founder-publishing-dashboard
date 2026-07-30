@@ -15,7 +15,7 @@ Phase 23B implements the first usable private dashboard surface without creating
 - Search indexing: prohibited
 - Shared/public caching: prohibited
 
-The route emits private `no-store`, `noindex`, `noarchive`, `nosnippet`, same-origin referrer, content-type, and restricted device-permission headers.
+The virtual route and shortcode fallback emit private `no-store`, `noindex`, `noarchive`, `nosnippet`, same-origin referrer, and content-type protection headers.
 
 ## Implemented Workspaces
 
@@ -28,7 +28,7 @@ The route emits private `no-store`, `noindex`, `noarchive`, `nosnippet`, same-or
 | Denied | Missing explicit capability or invalid account | No dashboard access |
 | Dependency unavailable | Missing/incompatible File 00 | Fail-closed |
 
-Workspace resolution is bound to the current authenticated user and cannot be used to project another user's authority.
+Workspace resolution is bound to the current authenticated user and cannot be used to project another user's authority or membership status.
 
 ## Implemented Views
 
@@ -52,6 +52,8 @@ Phase 23B does not have accepted native content providers. It therefore reports 
 - Maximum filter value: 100 characters.
 - Patient, prescription, appointment, message, identity-document, and consent fields are not accepted.
 - Data is revalidated on both write and read projection.
+- Approved/verified accounts may create and delete their own saved views.
+- Restricted accounts may list existing saved views but cannot create or delete them.
 - Saved views never grant publishing authority.
 
 ## Graceful Degradation
@@ -59,7 +61,7 @@ Phase 23B does not have accepted native content providers. It therefore reports 
 - No provider: dashboard remains usable and reports zero providers.
 - Provider registration error: affected provider is isolated; bounded error count is shown.
 - File 00 unavailable: private actions fail closed.
-- Restricted account: dashboard remains read-only.
+- Restricted account: dashboard remains read-only, including saved-view mutation.
 - JavaScript unavailable: overview and system-status views remain readable; saved-view mutation is unavailable rather than silently simulated.
 
 ## Accessibility and Responsive Baseline
