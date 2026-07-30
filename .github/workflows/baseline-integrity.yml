@@ -92,23 +92,32 @@ jobs:
         run: node --check assets/js/dashboard.js
 
       - name: Run executable contract tests
-        run: php tests/contract-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+        shell: bash
+        run: set -o pipefail; php tests/contract-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
       - name: Run executable dashboard-core tests
-        run: php tests/dashboard-core-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+        shell: bash
+        run: set -o pipefail; php tests/dashboard-core-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
       - name: Run REST privacy tests
-        run: php tests/rest-privacy-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+        shell: bash
+        run: set -o pipefail; php tests/rest-privacy-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
       - name: Run capability installer tests
-        run: php tests/capability-installer-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+        shell: bash
+        run: set -o pipefail; php tests/capability-installer-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
       - name: Run provider registration isolation tests
-        run: php tests/provider-registration-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+        shell: bash
+        run: set -o pipefail; php tests/provider-registration-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
       - name: Run corrective federated inventory tests
-        run: php tests/inventory-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+        shell: bash
+        run: set -o pipefail; php tests/inventory-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
       - name: Run corrective role-workspace tests
-        run: php tests/workspace-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+        shell: bash
+        run: set -o pipefail; php tests/workspace-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
       - name: Run corrective review and calendar tests
-        run: php tests/review-calendar-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+        shell: bash
+        run: set -o pipefail; php tests/review-calendar-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
       - name: Run architecture boundary guard
-        run: php tests/architecture-guard.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+        shell: bash
+        run: set -o pipefail; php tests/architecture-guard.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
 
       - name: Verify corrective Phase 23E controls
         shell: bash
