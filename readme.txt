@@ -4,7 +4,7 @@ Tags: publishing, dashboard, editorial, doctors, founder, review, calendar, coll
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 0.6.2
+Stable tag: 0.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,36 +14,26 @@ A private, role-aware, federated publishing operations dashboard for the Sabri S
 
 File 23 provides one operational dashboard for the Founder and doctors while preserving each native module as the source of truth.
 
-Version 0.6.2 is the corrected Phase 23F development candidate. It provides:
+Version 0.7.0 is the Phase 23G native-reference governance foundation. It retains the corrected Phase 23F metadata, read API, and read-only UI, and adds:
 
-* metadata-only cross-module collection, Founder campaign, collection-item, and knowledge-link contracts;
-* exactly three File 23-owned metadata tables under Schema Version 3;
-* lifecycle verification of required tables, columns, and indexes;
-* request-cached repository health instead of repeated schema inspection inside one request;
-* no persisted native destinations, publication bodies, reports, clinical records, media, or raw analytics;
-* current approved-account, capability, scope, Founder, parent-collection, and object-level visibility gates;
-* actor-scoped idempotency plus request fingerprints that distinguish exact replay from payload conflict;
-* deterministic duplicate canonical-relation conflicts;
-* persisted bounded audit reasons and observed native versions;
-* Unicode-aware bounded text and sensitive-data rejection;
-* campaign-only field separation and defense-in-depth dark-pattern screening;
-* a versioned native-reference resolver contract;
-* a concrete WordPress repository for verified reads and idempotent creates;
-* strict repository input, envelope, lifecycle, collection-item, and output projection validation;
-* six explicit read-only collection, collection-item, and knowledge-link REST routes;
-* private/no-store REST policy and truthful pagination headers;
-* a protected read-only Collections and Knowledge dashboard view;
-* collection list/detail, parent-authorized active item list/detail, and knowledge-link list/detail;
-* bounded filters, pagination, Founder-only institution scope presentation, and scope-preserving navigation;
-* semantic captions, landmarks, definition lists, responsive tables, visible focus, RTL, reduced-motion, and forced-color support;
-* non-sensitive Phase 23F readiness in System Status;
-* explicit read, collection-write, knowledge-write, and any-write readiness;
-* update, reorder, archive, REST mutation, mutation UI, and production writes kept fail-closed;
-* executable policy, runtime-authority, schema, replay, repository, item-IDOR, read-REST, UI, malformed-route, privacy, and architecture tests.
+* a provider-specific native-reference resolver contract;
+* a File 23-owned resolver registry implementing the aggregate resolver boundary;
+* exact provider-key, provider-version, resolver-version, and object-type binding;
+* existing-adapter dependency and separate adapter/resolver acceptance;
+* default-denied staging and production acceptance;
+* an isolated resolver-registration hook that cannot self-accept a provider;
+* request-cached bounded resolver health;
+* strict current-user, scope, Founder, capability, and environment context reconstruction;
+* exact provider/type/ID/scope response matching;
+* reconstruction of a bounded safe response instead of relaying provider payloads;
+* bounded generic translation of provider exceptions and provider errors;
+* safe current-request destination validation without destination persistence;
+* non-sensitive registered, ready, and registration-error diagnostics;
+* PHP 8.0–8.3 tests for duplicate registration, missing adapter, version/type mismatch, malformed governance, acceptance separation, context forgery, callback isolation, provider exceptions, sensitive errors, malformed responses, scope mismatch, unsafe destinations, and health caching.
 
-File 23 does not copy native publication bodies, drafts, profiles, knowledge objects, review decisions, schedules, media, comments, corrections, retractions, patient data, or analytics. It stores only bounded cross-module metadata and canonical references.
+File 23 still does not copy native publication bodies, drafts, profiles, knowledge objects, review decisions, schedules, media, comments, corrections, retractions, patient data, or analytics. It stores only bounded cross-module metadata and canonical references.
 
-The concrete File 23 repository is injected for verified server-side reads. A native-reference resolver is deliberately not injected yet. Collection creates can run only when the explicit Phase 23F write constant is enabled in local, development, or staging; knowledge-link creates additionally require a reviewed resolver. The REST and dashboard Collections surfaces are read-only. No Phase 23F mutation route or mutation UI is exposed, and production mutation remains disabled.
+The registry is booted with an empty File 23-owned acceptance map and is deliberately not injected into `SPDB_Collections_Service` yet. Therefore no provider resolver is operational by default, knowledge-link write readiness remains false, no real native provider is integrated, no mutation REST or mutation UI is exposed, and production mutation remains disabled.
 
 == Installation ==
 
@@ -52,50 +42,54 @@ The concrete File 23 repository is injected for verified server-side reads. A na
 3. Activate the plugin; it creates no editorial WordPress roles.
 4. Activation installs only the three declared File 23 metadata tables and verifies their tables, columns, and indexes.
 5. Keep `SPDB_PHASE23F_WRITES_ENABLED` undefined or false outside an explicitly reviewed local, development, or staging test.
-6. Register only reviewed native adapters and native-reference resolvers.
-7. Verify Founder, Doctor, trusted-doctor, pending, suspended, reviewer, and contributor accounts.
-8. Verify privacy, IDOR, stale-reference, permission-loss, cache, accessibility, backup, restore, migration, and rollback behavior.
+6. Register only independently reviewed provider adapters and provider-specific resolvers.
+7. Do not add staging or production resolver acceptance until provider-specific review and real staging evidence are complete.
+8. Verify privacy, IDOR, stale-reference, permission-loss, provider outage, cache, accessibility, backup, restore, migration, and rollback behavior.
 9. Do not merge before review, correction, corrective re-review, exact-head QA, staging acceptance, rollback evidence, Founder acceptance, and explicit authorization are complete.
 
 == Frequently Asked Questions ==
 
-= Does File 23 copy content into a collection? =
+= Does File 23 copy native content? =
 
-No. It stores canonical provider, object-type, object-ID, relation, ordering, scope, and governance metadata only. Native content remains with its owner.
+No. It stores bounded organizational metadata and canonical references only. Native content remains with its owner.
 
-= Does File 23 store a native edit or preview URL? =
+= Is a real native resolver active? =
 
-No. Native destinations must be freshly re-resolved and safety-validated. Signed, expiring, private, or stale destinations are not persisted.
+No. Version 0.7.0 provides the default-denied registry and isolation foundation only. The plugin acceptance map is empty, the registry is not injected into collection writes, and no real provider implementation is included.
 
-= Are Phase 23F writes enabled? =
+= Can a provider accept itself? =
 
-Not in production. The explicit write constant must be enabled in an approved local, development, or staging test. Collection create is resolver-independent; knowledge-link create also requires a reviewed native resolver. Update, reorder, archive, REST mutation, and dashboard mutation controls remain disabled.
+No. Technical registration and File 23-owned acceptance are separate. A provider must also have an accepted adapter, exact matching version, declared object type, healthy resolver, and environment-appropriate resolver acceptance.
 
-= Which Phase 23F REST routes exist? =
+= Can provider errors or health details leak? =
 
-Only explicit GET projections for collections, collection details, collection items, collection-item details, knowledge links, and knowledge-link details. Every route requires an approved current account and `spdb_view_own_content`; institution scope additionally requires current Founder identity and `spdb_manage_campaigns`.
+Provider health and errors are reconstructed into bounded states. Object identifiers, destinations, callback details, patient information, provider error text, and secrets are not included in diagnostics.
 
-= What does the Collections dashboard show? =
+= Are writes enabled? =
 
-Only validated File 23 organizational metadata: accessible collections, campaigns, active canonical item references, and knowledge links. It does not render native content bodies or native destinations, and it exposes no mutation control.
+Not in production. No Phase 23G mutation route or UI exists. Collection creation remains separately gated under the earlier non-production constant; knowledge-link creation still has no injected resolver in the default plugin runtime.
 
-= Is automated ethical screening sufficient for a campaign? =
+= Which read routes exist? =
 
-No. The bounded phrase screen is defense in depth only. Founder governance, human moderation, medical policy, and native-module authorization remain mandatory.
+Only the six Phase 23F GET projections for collections, collection details, collection items, item details, knowledge links, and link details. The protected Collections dashboard remains read-only.
 
 == Changelog ==
 
+= 0.7.0 =
+
+* Added a default-denied provider-specific native-reference registry, isolated registration, acceptance separation, strict context and response privacy, truthful diagnostics, and dedicated PHP 8.0–8.3 tests without enabling any real provider or mutation.
+
 = 0.6.2 =
 
-* Corrected persistence, pagination, lifecycle, item-authorization, read-API, and Collections UI defects; added strict item services, six GET-only REST routes, an accessible read-only dashboard projection, and dedicated PHP 8.0–8.3 UI QA.
+* Corrected persistence, pagination, lifecycle, item authorization, read API, and Collections UI defects; added six GET-only REST routes and an accessible read-only dashboard projection.
 
 = 0.6.1 =
 
-* Corrected eighteen Phase 23F runtime and schema defects, introduced Schema Version 3, added the verified WordPress repository, separated read/write readiness, enforced IDOR-safe projections, and added concrete runtime/repository tests.
+* Corrected Phase 23F runtime and Schema Version 3 defects and added the verified WordPress repository.
 
 = 0.6.0 =
 
-* Corrected eighteen Phase 23F foundation defects and began the fail-closed runtime service and native-reference resolver contract.
+* Began the fail-closed Phase 23F metadata and resolver-contract foundation.
 
 = 0.5.1 =
 
