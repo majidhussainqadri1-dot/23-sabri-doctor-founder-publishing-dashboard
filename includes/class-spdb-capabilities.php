@@ -38,21 +38,37 @@ final class SPDB_Capabilities {
 	}
 
 	/**
-	 * Enforce the canonical capability and current File 00 account state.
+	 * Read-only capabilities permitted for the restricted pending/suspended view.
 	 *
-	 * This method fails closed if Membership Core is unavailable, the user is
-	 * signed out, or the account is pending, rejected, suspended, or otherwise
-	 * not approved.
+	 * @return string[]
+	 */
+	public static function restricted_view_capabilities(): array {
+		return array(
+			'spdb_view_dashboard',
+			'spdb_view_own_content',
+		);
+	}
+
+	/**
+	 * Enforce canonical capability and current File 00 account state.
+	 *
+	 * Pending, rejected, expired-document, appeal-review, and suspended accounts
+	 * may use only explicitly assigned restricted-view capabilities. Every other
+	 * File 23 capability requires an approved or verified File 00 account.
 	 */
 	public static function current_user_can( string $capability, ...$args ): bool {
 		if ( ! in_array( $capability, self::all(), true ) ) {
 			return false;
 		}
 
-		if ( ! SPDB_Membership_Guard::current_user_is_approved() ) {
+		if ( ! current_user_can( $capability, ...$args ) ) {
 			return false;
 		}
 
-		return current_user_can( $capability, ...$args );
+		if ( in_array( $capability, self::restricted_view_capabilities(), true ) ) {
+			return SPDB_Membership_Guard::current_user_can_view_restricted_dashboard();
+		}
+
+		return SPDB_Membership_Guard::current_user_is_approved();
 	}
 }
