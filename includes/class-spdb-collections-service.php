@@ -26,13 +26,13 @@ final class SPDB_Collections_Service {
 		$configured       = $this->writes_configured();
 		return array(
 			'repository_available' => null !== $this->repository,
-			'resolver_available' => null !== $this->resolver,
-			'read_ready' => $repository_ready,
-			'write_configured' => $configured,
+			'resolver_available'   => null !== $this->resolver,
+			'read_ready'           => $repository_ready,
+			'write_configured'     => $configured,
 			'collection_write_ready' => $configured && $repository_ready,
-			'knowledge_write_ready' => $configured && $repository_ready && null !== $this->resolver,
-			'write_enabled' => $configured && $repository_ready && null !== $this->resolver,
-			'repository_health' => $repository_health,
+			'knowledge_write_ready'  => $configured && $repository_ready && null !== $this->resolver,
+			'write_enabled'          => $configured && $repository_ready && null !== $this->resolver,
+			'repository_health'      => $repository_health,
 		);
 	}
 
@@ -76,8 +76,8 @@ final class SPDB_Collections_Service {
 		$contributor_state = $this->validate_contributors( $record['contributors'] ); if ( is_wp_error( $contributor_state ) ) { return $contributor_state; }
 		$actor = get_current_user_id();
 		$record['owner_user_id'] = $actor;
-		$record['created_by'] = $actor;
-		$record['request_hash'] = $this->request_hash( $record, array( 'idempotency_key' ) );
+		$record['created_by']    = $actor;
+		$record['request_hash']  = $this->request_hash( $record, array( 'idempotency_key' ) );
 		$record['idempotency_hash'] = hash( 'sha256', $actor . '|collection_create|' . $record['idempotency_key'] );
 		unset( $record['idempotency_key'] );
 		return $record;
@@ -125,10 +125,10 @@ final class SPDB_Collections_Service {
 		$target = $this->resolve_reference( $record['target_provider_key'], $record['target_object_type'], $record['target_object_id'], $record['scope'] ); if ( is_wp_error( $target ) ) { return $target; }
 		$actor = get_current_user_id();
 		$record['owner_user_id'] = $actor;
-		$record['created_by'] = $actor;
-		$record['status'] = 'active';
+		$record['created_by']    = $actor;
+		$record['status']        = 'active';
 		$record['relation_hash'] = hash( 'sha256', implode( '|', array( $record['source_provider_key'], $record['source_object_type'], $record['source_object_id'], $record['target_provider_key'], $record['target_object_type'], $record['target_object_id'], $record['relation_type'] ) ) );
-		$record['request_hash'] = $request_hash;
+		$record['request_hash']  = $request_hash;
 		$record['idempotency_hash'] = hash( 'sha256', $actor . '|knowledge_link_create|' . $record['idempotency_key'] );
 		$record['source_native_version'] = $source['native_version'];
 		$record['target_native_version'] = $target['native_version'];
@@ -234,17 +234,58 @@ final class SPDB_Collections_Service {
 		return array( 'items' => $result['items'], 'page' => $page, 'per_page' => $per_page, 'total' => $total, 'has_more' => (bool) $result['has_more'] );
 	}
 	private function validate_collection_record( $record ) {
-		if ( ! is_array( $record ) ) { return $this->error( 'spdb_collection_projection_invalid', 'A collection projection is invalid.' ); }
-		$type = (string) ( $record['record_type'] ?? '' ); $scope = (string) ( $record['scope'] ?? '' ); $status = (string) ( $record['status'] ?? '' );
+		$allowed = array( 'collection_id', 'record_type', 'scope', 'title', 'objective', 'ethical_declaration', 'owner_user_id', 'contributors', 'target_surfaces', 'status', 'start_at_gmt', 'end_at_gmt', 'version', 'created_by', 'created_at_gmt', 'updated_at_gmt', 'archived_at_gmt', 'replayed' );
+		if ( ! is_array( $record ) || array_diff( array_keys( $record ), $allowed ) ) { return $this->error( 'spdb_collection_projection_invalid', 'A collection projection contains an invalid field or shape.' ); }
+		$type = is_string( $record['record_type'] ?? null ) ? $record['record_type'] : '';
+		$scope = is_string( $record['scope'] ?? null ) ? $record['scope'] : '';
+		$status = is_string( $record['status'] ?? null ) ? $record['status'] : '';
+		$owner = $this->strict_positive_integer( $record['owner_user_id'] ?? null );
+		$version = $this->strict_positive_integer( $record['version'] ?? null );
+		$created_by = $this->strict_positive_integer( $record['created_by'] ?? null );
 		$statuses = 'campaign' === $type ? SPDB_Collections_Policy::campaign_statuses() : SPDB_Collections_Policy::collection_statuses();
-		if ( ! $this->valid_metadata_id( (string) ( $record['collection_id'] ?? '' ) ) || ! in_array( $type, SPDB_Collections_Policy::record_types(), true ) || ! in_array( $scope, SPDB_Collections_Policy::scopes(), true ) || ! in_array( $status, $statuses, true ) || (int) ( $record['owner_user_id'] ?? 0 ) < 1 || (int) ( $record['version'] ?? 0 ) < 1 || ! is_string( $record['title'] ?? null ) ) { return $this->error( 'spdb_collection_projection_invalid', 'A collection projection is invalid.' ); }
-		return $record;
+		$title = $this->projection_text( $record['title'] ?? null, 200, false );
+		$objective = $this->projection_text( $record['objective'] ?? '', 1000, true );
+		$ethics = $this->projection_text( $record['ethical_declaration'] ?? '', 1000, true );
+		$contributors = $this->projection_positive_list( $record['contributors'] ?? null, 25 );
+		$surfaces = $this->projection_enum_list( $record['target_surfaces'] ?? null, SPDB_Collections_Policy::target_surfaces(), 20 );
+		$start = $this->projection_timestamp( $record['start_at_gmt'] ?? '', true );
+		$end = $this->projection_timestamp( $record['end_at_gmt'] ?? '', true );
+		$created = $this->projection_timestamp( $record['created_at_gmt'] ?? null, false );
+		$updated = $this->projection_timestamp( $record['updated_at_gmt'] ?? null, false );
+		$archived = $this->projection_timestamp( $record['archived_at_gmt'] ?? '', true );
+		if ( ! $this->valid_metadata_id( is_string( $record['collection_id'] ?? null ) ? $record['collection_id'] : '' ) || ! in_array( $type, SPDB_Collections_Policy::record_types(), true ) || ! in_array( $scope, SPDB_Collections_Policy::scopes(), true ) || ! in_array( $status, $statuses, true ) || null === $owner || null === $version || null === $created_by || is_wp_error( $title ) || is_wp_error( $objective ) || is_wp_error( $ethics ) || is_wp_error( $contributors ) || is_wp_error( $surfaces ) || is_wp_error( $start ) || is_wp_error( $end ) || is_wp_error( $created ) || is_wp_error( $updated ) || is_wp_error( $archived ) ) { return $this->error( 'spdb_collection_projection_invalid', 'A collection projection is invalid.' ); }
+		if ( '' !== $start && '' !== $end && $start > $end ) { return $this->error( 'spdb_collection_projection_invalid', 'A collection projection contains an invalid date range.' ); }
+		if ( 'collection' === $type && ( '' !== $ethics || array() !== $surfaces || '' !== $start || '' !== $end || ( 'own' === $scope && array() !== $contributors ) ) ) { return $this->error( 'spdb_collection_projection_invalid', 'A collection projection violates the collection metadata contract.' ); }
+		if ( 'campaign' === $type && ( 'institution' !== $scope || '' === $objective || '' === $ethics || array() === $surfaces || '' === $start || '' === $end ) ) { return $this->error( 'spdb_collection_projection_invalid', 'A campaign projection violates the campaign metadata contract.' ); }
+		$projection = array( 'collection_id' => $record['collection_id'], 'record_type' => $type, 'scope' => $scope, 'title' => $title, 'objective' => $objective, 'ethical_declaration' => $ethics, 'owner_user_id' => $owner, 'contributors' => $contributors, 'target_surfaces' => $surfaces, 'status' => $status, 'start_at_gmt' => $start, 'end_at_gmt' => $end, 'version' => $version, 'created_by' => $created_by, 'created_at_gmt' => $created, 'updated_at_gmt' => $updated, 'archived_at_gmt' => $archived );
+		if ( array_key_exists( 'replayed', $record ) ) { if ( ! is_bool( $record['replayed'] ) ) { return $this->error( 'spdb_collection_projection_invalid', 'A collection replay marker is invalid.' ); } $projection['replayed'] = $record['replayed']; }
+		return $projection;
 	}
 	private function validate_knowledge_record( $record ) {
-		if ( ! is_array( $record ) ) { return $this->error( 'spdb_knowledge_projection_invalid', 'A knowledge-link projection is invalid.' ); }
-		if ( ! $this->valid_metadata_id( (string) ( $record['link_id'] ?? '' ) ) || ! in_array( (string) ( $record['scope'] ?? '' ), SPDB_Collections_Policy::scopes(), true ) || (int) ( $record['owner_user_id'] ?? 0 ) < 1 || (int) ( $record['version'] ?? 0 ) < 1 || ! in_array( (string) ( $record['status'] ?? '' ), array( 'active', 'archived' ), true ) ) { return $this->error( 'spdb_knowledge_projection_invalid', 'A knowledge-link projection is invalid.' ); }
-		foreach ( array( 'source_provider_key', 'source_object_type', 'target_provider_key', 'target_object_type' ) as $key ) { if ( ! SPDB_Adapter_Registry::is_canonical_key( (string) ( $record[ $key ] ?? '' ) ) ) { return $this->error( 'spdb_knowledge_projection_invalid', 'A knowledge-link projection is invalid.' ); } }
-		return $record;
+		$allowed = array( 'link_id', 'scope', 'owner_user_id', 'source_provider_key', 'source_object_type', 'source_object_id', 'source_native_version', 'target_provider_key', 'target_object_type', 'target_object_id', 'target_native_version', 'relation_type', 'status', 'version', 'created_by', 'created_at_gmt', 'updated_at_gmt', 'archived_at_gmt', 'replayed' );
+		if ( ! is_array( $record ) || array_diff( array_keys( $record ), $allowed ) ) { return $this->error( 'spdb_knowledge_projection_invalid', 'A knowledge-link projection contains an invalid field or shape.' ); }
+		$scope = is_string( $record['scope'] ?? null ) ? $record['scope'] : '';
+		$status = is_string( $record['status'] ?? null ) ? $record['status'] : '';
+		$owner = $this->strict_positive_integer( $record['owner_user_id'] ?? null );
+		$version = $this->strict_positive_integer( $record['version'] ?? null );
+		$created_by = $this->strict_positive_integer( $record['created_by'] ?? null );
+		$source_provider = is_string( $record['source_provider_key'] ?? null ) ? $record['source_provider_key'] : '';
+		$source_type = is_string( $record['source_object_type'] ?? null ) ? $record['source_object_type'] : '';
+		$source_id = is_string( $record['source_object_id'] ?? null ) ? $record['source_object_id'] : '';
+		$target_provider = is_string( $record['target_provider_key'] ?? null ) ? $record['target_provider_key'] : '';
+		$target_type = is_string( $record['target_object_type'] ?? null ) ? $record['target_object_type'] : '';
+		$target_id = is_string( $record['target_object_id'] ?? null ) ? $record['target_object_id'] : '';
+		$source_version = $this->native_version( $record['source_native_version'] ?? null );
+		$target_version = $this->native_version( $record['target_native_version'] ?? null );
+		$relation = is_string( $record['relation_type'] ?? null ) ? $record['relation_type'] : '';
+		$created = $this->projection_timestamp( $record['created_at_gmt'] ?? null, false );
+		$updated = $this->projection_timestamp( $record['updated_at_gmt'] ?? null, false );
+		$archived = $this->projection_timestamp( $record['archived_at_gmt'] ?? '', true );
+		if ( ! $this->valid_metadata_id( is_string( $record['link_id'] ?? null ) ? $record['link_id'] : '' ) || ! in_array( $scope, SPDB_Collections_Policy::scopes(), true ) || null === $owner || null === $version || null === $created_by || ! in_array( $status, array( 'active', 'archived' ), true ) || ! SPDB_Adapter_Registry::is_canonical_key( $source_provider ) || ! SPDB_Adapter_Registry::is_canonical_key( $source_type ) || ! SPDB_Projection_Validator::valid_object_id( $source_id ) || ! SPDB_Adapter_Registry::is_canonical_key( $target_provider ) || ! SPDB_Adapter_Registry::is_canonical_key( $target_type ) || ! SPDB_Projection_Validator::valid_object_id( $target_id ) || is_wp_error( $source_version ) || is_wp_error( $target_version ) || ! in_array( $relation, SPDB_Collections_Policy::knowledge_relations(), true ) || is_wp_error( $created ) || is_wp_error( $updated ) || is_wp_error( $archived ) ) { return $this->error( 'spdb_knowledge_projection_invalid', 'A knowledge-link projection is invalid.' ); }
+		if ( $source_provider === $target_provider && $source_type === $target_type && $source_id === $target_id ) { return $this->error( 'spdb_knowledge_projection_invalid', 'A knowledge-link projection points an object to itself.' ); }
+		$projection = array( 'link_id' => $record['link_id'], 'scope' => $scope, 'owner_user_id' => $owner, 'source_provider_key' => $source_provider, 'source_object_type' => $source_type, 'source_object_id' => $source_id, 'source_native_version' => $source_version, 'target_provider_key' => $target_provider, 'target_object_type' => $target_type, 'target_object_id' => $target_id, 'target_native_version' => $target_version, 'relation_type' => $relation, 'status' => $status, 'version' => $version, 'created_by' => $created_by, 'created_at_gmt' => $created, 'updated_at_gmt' => $updated, 'archived_at_gmt' => $archived );
+		if ( array_key_exists( 'replayed', $record ) ) { if ( ! is_bool( $record['replayed'] ) ) { return $this->error( 'spdb_knowledge_projection_invalid', 'A knowledge-link replay marker is invalid.' ); } $projection['replayed'] = $record['replayed']; }
+		return $projection;
 	}
 	/** @param array<string,mixed> $record */
 	private function record_is_visible( array $record ): bool { $scope = (string) ( $record['scope'] ?? '' ); $owner = (int) ( $record['owner_user_id'] ?? 0 ); return ( 'own' === $scope && $owner === get_current_user_id() ) || ( 'institution' === $scope && $this->current_user_is_founder() ); }
@@ -255,6 +296,11 @@ final class SPDB_Collections_Service {
 	private function native_version( $raw ) { if ( ! is_scalar( $raw ) ) { return $this->error( 'spdb_native_reference_version_invalid', 'The native object version is invalid.' ); } $value = trim( (string) $raw ); if ( '' === $value || $this->text_length( $value ) > 191 || preg_match( '/[\x00-\x1F\x7F]/u', $value ) ) { return $this->error( 'spdb_native_reference_version_invalid', 'The native object version is invalid.' ); } return $value; }
 	private function request_hash( array $record, array $exclude = array() ): string { foreach ( $exclude as $key ) { unset( $record[ $key ] ); } $record = $this->canonicalize( $record ); $json = wp_json_encode( $record ); return hash( 'sha256', is_string( $json ) ? $json : serialize( $record ) ); }
 	private function canonicalize( $value ) { if ( ! is_array( $value ) ) { return $value; } if ( ! $this->is_list( $value ) ) { ksort( $value ); } foreach ( $value as $key => $item ) { $value[ $key ] = $this->canonicalize( $item ); } return $value; }
+	private function strict_positive_integer( $raw ): ?int { if ( is_int( $raw ) ) { return $raw > 0 ? $raw : null; } if ( is_string( $raw ) && 1 === preg_match( '/^[1-9]\d*$/', $raw ) ) { $value = (int) $raw; return $value > 0 ? $value : null; } return null; }
+	private function projection_text( $raw, int $maximum, bool $allow_empty ) { if ( ! is_string( $raw ) ) { return $this->error( 'spdb_projection_text_invalid', 'Projected metadata text has an invalid shape.' ); } $value = trim( $raw ); if ( ( ! $allow_empty && '' === $value ) || $this->text_length( $value ) > $maximum || wp_strip_all_tags( $value ) !== $value || preg_match( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $value ) || preg_match( '/(?:https?:\/\/|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|\b(?:\+?92|0)?3\d{9}\b|\b\d{5}-\d{7}-\d\b)/iu', $value ) ) { return $this->error( 'spdb_projection_text_invalid', 'Projected metadata text is invalid or sensitive.' ); } return $value; }
+	private function projection_positive_list( $raw, int $maximum ) { if ( ! is_array( $raw ) || ! $this->is_list( $raw ) || count( $raw ) > $maximum ) { return $this->error( 'spdb_projection_list_invalid', 'A projected integer list is invalid.' ); } $result = array(); foreach ( $raw as $item ) { $value = $this->strict_positive_integer( $item ); if ( null === $value || in_array( $value, $result, true ) ) { return $this->error( 'spdb_projection_list_invalid', 'A projected integer list is invalid.' ); } $result[] = $value; } return $result; }
+	private function projection_enum_list( $raw, array $allowed, int $maximum ) { if ( ! is_array( $raw ) || ! $this->is_list( $raw ) || count( $raw ) > $maximum ) { return $this->error( 'spdb_projection_list_invalid', 'A projected metadata list is invalid.' ); } $result = array(); foreach ( $raw as $item ) { if ( ! is_string( $item ) || ! in_array( $item, $allowed, true ) || in_array( $item, $result, true ) ) { return $this->error( 'spdb_projection_list_invalid', 'A projected metadata list is invalid.' ); } $result[] = $item; } return $result; }
+	private function projection_timestamp( $raw, bool $allow_empty ) { if ( ! is_string( $raw ) ) { return $this->error( 'spdb_projection_timestamp_invalid', 'A projected timestamp has an invalid shape.' ); } $value = trim( $raw ); if ( '' === $value ) { return $allow_empty ? '' : $this->error( 'spdb_projection_timestamp_invalid', 'A projected timestamp is required.' ); } if ( 1 !== preg_match( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $value ) ) { return $this->error( 'spdb_projection_timestamp_invalid', 'A projected timestamp is invalid.' ); } try { $date = new DateTimeImmutable( $value ); } catch ( Throwable $throwable ) { return $this->error( 'spdb_projection_timestamp_invalid', 'A projected timestamp is invalid.' ); } return $date->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d\TH:i:s\Z' ) === $value ? $value : $this->error( 'spdb_projection_timestamp_invalid', 'A projected timestamp is not canonical UTC.' ); }
 	private function nonnegative_integer( $raw ): ?int { if ( is_int( $raw ) ) { $value = $raw; } elseif ( is_string( $raw ) && 1 === preg_match( '/^(?:0|[1-9]\d*)$/', $raw ) ) { $value = (int) $raw; } else { return null; } return $value >= 0 ? $value : null; }
 	private function positive_integer( $raw, int $maximum ): ?int { $value = $this->nonnegative_integer( $raw ); return null !== $value && $value >= 1 && $value <= $maximum ? $value : null; }
 	private function valid_metadata_id( string $value ): bool { return 1 === preg_match( '/^[a-z0-9][a-z0-9_-]{15,63}$/', $value ); }
