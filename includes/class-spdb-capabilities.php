@@ -37,8 +37,19 @@ final class SPDB_Capabilities {
 		);
 	}
 
+	/**
+	 * Enforce the canonical capability and current File 00 account state.
+	 *
+	 * This method fails closed if Membership Core is unavailable, the user is
+	 * signed out, or the account is pending, rejected, suspended, or otherwise
+	 * not approved.
+	 */
 	public static function current_user_can( string $capability, ...$args ): bool {
 		if ( ! in_array( $capability, self::all(), true ) ) {
+			return false;
+		}
+
+		if ( ! SPDB_Membership_Guard::current_user_is_approved() ) {
 			return false;
 		}
 
