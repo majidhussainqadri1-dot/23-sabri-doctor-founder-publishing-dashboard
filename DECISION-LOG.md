@@ -57,11 +57,11 @@ A parent Master Plan amendment remains a project-governance task outside this re
 
 **Test impact:** CI must prove staging acceptance does not authorize production.
 
-## 2026-07-30 — D-009 — Membership Core Fail-Closed Contract
+## 2026-07-30 — D-009 — Membership Core Fail-Closed and Restricted-View Contract
 
-**Decision:** Every File 23 capability check requires the canonical File 00 contract and an `approved` or `verified` account. Pending, rejected, suspended, signed-out, or dependency-unavailable states are denied.
+**Decision:** Every File 23 capability check requires the canonical compatible File 00 contract. Mutable, editorial, analytics, export, delegation, repair, and institution-wide capabilities require an `approved` or `verified` account. Pending, rejected, expired-document, appeal-review, and suspended accounts may receive only explicitly assigned `spdb_view_dashboard` and `spdb_view_own_content` restricted read-only access.
 
-**Reason:** WordPress capabilities alone do not establish current institutional eligibility.
+**Reason:** WordPress capabilities alone do not establish current institutional eligibility, while the governing plan still requires a safe status, appeal, and owned-content read-only path for non-approved doctors.
 
 ## 2026-07-30 — D-010 — Guarded Operation Broker
 
@@ -75,4 +75,22 @@ A parent Master Plan amendment remains a project-governance task outside this re
 
 **Reason:** Review findings must be resolved before integration; green checks from an earlier head are not evidence for corrected code.
 
-**Test impact:** Repository CI and status documents must retain an explicit review/merge gate. Draft PR #1 remains unmerged.
+**Test impact:** Repository CI and status documents must retain an explicit review and merge gate.
+
+## 2026-07-30 — D-012 — Stacked Phase Branches without Premature Merge
+
+**Decision:** When continued construction is authorized before a reviewed parent PR is merged, the next phase may start as a stacked branch from the exact reviewed parent head. The parent and child PRs remain Draft and unmerged until their own review and acceptance gates are complete.
+
+**Reason:** This permits orderly progress without violating the permanent no-merge-before-review rule.
+
+## 2026-07-30 — D-013 — Protected Virtual Dashboard Route
+
+**Decision:** Phase 23B provides `/publishing-dashboard/` through a dedicated WordPress rewrite route plus the approved shortcode fallback, rather than creating or overwriting a database page automatically.
+
+**Reason:** The route is deterministic, private, theme-compatible, reversible, upgrade-safe, and does not risk replacing existing WordPress content. A later activation wizard may create a page only after separate review.
+
+## 2026-07-30 — D-014 — Saved Views as Bounded Personal Preferences
+
+**Decision:** Phase 23B stores personal saved views in File 23-owned user meta under a versioned key. Only a narrow non-clinical filter allowlist is accepted, data is revalidated on read, and the limit is 25 views per user.
+
+**Reason:** A custom table is unnecessary at this scale, user meta follows account ownership naturally, and the bounded contract prevents patient or clinical data from entering dashboard preferences.
