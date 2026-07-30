@@ -77,8 +77,22 @@ $GLOBALS['spdb_test_query_vars'] = array();
 $invalid = SPDB_Saved_Views::normalize_definition( array( 'label' => '' ) );
 spdb_core_assert( 'spdb_invalid_saved_view_label' === spdb_core_error_code( $invalid ), 'Blank saved-view labels must be rejected.' );
 
+$invalid_label_shape = SPDB_Saved_Views::normalize_definition( array( 'label' => array( 'not', 'scalar' ) ) );
+spdb_core_assert( 'spdb_invalid_saved_view_label' === spdb_core_error_code( $invalid_label_shape ), 'Nested saved-view labels must be rejected without conversion warnings.' );
+
 $sensitive_label = SPDB_Saved_Views::normalize_definition( array( 'label' => 'Patient patient@example.com' ) );
 spdb_core_assert( 'spdb_sensitive_saved_view_label' === spdb_core_error_code( $sensitive_label ), 'Contact details must be rejected from saved-view labels.' );
+
+$invalid_filters_shape = SPDB_Saved_Views::normalize_definition( array( 'label' => 'Bad filters', 'filters' => 'status=draft' ) );
+spdb_core_assert( 'spdb_invalid_saved_view_filter' === spdb_core_error_code( $invalid_filters_shape ), 'Saved-view filters must be a structured object.' );
+
+$invalid_nested_filter = SPDB_Saved_Views::normalize_definition(
+	array(
+		'label'   => 'Nested filter',
+		'filters' => array( 'status' => array( array( 'draft' ) ) ),
+	)
+);
+spdb_core_assert( 'spdb_invalid_saved_view_filter' === spdb_core_error_code( $invalid_nested_filter ), 'Nested saved-view filter values must be rejected.' );
 
 $invalid_sort = SPDB_Saved_Views::normalize_definition(
 	array(
@@ -137,6 +151,18 @@ $saved_views = new SPDB_Saved_Views();
 $stored      = $saved_views->get_for_user( 7 );
 spdb_core_assert( 'My view' === $stored[0]['label'], 'Stored labels must be sanitized before projection.' );
 spdb_core_assert( ! isset( $stored[0]['filters']['patient_id'] ), 'Stored filters must be revalidated before projection.' );
+spdb_core_assert( array() === $saved_views->get_for_user( 99 ), 'Saved-view projection must remain bound to the current user.' );
+spdb_core_assert( $saved_views->validate_view_id( 'view_123e4567e89b12d3a456426614174000' ), 'Canonical saved-view IDs must validate.' );
+spdb_core_assert( ! $saved_views->validate_view_id( 'view_invalid' ), 'Malformed saved-view IDs must be rejected.' );
+
+$reflection = new ReflectionClass( SPDB_Saved_Views::class );
+$compare    = $reflection->getMethod( 'compare_and_store' );
+$compare->setAccessible( true );
+$raw_before = $GLOBALS['spdb_test_user_meta'][7]['spdb_saved_views_v1'];
+$GLOBALS['spdb_test_force_meta_conflict'] = true;
+$conflict = $compare->invoke( $saved_views, 7, $raw_before, array() );
+spdb_core_assert( 'spdb_saved_view_conflict' === spdb_core_error_code( $conflict ), 'Concurrent saved-view updates must return a conflict instead of silently overwriting.' );
+$GLOBALS['spdb_test_user_meta'][7]['spdb_saved_views_v1'] = $raw_before;
 
 $GLOBALS['spdb_test_member_status'] = 'submitted';
 spdb_core_assert( true === $saved_views->read_permission_check(), 'Restricted account may list existing saved views.' );
