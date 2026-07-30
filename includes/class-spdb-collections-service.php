@@ -442,16 +442,30 @@ final class SPDB_Collections_Service {
 	private function native_version( $raw ) { if ( ! is_string( $raw ) ) { return $this->error( 'spdb_native_reference_version_invalid', 'The native object version is invalid.' ); } $value = trim( $raw ); if ( $raw !== $value || '' === $value || $this->text_length( $value ) > 191 || preg_match( '/[\x00-\x1F\x7F]/u', $value ) ) { return $this->error( 'spdb_native_reference_version_invalid', 'The native object version is invalid.' ); } return $value; }
 	private function request_hash( array $record, array $exclude = array() ): string { foreach ( $exclude as $key ) { unset( $record[ $key ] ); } $record = $this->canonicalize( $record ); $json = wp_json_encode( $record ); return hash( 'sha256', is_string( $json ) ? $json : serialize( $record ) ); }
 	private function canonicalize( $value ) { if ( ! is_array( $value ) ) { return $value; } if ( ! $this->is_list( $value ) ) { ksort( $value ); } foreach ( $value as $key => $item ) { $value[ $key ] = $this->canonicalize( $item ); } return $value; }
-	private function strict_positive_integer( $raw ): ?int { if ( is_int( $raw ) ) { return $raw > 0 ? $raw : null; } if ( is_string( $raw ) && 1 === preg_match( '/^[1-9]\d*$/', $raw ) ) { $value = (int) $raw; return $value > 0 ? $value : null; } return null; }
+	private function strict_positive_integer( $raw ): ?int {
+		if ( is_int( $raw ) ) { return $raw > 0 ? $raw : null; }
+		if ( is_string( $raw ) && 1 === preg_match( '/^[1-9]\d*$/', $raw ) ) {
+			$value = (int) $raw;
+			return $value > 0 && (string) $value === $raw ? $value : null;
+		}
+		return null;
+	}
 	private function projection_text( $raw, int $maximum, bool $allow_empty ) { if ( ! is_string( $raw ) ) { return $this->error( 'spdb_projection_text_invalid', 'Projected metadata text has an invalid shape.' ); } $value = trim( $raw ); if ( $raw !== $value || ( ! $allow_empty && '' === $value ) || $this->text_length( $value ) > $maximum || wp_strip_all_tags( $value ) !== $value || preg_match( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $value ) || preg_match( '/(?:https?:\/\/|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|\b(?:\+?92|0)?3\d{9}\b|\b\d{5}-\d{7}-\d\b)/iu', $value ) ) { return $this->error( 'spdb_projection_text_invalid', 'Projected metadata text is invalid or sensitive.' ); } return $value; }
 	private function projection_positive_list( $raw, int $maximum ) { if ( ! is_array( $raw ) || ! $this->is_list( $raw ) || count( $raw ) > $maximum ) { return $this->error( 'spdb_projection_list_invalid', 'A projected integer list is invalid.' ); } $result = array(); foreach ( $raw as $item ) { $value = $this->strict_positive_integer( $item ); if ( null === $value || in_array( $value, $result, true ) ) { return $this->error( 'spdb_projection_list_invalid', 'A projected integer list is invalid.' ); } $result[] = $value; } return $result; }
 	private function projection_enum_list( $raw, array $allowed, int $maximum ) { if ( ! is_array( $raw ) || ! $this->is_list( $raw ) || count( $raw ) > $maximum ) { return $this->error( 'spdb_projection_list_invalid', 'A projected metadata list is invalid.' ); } $result = array(); foreach ( $raw as $item ) { if ( ! is_string( $item ) || ! in_array( $item, $allowed, true ) || in_array( $item, $result, true ) ) { return $this->error( 'spdb_projection_list_invalid', 'A projected metadata list is invalid.' ); } $result[] = $item; } return $result; }
 	private function projection_timestamp( $raw, bool $allow_empty ) { if ( ! is_string( $raw ) ) { return $this->error( 'spdb_projection_timestamp_invalid', 'A projected timestamp has an invalid shape.' ); } $value = trim( $raw ); if ( $raw !== $value ) { return $this->error( 'spdb_projection_timestamp_invalid', 'A projected timestamp is not canonical.' ); } if ( '' === $value ) { return $allow_empty ? '' : $this->error( 'spdb_projection_timestamp_invalid', 'A projected timestamp is required.' ); } if ( 1 !== preg_match( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $value ) ) { return $this->error( 'spdb_projection_timestamp_invalid', 'A projected timestamp is invalid.' ); } try { $date = new DateTimeImmutable( $value ); } catch ( Throwable $throwable ) { return $this->error( 'spdb_projection_timestamp_invalid', 'A projected timestamp is invalid.' ); } return $date->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d\TH:i:s\Z' ) === $value ? $value : $this->error( 'spdb_projection_timestamp_invalid', 'A projected timestamp is not canonical UTC.' ); }
-	private function nonnegative_integer( $raw ): ?int { if ( is_int( $raw ) ) { return $raw >= 0 ? $raw : null; } if ( is_string( $raw ) && 1 === preg_match( '/^(?:0|[1-9]\d*)$/', $raw ) ) { return (int) $raw; } return null; }
+	private function nonnegative_integer( $raw ): ?int {
+		if ( is_int( $raw ) ) { return $raw >= 0 ? $raw : null; }
+		if ( is_string( $raw ) && 1 === preg_match( '/^(?:0|[1-9]\d*)$/', $raw ) ) {
+			$value = (int) $raw;
+			return (string) $value === $raw ? $value : null;
+		}
+		return null;
+	}
 	private function positive_integer( $raw, int $maximum ): ?int { $value = $this->strict_positive_integer( $raw ); return null !== $value && $value <= $maximum ? $value : null; }
 	private function valid_metadata_id( string $value ): bool { return 1 === preg_match( '/^[a-z0-9][a-z0-9_-]{15,63}$/', $value ); }
 	private function is_list( array $value ): bool { $expected = 0; foreach ( $value as $key => $unused ) { if ( $key !== $expected ) { return false; } ++$expected; } return true; }
-	private function text_length( string $value ): int { if ( function_exists( 'mb_strlen' ) ) { return mb_strlen( $value, 'UTF-8' ); } $count = preg_match_all( '/./us', $value, $matches ); return false === $count ? strlen( $value ) : $count; }
+	private function text_length( string $value ): int { if ( 1 !== preg_match( '//u', $value ) ) { return PHP_INT_MAX; } if ( function_exists( 'mb_strlen' ) ) { return mb_strlen( $value, 'UTF-8' ); } $count = preg_match_all( '/./us', $value, $matches ); return false === $count ? PHP_INT_MAX : $count; }
 	private function unavailable( string $code, string $message ): WP_Error { return $this->error( $code, $message, 503 ); }
 	private function error( string $code, string $message, int $status = 422 ): WP_Error { return new WP_Error( $code, __( $message, 'sabri-publishing-dashboard' ), array( 'status' => $status ) ); }
 }
