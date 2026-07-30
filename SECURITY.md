@@ -2,45 +2,57 @@
 
 ## Security Objective
 
-File 23 is a private operational dashboard that can expose high-impact publishing actions. Its default posture is fail-closed, least privilege, explicit provider contracts, and native source-of-truth verification after every action.
+File 23 is a private operational dashboard that can expose high-impact publishing actions. Its default posture is fail-closed, least privilege, explicit provider contracts, independent provider acceptance, and native source-of-truth verification after every action.
 
 ## Primary Threats
 
 - IDOR across doctors, authors, reviews, tasks, exports, or campaigns;
-- forged role, author, provider, or status values;
+- forged role, author, provider, status, capability, or environment values;
+- provider self-promotion to staging/production acceptance;
 - CSRF on publish, schedule, correction, retraction, bulk, export, or delegation actions;
 - stored/reflected XSS in titles, excerpts, notes, filters, source summaries, and adapter errors;
 - SQL injection in federated filters and File 23-owned queries;
-- privilege escalation through generic action endpoints;
+- privilege escalation through generic or unregistered action keys;
 - stale-object overwrite and review-decision races;
 - replayed or duplicated write requests;
-- sensitive data leakage through analytics, notifications, logs, exports, or cache;
-- malicious/incompatible provider adapters;
+- sensitive data leakage through analytics, notifications, logs, exports, cache, or signed destinations;
+- malicious, throwing, or incompatible provider adapters;
 - unsafe bulk actions;
 - scheduled-job tampering or silent failure;
 - audit-log deletion or alteration;
-- public indexing/caching of private routes.
+- public indexing/caching of private routes;
+- direct mutation of provider-owned posts, comments, media, schedules, corrections, or retractions.
 
 ## Mandatory Controls
 
 - authenticated private routes;
-- server-side capability and ownership checks;
-- current Membership Core verification and suspension checks;
+- server-side canonical File 23 capability and ownership checks;
+- current Membership Core availability, approval, verification, and suspension checks;
 - WordPress nonces for browser actions;
-- explicit operation schemas and allowlists;
+- explicit operation definitions, schemas, and allowlists;
+- independent File 23-controlled staging/production acceptance;
+- server-side `wp_get_environment_type()` resolution;
 - prepared SQL, sanitization, and contextual escaping;
-- safe redirects and canonical route resolution;
+- exact canonical identifiers with no silent normalization;
+- safe redirects and on-demand native destination resolution;
 - object-version/ETag conflict checks;
 - idempotency keys for write operations;
 - bounded payloads and pagination;
 - per-operation rate limits;
 - high-risk confirmation and audit reason;
-- short-lived, single-purpose export tokens;
+- short-lived, single-purpose export tokens stored hashed where applicable;
 - `noindex`, `noarchive`, sitemap exclusion, and private/no-store caching;
-- adapter maturity gates;
+- adapter exception isolation and diagnostics;
 - read-only Safe Mode;
 - graceful adapter isolation;
-- append-only, access-controlled, tamper-evident audit ledger.
+- append-only, access-controlled, tamper-evident audit ledger;
+- native object re-read before confirmed success.
+
+## Adapter Trust Boundary
+
+A native provider may declare only technical capability. It cannot self-declare `staging_accepted` or `production_accepted`. Acceptance belongs to File 23 governance after compatibility, security, integration, staging, and production review.
+
+The File 23 operation broker is mandatory for dashboard mutations. Calling a provider adapter mutation method directly from a controller, REST route, AJAX handler, or template is prohibited.
 
 ## High-Risk Operations
 
@@ -55,12 +67,12 @@ File 23 is a private operational dashboard that can expose high-impact publishin
 - change publication policy;
 - repair or destructive cleanup.
 
-These operations require dedicated capabilities, current-state validation, object version checks, confirmation, reason capture, idempotency, and audit events.
+These operations require dedicated capabilities, current File 00 status, provider acceptance, current-state validation, object-version checks, confirmation, reason capture, idempotency, native authorization, rate limiting, and audit events.
 
 ## Patient and Clinical Safety
 
-File 23 must not store patient records, prescriptions, private messages, appointment details, identity documents, or consent evidence. It may display privacy/compliance status supplied by native providers. Any patient-identifying excerpt in logs, analytics, notifications, tasks, or exports is prohibited.
+File 23 must not store patient records, prescriptions, private messages, appointment details, identity documents, consent evidence, patient-document destinations, or patient-identifying excerpts. It may display a bounded privacy/compliance status supplied by a native provider. Patient-identifying content in logs, analytics, notifications, tasks, exports, caches, or signed links is prohibited.
 
 ## Vulnerability Reporting
 
-Security issues should be reported privately to the repository owner. Public issues must not include credentials, encryption keys, patient data, access tokens, or exploit details for an unpatched vulnerability.
+Security issues should be reported privately to the repository owner. Public issues must not include credentials, encryption keys, patient data, access tokens, signed URLs, or exploit details for an unpatched vulnerability.
