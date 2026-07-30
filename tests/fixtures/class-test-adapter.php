@@ -7,9 +7,7 @@ final class SPDB_Test_Adapter implements SPDB_Provider_Adapter {
 	/** @var array<string,mixed> */
 	private array $config;
 
-	/**
-	 * @param array<string,mixed> $config Test configuration.
-	 */
+	/** @param array<string,mixed> $config Test configuration. */
 	public function __construct( array $config = array() ) {
 		$this->config = array_merge(
 			array(
@@ -43,59 +41,34 @@ final class SPDB_Test_Adapter implements SPDB_Provider_Adapter {
 		return (string) $this->config['provider_key'];
 	}
 
-	public function get_provider_name(): string {
-		return (string) $this->config['provider_name'];
-	}
-
-	public function get_provider_version(): string {
-		return (string) $this->config['provider_version'];
-	}
-
-	public function get_minimum_contract_version(): string {
-		return (string) $this->config['minimum_contract'];
-	}
-
-	public function get_maximum_contract_version(): string {
-		return (string) $this->config['maximum_contract'];
-	}
-
-	public function get_declared_capability_state(): string {
-		return (string) $this->config['capability_state'];
-	}
-
-	public function get_object_types(): array {
-		return $this->config['object_types'];
-	}
-
-	public function get_privacy_classifications(): array {
-		return $this->config['privacy_classes'];
-	}
-
-	public function get_supported_capabilities(): array {
-		return $this->config['supported_capabilities'];
-	}
+	public function get_provider_name(): string { return (string) $this->config['provider_name']; }
+	public function get_provider_version(): string { return (string) $this->config['provider_version']; }
+	public function get_minimum_contract_version(): string { return (string) $this->config['minimum_contract']; }
+	public function get_maximum_contract_version(): string { return (string) $this->config['maximum_contract']; }
+	public function get_declared_capability_state(): string { return (string) $this->config['capability_state']; }
+	public function get_object_types(): array { return $this->config['object_types']; }
+	public function get_privacy_classifications(): array { return $this->config['privacy_classes']; }
+	public function get_supported_capabilities(): array { return $this->config['supported_capabilities']; }
 
 	public function get_operation_definitions(): array {
 		return array(
 			'submit_item' => array(
-				'required_capability'       => 'spdb_manage_own_content',
-				'requires_ownership'         => true,
-				'requires_verified_account'  => true,
-				'requires_state_guard'       => true,
-				'requires_object_version'    => true,
-				'requires_idempotency_key'   => true,
-				'requires_audit_reason'      => false,
-				'payload_schema'             => array( 'type' => 'object' ),
-				'rate_limit'                 => array( 'requests' => 10, 'window' => 60 ),
-				'success_schema'             => array( 'type' => 'object' ),
-				'error_schema'               => array( 'type' => 'object' ),
+				'required_capability'      => 'spdb_manage_own_content',
+				'requires_ownership'        => true,
+				'requires_verified_account' => true,
+				'requires_state_guard'      => true,
+				'requires_object_version'   => true,
+				'requires_idempotency_key'  => true,
+				'requires_audit_reason'     => false,
+				'payload_schema'            => array( 'type' => 'object' ),
+				'rate_limit'                => array( 'requests' => 10, 'window' => 60 ),
+				'success_schema'            => array( 'type' => 'object' ),
+				'error_schema'              => array( 'type' => 'object' ),
 			),
 		);
 	}
 
-	public function health_check(): array {
-		return array( 'healthy' => true );
-	}
+	public function health_check(): array { return array( 'healthy' => true ); }
 
 	public function list_items( array $query ) {
 		$GLOBALS['spdb_test_last_inventory_query'] = $query;
@@ -103,12 +76,9 @@ final class SPDB_Test_Adapter implements SPDB_Provider_Adapter {
 			throw new RuntimeException( 'Synthetic list exception.' );
 		}
 		if ( $this->config['list_error'] ) {
-			return new WP_Error( 'synthetic_list_error', 'Synthetic list error.' );
+			return new WP_Error( 'synthetic_sensitive_provider_error', 'Synthetic list error.' );
 		}
-		return array(
-			'items' => $this->config['items'],
-			'total' => (int) $this->config['total'],
-		);
+		return array( 'items' => $this->config['items'], 'total' => $this->config['total'] );
 	}
 
 	public function get_item( string $object_type, string $object_id ) {
@@ -116,12 +86,9 @@ final class SPDB_Test_Adapter implements SPDB_Provider_Adapter {
 			throw new RuntimeException( 'Synthetic item exception.' );
 		}
 		if ( $this->config['get_error'] ) {
-			return new WP_Error( 'synthetic_item_error', 'Synthetic item error.' );
+			return new WP_Error( 'synthetic_sensitive_item_error', 'Synthetic item error.' );
 		}
-		if ( is_array( $this->config['item'] ) ) {
-			return $this->config['item'];
-		}
-		return self::projection( $object_type, $object_id );
+		return is_array( $this->config['item'] ) ? $this->config['item'] : self::projection( $object_type, $object_id );
 	}
 
 	public function get_allowed_operations( string $object_type, string $object_id ): array {
@@ -132,9 +99,7 @@ final class SPDB_Test_Adapter implements SPDB_Provider_Adapter {
 		return array( 'executed' => true, 'operation' => $operation_key );
 	}
 
-	/**
-	 * @return array<string,mixed>
-	 */
+	/** @return array<string,mixed> */
 	public static function projection( string $object_type = 'publication', string $object_id = '42', array $overrides = array() ): array {
 		return array_merge(
 			array(
@@ -150,10 +115,12 @@ final class SPDB_Test_Adapter implements SPDB_Provider_Adapter {
 				'operational_state' => 'healthy',
 				'language'          => 'en',
 				'topic'             => 'homeopathy',
+				'owner_user_id'     => 7,
 				'author'            => array( 'id' => 7, 'display_name' => 'Test Doctor' ),
 				'created_at'        => '2026-07-30T01:00:00Z',
 				'modified_at'       => '2026-07-30T02:00:00Z',
 				'canonical_url'     => 'https://example.test/publication/' . rawurlencode( $object_id ) . '/',
+				'thumbnail_url'     => '',
 				'destinations'      => array(
 					'edit'    => 'https://example.test/composer/?object=' . rawurlencode( $object_id ),
 					'preview' => 'https://example.test/preview/' . rawurlencode( $object_id ) . '/',
