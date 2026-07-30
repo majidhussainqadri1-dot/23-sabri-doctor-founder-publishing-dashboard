@@ -48,15 +48,27 @@ jobs:
             docs/ANALYTICS-CONTRACT.md
             docs/BACKGROUND-JOBS.md
             docs/AUDIT-2026-07-30.md
+            docs/DASHBOARD-CORE.md
+            docs/PHASE-23B-REVIEW-GATE.md
             includes/interface-spdb-provider-adapter.php
             includes/class-spdb-adapter-registry.php
             includes/class-spdb-membership-guard.php
             includes/class-spdb-capabilities.php
             includes/class-spdb-operation-broker.php
+            includes/class-spdb-dashboard-router.php
+            includes/class-spdb-workspace-resolver.php
+            includes/class-spdb-saved-views.php
+            includes/class-spdb-system-state.php
+            includes/class-spdb-overview-service.php
+            includes/class-spdb-dashboard-page.php
             includes/class-spdb-plugin.php
+            templates/dashboard.php
+            assets/css/dashboard.css
+            assets/js/dashboard.js
             tests/bootstrap.php
             tests/fixtures/class-test-adapter.php
             tests/contract-tests.php
+            tests/dashboard-core-tests.php
             tests/architecture-guard.php
           )
           for file in "${required[@]}"; do
@@ -71,18 +83,36 @@ jobs:
             php -l "$file"
           done < <(find . -type f -name '*.php' -not -path './vendor/*' -print0)
 
+      - name: JavaScript syntax check
+        run: node --check assets/js/dashboard.js
+
       - name: Run executable contract tests
         run: php tests/contract-tests.php
 
+      - name: Run executable dashboard-core tests
+        run: php tests/dashboard-core-tests.php
+
       - name: Run architecture boundary guard
         run: php tests/architecture-guard.php
+
+      - name: Verify private route controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "auth_redirect" includes/class-spdb-dashboard-router.php
+          grep -q "spdb_view_dashboard" includes/class-spdb-dashboard-router.php
+          grep -q "private, no-store" includes/class-spdb-dashboard-router.php
+          grep -q "X-Robots-Tag: noindex" includes/class-spdb-dashboard-router.php
+          grep -q "permission_callback" includes/class-spdb-saved-views.php
+          grep -q "patient_id" tests/dashboard-core-tests.php
+          grep -q "DO NOT MERGE before review is complete" docs/PHASE-23B-REVIEW-GATE.md
 
       - name: Verify version alignment
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "Version:[[:space:]]*0.1.1" sabri-publishing-dashboard.php
-          grep -q "Stable tag: 0.1.1" readme.txt
+          grep -q "Version:[[:space:]]*0.2.0" sabri-publishing-dashboard.php
+          grep -q "Stable tag: 0.2.0" readme.txt
           grep -q "SPDB_CONTRACT_VERSION.*2.0.0" sabri-publishing-dashboard.php
           grep -q "Contract version: 2.0.0" includes/interface-spdb-provider-adapter.php
 
@@ -93,3 +123,4 @@ jobs:
           grep -qi "DO NOT MERGE" docs/AUDIT-2026-07-30.md
           grep -qi "Founder review completed" STATUS.md
           grep -qi "No merge before completed review" DECISION-LOG.md
+          grep -qi "DO NOT MERGE before review is complete" docs/PHASE-23B-REVIEW-GATE.md
