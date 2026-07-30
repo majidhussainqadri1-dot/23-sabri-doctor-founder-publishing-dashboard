@@ -151,19 +151,21 @@ $GLOBALS['spdb_test_member_status'] = 'approved';
 spdb_core_assert( true === $saved_views->write_permission_check(), 'Approved account may pass the personal saved-view mutation gate.' );
 
 $registry      = new SPDB_Adapter_Registry();
-$state_service = new SPDB_System_State( $registry );
+$collections  = new SPDB_Collections_Service();
+$state_service = new SPDB_System_State( $registry, $collections );
 $workspace     = $resolver->resolve( 7 );
 $state         = $state_service->snapshot( $workspace );
 spdb_core_assert( 0 === $state['provider_count'], 'An empty registry must report zero providers without fabricated counts.' );
-spdb_core_assert( false === $state['production_writes'], 'Phase 23E system state must declare production writes disabled.' );
-spdb_core_assert( '23E' === $state['phase'], 'System state must identify the active implementation phase.' );
+spdb_core_assert( false === $state['production_writes'], 'Phase 23F system state must declare production writes disabled.' );
+spdb_core_assert( '23F' === $state['phase'], 'System state must identify the active implementation phase.' );
+spdb_core_assert( false === $state['collections']['repository_available'], 'Phase 23F system state must truthfully expose an unavailable collection repository.' );
 
 $overview = ( new SPDB_Overview_Service( $state_service ) )->build( $workspace );
 spdb_core_assert( 4 === count( $overview['cards'] ), 'Overview must provide the bounded dashboard summary cards.' );
 spdb_core_assert( ! empty( $overview['alerts'] ), 'No-provider state must produce an explicit truthful notice.' );
 
 $navigation = $resolver->navigation( $workspace );
-spdb_core_assert( isset( $navigation['overview'], $navigation['workspace'], $navigation['inventory'], $navigation['review'], $navigation['calendar'], $navigation['saved-views'], $navigation['system-status'] ), 'Only implemented and authorized Phase 23E dashboard destinations must be exposed.' );
+spdb_core_assert( isset( $navigation['overview'], $navigation['workspace'], $navigation['inventory'], $navigation['review'], $navigation['calendar'], $navigation['saved-views'], $navigation['system-status'] ), 'Only implemented and authorized dashboard destinations must be exposed.' );
 
 if ( $failed > 0 ) {
 	fwrite( STDERR, "{$failed} of {$tests} dashboard-core tests failed.\n" );
