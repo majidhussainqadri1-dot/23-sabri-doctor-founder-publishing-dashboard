@@ -4,7 +4,7 @@
 
 Roles are labels; capabilities are authority. Every privileged action must be authorized server-side against the current authenticated user, current Membership Core approval/suspension state, current object ownership, provider policy, native state, and object version.
 
-A WordPress capability alone is insufficient. File 23 fails closed when the compatible File 00 contract is unavailable. Pending, rejected, expired-document, appeal-review, and suspended accounts may receive only the explicitly assigned restricted read-only capabilities required for status, appeal, and owned-content visibility; every mutable or institution-wide capability requires an `approved` or `verified` account.
+A WordPress capability alone is insufficient. File 23 fails closed when the compatible File 00 contract is unavailable. Pending, rejected, expired-document, appeal-review, and suspended accounts may receive only the restricted read-only capabilities required for status, appeal, and owned-content visibility; every mutable or institution-wide capability requires an `approved` or `verified` account.
 
 ## Core Capabilities
 
@@ -27,16 +27,31 @@ A WordPress capability alone is insufficient. File 23 fails closed when the comp
 | `spdb_repair_owned_data` | Repair File 23-owned data only |
 | `spdb_manage_safe_mode` | Enable or disable File 23 read-only Safe Mode |
 
-File 23 defines these keys but does not automatically create editorial WordPress roles. File 00 or an explicitly approved administrator process assigns them.
+File 23 defines these keys but does not create editorial WordPress roles. Plugin activation is an administrator-approved process that attaches File 23 keys to existing roles. Runtime Membership Core status checks remain mandatory and can only reduce authority.
+
+## Existing-Role Provisioning
+
+The `SPDB_Capability_Installer` reconciles only roles that already exist:
+
+| Existing role | Provisioned File 23 authority |
+|---|---|
+| `administrator` | All File 23 capabilities, still subject to File 00 account state and native provider policy |
+| `sabri_pending` | `spdb_view_dashboard`, `spdb_view_own_content` only |
+| `sabri_doctor` | Restricted view keys plus own-content management and own analytics |
+| `sabri_verified_doctor` | Restricted view keys plus own-content management and own analytics |
+| `sabri_medical_reviewer` | Dashboard, own-content view, review queue, assigned review |
+| `sabri_moderator` | Dashboard and interaction moderation |
+
+No role is created, renamed, deleted, or made authoritative merely by this mapping. Missing roles are skipped. The versioned installer reruns when the available role inventory changes.
 
 ## Restricted Read-Only Capabilities
 
-Only these capabilities may pass for a non-approved File 00 status, and only when they are actually assigned by WordPress/File 00 policy:
+Only these capabilities may pass for a non-approved File 00 status:
 
 - `spdb_view_dashboard`
 - `spdb_view_own_content`
 
-They provide no submit, edit, review, schedule, interaction, analytics, export, delegation, repair, or Safe Mode authority. The eventual UI must show only status/appeal and policy-permitted owned-content read-only routes.
+They provide no submit, edit, review, schedule, interaction, analytics, export, delegation, repair, or Safe Mode authority. The UI must show only status/appeal and policy-permitted owned-content read-only routes.
 
 ## Membership Core Compatibility
 
@@ -73,23 +88,12 @@ Founder publications may receive direct-publish authority only through explicit 
 - Verified Doctor: submit for review by default.
 - Trusted Verified Doctor: direct publishing only for explicit content types and surfaces.
 - Pending Doctor: restricted status/appeal and policy-permitted owned-content read-only view.
-- Rejected or expired-document Doctor: restricted status/appeal view only where assigned.
+- Rejected or expired-document Doctor: restricted status/appeal view only where policy permits.
 - Suspended Doctor: every privileged/mutable action denied; restricted status/appeal and read-only routes may remain where policy permits.
 
 ## Delegation
 
-Every delegation must record:
-
-- principal user;
-- delegate user;
-- allowed providers;
-- allowed object types/IDs;
-- allowed operations;
-- start and expiry times;
-- MFA requirement;
-- revocation state;
-- maximum session policy;
-- audit reason.
+Every delegation must record principal, delegate, providers, object scope, operations, start/expiry, MFA requirement, revocation state, maximum session policy, and audit reason.
 
 A delegate may not publish as the Founder, change canonical authorship, view patient evidence, or export data unless a separate explicit capability and delegation scope permits it. Delegation never replaces the delegate's current File 00 account-state check.
 
