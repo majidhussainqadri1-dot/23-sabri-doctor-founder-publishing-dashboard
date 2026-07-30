@@ -4,7 +4,7 @@ Tags: publishing, dashboard, editorial, doctors, founder, review, calendar, coll
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 0.6.1
+Stable tag: 0.6.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,28 +14,31 @@ A private, role-aware, federated publishing operations dashboard for the Sabri S
 
 File 23 provides one operational dashboard for the Founder and doctors while preserving each native module as the source of truth.
 
-Version 0.6.1 is the second corrective Phase 23F development candidate. It provides:
+Version 0.6.2 is the third corrective Phase 23F development candidate. It provides:
 
 * metadata-only cross-module collection, Founder campaign, and knowledge-link contracts;
 * exactly three File 23-owned metadata tables under Schema Version 3;
 * lifecycle verification of required tables, columns, and indexes;
+* request-cached repository health instead of repeated schema inspection inside one request;
 * no persisted native destinations, publication bodies, reports, clinical records, media, or raw analytics;
-* current approved-account, capability, scope, Founder, and object-level visibility gates;
+* current approved-account, capability, scope, Founder, parent-collection, and object-level visibility gates;
 * actor-scoped idempotency plus request fingerprints that distinguish exact replay from payload conflict;
+* deterministic duplicate canonical-relation conflicts;
 * persisted bounded audit reasons and observed native versions;
 * Unicode-aware bounded text and sensitive-data rejection;
 * campaign-only field separation and defense-in-depth dark-pattern screening;
 * a versioned native-reference resolver contract;
 * a concrete WordPress repository for verified reads and idempotent creates;
-* strict repository-envelope validation and cross-user record rejection;
+* strict repository input, envelope, lifecycle, collection-item, and output projection validation;
+* six explicit read-only collection, collection-item, and knowledge-link REST routes;
+* private/no-store REST policy and truthful pagination headers;
 * explicit read readiness, collection-write readiness, and knowledge-write readiness;
 * update, reorder, archive, REST mutation, and production writes kept fail-closed;
-* restored Phase 23A–23E architecture guards plus Phase 23F-specific checks;
-* executable policy, runtime-authority, schema, replay, and repository tests.
+* executable policy, runtime-authority, schema, replay, repository, item-IDOR, and read-REST tests.
 
 File 23 does not copy native publication bodies, drafts, profiles, knowledge objects, review decisions, schedules, media, comments, corrections, retractions, patient data, or analytics. It stores only bounded cross-module metadata and canonical references.
 
-The concrete File 23 repository is injected for verified server-side reads. A native-reference resolver is deliberately not injected yet. Collection creates can run only when the explicit Phase 23F write constant is enabled in local, development, or staging; knowledge-link creates additionally require a reviewed resolver. No Phase 23F REST mutation route is exposed, and production mutation remains disabled.
+The concrete File 23 repository is injected for verified server-side reads. A native-reference resolver is deliberately not injected yet. Collection creates can run only when the explicit Phase 23F write constant is enabled in local, development, or staging; knowledge-link creates additionally require a reviewed resolver. The REST surface is read-only. No Phase 23F REST mutation route is exposed, and production mutation remains disabled.
 
 == Installation ==
 
@@ -63,11 +66,19 @@ No. Native destinations must be freshly re-resolved and safety-validated. Signed
 
 Not in production. The explicit write constant must be enabled in an approved local, development, or staging test. Collection create is resolver-independent; knowledge-link create also requires a reviewed native resolver. Update, reorder, archive, and REST mutation remain disabled.
 
+= Which Phase 23F REST routes exist? =
+
+Only explicit GET projections for collections, collection details, collection items, collection-item details, knowledge links, and knowledge-link details. Every route requires an approved current account and `spdb_view_own_content`; institution scope additionally requires current Founder identity and `spdb_manage_campaigns`.
+
 = Is automated ethical screening sufficient for a campaign? =
 
 No. The bounded phrase screen is defense in depth only. Founder governance, human moderation, medical policy, and native-module authorization remain mandatory.
 
 == Changelog ==
+
+= 0.6.2 =
+
+* Corrected sixteen third-review persistence, pagination, lifecycle, item-authorization, and integration defects; added strict collection-item services and six explicit read-only REST routes.
 
 = 0.6.1 =
 
