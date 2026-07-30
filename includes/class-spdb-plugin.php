@@ -8,6 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 
 require_once SPDB_PLUGIN_DIR . 'includes/interface-spdb-provider-adapter.php';
+require_once SPDB_PLUGIN_DIR . 'includes/interface-spdb-workspace-provider-adapter.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-adapter-registry.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-membership-guard.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-capabilities.php';
@@ -18,6 +19,9 @@ require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-inventory-query.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-projection-validator.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-federated-inventory.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-inventory-rest-controller.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-safe-destination.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-workspace-projection-validator.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-role-workspace-service.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-dashboard-router.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-workspace-resolver.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-saved-views.php';
@@ -34,6 +38,7 @@ final class SPDB_Plugin {
 	private SPDB_Federated_Inventory $inventory;
 	private SPDB_Inventory_REST_Controller $inventory_rest;
 	private SPDB_Workspace_Resolver $workspace_resolver;
+	private SPDB_Role_Workspace_Service $role_workspace_service;
 	private SPDB_Saved_Views $saved_views;
 	private SPDB_REST_Privacy $rest_privacy;
 	private SPDB_System_State $system_state;
@@ -43,26 +48,29 @@ final class SPDB_Plugin {
 	private bool $booted = false;
 
 	private function __construct() {
-		// Provider acceptance is not persisted in Phase 23C. Inventory reads are
-		// permitted from read-capable adapters, while mutation execution remains
-		// unavailable until a later reviewed governance phase.
-		$this->adapter_registry   = new SPDB_Adapter_Registry();
-		$this->operation_broker   = new SPDB_Operation_Broker( $this->adapter_registry );
-		$this->inventory          = new SPDB_Federated_Inventory( $this->adapter_registry );
-		$this->inventory_rest     = new SPDB_Inventory_REST_Controller( $this->inventory );
-		$this->workspace_resolver = new SPDB_Workspace_Resolver();
-		$this->saved_views        = new SPDB_Saved_Views();
-		$this->rest_privacy       = new SPDB_REST_Privacy();
-		$this->system_state       = new SPDB_System_State( $this->adapter_registry );
-		$this->overview_service   = new SPDB_Overview_Service( $this->system_state );
-		$this->dashboard_page     = new SPDB_Dashboard_Page(
+		// Provider acceptance is not persisted by this initial Phase 23D candidate.
+		// Read projections are permitted from compatible adapters, while mutating
+		// launch destinations remain hidden unless File 23-controlled environment
+		// acceptance is explicitly supplied by a later reviewed governance layer.
+		$this->adapter_registry       = new SPDB_Adapter_Registry();
+		$this->operation_broker       = new SPDB_Operation_Broker( $this->adapter_registry );
+		$this->inventory              = new SPDB_Federated_Inventory( $this->adapter_registry );
+		$this->inventory_rest         = new SPDB_Inventory_REST_Controller( $this->inventory );
+		$this->workspace_resolver     = new SPDB_Workspace_Resolver();
+		$this->role_workspace_service = new SPDB_Role_Workspace_Service( $this->adapter_registry );
+		$this->saved_views            = new SPDB_Saved_Views();
+		$this->rest_privacy           = new SPDB_REST_Privacy();
+		$this->system_state           = new SPDB_System_State( $this->adapter_registry );
+		$this->overview_service       = new SPDB_Overview_Service( $this->system_state );
+		$this->dashboard_page         = new SPDB_Dashboard_Page(
 			$this->workspace_resolver,
 			$this->overview_service,
 			$this->system_state,
 			$this->saved_views,
-			$this->inventory
+			$this->inventory,
+			$this->role_workspace_service
 		);
-		$this->dashboard_router   = new SPDB_Dashboard_Router( array( $this->dashboard_page, 'render' ) );
+		$this->dashboard_router = new SPDB_Dashboard_Router( array( $this->dashboard_page, 'render' ) );
 	}
 
 	public static function instance(): SPDB_Plugin {
@@ -143,6 +151,10 @@ final class SPDB_Plugin {
 
 	public function inventory(): SPDB_Federated_Inventory {
 		return $this->inventory;
+	}
+
+	public function role_workspace(): SPDB_Role_Workspace_Service {
+		return $this->role_workspace_service;
 	}
 
 	public function router(): SPDB_Dashboard_Router {
