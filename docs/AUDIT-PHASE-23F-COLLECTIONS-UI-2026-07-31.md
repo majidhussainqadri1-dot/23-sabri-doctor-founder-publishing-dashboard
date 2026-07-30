@@ -2,58 +2,63 @@
 
 ## Verdict
 
-The corrected Phase 23F repository, service, and read-only REST slice is suitable as a source foundation for an accessible dashboard projection, but the existing dashboard UI is **not acceptable as a Collections interface**. Independent review found sixteen UI-integration defects that must be corrected before the view can be considered source-complete.
+The corrected Phase 23F repository, service, and read-only REST slice was suitable as a source foundation, but the first Collections UI candidate was **not acceptable**. Independent review found sixteen principal UI-integration defects. Corrective re-review then found five additional defects in actual integration, CI coverage, malformed routing, scope-aware ergonomics, and diagnostics.
 
-**DO NOT MERGE.** This audit authorizes an accessible read-only dashboard slice only. It does not authorize item creation, campaign mutation, updates, reorder, archive, a native resolver, production writes, staging acceptance, or merge.
+**DO NOT MERGE.** The corrected UI remains a Draft source candidate. This audit does not authorize item creation, campaign mutation, updates, reorder, archive, a native resolver, production writes, WordPress staging acceptance, Founder acceptance, or merge.
 
-## Findings
+## Principal Findings
 
-1. `SPDB_Dashboard_Router::normalize_view()` does not accept a `collections` view, so direct navigation is silently redirected to Overview.
-2. Dashboard navigation has no Collections and Knowledge entry despite the implemented Phase 23F read service.
-3. The dashboard header still displays “Phase 23E — Review and Calendar,” which is factually stale.
-4. `SPDB_Dashboard_Page` injects the collections service but never resolves or passes any collection, item, campaign, or knowledge projection to the template.
-5. There is no dedicated UI query contract or strict allowlist for collection, item, knowledge, scope, filter, and pagination parameters.
-6. No server-side view model distinguishes collection list, collection detail, collection-item detail, knowledge list, and knowledge detail states.
-7. No dashboard render path exercises the parent-collection authorization boundary before showing collection items.
-8. No collection or knowledge pagination UI exists, and no source proves that pagination links preserve only validated filters.
-9. The dashboard does not show repository/read readiness or explain why writes, native resolution, updates, reorder, and archive are unavailable.
-10. There are no truthful empty, not-found, forbidden, malformed-query, repository-unavailable, or partial-state UI presentations for Phase 23F.
-11. No accessible table captions, result summaries, current-page semantics, landmark labels, or detail definition lists exist for Collections.
-12. No responsive card fallback or mobile-safe treatment exists for collection and knowledge tables.
-13. No Collections-specific visible-focus, reduced-motion, high-contrast, long-text, or RTL styling exists.
-14. The dashboard System Status view does not project Phase 23F repository/read/write readiness.
-15. No executable tests cover router acceptance, strict UI query rejection, parent item IDOR prevention, escaped output, pagination, empty/error states, or mutation-control absence.
-16. No static architecture control prevents a future Collections template from introducing direct mutation forms, mutation buttons, native write calls, or unsafe destinations.
+1. The protected router did not accept a `collections` view.
+2. Dashboard navigation had no Collections and Knowledge entry.
+3. The dashboard header still displayed the stale Phase 23E label.
+4. The dashboard page injected the collections service but never resolved a projection.
+5. No strict UI query allowlist existed.
+6. No view model distinguished collection list/detail/item and knowledge list/detail.
+7. The render path did not exercise parent collection authorization before item reads.
+8. No bounded collection or knowledge pagination UI existed.
+9. The dashboard did not explain repository readiness or the absence of mutation controls.
+10. Truthful empty, malformed, forbidden, not-found, and unavailable UI states were absent.
+11. Semantic captions, result summaries, landmarks, current-page attributes, and definition lists were absent.
+12. No mobile-safe table treatment existed.
+13. Collections-specific focus, reduced-motion, high-contrast, long-text, and RTL treatment was absent.
+14. System Status did not display Phase 23F readiness.
+15. No executable UI query, projection, IDOR, or mutation-absence tests existed.
+16. No static source gate prevented future direct mutation controls in the Collections template.
 
-## Required Corrections
+## Corrective Re-review Findings
 
-- Add `collections` as an explicit protected dashboard view and navigation item.
-- Replace stale Phase 23E labeling with truthful Phase 23F labeling.
-- Introduce a bounded `SPDB_Collections_View` query and projection service.
-- Resolve all UI data through `SPDB_Collections_Service`; never call the repository directly from a page or template.
-- Support collection list/detail/item and knowledge list/detail modes with strict allowlists and bounded pagination.
-- Require parent collection authorization before item list/detail projection.
-- Render explicit health, write-disabled, empty, error, and unavailable states without fabricated data.
-- Use semantic headings, landmarks, table captions, definition lists, pagination labels, focusable overflow regions, and current-page attributes.
-- Add responsive and RTL-aware Collections CSS with visible focus and reduced-motion support.
-- Add non-sensitive Collections readiness to System Status.
-- Add executable UI query/projection tests and static template/architecture controls.
-- Keep the entire slice read-only: no mutation form, mutation button, direct database/native call, or REST mutation route.
+17. New UI files existed on the branch, but the dashboard renderer and main template still did not use them.
+18. The baseline workflow remained green because it did not execute the new UI suite; a dedicated exact-head matrix was required.
+19. An array-valued `view` query could reach `sanitize_key()` and produce a warning instead of failing closed.
+20. Institution scope appeared to ordinary doctors even though the server correctly rejected it; the UI had to reflect Founder-only authority.
+21. Back links did not preserve authorized scope, hard-coded a left-pointing symbol that was wrong in RTL, and System Status omitted the already-available readiness projection.
 
-## Authorized Coding Slice
+## Corrections Implemented
 
-This review authorizes:
+- Added the protected `collections` route and approved-account navigation entry.
+- Added `SPDB_Collections_View`, with strict query allowlists and list/detail/item/knowledge modes.
+- Routed every projection through `SPDB_Collections_Service`; templates never call the repository.
+- Required parent collection authorization before item list or detail projection.
+- Integrated Collections into `SPDB_Dashboard_Page` and `templates/dashboard.php`.
+- Added conditional Collections CSS loading and truthful Phase 23F labeling.
+- Added bounded GET filters, pagination, captions, definition lists, focusable overflow regions, empty/error states, and readiness notices.
+- Added responsive, visible-focus, RTL, reduced-motion, and forced-color CSS.
+- Added non-sensitive collection read/write readiness to System Status.
+- Added Founder-only institution scope rendering and scope-preserving back links.
+- Removed direction-specific back symbols and free-text status filtering.
+- Made malformed array-valued view selectors fail closed to Overview.
+- Added executable UI boundary, corrective static, malformed-route, IDOR, navigation, and no-mutation tests.
+- Added a dedicated exact-head PHP 8.0–8.3 Collections UI workflow with artifacts and checksums.
 
-- a protected `collections` dashboard view;
-- server-rendered read-only collection and knowledge projections;
-- collection list/detail and active item list/detail;
-- knowledge list/detail;
-- bounded filters and pagination;
-- accessible, responsive, RTL-aware presentation;
-- tests and architecture controls.
+## Retained Restrictions
 
-It does not authorize create/update/archive/reorder UI, a concrete native resolver, production writes, or merge.
+- No POST, PUT, PATCH, or DELETE Collections UI path.
+- No create, update, archive, reorder, publish, approve, or native-write control.
+- No persisted or rendered native destination.
+- No production write enablement.
+- No concrete native resolver.
+- No merge before exact-head automated QA, WordPress staging, privacy/cache/accessibility/rollback evidence, Founder acceptance, and explicit authorization.
 
 ## Acceptance Rule
 
-After correction and coding, the new source must be independently re-reviewed and the complete PHP 8.0–8.3 exact-head matrix must pass. Any later source or documentation change invalidates earlier evidence.
+The documentation-inclusive final source head must pass both the complete Baseline Integrity matrix and the dedicated Collections UI matrix on PHP 8.0, 8.1, 8.2, and 8.3. Any later source or documentation change invalidates that evidence and requires both matrices to run again.
