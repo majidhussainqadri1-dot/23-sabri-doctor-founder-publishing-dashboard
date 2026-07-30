@@ -11,8 +11,8 @@
 - Adapter contract: `2.0.0`
 - Production readiness: Not ready
 - Staging readiness: Not ready
-- Merge readiness: Blocked
-- Code status: Review completed; corrective commits present; exact corrected-head CI pending
+- Merge readiness: Blocked pending Founder acceptance
+- Technical status: Review complete; discovered defects corrected; corrective re-review complete; PHP 8.0–8.3 checks green
 
 ## Phase 23A Acceptance Gates
 
@@ -31,17 +31,35 @@
 - [x] Source review completed
 - [x] Blocking defects documented
 - [x] Corrective code committed
-- [x] Membership Core fail-closed guard committed
+- [x] Membership Core fail-closed and version-compatibility guard committed
+- [x] Restricted pending/suspended read-only view restored without mutation authority
 - [x] Provider acceptance separated from technical capability
 - [x] Server-controlled environment gate committed
 - [x] Guarded operation broker committed
+- [x] Native identifier and audit-input bounds committed
 - [x] Executable contract tests committed
 - [x] Architecture boundary guard committed
 - [x] PHP 8.0–8.3 CI matrix committed
-- [ ] Exact corrected-head automated checks green
-- [ ] Corrective re-review completed
+- [x] Corrected code/governance head automated checks green
+- [x] Corrective re-review completed
 - [ ] Founder review completed
 - [ ] Founder acceptance recorded
+
+## Corrective Evidence
+
+- GitHub Actions workflow: Baseline Integrity
+- Evidence run: #76
+- PHP 8.0: success
+- PHP 8.1: success
+- PHP 8.2: success
+- PHP 8.3: success
+- PHP syntax: success
+- Executable contract tests: success
+- Architecture boundary guard: success
+- Version/contract alignment: success
+- Audit and merge-gate verification: success
+
+The final status/audit documentation commit must also retain a green workflow result before the PR is considered technically settled; any later code change invalidates prior exact-head evidence and requires another review and rerun.
 
 ## Non-Negotiable Restrictions
 
@@ -57,8 +75,8 @@
 
 ## Review Gate
 
-The earlier green Baseline Integrity run applied to the pre-correction head and is not acceptance evidence for corrective version `0.1.1`. The complete PHP 8.0–8.3 matrix and executable contract tests must pass on the exact corrected head.
+Technical review and corrective re-review are complete. This is not Founder acceptance, staging acceptance, production acceptance, or permission to merge. PR #1 must remain Draft and unmerged until Founder review and acceptance are explicitly recorded.
 
 ## Next Phase
 
-Phase 23B — Dashboard Core may begin only after corrective re-review, exact-head CI success, PR acceptance, and the applicable merge/acceptance gate. PR #1 remains Draft and unmerged.
+Phase 23B — Dashboard Core may begin only after the applicable Founder acceptance and merge/phase gate. PR #1 remains Draft and unmerged.
