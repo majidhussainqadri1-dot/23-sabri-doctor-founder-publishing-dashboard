@@ -4,36 +4,41 @@ All notable changes to File 23 are documented here.
 
 ## [Unreleased]
 
-Phase 23D remains Draft, unmerged, not staging-accepted, and not production-ready.
+Phase 23E remains Draft, unmerged, not independently reviewed, not staging-accepted, and not production-ready.
 
-## [0.4.1] — Phase 23D Corrective Review
+## [0.5.0] — Phase 23E Initial Review and Calendar Candidate
 
-### Fixed
+### Added
 
-- Re-derived Founder, trusted-doctor, Doctor, restricted, account-state, and read-only authority from File 00 instead of trusting a supplied workspace array.
-- Prevented forged Founder policy and forged writable workspace exposure.
-- Added a canonical action-type contract for mutability, required capability, and Founder-only semantics.
-- Rejected action capabilities that the provider did not declare.
-- Routed profile edit, public-profile, and knowledge destinations through the centralized action gate.
-- Added global provider, card, action, profile, knowledge, activity, and alert limits with truthful truncation notices.
-- Suppressed duplicate native launch actions.
-- Replaced ambiguous `parse_str()` destination handling with strict raw-query validation.
-- Rejected duplicate/bracketed parameters, malformed percent encoding, recursively encoded nested URLs, unsafe schemes, secrets, signatures, and expiry data.
-- Required exact-origin HTTP(S), matching port, no credentials, and no fragments.
-- Required absolute source timestamps for profile and knowledge projections and RFC 3339 UTC generation time.
-- Rejected malformed verification-state values instead of silently hiding them.
-- Removed user-facing generated text from CSS and localized it in PHP markup.
-- Expanded corrective tests and architecture guards for identity, semantic, destination, direct-link, and global-bound failures.
+- Optional `SPDB_Review_Calendar_Provider_Adapter` interface for native review queues and publishing schedules.
+- Universal Review Inbox with bounded native review state, reviewer assignment, due dates, privacy/safety/source/copyright flags, version, freshness, and safe destinations.
+- Federated Publishing Calendar with bounded native UTC schedules, IANA timezones, conflicts, failures, version, freshness, and safe destinations.
+- Explicit approve, request-changes, reject, assign-reviewer, schedule, reschedule, and unschedule REST routes.
+- Guarded operation-broker execution requiring provider declaration, current capability, approved account, environment acceptance, object version, idempotency key, and audit reason.
+- Native object re-fetch before an operation is reported as confirmed.
+- Separation-of-duties protection against final self-approval and self-rejection.
+- Provider failure isolation, truthful unavailable states, global safety limits, and responsive review/calendar views.
+- Executable Phase 23E tests and architecture guards.
+- `docs/REVIEW-CALENDAR.md` and `docs/PHASE-23E-REVIEW-GATE.md`.
 
 ### Security
 
-- No caller or provider may elevate role authority, weaken create/edit action semantics, or bypass adapter acceptance through a direct profile or knowledge link.
-- Restricted accounts may receive only safe non-mutating views whose canonical contract and capability pass.
-- Provider exceptions remain isolated and non-sensitive.
+- Browser-supplied user, role, Founder flag, reviewer, author, scope, account state, capability, environment, and acceptance are non-authoritative.
+- Review items assigned to another reviewer fail closed for non-Founder reviewers.
+- Schedule mutations remain hidden or denied for unaccepted providers and unauthorized accounts.
+- Exact same-origin destinations, RFC 3339 timestamps, IANA timezones, strict totals, bounded flags, and privacy-safe text are required.
+- Provider failures never become approval, schedule, or success states.
 
-### Documentation
+### Architecture
 
-- Added `docs/AUDIT-PHASE-23D-2026-07-30.md` recording sixteen findings and their corrections.
+- File 23 creates no review, reviewer-assignment, schedule, or cron table.
+- Native review and schedule owners remain authoritative.
+- Projection services and templates do not execute native mutations directly.
+
+## [0.4.1] — Phase 23D Corrective Review
+
+- Corrected sixteen role-workspace authority, action-semantic, destination, global-bound, profile/knowledge, timestamp, localization, and failure-isolation defects.
+- Added the Phase 23D corrective audit, expanded tests, and architecture guards.
 
 ## [0.4.0] — Phase 23D Initial Role-Workspace Candidate
 
