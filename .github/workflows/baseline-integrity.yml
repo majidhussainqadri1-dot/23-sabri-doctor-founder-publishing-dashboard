@@ -116,9 +116,11 @@ jobs:
           grep -q "gmdate" includes/class-spdb-role-workspace-service.php
           grep -q "validate_raw_query" includes/class-spdb-safe-destination.php
           grep -q "Opens native management" templates/workspace.php
-          ! grep -Eq "\\$profile\[['\"](edit_destination|public_destination)['\"]\]|\\$knowledge\[['\"]destination['\"]\]" templates/workspace.php
-          ! grep -Eq "content[[:space:]]*:[[:space:]]*['\"]" assets/css/workspace.css
-          ! grep -Eq "<form\b|<button\b" templates/workspace.php
+          ! grep -q "edit_destination" templates/workspace.php
+          ! grep -q "public_destination" templates/workspace.php
+          ! grep -q "knowledge\['destination'\]" templates/workspace.php
+          ! grep -Eq 'content[[:space:]]*:' assets/css/workspace.css
+          ! grep -Eq '<form\b|<button\b' templates/workspace.php
 
       - name: Verify version alignment
         shell: bash
