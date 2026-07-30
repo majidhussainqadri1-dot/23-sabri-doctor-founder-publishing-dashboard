@@ -21,7 +21,6 @@ final class SPDB_Workspace_Resolver {
 		}
 
 		$status = SPDB_Membership_Guard::user_status( $user_id );
-
 		if ( ! SPDB_Membership_Guard::is_available() ) {
 			return $this->workspace( 'dependency_unavailable', __( 'Dependency Unavailable', 'sabri-publishing-dashboard' ), true, $status, $user_id );
 		}
@@ -62,6 +61,22 @@ final class SPDB_Workspace_Resolver {
 			),
 		);
 
+		$key = (string) ( $workspace['key'] ?? 'denied' );
+		if ( ! in_array( $key, array( 'denied', 'dependency_unavailable' ), true ) ) {
+			$workspace_label = __( 'Publishing Workspace', 'sabri-publishing-dashboard' );
+			if ( 'founder' === $key ) {
+				$workspace_label = __( 'Founder Workspace', 'sabri-publishing-dashboard' );
+			} elseif ( in_array( $key, array( 'doctor', 'trusted_doctor' ), true ) ) {
+				$workspace_label = __( 'Doctor Workspace', 'sabri-publishing-dashboard' );
+			} elseif ( 'restricted' === $key ) {
+				$workspace_label = __( 'Publishing Status', 'sabri-publishing-dashboard' );
+			}
+			$items['workspace'] = array(
+				'label' => $workspace_label,
+				'url'   => SPDB_Dashboard_Router::route_url( 'workspace' ),
+			);
+		}
+
 		if ( SPDB_Capabilities::current_user_can( 'spdb_view_own_content' ) ) {
 			$items['inventory'] = array(
 				'label' => __( 'Content Inventory', 'sabri-publishing-dashboard' ),
@@ -69,7 +84,7 @@ final class SPDB_Workspace_Resolver {
 			);
 		}
 
-		if ( 'denied' !== $workspace['key'] && 'dependency_unavailable' !== $workspace['key'] ) {
+		if ( ! in_array( $key, array( 'denied', 'dependency_unavailable' ), true ) ) {
 			$items['saved-views'] = array(
 				'label' => __( 'Saved Views', 'sabri-publishing-dashboard' ),
 				'url'   => SPDB_Dashboard_Router::route_url( 'saved-views' ),
@@ -86,9 +101,7 @@ final class SPDB_Workspace_Resolver {
 		return $items;
 	}
 
-	/**
-	 * @return array<string,mixed>
-	 */
+	/** @return array<string,mixed> */
 	private function workspace( string $key, string $label, bool $read_only, string $status, int $user_id ): array {
 		return array(
 			'key'            => $key,
