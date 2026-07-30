@@ -30,11 +30,15 @@ final class SPDB_Projection_Validator {
 			return self::error( 'spdb_projection_shape_invalid', 'The provider returned a projection field with an invalid shape.' );
 		}
 
-		$object_type = sanitize_key( $object_type_raw );
-		$object_id   = trim( $object_id_raw );
-		$title       = trim( sanitize_text_field( $title_raw ) );
-		$version     = trim( sanitize_text_field( $version_raw ) );
-		$privacy     = sanitize_key( $privacy_raw );
+		$object_type = self::canonical_key( $object_type_raw, false );
+		$privacy     = self::canonical_key( $privacy_raw, false );
+		if ( is_wp_error( $object_type ) || is_wp_error( $privacy ) ) {
+			return self::error( 'spdb_projection_key_invalid', 'The provider returned a projection key that was not already canonical.' );
+		}
+
+		$object_id = trim( $object_id_raw );
+		$title     = trim( sanitize_text_field( $title_raw ) );
+		$version   = trim( sanitize_text_field( $version_raw ) );
 
 		if ( ! in_array( $object_type, $metadata['object_types'] ?? array(), true ) || ( '' !== $expected_type && $expected_type !== $object_type ) ) {
 			return self::error( 'spdb_projection_object_type_invalid', 'The provider returned an unsupported object type.' );
@@ -42,7 +46,7 @@ final class SPDB_Projection_Validator {
 		if ( ! self::valid_object_id( $object_id ) || ( '' !== $expected_id && ! hash_equals( $expected_id, $object_id ) ) ) {
 			return self::error( 'spdb_projection_object_id_invalid', 'The provider returned an invalid or mismatched object identifier.' );
 		}
-		if ( '' === $title || strlen( $title ) > 240 ) {
+		if ( '' === $title || self::text_length( $title ) > 240 ) {
 			return self::error( 'spdb_projection_title_invalid', 'The provider returned an invalid title.' );
 		}
 		if ( '' === $version || strlen( $version ) > 160 || preg_match( '/[\x00-\x1F\x7F]/', $version ) ) {
@@ -64,12 +68,12 @@ final class SPDB_Projection_Validator {
 			return $destinations;
 		}
 
-		$canonical_url = self::normalize_same_origin_url( $raw['canonical_url'] ?? '' );
+		$canonical_url = self::normalize_same_origin_url( $raw['canonical_url'] ?? '', 'spdb_projection_destination_invalid' );
 		if ( is_wp_error( $canonical_url ) ) {
 			return $canonical_url;
 		}
 
-		$thumbnail_url = self::normalize_media_url( $raw['thumbnail_url'] ?? '' );
+		$thumbnail_url = self::normalize_same_origin_url( $raw['thumbnail_url'] ?? '', 'spdb_projection_thumbnail_invalid' );
 		if ( is_wp_error( $thumbnail_url ) ) {
 			return $thumbnail_url;
 		}
@@ -79,22 +83,19 @@ final class SPDB_Projection_Validator {
 			return self::error( 'spdb_projection_author_invalid', 'The provider returned an invalid author projection.' );
 		}
 		$author = is_array( $author ) ? $author : array();
-		$author_id_raw = self::scalar_string( $author['id'] ?? '0' );
+		$author_id = self::normalize_user_id( $author['id'] ?? '0' );
+		$owner_id  = self::normalize_user_id( $raw['owner_user_id'] ?? ( is_wp_error( $author_id ) ? '0' : (string) $author_id ) );
 		$author_name_raw = self::scalar_string( $author['display_name'] ?? '' );
-		if ( is_wp_error( $author_id_raw ) || is_wp_error( $author_name_raw ) || ! preg_match( '/^\d+$/', $author_id_raw ) ) {
-			return self::error( 'spdb_projection_author_invalid', 'The provider returned an invalid author projection.' );
+		if ( is_wp_error( $author_id ) || is_wp_error( $owner_id ) || is_wp_error( $author_name_raw ) ) {
+			return self::error( 'spdb_projection_author_invalid', 'The provider returned an invalid author or owner projection.' );
 		}
-		$author_id   = max( 0, (int) $author_id_raw );
-		$author_name = trim( sanitize_text_field( $author_name_raw ) );
-		if ( strlen( $author_name ) > 160 ) {
-			$author_name = substr( $author_name, 0, 160 );
-		}
+		$author_name = self::truncate_text( trim( sanitize_text_field( $author_name_raw ) ), 160 );
 
-		$summary = self::bounded_text( $raw['summary'] ?? '', 500 );
-		$language = self::canonical_optional_key( $raw['language'] ?? '' );
-		$topic = self::canonical_optional_key( $raw['topic'] ?? '' );
-		$created_at = self::normalize_timestamp( $raw['created_at'] ?? '' );
-		$modified_at = self::normalize_timestamp( $raw['modified_at'] ?? '' );
+		$summary      = self::bounded_text( $raw['summary'] ?? '', 500 );
+		$language     = self::canonical_optional_key( $raw['language'] ?? '' );
+		$topic        = self::canonical_optional_key( $raw['topic'] ?? '' );
+		$created_at   = self::normalize_timestamp( $raw['created_at'] ?? '' );
+		$modified_at  = self::normalize_timestamp( $raw['modified_at'] ?? '' );
 		$scheduled_at = self::normalize_timestamp( $raw['scheduled_at'] ?? '' );
 		$published_at = self::normalize_timestamp( $raw['published_at'] ?? '' );
 		foreach ( array( $summary, $language, $topic, $created_at, $modified_at, $scheduled_at, $published_at ) as $normalized_field ) {
@@ -130,6 +131,7 @@ final class SPDB_Projection_Validator {
 				'language'          => $language,
 				'topic'             => $topic,
 				'privacy_class'     => $privacy,
+				'owner_user_id'     => $owner_id,
 				'author'            => array( 'id' => $author_id, 'display_name' => $author_name ),
 				'created_at'        => $created_at,
 				'modified_at'       => $modified_at,
@@ -178,8 +180,8 @@ final class SPDB_Projection_Validator {
 		if ( is_wp_error( $raw ) ) {
 			return 'unknown';
 		}
-		$value = sanitize_key( $raw );
-		return in_array( $value, $allowed, true ) ? $value : 'unknown';
+		$key = self::canonical_key( $raw, false );
+		return ! is_wp_error( $key ) && in_array( $key, $allowed, true ) ? $key : 'unknown';
 	}
 
 	/**
@@ -199,7 +201,7 @@ final class SPDB_Projection_Validator {
 			if ( ! isset( $raw[ $key ] ) || '' === $raw[ $key ] ) {
 				continue;
 			}
-			$url = self::normalize_same_origin_url( $raw[ $key ] );
+			$url = self::normalize_same_origin_url( $raw[ $key ], 'spdb_projection_destination_invalid' );
 			if ( is_wp_error( $url ) ) {
 				return $url;
 			}
@@ -209,72 +211,58 @@ final class SPDB_Projection_Validator {
 	}
 
 	/**
-	 * Require strict same-origin, non-secret dashboard destinations.
+	 * Require strict same-origin, fragment-free, non-secret URLs.
 	 *
-	 * @param mixed $raw Raw URL.
+	 * @param mixed  $raw Raw URL.
+	 * @param string $invalid_code Error code for malformed URL.
 	 * @return string|WP_Error
 	 */
-	private static function normalize_same_origin_url( $raw ) {
+	private static function normalize_same_origin_url( $raw, string $invalid_code ) {
 		$raw_string = self::scalar_string( $raw );
 		if ( is_wp_error( $raw_string ) ) {
-			return self::error( 'spdb_projection_destination_invalid', 'A provider destination URL is invalid.' );
+			return self::error( $invalid_code, 'A provider URL is invalid.' );
 		}
 		$url = trim( $raw_string );
 		if ( '' === $url ) {
 			return '';
 		}
 		if ( strlen( $url ) > 2048 || preg_match( '/[\x00-\x1F\x7F]/', $url ) ) {
-			return self::error( 'spdb_projection_destination_invalid', 'A provider destination URL is invalid.' );
+			return self::error( $invalid_code, 'A provider URL is invalid.' );
 		}
 
 		$parts = wp_parse_url( $url );
 		$home  = wp_parse_url( home_url( '/' ) );
-		if ( ! is_array( $parts ) || ! is_array( $home ) || empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
-			return self::error( 'spdb_projection_destination_invalid', 'A provider destination URL is invalid.' );
+		if ( ! is_array( $parts ) || ! is_array( $home ) || empty( $parts['scheme'] ) || empty( $parts['host'] ) || isset( $parts['fragment'] ) ) {
+			return self::error( $invalid_code, 'A provider URL is invalid or contains a fragment.' );
 		}
 
-		$scheme = strtolower( (string) $parts['scheme'] );
+		$scheme      = strtolower( (string) $parts['scheme'] );
 		$home_scheme = strtolower( (string) ( $home['scheme'] ?? 'https' ) );
-		$port = isset( $parts['port'] ) ? (int) $parts['port'] : ( 'https' === $scheme ? 443 : 80 );
-		$home_port = isset( $home['port'] ) ? (int) $home['port'] : ( 'https' === $home_scheme ? 443 : 80 );
+		$port        = isset( $parts['port'] ) ? (int) $parts['port'] : ( 'https' === $scheme ? 443 : 80 );
+		$home_port   = isset( $home['port'] ) ? (int) $home['port'] : ( 'https' === $home_scheme ? 443 : 80 );
 		if ( $scheme !== $home_scheme || strtolower( (string) $parts['host'] ) !== strtolower( (string) ( $home['host'] ?? '' ) ) || $port !== $home_port ) {
-			return self::error( 'spdb_projection_destination_origin_invalid', 'A provider destination must remain on the platform origin.' );
+			return self::error( 'spdb_projection_destination_origin_invalid', 'A provider URL must remain on the platform origin.' );
 		}
 		if ( isset( $parts['user'] ) || isset( $parts['pass'] ) ) {
-			return self::error( 'spdb_projection_destination_credentials', 'A provider destination must not contain embedded credentials.' );
+			return self::error( 'spdb_projection_destination_credentials', 'A provider URL must not contain embedded credentials.' );
 		}
 
 		if ( ! empty( $parts['query'] ) ) {
 			parse_str( (string) $parts['query'], $query );
-			foreach ( array_keys( $query ) as $query_key ) {
+			foreach ( $query as $query_key => $query_value ) {
 				$query_key = strtolower( (string) $query_key );
-				if ( preg_match( '/(?:nonce|token|signature|secret|password|auth|expires|key)/', $query_key ) ) {
-					return self::error( 'spdb_projection_destination_secret', 'A provider destination must not contain signed or secret-bearing query parameters.' );
+				if ( preg_match( '/(?:^|_)(?:wpnonce|nonce|token|access_token|signature|sig|secret|password|auth|authorization|expires|expiry|jwt|api_key|key)(?:_|$)/', $query_key ) ) {
+					return self::error( 'spdb_projection_destination_secret', 'A provider URL must not contain signed or secret-bearing query parameters.' );
+				}
+				$query_value = is_scalar( $query_value ) ? (string) $query_value : wp_json_encode( $query_value );
+				if ( ! is_string( $query_value ) || preg_match( '~(?:https?://|//|(?:nonce|token|signature|secret|password|authorization|jwt)=)~i', $query_value ) ) {
+					return self::error( 'spdb_projection_destination_secret', 'A provider URL must not contain redirect or secret-bearing query values.' );
 				}
 			}
 		}
 
-		return esc_url_raw( $url );
-	}
-
-	/**
-	 * @param mixed $raw Raw media URL.
-	 * @return string|WP_Error
-	 */
-	private static function normalize_media_url( $raw ) {
-		$raw_string = self::scalar_string( $raw );
-		if ( is_wp_error( $raw_string ) ) {
-			return self::error( 'spdb_projection_thumbnail_invalid', 'The provider returned an invalid thumbnail URL.' );
-		}
-		$url = trim( $raw_string );
-		if ( '' === $url ) {
-			return '';
-		}
-		$parts = wp_parse_url( $url );
-		if ( strlen( $url ) > 2048 || ! is_array( $parts ) || 'https' !== strtolower( (string) ( $parts['scheme'] ?? '' ) ) || empty( $parts['host'] ) || isset( $parts['user'] ) || isset( $parts['pass'] ) ) {
-			return self::error( 'spdb_projection_thumbnail_invalid', 'The provider returned an invalid thumbnail URL.' );
-		}
-		return esc_url_raw( $url );
+		$clean = esc_url_raw( $url );
+		return '' === $clean ? self::error( $invalid_code, 'A provider URL is invalid.' ) : $clean;
 	}
 
 	/**
@@ -293,15 +281,12 @@ final class SPDB_Projection_Validator {
 			if ( ! is_array( $alert ) ) {
 				return self::error( 'spdb_projection_alert_invalid', 'The provider returned an invalid compliance alert.' );
 			}
-			$key_raw = self::scalar_string( $alert['key'] ?? '' );
+			$key_raw   = self::scalar_string( $alert['key'] ?? '' );
 			$level_raw = self::scalar_string( $alert['level'] ?? 'information' );
-			$message = self::bounded_text( $alert['message'] ?? '', 240 );
-			if ( is_wp_error( $key_raw ) || is_wp_error( $level_raw ) || is_wp_error( $message ) ) {
-				return self::error( 'spdb_projection_alert_invalid', 'The provider returned an invalid compliance alert.' );
-			}
-			$key = sanitize_key( $key_raw );
-			$level = sanitize_key( $level_raw );
-			if ( '' === $key || '' === $message || ! in_array( $level, array( 'information', 'warning', 'critical' ), true ) ) {
+			$message   = self::bounded_text( $alert['message'] ?? '', 240 );
+			$key       = is_wp_error( $key_raw ) ? $key_raw : self::canonical_key( $key_raw, false );
+			$level     = is_wp_error( $level_raw ) ? $level_raw : self::canonical_key( $level_raw, false );
+			if ( is_wp_error( $key ) || is_wp_error( $level ) || is_wp_error( $message ) || '' === $message || ! in_array( $level, array( 'information', 'warning', 'critical' ), true ) ) {
 				return self::error( 'spdb_projection_alert_invalid', 'The provider returned an invalid compliance alert.' );
 			}
 			$clean[] = array( 'key' => $key, 'level' => $level, 'message' => $message );
@@ -309,23 +294,16 @@ final class SPDB_Projection_Validator {
 		return $clean;
 	}
 
-	/**
-	 * @param mixed $value Raw optional key.
-	 * @return string|WP_Error
-	 */
+	/** @param mixed $value Raw optional key. @return string|WP_Error */
 	private static function canonical_optional_key( $value ) {
 		$raw = self::scalar_string( $value );
 		if ( is_wp_error( $raw ) ) {
 			return self::error( 'spdb_projection_key_invalid', 'The provider returned an invalid projection key.' );
 		}
-		$value = sanitize_key( $raw );
-		return '' === $value || 1 === preg_match( '/^[a-z0-9][a-z0-9_-]{0,63}$/', $value ) ? $value : '';
+		return self::canonical_key( $raw, true );
 	}
 
-	/**
-	 * @param mixed $value Raw timestamp.
-	 * @return string|WP_Error
-	 */
+	/** @param mixed $value Raw timestamp. @return string|WP_Error */
 	private static function normalize_timestamp( $value ) {
 		$raw = self::scalar_string( $value );
 		if ( is_wp_error( $raw ) ) {
@@ -335,32 +313,63 @@ final class SPDB_Projection_Validator {
 		if ( '' === $value ) {
 			return '';
 		}
-		$timestamp = strtotime( $value );
-		return false === $timestamp ? '' : gmdate( 'c', $timestamp );
+		if ( 1 !== preg_match( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/', $value ) ) {
+			return self::error( 'spdb_projection_timestamp_invalid', 'Provider timestamps must use an absolute RFC 3339 value.' );
+		}
+		try {
+			$date = new DateTimeImmutable( $value );
+		} catch ( Exception $exception ) {
+			return self::error( 'spdb_projection_timestamp_invalid', 'The provider returned an invalid timestamp.' );
+		}
+		return $date->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d\TH:i:s\Z' );
 	}
 
-	/**
-	 * @param mixed $value Raw text.
-	 * @return string|WP_Error
-	 */
+	/** @param mixed $value Raw user ID. @return int|WP_Error */
+	private static function normalize_user_id( $value ) {
+		$raw = self::scalar_string( $value );
+		if ( is_wp_error( $raw ) || 1 !== preg_match( '/^\d+$/', $raw ) ) {
+			return self::error( 'spdb_projection_owner_invalid', 'The provider returned an invalid owner identifier.' );
+		}
+		return max( 0, (int) $raw );
+	}
+
+	/** @param mixed $value Raw text. @return string|WP_Error */
 	private static function bounded_text( $value, int $limit ) {
 		$raw = self::scalar_string( $value );
 		if ( is_wp_error( $raw ) ) {
 			return self::error( 'spdb_projection_text_invalid', 'The provider returned invalid projection text.' );
 		}
-		$value = trim( sanitize_text_field( $raw ) );
-		return strlen( $value ) > $limit ? substr( $value, 0, $limit ) : $value;
+		return self::truncate_text( trim( sanitize_text_field( $raw ) ), $limit );
 	}
 
-	/**
-	 * @param mixed $value Raw scalar.
-	 * @return string|WP_Error
-	 */
+	/** @return string|WP_Error */
+	private static function canonical_key( string $raw, bool $allow_empty ) {
+		if ( '' === $raw && $allow_empty ) {
+			return '';
+		}
+		if ( sanitize_key( $raw ) !== $raw || 1 !== preg_match( '/^[a-z0-9][a-z0-9_-]{0,63}$/', $raw ) ) {
+			return self::error( 'spdb_projection_key_invalid', 'The provider returned a non-canonical projection key.' );
+		}
+		return $raw;
+	}
+
+	/** @param mixed $value Raw scalar. @return string|WP_Error */
 	private static function scalar_string( $value ) {
 		if ( is_array( $value ) || is_object( $value ) || is_resource( $value ) ) {
 			return self::error( 'spdb_projection_shape_invalid', 'The provider returned a projection field with an invalid shape.' );
 		}
 		return (string) $value;
+	}
+
+	private static function text_length( string $value ): int {
+		return function_exists( 'mb_strlen' ) ? mb_strlen( $value, 'UTF-8' ) : strlen( $value );
+	}
+
+	private static function truncate_text( string $value, int $limit ): string {
+		if ( self::text_length( $value ) <= $limit ) {
+			return $value;
+		}
+		return function_exists( 'mb_substr' ) ? mb_substr( $value, 0, $limit, 'UTF-8' ) : substr( $value, 0, $limit );
 	}
 
 	private static function error( string $code, string $message ): WP_Error {
