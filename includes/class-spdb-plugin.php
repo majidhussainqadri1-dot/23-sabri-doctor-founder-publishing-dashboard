@@ -11,7 +11,9 @@ require_once SPDB_PLUGIN_DIR . 'includes/interface-spdb-provider-adapter.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-adapter-registry.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-membership-guard.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-capabilities.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-capability-installer.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-operation-broker.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-provider-registration.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-dashboard-router.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-workspace-resolver.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-saved-views.php';
@@ -61,6 +63,18 @@ final class SPDB_Plugin {
 		return self::$instance;
 	}
 
+	/**
+	 * Activation is an administrator-approved capability assignment event.
+	 */
+	public static function activate(): void {
+		SPDB_Capability_Installer::ensure();
+		SPDB_Dashboard_Router::activate();
+	}
+
+	public static function deactivate(): void {
+		SPDB_Dashboard_Router::deactivate();
+	}
+
 	public function boot(): void {
 		if ( $this->booted ) {
 			return;
@@ -73,6 +87,7 @@ final class SPDB_Plugin {
 		$this->saved_views->register();
 		$this->rest_privacy->register();
 
+		add_action( 'init', array( 'SPDB_Capability_Installer', 'maybe_upgrade' ), 1 );
 		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
 		add_action( 'plugins_loaded', array( $this, 'register_provider_adapters' ), 30 );
 		add_action( 'admin_notices', array( $this, 'render_dependency_notice' ) );
@@ -88,26 +103,10 @@ final class SPDB_Plugin {
 	}
 
 	/**
-	 * Allow native providers to register versioned adapters.
+	 * Invoke every provider registration callback behind its own failure boundary.
 	 */
 	public function register_provider_adapters(): void {
-		try {
-			/**
-			 * Register File 23 provider adapters.
-			 *
-			 * Providers receive the guarded registry instance. Registration never
-			 * grants staging or production acceptance and never constitutes full
-			 * action authorization.
-			 *
-			 * @param SPDB_Adapter_Registry $registry Adapter registry.
-			 */
-			do_action( 'spdb/register_adapters', $this->adapter_registry );
-		} catch ( Throwable $throwable ) {
-			$this->adapter_registry->record_error(
-				'system',
-				new WP_Error( 'spdb_adapter_hook_exception', __( 'A provider registration hook failed.', 'sabri-publishing-dashboard' ) )
-			);
-		}
+		SPDB_Provider_Registration::dispatch( $this->adapter_registry );
 	}
 
 	/**
