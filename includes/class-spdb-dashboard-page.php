@@ -29,6 +29,25 @@ final class SPDB_Dashboard_Page {
 	public function register(): void {
 		add_shortcode( 'sabri_publishing_dashboard', array( $this, 'shortcode' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'register_assets' ) );
+		add_action( 'template_redirect', array( $this, 'protect_shortcode_page' ), -1 );
+	}
+
+	/**
+	 * A shortcode fallback must inherit the same private cache and indexing
+	 * policy as the virtual route. Otherwise a theme page containing private
+	 * dashboard markup could be cached or indexed before the shortcode runs.
+	 */
+	public function protect_shortcode_page(): void {
+		if ( ! is_singular() ) {
+			return;
+		}
+
+		$post = get_post();
+		if ( ! $post instanceof WP_Post || ! has_shortcode( (string) $post->post_content, 'sabri_publishing_dashboard' ) ) {
+			return;
+		}
+
+		SPDB_Dashboard_Router::emit_private_headers();
 	}
 
 	public function register_assets(): void {
