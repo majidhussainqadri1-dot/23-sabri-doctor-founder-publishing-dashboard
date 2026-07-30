@@ -7,7 +7,10 @@ require_once SPDB_PLUGIN_DIR . 'includes/interface-spdb-workspace-provider-adapt
 require_once SPDB_PLUGIN_DIR . 'includes/interface-spdb-review-calendar-provider-adapter.php';
 require_once SPDB_PLUGIN_DIR . 'includes/interface-spdb-collections-repository.php';
 require_once SPDB_PLUGIN_DIR . 'includes/interface-spdb-native-reference-resolver.php';
+require_once SPDB_PLUGIN_DIR . 'includes/interface-spdb-native-reference-provider.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-adapter-registry.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-native-reference-registry.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-native-reference-registration.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-membership-guard.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-capabilities.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-capability-installer.php';
@@ -40,6 +43,7 @@ require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-dashboard-page.php';
 final class SPDB_Plugin {
 	private static ?SPDB_Plugin $instance = null;
 	private SPDB_Adapter_Registry $adapter_registry;
+	private SPDB_Native_Reference_Registry $native_reference_registry;
 	private SPDB_Operation_Broker $operation_broker;
 	private SPDB_Federated_Inventory $inventory;
 	private SPDB_Inventory_REST_Controller $inventory_rest;
@@ -60,6 +64,9 @@ final class SPDB_Plugin {
 
 	private function __construct() {
 		$this->adapter_registry = new SPDB_Adapter_Registry();
+		// Resolver acceptance is deliberately empty. Provider callbacks can register
+		// technical implementations, but they cannot self-accept them.
+		$this->native_reference_registry = new SPDB_Native_Reference_Registry( $this->adapter_registry, array() );
 		$this->operation_broker = new SPDB_Operation_Broker( $this->adapter_registry );
 		$this->inventory = new SPDB_Federated_Inventory( $this->adapter_registry );
 		$this->inventory_rest = new SPDB_Inventory_REST_Controller( $this->inventory );
@@ -68,13 +75,14 @@ final class SPDB_Plugin {
 		$this->review_calendar_service = new SPDB_Review_Calendar_Service( $this->adapter_registry );
 		$this->review_calendar_rest = new SPDB_Review_Calendar_REST_Controller( $this->review_calendar_service, $this->operation_broker );
 		$this->collections_repository = new SPDB_WP_Collections_Repository();
-		// Reads use the verified File 23 repository. Knowledge writes still fail
-		// closed because no reviewed native-reference resolver is injected.
+		// The new registry is not injected into Collections yet. This preserves
+		// truthful knowledge-write readiness until accepted provider wiring has its
+		// own correction, re-review, and staging gate.
 		$this->collections_service = new SPDB_Collections_Service( $this->collections_repository );
 		$this->collections_rest = new SPDB_Collections_REST_Controller( $this->collections_service );
 		$this->saved_views = new SPDB_Saved_Views();
 		$this->rest_privacy = new SPDB_REST_Privacy();
-		$this->system_state = new SPDB_System_State( $this->adapter_registry, $this->collections_service );
+		$this->system_state = new SPDB_System_State( $this->adapter_registry, $this->collections_service, $this->native_reference_registry );
 		$this->overview_service = new SPDB_Overview_Service( $this->system_state );
 		$this->dashboard_page = new SPDB_Dashboard_Page(
 			$this->workspace_resolver,
@@ -110,21 +118,22 @@ final class SPDB_Plugin {
 		$this->collections_rest->register();
 		$this->rest_privacy->register();
 		add_action( 'init', array( 'SPDB_Capability_Installer', 'maybe_upgrade' ), 1 );
-		// Full table/column/index verification is intentionally restricted to
-		// activation, administrative lifecycle checks, and cached repository health.
 		add_action( 'admin_init', array( 'SPDB_Collections_Schema', 'maybe_upgrade' ), 2 );
 		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
 		add_action( 'plugins_loaded', array( $this, 'register_provider_adapters' ), 30 );
+		add_action( 'plugins_loaded', array( $this, 'register_native_reference_resolvers' ), 31 );
 		add_action( 'admin_notices', array( $this, 'render_dependency_notice' ) );
 		add_filter( 'spdb/capabilities', array( $this, 'filter_capabilities' ) );
 	}
 	public function load_textdomain(): void { load_plugin_textdomain( 'sabri-publishing-dashboard', false, dirname( plugin_basename( SPDB_PLUGIN_FILE ) ) . '/languages' ); }
 	public function register_provider_adapters(): void { SPDB_Provider_Registration::dispatch( $this->adapter_registry ); }
+	public function register_native_reference_resolvers(): void { SPDB_Native_Reference_Registration::dispatch( $this->native_reference_registry ); }
 	public function render_dependency_notice(): void {
 		if ( SPDB_Membership_Guard::is_available() || ! current_user_can( 'activate_plugins' ) ) { return; }
 		echo '<div class="notice notice-error"><p>' . esc_html__( 'Sabri Publishing Dashboard is in fail-closed mode because Sabri Membership Core is unavailable or incompatible. No privileged dashboard action is permitted.', 'sabri-publishing-dashboard' ) . '</p></div>';
 	}
 	public function registry(): SPDB_Adapter_Registry { return $this->adapter_registry; }
+	public function native_references(): SPDB_Native_Reference_Registry { return $this->native_reference_registry; }
 	public function broker(): SPDB_Operation_Broker { return $this->operation_broker; }
 	public function inventory(): SPDB_Federated_Inventory { return $this->inventory; }
 	public function role_workspace(): SPDB_Role_Workspace_Service { return $this->role_workspace_service; }
