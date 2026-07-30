@@ -9,17 +9,17 @@
 - Parent branch: `phase/23b-dashboard-core`
 - Phase 23A pull request: Draft PR #1, unmerged
 - Phase 23B pull request: Draft PR #2, twice reviewed technically, unmerged
-- Phase 23C pull request: Not yet opened
+- Phase 23C pull request: Draft PR #3, open and unmerged
 - Plugin version: `0.3.0`
 - Adapter contract: `2.0.0`
 - Production readiness: Not ready
 - Staging readiness: Not ready
 - Merge readiness: Blocked pending Phase 23C independent review, correction, exact-head QA, WordPress staging, accessibility, rollback, and Founder acceptance
-- Technical status: Initial Phase 23C implementation in progress; review and exact-current-head QA pending
+- Technical status: Initial Phase 23C implementation and Draft PR are present; independent source review and acceptance remain pending
 
 ## Why Phase 23C Is Stacked
 
-The Founder authorized continued construction while preserving the permanent rule that no work is merged before review completion. Phase 23C therefore starts from the exact Phase 23B reviewed head. PR #1 and PR #2 remain Draft and unmerged; the Phase 23C candidate will also remain Draft and unmerged.
+The Founder authorized continued construction while preserving the permanent rule that no work is merged before review completion. Phase 23C therefore starts from the exact Phase 23B reviewed head. PR #1, PR #2, and PR #3 remain Draft and unmerged.
 
 ## Implemented Phase 23C Candidate Scope
 
@@ -45,7 +45,7 @@ The Founder authorized continued construction while preserving the permanent rul
 
 ## Phase 23C Review and Acceptance Gates
 
-- [ ] Draft stacked pull request opened
+- [x] Draft stacked pull request opened
 - [ ] Independent source review completed
 - [ ] Every defect documented
 - [ ] Every defect corrected
@@ -68,6 +68,10 @@ The Founder authorized continued construction while preserving the permanent rul
 - [ ] Founder review completed
 - [ ] Founder acceptance recorded
 - [ ] Pull request ready for merge
+
+## Exact-Head Evidence Rule
+
+The authoritative current head SHA, workflow run, matrix results, and retained artifact digests are maintained in Draft PR #3. Any later source commit invalidates earlier exact-head evidence and requires a complete rerun. This tracked status file therefore records gates without duplicating a moving evidence pointer.
 
 ## Completed Parent Baselines
 
@@ -96,4 +100,4 @@ Twice-reviewed private route, role-aware workspaces, real File 00 role capabilit
 
 ## Next Technical Step
 
-Open a stacked Draft PR for Phase 23C, run the complete exact-head PHP matrix, inspect every failure, correct all defects, and keep all PRs unmerged. After automated QA is green, perform the mandatory independent source review and immediate corrective cycle before any staging or merge decision.
+Run the complete workflow on the exact current PR head, inspect every failure, and correct all defects. After automated QA is green, conduct the mandatory independent source review and immediate corrective cycle before any staging or merge decision. All pull requests remain Draft and unmerged.
