@@ -6,6 +6,40 @@ All notable changes to File 23 will be documented here.
 
 Phase 23B remains under review and is not merge-ready, staging-accepted, or production-ready.
 
+## [0.2.1] — Phase 23B Second Corrective Review
+
+### Added
+
+- Capability reconciliation for existing administrator and File 00 roles without creating roles.
+- Per-callback provider registration isolation.
+- Private header enforcement immediately before serving every File 23 REST response.
+- Saved-view route ID validation and compare-and-store conflict protection.
+- Multi-instance dashboard IDs and JavaScript initialization.
+- Persistent saved-view empty state.
+- Accessibility correction layer for visible skip-target focus.
+- Exact PR-head checkout verification and retained QA artifacts with source checksums.
+- Capability installer and provider registration executable tests.
+- Second corrective audit and no-merge evidence record.
+
+### Changed
+
+- Plugin version advanced to `0.2.1`.
+- Activation now provisions File 23 capabilities on existing approved roles and registers the dashboard route.
+- Saved-view labels and filter values now reject non-scalar or malformed nested values.
+- Saved-view projection is bound to the current authenticated user.
+- Indirect shortcode contexts fail closed unless private page protection was established before output.
+- Virtual and shortcode requests mark `DONOTCACHEPAGE` for WordPress cache-stack interoperability.
+- REST privacy policy now covers converted error responses as well as normal responses.
+- Pull-request CI now tests the exact head SHA instead of GitHub's synthetic merge commit.
+
+### Security
+
+- Actual File 00 1.0.1 integration no longer depends on manually absent `spdb_*` role capabilities.
+- Provider callback failure cannot block later healthy providers.
+- Concurrent personal-preference writes cannot silently overwrite each other.
+- Unprotected widget or template shortcode execution cannot expose a cacheable dashboard.
+- REST denial and validation responses inherit the same no-store policy as successful responses.
+
 ## [0.2.0] — Phase 23B Dashboard Core
 
 ### Added
