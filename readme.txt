@@ -1,10 +1,10 @@
 === Sabri Doctor and Founder Publishing Dashboard ===
 Contributors: majidhussainqadri1-dot
-Tags: publishing, dashboard, editorial, doctors, founder, review, calendar
+Tags: publishing, dashboard, editorial, doctors, founder, review, calendar, collections
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 0.5.1
+Stable tag: 0.6.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,84 +14,77 @@ A private, role-aware, federated publishing operations dashboard for the Sabri S
 
 File 23 provides one operational dashboard for the Founder and doctors while preserving each native module as the source of truth.
 
-Version 0.5.1 is the corrective Phase 23E Review and Calendar candidate. It provides:
+Version 0.6.0 is the corrected Phase 23F development candidate. It adds:
 
-* a Universal Review Inbox that projects native queues without owning review rows, assignments, decisions, appeals, or audit ledgers;
-* a Federated Publishing Calendar that projects native schedules without creating a schedule or cron database;
-* current server-derived File 00 account, Founder, reviewer, capability, scope, and environment authority;
-* strict fail-closed review/calendar filters and bounded global pagination;
-* truthful separation of native reported totals, accessible validated windows, and current-page counts;
-* fresh item-level authorization before every explicit review or schedule mutation;
-* canonical operation contracts for capability, Founder-only policy, eligible state, ownership, assignment, and separation of duties;
-* REST nonce verification, strict payload allowlists, object-version checks, idempotency keys, audit reasons, and operation-specific required fields;
-* mandatory privacy-safe review notes and structured reason codes for request-changes and rejection;
-* Founder-only reviewer assignment with target account and capability validation;
-* canonical UTC schedule timestamps and valid IANA native timezones;
-* exact same-origin native destinations, strict identifiers, totals, flags, operations, continuation flags, and projected text;
-* native object re-fetch and matching-reference confirmation before success is reported;
-* provider failure isolation, bounded aggregate totals, responsive views, keyboard focus, reduced-motion support, and accessible pagination;
-* expanded corrective authorization, privacy, IDOR, state, timezone, pagination, nonce, confirmation, and failure tests.
+* metadata-only cross-module collection, Founder campaign, and knowledge-link contracts;
+* exactly three File 23-owned metadata tables with post-install verification;
+* no persisted native destinations, publication bodies, reports, clinical records, media, or raw analytics;
+* current approved-account, capability, scope, and Founder authority gates;
+* actor-scoped idempotency and owner/scope-scoped canonical relation hashes;
+* Unicode-aware bounded text and sensitive-data rejection;
+* campaign-only field separation and defense-in-depth dark-pattern screening;
+* a versioned native-reference resolver contract;
+* a fail-closed runtime service with truthful repository/resolver health;
+* production writes disabled and no Phase 23F mutation REST route;
+* restored Phase 23A–23E architecture guards plus Phase 23F-specific checks;
+* expanded executable Phase 23F policy and runtime-foundation tests.
 
-File 23 does not copy publication bodies, drafts, review decisions, reviewer assignments, native schedules, cron state, profile records, knowledge records, sources, media, comments, corrections, retractions, or raw analytics. Native modules remain authoritative.
+File 23 does not copy native publication bodies, drafts, profiles, knowledge objects, review decisions, schedules, media, comments, corrections, retractions, patient data, or analytics. It stores only bounded cross-module metadata and canonical references.
 
-Production mutation remains fail-closed until File 23-controlled adapter acceptance, real native integration, staging evidence, completed review, corrective re-review, rollback evidence, and Founder acceptance are complete.
+The runtime repository and native-reference resolver are not yet injected. The Collections view and write routes are not production-enabled. Production mutation remains fail-closed until separate implementation review, staging evidence, rollback evidence, and Founder acceptance are complete.
 
 == Installation ==
 
 1. Install on staging first.
-2. Confirm WordPress and PHP requirements.
-3. Confirm Sabri Membership Core 1.0.1 or a formally accepted compatible version is active.
-4. Activate the plugin; it creates no new WordPress roles.
-5. Register only reviewed adapters implementing Adapter Contract 2.0.0 and the optional projection interfaces they support.
-6. Verify Founder, Doctor, trusted-doctor, pending, suspended, reviewer, and reviewer-target accounts.
-7. Verify real File 21 Newsroom and File 22 Composer/schedule integration.
-8. Verify native object re-fetch, timezone behavior, conflicts, failures, suspension, permission loss, privacy holds, cache privacy, and rollback.
+2. Confirm WordPress, PHP, and Sabri Membership Core requirements.
+3. Activate the plugin; it creates no editorial WordPress roles.
+4. Activation installs only the three declared File 23 metadata tables and verifies their existence.
+5. Keep `SPDB_PHASE23F_WRITES_ENABLED` undefined or false outside an explicitly reviewed development or staging test.
+6. Register only reviewed native adapters and native-reference resolvers.
+7. Verify Founder, Doctor, trusted-doctor, pending, suspended, reviewer, and contributor accounts.
+8. Verify privacy, IDOR, stale-reference, permission-loss, cache, backup, restore, and rollback behavior.
 9. Do not merge before review, correction, corrective re-review, exact-head QA, staging acceptance, rollback evidence, and Founder acceptance are complete.
 
 == Frequently Asked Questions ==
 
-= Does File 23 replace File 21 Newsroom? =
+= Does File 23 copy content into a collection? =
 
-No. File 21 remains the native owner of its review records and decisions. File 23 validates and projects review items and calls only declared native operations through the guarded broker.
+No. It stores canonical provider, object-type, object-ID, relation, ordering, scope, and governance metadata only. Native content remains with its owner.
 
-= Does File 23 create a universal schedule database? =
+= Does File 23 store a native edit or preview URL? =
 
-No. It projects native schedules, timezones, conflicts, and failures. Schedule state and cron reconciliation remain with the native owner.
+No. Native destinations must be freshly re-resolved and safety-validated. Signed, expiring, private, or stale destinations are not persisted.
 
-= Is a review or schedule action considered successful immediately? =
+= Are Phase 23F writes enabled? =
 
-No. File 23 freshly re-authorizes the native object, the adapter must authorize and execute the explicit operation, and File 23 must re-fetch a matching native reference. Failed or mismatched confirmation never becomes success.
+No. The current service is fail-closed by default and exposes no Phase 23F mutation REST route.
 
-= Can an author approve or reject their own content? =
+= Is automated ethical screening sufficient for a campaign? =
 
-No. Final self-approval and self-rejection are blocked independently at validation, action-visibility, fresh operation-authorization, and native-provider boundaries.
-
-= Can any reviewer assign another reviewer? =
-
-No. Reviewer assignment is Founder-only in the File 23 operation contract, and the target must currently be an approved account with the assigned-review capability.
+No. The bounded phrase screen is defense in depth only. Founder governance, human moderation, medical policy, and native-module authorization remain mandatory.
 
 == Changelog ==
 
+= 0.6.0 =
+
+* Corrected eighteen Phase 23F foundation defects and began the fail-closed runtime service and native-reference resolver contract.
+
 = 0.5.1 =
 
-* Corrected Phase 23E authorization, query broadening, item-level IDOR, semantic capability, separation-of-duties, reviewer-target, nonce, payload, timestamp, confirmation, total, pagination, privacy, and accessibility defects.
-
-= 0.5.0 =
-
-* Added the initial Phase 23E Universal Review Inbox and Federated Publishing Calendar candidate; superseded by corrective version 0.5.1.
+* Corrected Phase 23E Review Inbox and Publishing Calendar defects.
 
 = 0.4.1 =
 
-* Corrected sixteen Phase 23D role-workspace defects and expanded security and architecture guards.
+* Corrected Phase 23D role-workspace defects.
 
 = 0.3.1 =
 
-* Corrective Phase 23C federated inventory review.
+* Corrected Phase 23C federated inventory defects.
 
 = 0.2.1 =
 
-* Second corrective Phase 23B review and secure Dashboard Core.
+* Corrected Phase 23B Dashboard Core defects.
 
 = 0.1.1 =
 
-* Corrective Phase 23A contracts, authorization, operation broker, and architecture guards.
+* Corrected Phase 23A contracts, authorization, operation broker, and architecture guards.
