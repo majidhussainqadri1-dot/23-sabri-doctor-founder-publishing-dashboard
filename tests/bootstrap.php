@@ -4,19 +4,23 @@
  */
 
 define( 'ABSPATH', __DIR__ . '/' );
-define( 'SPDB_VERSION', '0.2.0' );
+define( 'SPDB_VERSION', '0.2.1' );
 define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
 
-$GLOBALS['spdb_test_environment']   = 'production';
-$GLOBALS['spdb_test_logged_in']     = true;
-$GLOBALS['spdb_test_user_id']       = 7;
-$GLOBALS['spdb_test_capabilities']  = array();
-$GLOBALS['spdb_test_member_status'] = 'draft';
-$GLOBALS['spdb_test_founder']       = false;
-$GLOBALS['spdb_test_trusted']       = false;
-$GLOBALS['spdb_test_query_vars']    = array();
-$GLOBALS['spdb_test_user_meta']     = array();
-$GLOBALS['wp']                      = (object) array( 'query_vars' => array() );
+$GLOBALS['spdb_test_environment']       = 'production';
+$GLOBALS['spdb_test_logged_in']         = true;
+$GLOBALS['spdb_test_user_id']           = 7;
+$GLOBALS['spdb_test_capabilities']      = array();
+$GLOBALS['spdb_test_member_status']     = 'draft';
+$GLOBALS['spdb_test_founder']           = false;
+$GLOBALS['spdb_test_trusted']           = false;
+$GLOBALS['spdb_test_query_vars']        = array();
+$GLOBALS['spdb_test_user_meta']         = array();
+$GLOBALS['spdb_test_options']           = array();
+$GLOBALS['spdb_test_roles']             = array();
+$GLOBALS['spdb_test_force_meta_conflict'] = false;
+$GLOBALS['wp_filter']                   = array();
+$GLOBALS['wp']                          = (object) array( 'query_vars' => array() );
 
 if ( ! class_exists( 'WP_Error' ) ) {
 	class WP_Error {
@@ -40,6 +44,40 @@ if ( ! class_exists( 'WP_Error' ) ) {
 
 		public function get_error_data() {
 			return $this->data;
+		}
+	}
+}
+
+if ( ! class_exists( 'WP_HTTP_Response' ) ) {
+	class WP_HTTP_Response {
+		public array $headers = array();
+
+		public function header( string $key, string $value, bool $replace = true ): void {
+			$this->headers[ $key ] = $value;
+		}
+	}
+}
+
+if ( ! class_exists( 'WP_REST_Request' ) ) {
+	class WP_REST_Request {
+		private string $route;
+
+		public function __construct( string $route = '' ) {
+			$this->route = $route;
+		}
+
+		public function get_route(): string {
+			return $this->route;
+		}
+	}
+}
+
+if ( ! class_exists( 'SPDB_Test_Role' ) ) {
+	class SPDB_Test_Role {
+		public array $capabilities = array();
+
+		public function add_cap( string $capability, bool $grant = true ): void {
+			$this->capabilities[ $capability ] = $grant;
 		}
 	}
 }
@@ -104,7 +142,18 @@ function get_user_meta( int $user_id, string $key, bool $single = false ) {
 	return $GLOBALS['spdb_test_user_meta'][ $user_id ][ $key ] ?? ( $single ? '' : array() );
 }
 
-function update_user_meta( int $user_id, string $key, $value ): bool {
+function update_user_meta( int $user_id, string $key, $value, $previous_value = null ): bool {
+	$current = get_user_meta( $user_id, $key, true );
+	if ( ! empty( $GLOBALS['spdb_test_force_meta_conflict'] ) ) {
+		$GLOBALS['spdb_test_user_meta'][ $user_id ][ $key ] = array( 'concurrent_change' => true );
+		$GLOBALS['spdb_test_force_meta_conflict'] = false;
+		return false;
+	}
+
+	if ( 4 === func_num_args() && $current !== $previous_value ) {
+		return false;
+	}
+
 	$GLOBALS['spdb_test_user_meta'][ $user_id ][ $key ] = $value;
 	return true;
 }
@@ -117,11 +166,30 @@ function current_time( string $type, bool $gmt = false ): string {
 	return '2026-07-30 02:27:00';
 }
 
+function get_role( string $role_key ) {
+	return $GLOBALS['spdb_test_roles'][ $role_key ] ?? null;
+}
+
+function get_option( string $key, $default = false ) {
+	return $GLOBALS['spdb_test_options'][ $key ] ?? $default;
+}
+
+function update_option( string $key, $value, $autoload = null ): bool {
+	$GLOBALS['spdb_test_options'][ $key ] = $value;
+	return true;
+}
+
+function remove_all_actions( string $hook ): void {
+	unset( $GLOBALS['wp_filter'][ $hook ] );
+}
+
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-provider-adapter.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-adapter-registry.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-membership-guard.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-capabilities.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-capability-installer.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-operation-broker.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-provider-registration.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-dashboard-router.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-workspace-resolver.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-saved-views.php';
