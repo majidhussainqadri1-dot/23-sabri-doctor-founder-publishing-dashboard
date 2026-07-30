@@ -28,6 +28,9 @@ final class SPDB_Test_Native_Reference_Provider implements SPDB_Native_Reference
 	public function get_provider_version(): string { return (string) $this->config['provider_version']; }
 	public function get_resolver_version(): string { return (string) $this->config['resolver_version']; }
 	public function get_object_types(): array { return $this->config['object_types']; }
+	public function set_provider_version( string $version ): void { $this->config['provider_version'] = $version; }
+	/** @param string[] $object_types */
+	public function set_object_types( array $object_types ): void { $this->config['object_types'] = $object_types; }
 	public function health_check(): array {
 		++$this->health_calls;
 		if ( $this->config['health_exception'] ) { throw new RuntimeException( 'Synthetic resolver health exception.' ); }
