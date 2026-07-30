@@ -82,6 +82,12 @@ final class SPDB_Workspace_Resolver {
 				'label' => __( 'Content Inventory', 'sabri-publishing-dashboard' ),
 				'url'   => SPDB_Dashboard_Router::route_url( 'inventory' ),
 			);
+			if ( SPDB_Membership_Guard::current_user_is_approved() ) {
+				$items['collections'] = array(
+					'label' => __( 'Collections & Knowledge', 'sabri-publishing-dashboard' ),
+					'url'   => SPDB_Dashboard_Router::route_url( 'collections' ),
+				);
+			}
 			$items['calendar'] = array(
 				'label' => __( 'Publishing Calendar', 'sabri-publishing-dashboard' ),
 				'url'   => SPDB_Dashboard_Router::route_url( 'calendar' ),
