@@ -1,18 +1,16 @@
 name: Phase 23F Materialize
 
 on:
-  push:
-    branches: ['phase/23f-collections-knowledge']
-    paths:
-      - 'tools/phase23f-source.part-*'
-      - '.github/workflows/phase23f-materialize.yml'
+  pull_request:
+    branches: ['phase/23f-materializer-base']
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
 jobs:
   materialize:
-    if: ${{ !contains(github.event.head_commit.message, 'Materialize initial Phase 23F candidate') }}
+    if: ${{ github.head_ref == 'phase/23f-collections-knowledge' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Phase 23F branch
@@ -25,6 +23,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if ! compgen -G 'tools/phase23f-source.part-*' > /dev/null; then
+            echo 'Phase 23F source is already materialized.'
+            exit 0
+          fi
           cat tools/phase23f-source.part-* > /tmp/phase23f-source.b64
           echo 'c0d50a65bf0a6d83246e5ba605388bb851e449ff357e017c8bd54b0c53c8510e  /tmp/phase23f-source.b64' | sha256sum -c -
           base64 --decode /tmp/phase23f-source.b64 > /tmp/phase23f-source.tar.gz
@@ -41,5 +43,9 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
+          if git diff --cached --quiet; then
+            echo 'No materialization changes remain.'
+            exit 0
+          fi
           git commit -m 'Materialize initial Phase 23F candidate'
           git push origin HEAD:phase/23f-collections-knowledge
