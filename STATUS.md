@@ -10,13 +10,13 @@
 - Phase 23A PR #1: Draft, unmerged
 - Phase 23B PR #2: Draft, twice source-reviewed, unmerged
 - Phase 23C PR #3: Draft, source-reviewed, corrected, exact-head QA-green, unmerged
-- Phase 23D PR #4: Draft, open, source-reviewed, corrected, unmerged
+- Phase 23D PR #4: Draft, open, source-reviewed, corrected, automated-QA-green, unmerged
 - Plugin version: `0.4.1`
 - Adapter contract: `2.0.0`
 - Production readiness: Not ready
 - Staging readiness: Not ready
-- Merge readiness: Blocked by final corrected exact-head QA, WordPress staging, real-account/privacy/accessibility/rollback testing, and Founder acceptance
-- Technical status: Phase 23D independent source review completed; sixteen findings corrected; final exact-current-head evidence pending
+- Merge readiness: Blocked by WordPress staging, real-account/privacy/accessibility/rollback testing, and Founder acceptance
+- Technical status: Phase 23D independent source review completed; sixteen findings corrected; complete PHP 8.0–8.3 regression matrix passed; one final exact-head evidence run is required after this documentation update
 
 ## Corrected Phase 23D Scope
 
@@ -51,15 +51,16 @@
 - [x] Sixteen defects documented
 - [x] Every identified source defect corrected
 - [x] Corrective source re-review completed
-- [ ] Exact-current-head PHP 8.0 successful
-- [ ] Exact-current-head PHP 8.1 successful
-- [ ] Exact-current-head PHP 8.2 successful
-- [ ] Exact-current-head PHP 8.3 successful
-- [ ] Contract, Dashboard Core, and inventory regressions green on final head
-- [ ] Corrective workspace tests green
-- [ ] REST privacy, capability-installer, and provider-isolation tests green
-- [ ] Architecture boundary guard green
-- [ ] Exact-head artifacts and source checksums retained
+- [x] PHP 8.0 corrective matrix successful
+- [x] PHP 8.1 corrective matrix successful
+- [x] PHP 8.2 corrective matrix successful
+- [x] PHP 8.3 corrective matrix successful
+- [x] Contract, Dashboard Core, and inventory regressions green
+- [x] Corrective workspace tests green
+- [x] REST privacy, capability-installer, and provider-isolation tests green
+- [x] Architecture boundary guard green
+- [x] QA artifacts and source checksums retained for corrected source
+- [ ] Final exact-current-documentation-head evidence retained
 - [ ] Real File 21 official/professional projections accepted on staging
 - [ ] Real File 22 Composer destinations accepted on staging
 - [ ] Real File 03 profile projections accepted on staging
@@ -92,4 +93,4 @@
 
 ## Next Technical Step
 
-Run the complete workflow against the final corrected exact head, inspect all PHP 8.0–8.3 jobs and artifacts, correct any remaining defect immediately, update Draft PR #4 with final evidence, and keep PRs #1–#4 unmerged.
+Complete the final workflow against this documentation-inclusive head, retain its artifacts and checksums, update Draft PR #4 without changing repository source, and keep PRs #1–#4 unmerged.
