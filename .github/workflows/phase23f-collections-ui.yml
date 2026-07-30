@@ -1,0 +1,131 @@
+name: Phase 23F Collections UI
+
+on:
+  push:
+    branches: [main, 'phase/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  collections-ui:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.0', '8.1', '8.2', '8.3']
+    env:
+      EXPECTED_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.EXPECTED_SHA }}
+          persist-credentials: false
+
+      - name: Verify exact checked head
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa-evidence
+          actual_sha="$(git rev-parse HEAD)"
+          test "$actual_sha" = "$EXPECTED_SHA"
+          printf 'expected_sha=%s\nactual_sha=%s\nrun_id=%s\nphp=%s\n' "$EXPECTED_SHA" "$actual_sha" "$GITHUB_RUN_ID" "${{ matrix.php }}" > "qa-evidence/collections-ui-context-php-${{ matrix.php }}.txt"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: Verify UI slice files
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            docs/AUDIT-PHASE-23F-COLLECTIONS-UI-2026-07-31.md
+            includes/class-spdb-collections-view.php
+            includes/class-spdb-dashboard-page.php
+            includes/class-spdb-dashboard-router.php
+            includes/class-spdb-workspace-resolver.php
+            templates/dashboard.php
+            templates/collections.php
+            assets/css/collections.css
+            tests/phase23f-collections-ui-tests.php
+          )
+          for file in "${required[@]}"; do test -s "$file" || { echo "Missing or empty: $file"; exit 1; }; done
+
+      - name: PHP syntax check
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l includes/class-spdb-collections-view.php
+          php -l includes/class-spdb-dashboard-page.php
+          php -l includes/class-spdb-dashboard-router.php
+          php -l includes/class-spdb-workspace-resolver.php
+          php -l templates/dashboard.php
+          php -l templates/collections.php
+          php -l tests/phase23f-collections-ui-tests.php
+
+      - name: Run Collections UI boundary tests
+        shell: bash
+        run: set -o pipefail; php tests/phase23f-collections-ui-tests.php | tee "qa-evidence/collections-ui-tests-php-${{ matrix.php }}.log"
+
+      - name: Run architecture regression guard
+        shell: bash
+        run: set -o pipefail; php tests/architecture-guard.php | tee -a "qa-evidence/collections-ui-tests-php-${{ matrix.php }}.log"
+
+      - name: Verify read-only UI controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "'collections'" includes/class-spdb-dashboard-router.php
+          grep -q "SPDB_Collections_View" includes/class-spdb-dashboard-page.php
+          grep -q "collections_request_input" includes/class-spdb-dashboard-page.php
+          grep -q "assets/css/collections.css" includes/class-spdb-dashboard-page.php
+          grep -q "templates/collections.php" templates/dashboard.php
+          grep -q "Phase 23F" templates/dashboard.php
+          grep -q "Collections and Knowledge" templates/dashboard.php
+          grep -q '<caption>' templates/collections.php
+          grep -q 'aria-current="page"' templates/collections.php
+          grep -q ':focus-visible' assets/css/collections.css
+          grep -q '\[dir="rtl"\]' assets/css/collections.css
+          grep -q 'prefers-reduced-motion' assets/css/collections.css
+          grep -q 'forced-colors' assets/css/collections.css
+          ! grep -Eqi 'method\s*=\s*["'"']post["'"']|WP_REST_Server::(CREATABLE|EDITABLE|DELETABLE)' templates/collections.php
+          ! grep -Eqi '<button[^>]+(?:delete|archive|reorder|publish|approve)' templates/collections.php
+
+      - name: Verify release and merge restrictions
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "Version:[[:space:]]*0.6.2" sabri-publishing-dashboard.php
+          grep -q "Stable tag: 0.6.2" readme.txt
+          grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23F-COLLECTIONS-UI-2026-07-31.md
+          grep -qi "Founder review completed" STATUS.md
+
+      - name: Record source checksums
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum \
+            includes/class-spdb-collections-view.php \
+            includes/class-spdb-dashboard-page.php \
+            includes/class-spdb-dashboard-router.php \
+            includes/class-spdb-workspace-resolver.php \
+            templates/dashboard.php \
+            templates/collections.php \
+            assets/css/collections.css \
+            tests/phase23f-collections-ui-tests.php \
+            > "qa-evidence/collections-ui-checksums-php-${{ matrix.php }}.sha256"
+
+      - name: Upload UI QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-23f-collections-ui-qa-php-${{ matrix.php }}-${{ github.run_id }}
+          path: qa-evidence/
+          if-no-files-found: error
+          retention-days: 30
