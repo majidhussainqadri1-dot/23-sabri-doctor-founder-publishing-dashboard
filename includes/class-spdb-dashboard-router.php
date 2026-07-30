@@ -40,8 +40,7 @@ final class SPDB_Dashboard_Router {
 	}
 
 	/**
-	 * Flush once after an upgrade that introduces or changes the route. This
-	 * avoids requiring deactivation/reactivation on an already active plugin.
+	 * Flush once after an upgrade that introduces or changes the route.
 	 */
 	public static function maybe_flush_rewrite_rules(): void {
 		if ( self::REWRITE_VERSION === (string) get_option( 'spdb_rewrite_version', '' ) ) {
@@ -72,11 +71,16 @@ final class SPDB_Dashboard_Router {
 	}
 
 	/**
-	 * Detect the route both before and after WP_Query is populated. WordPress
-	 * fires `send_headers` before the final query object is always available.
+	 * Detect the route both before and after WP_Query is populated.
 	 */
 	public static function is_dashboard_request(): bool {
-		if ( isset( $GLOBALS['wp']->query_vars[ self::QUERY_VAR ] ) ) {
+		if (
+			isset( $GLOBALS['wp'] )
+			&& is_object( $GLOBALS['wp'] )
+			&& isset( $GLOBALS['wp']->query_vars )
+			&& is_array( $GLOBALS['wp']->query_vars )
+			&& isset( $GLOBALS['wp']->query_vars[ self::QUERY_VAR ] )
+		) {
 			return '1' === (string) $GLOBALS['wp']->query_vars[ self::QUERY_VAR ];
 		}
 
@@ -106,6 +110,8 @@ final class SPDB_Dashboard_Router {
 			return;
 		}
 
+		self::mark_private_request();
+
 		if ( ! is_user_logged_in() ) {
 			auth_redirect();
 			exit;
@@ -129,7 +135,17 @@ final class SPDB_Dashboard_Router {
 
 	public function send_private_headers(): void {
 		if ( self::is_dashboard_request() ) {
+			self::mark_private_request();
 			self::emit_private_headers();
+		}
+	}
+
+	/**
+	 * Mark the current page for cache plugins before any dashboard output.
+	 */
+	public static function mark_private_request(): void {
+		if ( ! defined( 'DONOTCACHEPAGE' ) ) {
+			define( 'DONOTCACHEPAGE', true );
 		}
 	}
 
@@ -137,12 +153,17 @@ final class SPDB_Dashboard_Router {
 	 * Emit headers shared by the virtual route and shortcode fallback page.
 	 */
 	public static function emit_private_headers(): void {
+		if ( headers_sent() ) {
+			return;
+		}
+
 		nocache_headers();
 		header( 'Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0', true );
 		header( 'Pragma: no-cache', true );
 		header( 'X-Robots-Tag: noindex, nofollow, noarchive, nosnippet', true );
 		header( 'Referrer-Policy: same-origin', true );
 		header( 'X-Content-Type-Options: nosniff', true );
+		header( 'Permissions-Policy: camera=(), microphone=(), geolocation=()', true );
 	}
 
 	/**
