@@ -106,19 +106,30 @@ final class SPDB_Adapter_Registry {
 				return $this->reject_error( $key, $operations );
 			}
 
+			if ( ! class_exists( 'SPDB_Capabilities' ) ) {
+				return $this->reject( $key, 'spdb_capability_contract_unavailable', __( 'The File 23 capability contract is unavailable.', 'sabri-publishing-dashboard' ) );
+			}
+
+			foreach ( $operations as $definition ) {
+				$required_capability = $definition['required_capability'];
+				if ( ! in_array( $required_capability, $capabilities, true ) || ! in_array( $required_capability, SPDB_Capabilities::all(), true ) ) {
+					return $this->reject( $key, 'spdb_undeclared_operation_capability', __( 'An operation references an undeclared or non-canonical File 23 capability.', 'sabri-publishing-dashboard' ) );
+				}
+			}
+
 			$this->adapters[ $key ] = $adapter;
 			$this->metadata[ $key ] = array(
-				'provider_key'          => $key,
-				'provider_name'         => $provider_name,
-				'provider_version'      => $provider_version,
-				'minimum_contract'      => $minimum_contract,
-				'maximum_contract'      => $maximum_contract,
-				'declared_capability'   => $capability_state,
-				'acceptance_state'      => $this->get_acceptance_state( $key ),
-				'object_types'          => $object_types,
-				'privacy_classes'       => $privacy_classes,
-				'supported_capabilities'=> $capabilities,
-				'operation_definitions' => $operations,
+				'provider_key'           => $key,
+				'provider_name'          => $provider_name,
+				'provider_version'       => $provider_version,
+				'minimum_contract'       => $minimum_contract,
+				'maximum_contract'       => $maximum_contract,
+				'declared_capability'    => $capability_state,
+				'acceptance_state'       => $this->get_acceptance_state( $key ),
+				'object_types'           => $object_types,
+				'privacy_classes'        => $privacy_classes,
+				'supported_capabilities' => $capabilities,
+				'operation_definitions'  => $operations,
 			);
 
 			return true;
@@ -347,9 +358,6 @@ final class SPDB_Adapter_Registry {
 		return $validated;
 	}
 
-	/**
-	 * @return WP_Error
-	 */
 	private function reject( string $provider_key, string $code, string $message ): WP_Error {
 		$error = new WP_Error( $code, $message );
 		$this->record_error( $provider_key, $error );
