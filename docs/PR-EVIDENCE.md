@@ -16,4 +16,4 @@ The PR description must record:
 
 No merge may rely on evidence from an earlier head. Any later branch commit requires review of the affected scope and a complete current-head workflow rerun.
 
-Current authoritative evidence is intentionally not duplicated in this tracked file; see Draft PR #1.
+Current authoritative evidence is intentionally not duplicated in this tracked file; see Draft PR #1 description.
