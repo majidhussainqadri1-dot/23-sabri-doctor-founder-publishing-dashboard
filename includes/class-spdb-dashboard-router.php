@@ -101,7 +101,7 @@ final class SPDB_Dashboard_Router {
 	}
 
 	public static function normalize_view( string $view ): string {
-		$allowed = array( 'overview', 'saved-views', 'system-status' );
+		$allowed = array( 'overview', 'inventory', 'saved-views', 'system-status' );
 		return in_array( $view, $allowed, true ) ? $view : 'overview';
 	}
 
