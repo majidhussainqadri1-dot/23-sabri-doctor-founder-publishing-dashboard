@@ -15,7 +15,7 @@ final class SPDB_Dashboard_Page {
 	private SPDB_Federated_Inventory $inventory;
 	private SPDB_Role_Workspace_Service $role_workspace_service;
 	private SPDB_Review_Calendar_Service $review_calendar_service;
-	private ?SPDB_Collections_Service $collections_service;
+	private ?SPDB_Collections_View $collections_view;
 	private bool $assets_localized = false;
 	private bool $shortcode_page_protected = false;
 	private int $render_count = 0;
@@ -37,7 +37,7 @@ final class SPDB_Dashboard_Page {
 		$this->inventory               = $inventory;
 		$this->role_workspace_service  = $role_workspace_service;
 		$this->review_calendar_service = $review_calendar_service;
-		$this->collections_service     = $collections_service;
+		$this->collections_view        = null === $collections_service ? null : new SPDB_Collections_View( $collections_service );
 	}
 
 	public function register(): void {
@@ -79,6 +79,9 @@ final class SPDB_Dashboard_Page {
 		if ( ! wp_style_is( 'spdb-review-calendar', 'registered' ) ) {
 			wp_register_style( 'spdb-review-calendar', SPDB_PLUGIN_URL . 'assets/css/review-calendar.css', array( 'spdb-dashboard-corrections' ), SPDB_VERSION );
 		}
+		if ( ! wp_style_is( 'spdb-collections', 'registered' ) ) {
+			wp_register_style( 'spdb-collections', SPDB_PLUGIN_URL . 'assets/css/collections.css', array( 'spdb-dashboard-corrections' ), SPDB_VERSION );
+		}
 		if ( ! wp_script_is( 'spdb-dashboard', 'registered' ) ) {
 			wp_register_script( 'spdb-dashboard', SPDB_PLUGIN_URL . 'assets/js/dashboard.js', array( 'wp-api-fetch', 'wp-i18n' ), SPDB_VERSION, true );
 		}
@@ -93,6 +96,9 @@ final class SPDB_Dashboard_Page {
 		}
 		if ( 'workspace' === $current ) {
 			wp_enqueue_style( 'spdb-workspace' );
+		}
+		if ( 'collections' === $current ) {
+			wp_enqueue_style( 'spdb-collections' );
 		}
 		if ( in_array( $current, array( 'review', 'calendar' ), true ) ) {
 			wp_enqueue_style( 'spdb-review-calendar' );
@@ -165,6 +171,7 @@ final class SPDB_Dashboard_Page {
 		$inventory_result    = null;
 		$inventory_item      = null;
 		$inventory_providers = array();
+		$collections_projection = null;
 
 		if ( 'inventory' === $current ) {
 			$inventory_result    = $this->inventory->list_items( $this->inventory_request_input() );
@@ -176,6 +183,11 @@ final class SPDB_Dashboard_Page {
 		}
 		if ( 'workspace' === $current ) {
 			$role_workspace = $this->role_workspace_service->build( $workspace );
+		}
+		if ( 'collections' === $current ) {
+			$collections_projection = null === $this->collections_view
+				? new WP_Error( 'spdb_collections_view_unavailable', __( 'The Collections view service is unavailable.', 'sabri-publishing-dashboard' ), array( 'status' => 503 ) )
+				: $this->collections_view->resolve( $this->collections_request_input() );
 		}
 		if ( 'review' === $current ) {
 			$review_result = $this->review_calendar_service->review_queue( $this->review_request_input() );
@@ -190,6 +202,25 @@ final class SPDB_Dashboard_Page {
 
 	private function inventory_request_input(): array {
 		return $this->read_query( array( 'page', 'per_page', 'search', 'provider', 'object_type', 'lifecycle_state', 'review_state', 'visibility_state', 'operational_state', 'language', 'topic', 'date_from', 'date_to', 'sort', 'direction', 'scope' ) );
+	}
+
+	private function collections_request_input(): array {
+		$allowed = array( 'view', 'section', 'scope', 'record_type', 'status', 'page', 'per_page', 'collection_id', 'item_id', 'item_page', 'link_id' );
+		$routing = array( 'page_id', 'p', 'post_type' );
+		$input   = array( 'view' => 'collections' );
+		foreach ( $_GET as $raw_key => $raw_value ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Strict read-only dashboard query.
+			$key = sanitize_key( (string) $raw_key );
+			if ( '' === $key || in_array( $key, $routing, true ) ) {
+				continue;
+			}
+			$value = is_array( $raw_value ) ? wp_unslash( $raw_value ) : (string) wp_unslash( $raw_value );
+			if ( ! in_array( $key, $allowed, true ) ) {
+				$input[ $key ] = $value;
+				continue;
+			}
+			$input[ $key ] = $value;
+		}
+		return $input;
 	}
 
 	private function review_request_input(): array {
