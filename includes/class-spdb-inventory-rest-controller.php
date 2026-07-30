@@ -39,12 +39,10 @@ final class SPDB_Inventory_REST_Controller {
 				'args'                => array(
 					'provider' => array(
 						'required'          => true,
-						'sanitize_callback' => 'sanitize_key',
 						'validate_callback' => array( $this, 'validate_canonical_key' ),
 					),
 					'object_type' => array(
 						'required'          => true,
-						'sanitize_callback' => 'sanitize_key',
 						'validate_callback' => array( $this, 'validate_canonical_key' ),
 					),
 					'object_id' => array(
@@ -71,6 +69,8 @@ final class SPDB_Inventory_REST_Controller {
 		if ( $response instanceof WP_HTTP_Response ) {
 			$response->header( 'X-WP-Total', (string) $result['total'] );
 			$response->header( 'X-WP-TotalPages', (string) $result['pages'] );
+			$response->header( 'X-SPDB-Accessible-Total', (string) $result['accessible_total'] );
+			$response->header( 'X-SPDB-Validated-Window', (string) $result['validated_window_count'] );
 		}
 		return $response;
 	}
@@ -86,11 +86,12 @@ final class SPDB_Inventory_REST_Controller {
 
 	/** @param mixed $value Raw value. */
 	public function validate_canonical_key( $value ): bool {
-		return ! is_array( $value ) && ! is_object( $value ) && SPDB_Adapter_Registry::is_canonical_key( (string) $value );
+		$value = is_scalar( $value ) ? (string) $value : '';
+		return '' !== $value && sanitize_key( $value ) === $value && SPDB_Adapter_Registry::is_canonical_key( $value );
 	}
 
 	/** @param mixed $value Raw value. */
 	public function validate_object_id( $value ): bool {
-		return ! is_array( $value ) && ! is_object( $value ) && SPDB_Projection_Validator::valid_object_id( (string) $value );
+		return is_scalar( $value ) && SPDB_Projection_Validator::valid_object_id( (string) $value );
 	}
 }
