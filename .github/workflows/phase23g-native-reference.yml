@@ -1,0 +1,128 @@
+name: Phase 23G Native Reference Resolution
+
+on:
+  push:
+    branches: [main, 'phase/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  native-reference:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.0', '8.1', '8.2', '8.3']
+    env:
+      EXPECTED_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.EXPECTED_SHA }}
+          persist-credentials: false
+
+      - name: Verify exact checked head
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa-evidence
+          actual_sha="$(git rev-parse HEAD)"
+          test "$actual_sha" = "$EXPECTED_SHA"
+          printf 'expected_sha=%s\nactual_sha=%s\nrun_id=%s\nphp=%s\n' "$EXPECTED_SHA" "$actual_sha" "$GITHUB_RUN_ID" "${{ matrix.php }}" > "qa-evidence/phase23g-context-php-${{ matrix.php }}.txt"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: Verify Phase 23G files
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            docs/AUDIT-PHASE-23G-NATIVE-REFERENCE-RESOLUTION-2026-07-31.md
+            includes/interface-spdb-native-reference-provider.php
+            includes/class-spdb-native-reference-registry.php
+            includes/class-spdb-native-reference-registration.php
+            includes/class-spdb-plugin.php
+            includes/class-spdb-system-state.php
+            tests/fixtures/class-test-native-reference-provider.php
+            tests/phase23g-native-reference-tests.php
+          )
+          for file in "${required[@]}"; do test -s "$file" || { echo "Missing or empty: $file"; exit 1; }; done
+
+      - name: PHP syntax check
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l includes/interface-spdb-native-reference-provider.php
+          php -l includes/class-spdb-native-reference-registry.php
+          php -l includes/class-spdb-native-reference-registration.php
+          php -l includes/class-spdb-plugin.php
+          php -l includes/class-spdb-system-state.php
+          php -l tests/fixtures/class-test-native-reference-provider.php
+          php -l tests/phase23g-native-reference-tests.php
+
+      - name: Run Phase 23G native resolver tests
+        shell: bash
+        run: set -o pipefail; php tests/phase23g-native-reference-tests.php | tee "qa-evidence/phase23g-tests-php-${{ matrix.php }}.log"
+
+      - name: Run Phase 23F runtime regression
+        shell: bash
+        run: set -o pipefail; php tests/phase23f-runtime-tests.php | tee -a "qa-evidence/phase23g-tests-php-${{ matrix.php }}.log"
+
+      - name: Run architecture guard
+        shell: bash
+        run: set -o pipefail; php tests/architecture-guard.php | tee -a "qa-evidence/phase23g-tests-php-${{ matrix.php }}.log"
+
+      - name: Verify Phase 23G boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'interface SPDB_Native_Reference_Provider' includes/interface-spdb-native-reference-provider.php
+          grep -q 'implements SPDB_Native_Reference_Resolver' includes/class-spdb-native-reference-registry.php
+          grep -q 'ACCEPTANCE_UNREVIEWED' includes/class-spdb-native-reference-registry.php
+          grep -q 'adapter_acceptance_state' includes/class-spdb-native-reference-registry.php
+          grep -q 'validated_context' includes/class-spdb-native-reference-registry.php
+          grep -q 'spdb_native_resolver_provider_error' includes/class-spdb-native-reference-registry.php
+          grep -q 'spdb/register_native_reference_resolvers' includes/class-spdb-native-reference-registration.php
+          grep -q 'new SPDB_Native_Reference_Registry( \$this->adapter_registry, array() )' includes/class-spdb-plugin.php
+          grep -q "register_provider_adapters' ), 30" includes/class-spdb-plugin.php
+          grep -q "register_native_reference_resolvers' ), 31" includes/class-spdb-plugin.php
+          grep -q 'new SPDB_Collections_Service( \$this->collections_repository )' includes/class-spdb-plugin.php
+          ! grep -Eq 'new SPDB_Collections_Service\([^;]*native_reference_registry' includes/class-spdb-plugin.php
+          ! grep -Eq 'register_rest_route\s*\(|WP_REST_Server::(CREATABLE|EDITABLE|DELETABLE)|\b(?:POST|PUT|PATCH|DELETE)\b' includes/class-spdb-native-reference-registry.php includes/class-spdb-native-reference-registration.php
+          ! grep -Eq '\b(?:insert|update|delete)_?(?:option|post|metadata)?\s*\(' includes/class-spdb-native-reference-registry.php includes/class-spdb-native-reference-registration.php
+          grep -q "'phase'.*'23G'" includes/class-spdb-system-state.php
+          grep -q "Version:[[:space:]]*0.7.0" sabri-publishing-dashboard.php
+          grep -q "SPDB_VERSION.*0.7.0" tests/bootstrap.php
+          grep -qi 'DO NOT MERGE' docs/AUDIT-PHASE-23G-NATIVE-REFERENCE-RESOLUTION-2026-07-31.md
+
+      - name: Record source checksums
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum \
+            includes/interface-spdb-native-reference-provider.php \
+            includes/class-spdb-native-reference-registry.php \
+            includes/class-spdb-native-reference-registration.php \
+            includes/class-spdb-plugin.php \
+            includes/class-spdb-system-state.php \
+            tests/fixtures/class-test-native-reference-provider.php \
+            tests/phase23g-native-reference-tests.php \
+            docs/AUDIT-PHASE-23G-NATIVE-REFERENCE-RESOLUTION-2026-07-31.md \
+            > "qa-evidence/phase23g-checksums-php-${{ matrix.php }}.sha256"
+
+      - name: Upload Phase 23G QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-23g-native-reference-qa-php-${{ matrix.php }}-${{ github.run_id }}
+          path: qa-evidence/
+          if-no-files-found: error
+          retention-days: 30
