@@ -1,0 +1,58 @@
+<?php
+/** Corrective runtime authority tests for Phase 23F. */
+require_once __DIR__ . '/bootstrap.php';
+if ( ! defined( 'SPDB_PHASE23F_WRITES_ENABLED' ) ) { define( 'SPDB_PHASE23F_WRITES_ENABLED', true ); }
+if ( ! defined( 'SMC_VERSION' ) ) { define( 'SMC_VERSION', '1.0.1' ); }
+if ( ! function_exists( 'smc_user_status' ) ) { function smc_user_status( $user_id ) { return (string) ( $GLOBALS['spdb_test_member_statuses'][ $user_id ] ?? $GLOBALS['spdb_test_member_status'] ); } }
+if ( ! function_exists( 'smc_is_founder' ) ) { function smc_is_founder( $user_id ) { return (bool) $GLOBALS['spdb_test_founder']; } }
+if ( ! function_exists( 'smc_is_trusted_publisher' ) ) { function smc_is_trusted_publisher( $user_id ) { return false; } }
+
+final class SPDB_Test_Collections_Repository implements SPDB_Collections_Repository {
+	public array $collections = array(); public array $links = array(); public bool $healthy = true; public bool $inject_foreign = false;
+	public function health_check(): array { return array( 'healthy' => $this->healthy, 'schema_ready' => $this->healthy, 'code' => $this->healthy ? 'ready' : 'failed' ); }
+	public function list_collections( array $query ) { $items = array_values( array_filter( $this->collections, static fn( $row ) => (string) $row['scope'] === $query['scope'] && (int) $row['owner_user_id'] === $query['owner_user_id'] ) ); if ( $this->inject_foreign ) { $items[] = spdb_runtime_collection_row( 99 ); } return array( 'items' => $items, 'page' => $query['page'], 'per_page' => $query['per_page'], 'total' => count( $items ), 'has_more' => false ); }
+	public function get_collection( string $collection_id ) { return $this->collections[ $collection_id ] ?? new WP_Error( 'spdb_collection_not_found', '', array( 'status' => 404 ) ); }
+	public function create_collection( array $record ) { $row = array_merge( $record, array( 'collection_id' => 'collection_123e4567e89b12d3a456000000000001', 'version' => 1, 'created_at_gmt' => '2026-07-30T17:00:00Z', 'updated_at_gmt' => '2026-07-30T17:00:00Z', 'archived_at_gmt' => '' ) ); unset( $row['idempotency_hash'], $row['request_hash'], $row['audit_reason'] ); $this->collections[ $row['collection_id'] ] = $row; return $row; }
+	public function update_collection( string $collection_id, int $expected_version, array $changes, array $operation ) { return new WP_Error( 'not_implemented' ); }
+	public function archive_collection( string $collection_id, int $expected_version, array $operation ) { return new WP_Error( 'not_implemented' ); }
+	public function list_collection_items( string $collection_id, array $query = array() ) { return array( 'items' => array(), 'page' => 1, 'per_page' => 20, 'total' => 0, 'has_more' => false ); }
+	public function get_collection_item( string $collection_id, string $item_id ) { return new WP_Error( 'not_found' ); }
+	public function add_collection_item( string $collection_id, int $expected_collection_version, array $record ) { return new WP_Error( 'not_implemented' ); }
+	public function update_collection_item( string $collection_id, string $item_id, int $expected_collection_version, int $expected_item_version, array $changes, array $operation ) { return new WP_Error( 'not_implemented' ); }
+	public function archive_collection_item( string $collection_id, string $item_id, int $expected_collection_version, int $expected_item_version, array $operation ) { return new WP_Error( 'not_implemented' ); }
+	public function list_knowledge_links( array $query ) { $items = array_values( array_filter( $this->links, static fn( $row ) => (string) $row['scope'] === $query['scope'] && (int) $row['owner_user_id'] === $query['owner_user_id'] ) ); return array( 'items' => $items, 'page' => $query['page'], 'per_page' => $query['per_page'], 'total' => count( $items ), 'has_more' => false ); }
+	public function get_knowledge_link( string $link_id ) { return $this->links[ $link_id ] ?? new WP_Error( 'spdb_knowledge_link_not_found', '', array( 'status' => 404 ) ); }
+	public function create_knowledge_link( array $record ) { $row = array_merge( $record, array( 'link_id' => 'knowledge_123e4567e89b12d3a456000000000001', 'version' => 1, 'created_at_gmt' => '2026-07-30T17:00:00Z', 'updated_at_gmt' => '2026-07-30T17:00:00Z', 'archived_at_gmt' => '' ) ); unset( $row['idempotency_hash'], $row['request_hash'], $row['audit_reason'], $row['relation_hash'] ); $this->links[ $row['link_id'] ] = $row; return $row; }
+	public function update_knowledge_link( string $link_id, int $expected_version, array $changes, array $operation ) { return new WP_Error( 'not_implemented' ); }
+	public function archive_knowledge_link( string $link_id, int $expected_version, array $operation ) { return new WP_Error( 'not_implemented' ); }
+}
+final class SPDB_Test_Native_Resolver implements SPDB_Native_Reference_Resolver {
+	public $owner = 7; public string $version = 'v1'; public array $last_context = array();
+	public function resolve_reference( string $provider_key, string $object_type, string $object_id, array $context ) { $this->last_context = $context; return array( 'provider_key' => $provider_key, 'object_type' => $object_type, 'object_id' => $object_id, 'exists' => true, 'visible' => true, 'reference_allowed' => true, 'owner_user_id' => $this->owner, 'native_version' => $this->version, 'destination' => 'https://example.test/native/view' ); }
+}
+function spdb_runtime_collection_row( int $owner = 7 ): array { return array( 'collection_id' => 'collection_123e4567e89b12d3a456000000000099', 'record_type' => 'collection', 'scope' => 'own', 'title' => 'Study Set', 'objective' => '', 'ethical_declaration' => '', 'owner_user_id' => $owner, 'contributors' => array(), 'target_surfaces' => array(), 'status' => 'draft', 'start_at_gmt' => '', 'end_at_gmt' => '', 'version' => 1, 'created_by' => $owner, 'created_at_gmt' => '2026-07-30T17:00:00Z', 'updated_at_gmt' => '2026-07-30T17:00:00Z', 'archived_at_gmt' => '' ); }
+function spdb_runtime_collection_input(): array { return array( 'record_type' => 'collection', 'scope' => 'own', 'title' => 'Study Set', 'objective' => '', 'ethical_declaration' => '', 'contributors' => array(), 'target_surfaces' => array(), 'status' => 'draft', 'start_at_gmt' => '', 'end_at_gmt' => '', 'idempotency_key' => 'runtime-create-0001', 'audit_reason' => 'Create a reviewed own-scope study set.' ); }
+function spdb_runtime_link_input(): array { return array( 'scope' => 'own', 'source_provider_key' => 'file21', 'source_object_type' => 'publication', 'source_object_id' => 'post-101', 'target_provider_key' => 'file06', 'target_object_type' => 'remedy', 'target_object_id' => 'remedy-22', 'relation_type' => 'encyclopedia', 'idempotency_key' => 'runtime-link-00001', 'audit_reason' => 'Connect two canonical educational references.' ); }
+$tests = 0; $failed = 0;
+function spdb_runtime_assert( bool $condition, string $message ): void { global $tests, $failed; ++$tests; if ( ! $condition ) { ++$failed; fwrite( STDERR, "FAIL: {$message}\n" ); } }
+function spdb_runtime_code( $value ): string { return $value instanceof WP_Error ? $value->get_error_code() : ''; }
+
+$GLOBALS['spdb_test_user_id'] = 7; $GLOBALS['spdb_test_member_status'] = 'approved'; $GLOBALS['spdb_test_member_statuses'][7] = 'approved'; $GLOBALS['spdb_test_founder'] = false;
+$GLOBALS['spdb_test_capabilities']['spdb_view_own_content'] = true; $GLOBALS['spdb_test_capabilities']['spdb_manage_own_content'] = true; $GLOBALS['spdb_test_capabilities']['spdb_manage_campaigns'] = false;
+$repository = new SPDB_Test_Collections_Repository(); $service = new SPDB_Collections_Service( $repository );
+$health = $service->health(); spdb_runtime_assert( true === $health['read_ready'] && false === $health['collection_write_ready'], 'Production must expose verified reads but not metadata writes.' );
+$GLOBALS['spdb_test_member_status'] = 'submitted'; $pending = $service->list_collections( array( 'scope' => 'own' ) ); spdb_runtime_assert( 'spdb_collections_read_forbidden' === spdb_runtime_code( $pending ), 'Pending accounts must not read collection metadata.' );
+$GLOBALS['spdb_test_member_status'] = 'approved'; $repository->collections['collection_123e4567e89b12d3a456000000000099'] = spdb_runtime_collection_row();
+$list = $service->list_collections( array( 'scope' => 'own', 'page' => 1, 'per_page' => 20 ) ); spdb_runtime_assert( is_array( $list ) && 1 === count( $list['items'] ), 'Approved users must receive a validated own-scope envelope.' );
+$institution = $service->list_collections( array( 'scope' => 'institution' ) ); spdb_runtime_assert( 'spdb_collections_institution_forbidden' === spdb_runtime_code( $institution ), 'Institution queries must fail closed rather than silently downgrade.' );
+$mismatch = $service->list_collections( array( 'scope' => 'own', 'record_type' => 'collection', 'status' => 'paused' ) ); spdb_runtime_assert( 'spdb_collections_query_status_invalid' === spdb_runtime_code( $mismatch ), 'Status filters must match the selected record type.' );
+$repository->inject_foreign = true; $foreign = $service->list_collections( array( 'scope' => 'own' ) ); spdb_runtime_assert( 'spdb_collections_repository_response_invalid' === spdb_runtime_code( $foreign ), 'A repository must not inject another user record into a list response.' ); $repository->inject_foreign = false;
+$GLOBALS['spdb_test_environment'] = 'staging'; $created = $service->create_collection( spdb_runtime_collection_input() ); spdb_runtime_assert( is_array( $created ) && 7 === $created['owner_user_id'], 'A reviewed staging collection create must not require a native resolver.' );
+$no_resolver = $service->create_knowledge_link( spdb_runtime_link_input() ); spdb_runtime_assert( 'spdb_native_reference_resolver_unavailable' === spdb_runtime_code( $no_resolver ), 'Knowledge-link creation must require a reviewed native resolver.' );
+$resolver = new SPDB_Test_Native_Resolver(); $service = new SPDB_Collections_Service( $repository, $resolver ); $link = $service->create_knowledge_link( spdb_runtime_link_input() ); spdb_runtime_assert( is_array( $link ) && 'v1' === $link['source_native_version'], 'A valid knowledge link must persist observed native versions.' );
+$resolver->version = "bad\nversion"; $bad_version = $service->create_knowledge_link( array_merge( spdb_runtime_link_input(), array( 'idempotency_key' => 'runtime-link-00002' ) ) ); spdb_runtime_assert( 'spdb_native_reference_version_invalid' === spdb_runtime_code( $bad_version ), 'Control characters must be rejected from native versions.' );
+$resolver->version = 'v2'; $resolver->owner = array( 7 ); $bad_owner = $service->create_knowledge_link( array_merge( spdb_runtime_link_input(), array( 'idempotency_key' => 'runtime-link-00003' ) ) ); spdb_runtime_assert( 'spdb_native_reference_owner_invalid' === spdb_runtime_code( $bad_owner ), 'Malformed native owner identifiers must fail closed.' );
+$GLOBALS['spdb_test_founder'] = true; $GLOBALS['spdb_test_capabilities']['spdb_manage_campaigns'] = true; $resolver->owner = 7; $resolved = $service->resolve_reference( 'file21', 'publication', 'post-101', 'institution' ); spdb_runtime_assert( is_array( $resolved ) && 'institution' === $resolver->last_context['scope'], 'Institution scope must remain exact after server-side Founder authorization.' );
+
+if ( $failed > 0 ) { fwrite( STDERR, "{$failed} of {$tests} Phase 23F runtime tests failed.\n" ); exit( 1 ); }
+echo "All {$tests} corrective Phase 23F runtime tests passed.\n";
