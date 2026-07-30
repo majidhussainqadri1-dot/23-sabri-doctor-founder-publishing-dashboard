@@ -15,7 +15,7 @@ final class SPDB_System_State {
 		}
 		$errors = 0; foreach ( $this->registry->registration_errors() as $provider_errors ) { $errors += is_array( $provider_errors ) ? count( $provider_errors ) : 0; }
 		$membership = SPDB_Membership_Guard::health_snapshot();
-		$collections = null !== $this->collections_service ? $this->collections_service->health() : array( 'repository_available' => false, 'resolver_available' => false, 'read_ready' => false, 'write_configured' => false, 'collection_write_ready' => false, 'knowledge_write_ready' => false, 'write_enabled' => false, 'repository_health' => array( 'healthy' => false, 'schema_ready' => false, 'code' => 'service_unavailable' ) );
+		$collections = null !== $this->collections_service ? $this->collections_service->health() : array( 'repository_available' => false, 'resolver_available' => false, 'read_ready' => false, 'write_configured' => false, 'collection_write_ready' => false, 'knowledge_write_ready' => false, 'any_write_ready' => false, 'write_enabled' => false, 'repository_health' => array( 'healthy' => false, 'schema_ready' => false, 'code' => 'service_unavailable' ) );
 		$degraded = ! $membership['available'] || $errors > 0 || empty( $collections['read_ready'] );
 		return array(
 			'environment' => function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production',
