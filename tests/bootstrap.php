@@ -16,6 +16,7 @@ $GLOBALS['spdb_test_founder']       = false;
 $GLOBALS['spdb_test_trusted']       = false;
 $GLOBALS['spdb_test_query_vars']    = array();
 $GLOBALS['spdb_test_user_meta']     = array();
+$GLOBALS['wp']                      = (object) array( 'query_vars' => array() );
 
 if ( ! class_exists( 'WP_Error' ) ) {
 	class WP_Error {
