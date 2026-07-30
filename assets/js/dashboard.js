@@ -9,9 +9,22 @@
 	var config = window.SPDBDashboard;
 	var form = document.querySelector( '[data-spdb-saved-view-form]' );
 	var list = document.querySelector( '[data-spdb-saved-view-list]' );
+	var emptyState = document.querySelector( '.spdb-empty-state' );
 	var status = document.querySelector( '[data-spdb-status]' );
 
 	apiFetch.use( apiFetch.createNonceMiddleware( config.nonce ) );
+
+	if ( form && ! list ) {
+		list = document.createElement( 'ul' );
+		list.className = 'spdb-saved-view-list';
+		list.setAttribute( 'data-spdb-saved-view-list', '' );
+
+		if ( emptyState && emptyState.parentNode ) {
+			emptyState.parentNode.insertBefore( list, emptyState.nextSibling );
+		} else {
+			form.insertAdjacentElement( 'afterend', list );
+		}
+	}
 
 	function announce( message, isError ) {
 		if ( ! status ) {
@@ -19,6 +32,12 @@
 		}
 		status.textContent = message || '';
 		status.setAttribute( 'data-error', isError ? 'true' : 'false' );
+	}
+
+	function setEmptyState( isEmpty ) {
+		if ( emptyState ) {
+			emptyState.hidden = ! isEmpty;
+		}
 	}
 
 	function filtersSummary( filters ) {
@@ -92,6 +111,7 @@
 				}
 			} ).then( function ( view ) {
 				list.appendChild( createListItem( view ) );
+				setEmptyState( false );
 				form.reset();
 				announce( config.strings.created, false );
 			} ).catch( function ( error ) {
@@ -121,6 +141,7 @@
 				if ( item ) {
 					item.remove();
 				}
+				setEmptyState( 0 === list.children.length );
 				announce( config.strings.deleted, false );
 			} ).catch( function ( error ) {
 				button.disabled = false;
