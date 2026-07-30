@@ -13,6 +13,10 @@ permissions:
 jobs:
   integrity:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.0', '8.1', '8.2', '8.3']
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,7 +24,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.0'
+          php-version: ${{ matrix.php }}
           coverage: none
 
       - name: Verify required files
@@ -43,10 +47,17 @@ jobs:
             docs/STATE-PROJECTION.md
             docs/ANALYTICS-CONTRACT.md
             docs/BACKGROUND-JOBS.md
+            docs/AUDIT-2026-07-30.md
             includes/interface-spdb-provider-adapter.php
             includes/class-spdb-adapter-registry.php
+            includes/class-spdb-membership-guard.php
             includes/class-spdb-capabilities.php
+            includes/class-spdb-operation-broker.php
             includes/class-spdb-plugin.php
+            tests/bootstrap.php
+            tests/fixtures/class-test-adapter.php
+            tests/contract-tests.php
+            tests/architecture-guard.php
           )
           for file in "${required[@]}"; do
             test -s "$file" || { echo "Missing or empty: $file"; exit 1; }
@@ -60,20 +71,25 @@ jobs:
             php -l "$file"
           done < <(find . -type f -name '*.php' -not -path './vendor/*' -print0)
 
+      - name: Run executable contract tests
+        run: php tests/contract-tests.php
+
+      - name: Run architecture boundary guard
+        run: php tests/architecture-guard.php
+
       - name: Verify version alignment
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "Version:[[:space:]]*0.1.0" sabri-publishing-dashboard.php
-          grep -q "Stable tag: 0.1.0" readme.txt
-          grep -q "SPDB_CONTRACT_VERSION.*1.0.0" sabri-publishing-dashboard.php
+          grep -q "Version:[[:space:]]*0.1.1" sabri-publishing-dashboard.php
+          grep -q "Stable tag: 0.1.1" readme.txt
+          grep -q "SPDB_CONTRACT_VERSION.*2.0.0" sabri-publishing-dashboard.php
+          grep -q "Contract version: 2.0.0" includes/interface-spdb-provider-adapter.php
 
-      - name: Guard architectural boundaries
+      - name: Verify audit and merge gates
         shell: bash
         run: |
           set -euo pipefail
-          ! grep -R "POST /spdb/v1/action" . --exclude-dir=.git
-          ! grep -R "CREATE TABLE.*publication" . --include='*.php' --exclude-dir=.git
-          ! grep -R "CREATE TABLE.*comment" . --include='*.php' --exclude-dir=.git
-          ! grep -R "CREATE TABLE.*correction" . --include='*.php' --exclude-dir=.git
-          ! grep -R "CREATE TABLE.*retraction" . --include='*.php' --exclude-dir=.git
+          grep -q "DO NOT MERGE" docs/AUDIT-2026-07-30.md
+          grep -q "Founder review completed" STATUS.md
+          grep -q "No merge before completed review" DECISION-LOG.md
