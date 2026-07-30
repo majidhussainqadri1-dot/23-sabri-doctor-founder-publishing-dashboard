@@ -250,8 +250,10 @@ final class SPDB_Collections_Service {
 		if ( array_diff( array_keys( $input ), $allowed ) ) { return $this->error( 'spdb_collections_query_field_invalid', 'The collection query contains an unsupported field.' ); }
 		$scope = $this->scope_for_read( $input['scope'] ?? 'own' );
 		if ( is_wp_error( $scope ) ) { return $scope; }
-		$record_type = is_string( $input['record_type'] ?? '' ) ? $input['record_type'] : '';
-		$status = is_string( $input['status'] ?? '' ) ? $input['status'] : '';
+		$record_type_raw = $input['record_type'] ?? '';
+		$status_raw = $input['status'] ?? '';
+		$record_type = is_string( $record_type_raw ) ? $record_type_raw : '';
+		$status = is_string( $status_raw ) ? $status_raw : '';
 		if ( '' !== $record_type && ! in_array( $record_type, SPDB_Collections_Policy::record_types(), true ) ) { return $this->error( 'spdb_collections_query_type_invalid', 'The collection query type is invalid.' ); }
 		$statuses = 'collection' === $record_type ? SPDB_Collections_Policy::collection_statuses() : ( 'campaign' === $record_type ? SPDB_Collections_Policy::campaign_statuses() : array_unique( array_merge( SPDB_Collections_Policy::collection_statuses(), SPDB_Collections_Policy::campaign_statuses() ) ) );
 		if ( '' !== $status && ! in_array( $status, $statuses, true ) ) { return $this->error( 'spdb_collections_query_status_invalid', 'The collection query status is invalid for the selected record type.' ); }
@@ -271,7 +273,8 @@ final class SPDB_Collections_Service {
 		if ( array_diff( array_keys( $input ), $allowed ) ) { return $this->error( 'spdb_knowledge_query_field_invalid', 'The knowledge-link query contains an unsupported field.' ); }
 		$scope = $this->scope_for_read( $input['scope'] ?? 'own' );
 		if ( is_wp_error( $scope ) ) { return $scope; }
-		$status = is_string( $input['status'] ?? '' ) ? $input['status'] : '';
+		$status_raw = $input['status'] ?? '';
+		$status = is_string( $status_raw ) ? $status_raw : '';
 		if ( '' !== $status && ! in_array( $status, array( 'active', 'archived' ), true ) ) { return $this->error( 'spdb_knowledge_query_status_invalid', 'The knowledge-link status filter is invalid.' ); }
 		$page = $this->positive_integer( $input['page'] ?? 1, 100000 );
 		$per_page = $this->positive_integer( $input['per_page'] ?? 20, 50 );
