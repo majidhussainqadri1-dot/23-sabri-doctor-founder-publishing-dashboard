@@ -10,12 +10,13 @@
 
 defined( 'ABSPATH' ) || exit;
 
-$main_id           = $instance_id . '-main';
-$saved_title_id    = $instance_id . '-saved-views-title';
-$system_title_id   = $instance_id . '-system-status-title';
-$overview_title_id = $instance_id . '-overview-title';
-$provider_title_id = $instance_id . '-provider-title';
-$collections_health = is_array( $system_state['collections'] ?? null ) ? $system_state['collections'] : array();
+$main_id                = $instance_id . '-main';
+$saved_title_id         = $instance_id . '-saved-views-title';
+$system_title_id        = $instance_id . '-system-status-title';
+$overview_title_id      = $instance_id . '-overview-title';
+$provider_title_id      = $instance_id . '-provider-title';
+$collections_health     = is_array( $system_state['collections'] ?? null ) ? $system_state['collections'] : array();
+$native_reference_health = is_array( $system_state['native_references'] ?? null ) ? $system_state['native_references'] : array();
 ?>
 <a class="spdb-skip-link" href="#<?php echo esc_attr( $main_id ); ?>"><?php esc_html_e( 'Skip to dashboard content', 'sabri-publishing-dashboard' ); ?></a>
 <div class="spdb-shell" data-spdb-workspace="<?php echo esc_attr( (string) $workspace['key'] ); ?>" data-spdb-instance="<?php echo esc_attr( $instance_id ); ?>">
@@ -29,8 +30,8 @@ $collections_health = is_array( $system_state['collections'] ?? null ) ? $system
 			</p>
 		</div>
 		<div class="spdb-phase" aria-label="<?php esc_attr_e( 'Implementation phase', 'sabri-publishing-dashboard' ); ?>">
-			<span><?php esc_html_e( 'Phase 23F', 'sabri-publishing-dashboard' ); ?></span>
-			<strong><?php esc_html_e( 'Collections and Knowledge', 'sabri-publishing-dashboard' ); ?></strong>
+			<span><?php esc_html_e( 'Phase 23G', 'sabri-publishing-dashboard' ); ?></span>
+			<strong><?php esc_html_e( 'Native Reference Governance', 'sabri-publishing-dashboard' ); ?></strong>
 		</div>
 	</header>
 
@@ -92,8 +93,11 @@ $collections_health = is_array( $system_state['collections'] ?? null ) ? $system
 						<article><span><?php esc_html_e( 'Collections reads', 'sabri-publishing-dashboard' ); ?></span><strong><?php echo ! empty( $collections_health['read_ready'] ) ? esc_html__( 'Ready', 'sabri-publishing-dashboard' ) : esc_html__( 'Unavailable', 'sabri-publishing-dashboard' ); ?></strong></article>
 						<article><span><?php esc_html_e( 'Collection writes', 'sabri-publishing-dashboard' ); ?></span><strong><?php echo ! empty( $collections_health['collection_write_ready'] ) ? esc_html__( 'Non-production gate configured', 'sabri-publishing-dashboard' ) : esc_html__( 'Disabled', 'sabri-publishing-dashboard' ); ?></strong></article>
 						<article><span><?php esc_html_e( 'Knowledge writes', 'sabri-publishing-dashboard' ); ?></span><strong><?php echo ! empty( $collections_health['knowledge_write_ready'] ) ? esc_html__( 'Non-production gate configured', 'sabri-publishing-dashboard' ) : esc_html__( 'Disabled', 'sabri-publishing-dashboard' ); ?></strong></article>
+						<article><span><?php esc_html_e( 'Native resolvers registered', 'sabri-publishing-dashboard' ); ?></span><strong><?php echo esc_html( (string) ( $native_reference_health['resolver_count'] ?? 0 ) ); ?></strong></article>
+						<article><span><?php esc_html_e( 'Native resolvers ready', 'sabri-publishing-dashboard' ); ?></span><strong><?php echo esc_html( (string) ( $native_reference_health['ready_count'] ?? 0 ) ); ?></strong></article>
+						<article><span><?php esc_html_e( 'Resolver registration errors', 'sabri-publishing-dashboard' ); ?></span><strong><?php echo esc_html( (string) ( $native_reference_health['registration_errors'] ?? 0 ) ); ?></strong></article>
 					</div>
-					<p class="spdb-caption"><?php echo esc_html( sprintf( __( 'Generated at %s (GMT). No patient data or secrets are included.', 'sabri-publishing-dashboard' ), $system_state['generated_at_gmt'] ) ); ?></p>
+					<p class="spdb-caption"><?php echo esc_html( sprintf( __( 'Generated at %s (GMT). Resolver diagnostics contain no object identifiers, destinations, patient data, callback details, or secrets.', 'sabri-publishing-dashboard' ), $system_state['generated_at_gmt'] ) ); ?></p>
 				</section>
 			<?php else : ?>
 				<section aria-labelledby="<?php echo esc_attr( $overview_title_id ); ?>">
