@@ -1,7 +1,7 @@
 <?php
 /** Minimal WordPress-compatible test bootstrap for File 23 executable tests. */
 define( 'ABSPATH', __DIR__ . '/' );
-define( 'SPDB_VERSION', '0.4.1' );
+define( 'SPDB_VERSION', '0.5.0' );
 define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
 $GLOBALS['spdb_test_environment'] = 'production';
 $GLOBALS['spdb_test_logged_in'] = true;
@@ -17,6 +17,8 @@ $GLOBALS['spdb_test_roles'] = array();
 $GLOBALS['spdb_test_force_meta_conflict'] = false;
 $GLOBALS['spdb_test_last_inventory_query'] = array();
 $GLOBALS['spdb_test_workspace_context'] = array();
+$GLOBALS['spdb_test_review_context'] = array();
+$GLOBALS['spdb_test_calendar_context'] = array();
 $GLOBALS['wp_filter'] = array();
 $GLOBALS['wp'] = (object) array( 'query_vars' => array() );
 if ( ! class_exists( 'WP_Error' ) ) {
@@ -47,6 +49,7 @@ function __( string $text, string $domain = '' ): string { return $text; }
 function _n( string $single, string $plural, int $number, string $domain = '' ): string { return 1 === $number ? $single : $plural; }
 function sanitize_key( $key ): string { return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $key ) ) ?? ''; }
 function sanitize_text_field( $value ): string { return trim( preg_replace( '/[\x00-\x1F\x7F]/u', '', strip_tags( (string) $value ) ) ?? '' ); }
+function wp_strip_all_tags( $value ): string { return strip_tags( (string) $value ); }
 function wp_unslash( $value ) { return $value; }
 function wp_get_environment_type(): string { return (string) $GLOBALS['spdb_test_environment']; }
 function is_user_logged_in(): bool { return (bool) $GLOBALS['spdb_test_logged_in']; }
@@ -57,6 +60,7 @@ function home_url( string $path = '' ): string { return 'https://example.test' .
 function wp_parse_url( string $url ) { return parse_url( $url ); }
 function esc_url_raw( string $url ): string { return filter_var( $url, FILTER_SANITIZE_URL ) ?: ''; }
 function wp_json_encode( $value ) { return json_encode( $value ); }
+function rest_ensure_response( $value ) { return $value; }
 function add_query_arg( $key, $value = null, $url = null ): string { if ( is_array( $key ) ) { $base = (string) $value; foreach ( $key as $query_key => $query_value ) { $base = add_query_arg( (string) $query_key, (string) $query_value, $base ); } return $base; } $url = (string) $url; $separator = false === strpos( $url, '?' ) ? '?' : '&'; return $url . $separator . rawurlencode( (string) $key ) . '=' . rawurlencode( (string) $value ); }
 function get_user_meta( int $user_id, string $key, bool $single = false ) { return $GLOBALS['spdb_test_user_meta'][ $user_id ][ $key ] ?? ( $single ? '' : array() ); }
 function update_user_meta( int $user_id, string $key, $value, $previous_value = null ): bool { $current = get_user_meta( $user_id, $key, true ); if ( ! empty( $GLOBALS['spdb_test_force_meta_conflict'] ) ) { $GLOBALS['spdb_test_user_meta'][ $user_id ][ $key ] = array( 'concurrent_change' => true ); $GLOBALS['spdb_test_force_meta_conflict'] = false; return false; } if ( 4 === func_num_args() && $current !== $previous_value ) { return false; } $GLOBALS['spdb_test_user_meta'][ $user_id ][ $key ] = $value; return true; }
@@ -68,6 +72,7 @@ function update_option( string $key, $value, $autoload = null ): bool { $GLOBALS
 function remove_all_actions( string $hook ): void { unset( $GLOBALS['wp_filter'][ $hook ] ); }
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-provider-adapter.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-workspace-provider-adapter.php';
+require_once dirname( __DIR__ ) . '/includes/interface-spdb-review-calendar-provider-adapter.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-adapter-registry.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-membership-guard.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-capabilities.php';
@@ -80,6 +85,9 @@ require_once dirname( __DIR__ ) . '/includes/class-spdb-federated-inventory.php'
 require_once dirname( __DIR__ ) . '/includes/class-spdb-safe-destination.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-workspace-projection-validator.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-role-workspace-service.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-review-calendar-validator.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-review-calendar-service.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-review-calendar-rest-controller.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-dashboard-router.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-workspace-resolver.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-saved-views.php';
