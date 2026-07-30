@@ -1,6 +1,6 @@
 <?php
 /**
- * Build truthful Phase 23B overview data without fabricated publishing counts.
+ * Build truthful dashboard overview data without fabricated publishing counts.
  *
  * @package Sabri_Publishing_Dashboard
  */
@@ -74,7 +74,7 @@ final class SPDB_Overview_Service {
 				array(
 					'label' => __( 'Production Writes', 'sabri-publishing-dashboard' ),
 					'value' => __( 'Disabled', 'sabri-publishing-dashboard' ),
-					'note'  => __( 'Phase 23B safety boundary', 'sabri-publishing-dashboard' ),
+					'note'  => __( 'Phase 23C safety boundary', 'sabri-publishing-dashboard' ),
 				),
 			),
 			'alerts'       => $alerts,
