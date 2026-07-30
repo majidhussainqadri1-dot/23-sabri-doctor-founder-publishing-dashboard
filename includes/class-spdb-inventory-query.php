@@ -55,9 +55,9 @@ final class SPDB_Inventory_Query {
 			if ( is_wp_error( $raw ) ) {
 				return $raw;
 			}
-			$value = sanitize_key( $raw );
-			if ( '' !== $value && 1 !== preg_match( '/^[a-z0-9][a-z0-9_-]{0,63}$/', $value ) ) {
-				return self::error( 'spdb_inventory_filter_invalid', 'An inventory filter value is invalid.' );
+			$value = self::canonical_key( $raw, true );
+			if ( is_wp_error( $value ) ) {
+				return self::error( 'spdb_inventory_filter_invalid', 'An inventory filter value is invalid or was not already canonical.' );
 			}
 			$states[ $field ] = $value;
 		}
@@ -78,27 +78,27 @@ final class SPDB_Inventory_Query {
 		if ( is_wp_error( $sort_raw ) ) {
 			return $sort_raw;
 		}
-		$sort = sanitize_key( $sort_raw );
-		if ( ! in_array( $sort, array( 'modified_at', 'created_at', 'scheduled_at', 'published_at', 'title' ), true ) ) {
-			$sort = 'modified_at';
+		$sort = self::canonical_key( $sort_raw, false );
+		if ( is_wp_error( $sort ) || ! in_array( $sort, array( 'modified_at', 'created_at', 'scheduled_at', 'published_at', 'title' ), true ) ) {
+			return self::error( 'spdb_inventory_sort_invalid', 'The inventory sort value is invalid.' );
 		}
 
 		$direction_raw = self::scalar_string( $input['direction'] ?? 'desc', 'spdb_inventory_filter_invalid' );
 		if ( is_wp_error( $direction_raw ) ) {
 			return $direction_raw;
 		}
-		$direction = sanitize_key( $direction_raw );
-		if ( ! in_array( $direction, array( 'asc', 'desc' ), true ) ) {
-			$direction = 'desc';
+		$direction = self::canonical_key( $direction_raw, false );
+		if ( is_wp_error( $direction ) || ! in_array( $direction, array( 'asc', 'desc' ), true ) ) {
+			return self::error( 'spdb_inventory_direction_invalid', 'The inventory sort direction is invalid.' );
 		}
 
 		$scope_raw = self::scalar_string( $input['scope'] ?? 'own', 'spdb_inventory_filter_invalid' );
 		if ( is_wp_error( $scope_raw ) ) {
 			return $scope_raw;
 		}
-		$scope = sanitize_key( $scope_raw );
-		if ( ! in_array( $scope, array( 'own', 'institution' ), true ) ) {
-			$scope = 'own';
+		$scope = self::canonical_key( $scope_raw, false );
+		if ( is_wp_error( $scope ) || ! in_array( $scope, array( 'own', 'institution' ), true ) ) {
+			return self::error( 'spdb_inventory_scope_invalid', 'The inventory scope is invalid.' );
 		}
 
 		return array_merge(
@@ -120,6 +120,17 @@ final class SPDB_Inventory_Query {
 	}
 
 	/**
+	 * Return only client-safe normalized query fields.
+	 *
+	 * @param array<string,mixed> $query Internal normalized query.
+	 * @return array<string,mixed>
+	 */
+	public static function public_projection( array $query ): array {
+		$allowed = array( 'page', 'per_page', 'search', 'providers', 'object_types', 'date_from', 'date_to', 'sort', 'direction', 'scope', 'lifecycle_state', 'review_state', 'visibility_state', 'operational_state', 'language', 'topic' );
+		return array_intersect_key( $query, array_fill_keys( $allowed, true ) );
+	}
+
+	/**
 	 * @param mixed  $value Raw list value.
 	 * @param int    $limit Maximum entries.
 	 * @param string $label Error label.
@@ -129,7 +140,7 @@ final class SPDB_Inventory_Query {
 		if ( '' === $value || null === $value ) {
 			return array();
 		}
-		if ( is_object( $value ) ) {
+		if ( is_object( $value ) || is_resource( $value ) ) {
 			return self::error( 'spdb_inventory_' . $label . '_invalid', 'An inventory filter value has an invalid shape.' );
 		}
 
@@ -143,17 +154,14 @@ final class SPDB_Inventory_Query {
 			if ( is_array( $item ) || is_object( $item ) || is_resource( $item ) ) {
 				return self::error( 'spdb_inventory_' . $label . '_invalid', 'An inventory filter value has an invalid shape.' );
 			}
-			$key = sanitize_key( (string) $item );
-			if ( '' === $key ) {
-				continue;
-			}
-			if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9_-]{1,63}$/', $key ) ) {
-				return self::error( 'spdb_inventory_' . $label . '_invalid', 'An inventory filter key is not canonical.' );
+			$key = self::canonical_key( trim( (string) $item ), false );
+			if ( is_wp_error( $key ) ) {
+				return self::error( 'spdb_inventory_' . $label . '_invalid', 'An inventory filter key is not already canonical.' );
 			}
 			$clean[] = $key;
 		}
 
-		return array_values( array_unique( $clean ) );
+		return array_values( array_unique( array_filter( $clean, static fn( string $key ): bool => '' !== $key ) ) );
 	}
 
 	/**
@@ -173,6 +181,22 @@ final class SPDB_Inventory_Query {
 			return self::error( 'spdb_inventory_date_invalid', 'Inventory dates must use valid YYYY-MM-DD values.' );
 		}
 		return $value;
+	}
+
+	/**
+	 * @param string $raw Raw key.
+	 * @param bool   $allow_empty Whether an empty value is accepted.
+	 * @return string|WP_Error
+	 */
+	private static function canonical_key( string $raw, bool $allow_empty ) {
+		if ( '' === $raw && $allow_empty ) {
+			return '';
+		}
+		$sanitized = sanitize_key( $raw );
+		if ( $sanitized !== $raw || 1 !== preg_match( '/^[a-z0-9][a-z0-9_-]{0,63}$/', $raw ) ) {
+			return self::error( 'spdb_inventory_key_invalid', 'An inventory key is not canonical.' );
+		}
+		return $raw;
 	}
 
 	/**
