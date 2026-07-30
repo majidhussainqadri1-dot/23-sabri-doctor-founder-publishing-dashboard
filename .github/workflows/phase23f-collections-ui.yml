@@ -93,8 +93,25 @@ jobs:
           grep -q '\[dir="rtl"\]' assets/css/collections.css
           grep -q 'prefers-reduced-motion' assets/css/collections.css
           grep -q 'forced-colors' assets/css/collections.css
-          ! grep -Eqi 'method\s*=\s*["'"']post["'"']|WP_REST_Server::(CREATABLE|EDITABLE|DELETABLE)' templates/collections.php
-          ! grep -Eqi '<button[^>]+(?:delete|archive|reorder|publish|approve)' templates/collections.php
+          php <<'PHP'
+          <?php
+          $content = file_get_contents( 'templates/collections.php' );
+          if ( false === $content ) {
+              fwrite( STDERR, "Unable to read Collections template.\n" );
+              exit( 1 );
+          }
+          $patterns = array(
+              '/method\s*=\s*["\']post["\']/i',
+              '/WP_REST_Server::(?:CREATABLE|EDITABLE|DELETABLE)/i',
+              '/<button[^>]+(?:delete|archive|reorder|publish|approve)/i',
+          );
+          foreach ( $patterns as $pattern ) {
+              if ( preg_match( $pattern, $content ) ) {
+                  fwrite( STDERR, "A mutation control was detected in the read-only Collections template.\n" );
+                  exit( 1 );
+              }
+          }
+          PHP
 
       - name: Verify release and merge restrictions
         shell: bash
