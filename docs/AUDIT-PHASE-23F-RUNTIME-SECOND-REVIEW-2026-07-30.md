@@ -43,6 +43,24 @@ The corrected Phase 23F foundation at `062077d4813b99d797c85897a2f536e521208306`
 - Keep update, reorder, archive, REST mutation, production writes, and native-resolver injection disabled until their separate review gates.
 - Execute runtime and repository tests in every PHP 8.0–8.3 matrix job.
 
+## Corrective Re-review Findings
+
+After the eighteen findings were corrected and the first corrected matrix passed, the mandatory source re-review found two additional hardening defects before final acceptance:
+
+1. Repository rows were checked for owner visibility but were not projected through a complete output-field allowlist. A faulty or future repository implementation could therefore attach an unknown sensitive field to an otherwise valid row.
+2. Repository owner, version, creator, text, list, and timestamp values were not all normalized through strict canonical projection validators; permissive scalar coercion could conceal malformed stored values. In addition, full schema verification was hooked to every frontend `init`, creating unnecessary table/column/index inspection overhead on unrelated public requests.
+
+These re-review findings were corrected by:
+
+- rejecting every unknown collection or knowledge projection field;
+- returning newly constructed allowlisted projection arrays rather than raw repository rows;
+- strictly validating positive integer identifiers and versions;
+- revalidating projected text, Unicode bounds, sensitive-data patterns, lists, enums, timestamps, campaign semantics, native references, and replay markers;
+- adding explicit unknown-field and malformed-numeric regression tests;
+- moving schema upgrade verification from every frontend `init` to activation, `admin_init`, and repository-health checks.
+
+Because these were source changes after a green run, the earlier exact-head evidence was invalidated and the complete PHP 8.0–8.3 gate must run again.
+
 ## Next Coding Boundary
 
 After all findings are corrected and re-reviewed, the next coding slice may include:
