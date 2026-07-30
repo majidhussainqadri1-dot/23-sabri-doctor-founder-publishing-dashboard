@@ -44,6 +44,7 @@ final class SPDB_Saved_Views {
 					'id' => array(
 						'required'          => true,
 						'sanitize_callback' => 'sanitize_key',
+						'validate_callback' => array( $this, 'validate_view_id' ),
 					),
 				),
 			)
@@ -51,8 +52,14 @@ final class SPDB_Saved_Views {
 	}
 
 	/**
-	 * Restricted accounts may list their existing personal preferences, but the
-	 * workspace remains read-only.
+	 * @param mixed $value Candidate route value.
+	 */
+	public function validate_view_id( $value ): bool {
+		return is_string( $value ) && 1 === preg_match( '/^view_[a-z0-9]{32}$/', $value );
+	}
+
+	/**
+	 * Restricted accounts may list their existing personal preferences.
 	 *
 	 * @return true|WP_Error
 	 */
@@ -74,9 +81,7 @@ final class SPDB_Saved_Views {
 	}
 
 	/**
-	 * Personal preference mutation requires an approved or verified File 00
-	 * account. Pending, rejected, expired, appeal-review, and suspended accounts
-	 * remain strictly read-only.
+	 * Personal preference mutation requires an approved or verified account.
 	 *
 	 * @return true|WP_Error
 	 */
@@ -108,7 +113,8 @@ final class SPDB_Saved_Views {
 		}
 
 		$user_id = get_current_user_id();
-		$views   = $this->get_for_user( $user_id );
+		$raw     = get_user_meta( $user_id, self::META_KEY, true );
+		$views   = $this->normalize_stored_views( $raw );
 		if ( count( $views ) >= self::MAX_VIEWS ) {
 			return new WP_Error(
 				'spdb_saved_view_limit',
@@ -126,12 +132,9 @@ final class SPDB_Saved_Views {
 		);
 		$views[] = $view;
 
-		if ( ! update_user_meta( $user_id, self::META_KEY, $views ) ) {
-			return new WP_Error(
-				'spdb_saved_view_write_failed',
-				__( 'The saved view could not be stored.', 'sabri-publishing-dashboard' ),
-				array( 'status' => 500 )
-			);
+		$write = $this->compare_and_store( $user_id, $raw, $views );
+		if ( is_wp_error( $write ) ) {
+			return $write;
 		}
 
 		return new WP_REST_Response( $view, 201 );
@@ -139,13 +142,14 @@ final class SPDB_Saved_Views {
 
 	public function rest_delete( WP_REST_Request $request ) {
 		$user_id = get_current_user_id();
-		$id      = sanitize_key( (string) $request['id'] );
-		$views   = $this->get_for_user( $user_id );
+		$id      = (string) $request['id'];
+		$raw     = get_user_meta( $user_id, self::META_KEY, true );
+		$views   = $this->normalize_stored_views( $raw );
 		$kept    = array();
 		$deleted = false;
 
 		foreach ( $views as $view ) {
-			if ( isset( $view['id'] ) && hash_equals( (string) $view['id'], $id ) ) {
+			if ( hash_equals( (string) $view['id'], $id ) ) {
 				$deleted = true;
 				continue;
 			}
@@ -160,38 +164,42 @@ final class SPDB_Saved_Views {
 			);
 		}
 
-		if ( ! update_user_meta( $user_id, self::META_KEY, $kept ) ) {
-			return new WP_Error(
-				'spdb_saved_view_delete_failed',
-				__( 'The saved view could not be deleted.', 'sabri-publishing-dashboard' ),
-				array( 'status' => 500 )
-			);
+		$write = $this->compare_and_store( $user_id, $raw, $kept );
+		if ( is_wp_error( $write ) ) {
+			return $write;
 		}
 
 		return rest_ensure_response( array( 'deleted' => true, 'id' => $id ) );
 	}
 
 	/**
-	 * Read File 23-owned preferences through the same validation boundary used
-	 * for incoming requests. Direct database tampering must not bypass the
-	 * non-clinical allowlist when values are projected to the browser or REST.
-	 *
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function get_for_user( int $user_id ): array {
-		$views = get_user_meta( $user_id, self::META_KEY, true );
-		if ( ! is_array( $views ) ) {
+		if ( $user_id < 1 || $user_id !== get_current_user_id() ) {
+			return array();
+		}
+
+		return $this->normalize_stored_views( get_user_meta( $user_id, self::META_KEY, true ) );
+	}
+
+	/**
+	 * @param mixed $raw Stored user-meta value.
+	 * @return array<int,array<string,mixed>>
+	 */
+	private function normalize_stored_views( $raw ): array {
+		if ( ! is_array( $raw ) ) {
 			return array();
 		}
 
 		$validated = array();
-		foreach ( array_slice( $views, 0, self::MAX_VIEWS ) as $view ) {
+		foreach ( array_slice( $raw, 0, self::MAX_VIEWS ) as $view ) {
 			if ( ! is_array( $view ) || empty( $view['id'] ) || empty( $view['label'] ) || ! isset( $view['filters'] ) || ! is_array( $view['filters'] ) ) {
 				continue;
 			}
 
 			$id = sanitize_key( (string) $view['id'] );
-			if ( 1 !== preg_match( '/^view_[a-z0-9]{32}$/', $id ) ) {
+			if ( ! $this->validate_view_id( $id ) ) {
 				continue;
 			}
 
@@ -209,12 +217,41 @@ final class SPDB_Saved_Views {
 				'id'         => $id,
 				'label'      => $definition['label'],
 				'filters'    => $definition['filters'],
-				'created_at' => isset( $view['created_at'] ) ? sanitize_text_field( (string) $view['created_at'] ) : '',
-				'version'    => isset( $view['version'] ) ? max( 1, (int) $view['version'] ) : 1,
+				'created_at' => isset( $view['created_at'] ) && is_scalar( $view['created_at'] ) ? sanitize_text_field( (string) $view['created_at'] ) : '',
+				'version'    => isset( $view['version'] ) ? min( 2147483647, max( 1, (int) $view['version'] ) ) : 1,
 			);
 		}
 
 		return $validated;
+	}
+
+	/**
+	 * Compare-and-store prevents concurrent requests from silently overwriting
+	 * one another's saved-view changes.
+	 *
+	 * @param mixed                            $previous_raw Exact prior meta value.
+	 * @param array<int,array<string,mixed>> $new_value    Validated replacement.
+	 * @return true|WP_Error
+	 */
+	private function compare_and_store( int $user_id, $previous_raw, array $new_value ) {
+		if ( update_user_meta( $user_id, self::META_KEY, $new_value, $previous_raw ) ) {
+			return true;
+		}
+
+		$current = get_user_meta( $user_id, self::META_KEY, true );
+		if ( $current !== $previous_raw ) {
+			return new WP_Error(
+				'spdb_saved_view_conflict',
+				__( 'Saved views changed in another request. Refresh and try again.', 'sabri-publishing-dashboard' ),
+				array( 'status' => 409 )
+			);
+		}
+
+		return new WP_Error(
+			'spdb_saved_view_write_failed',
+			__( 'The saved-view change could not be stored.', 'sabri-publishing-dashboard' ),
+			array( 'status' => 500 )
+		);
 	}
 
 	/**
@@ -228,6 +265,10 @@ final class SPDB_Saved_Views {
 			return new WP_Error( 'spdb_invalid_saved_view', __( 'The saved-view payload is invalid.', 'sabri-publishing-dashboard' ) );
 		}
 
+		if ( isset( $input['label'] ) && ! is_scalar( $input['label'] ) ) {
+			return new WP_Error( 'spdb_invalid_saved_view_label', __( 'The saved-view label is invalid.', 'sabri-publishing-dashboard' ) );
+		}
+
 		$label        = isset( $input['label'] ) ? trim( sanitize_text_field( (string) $input['label'] ) ) : '';
 		$label_length = function_exists( 'mb_strlen' ) ? mb_strlen( $label ) : strlen( $label );
 		if ( '' === $label || $label_length > 80 ) {
@@ -238,7 +279,11 @@ final class SPDB_Saved_Views {
 			return new WP_Error( 'spdb_sensitive_saved_view_label', __( 'Saved-view labels must not contain contact details, URLs, or sensitive identifiers.', 'sabri-publishing-dashboard' ) );
 		}
 
-		$filters = isset( $input['filters'] ) && is_array( $input['filters'] ) ? $input['filters'] : array();
+		if ( isset( $input['filters'] ) && ! is_array( $input['filters'] ) ) {
+			return new WP_Error( 'spdb_invalid_saved_view_filter', __( 'Saved-view filters must be an object.', 'sabri-publishing-dashboard' ) );
+		}
+
+		$filters = $input['filters'] ?? array();
 		$allowed = array( 'status', 'type', 'provider', 'language', 'sort', 'direction', 'date_from', 'date_to' );
 		$multi   = array( 'status', 'type', 'provider', 'language' );
 		$clean   = array();
@@ -256,6 +301,9 @@ final class SPDB_Saved_Views {
 
 				$values = array();
 				foreach ( $value as $entry ) {
+					if ( ! is_scalar( $entry ) && null !== $entry ) {
+						return new WP_Error( 'spdb_invalid_saved_view_filter', __( 'A saved-view filter contains a non-scalar value.', 'sabri-publishing-dashboard' ) );
+					}
 					$normalized = self::normalize_filter_value( $key, $entry );
 					if ( is_wp_error( $normalized ) ) {
 						return $normalized;
@@ -267,6 +315,10 @@ final class SPDB_Saved_Views {
 					$clean[ $key ] = $values;
 				}
 				continue;
+			}
+
+			if ( ! is_scalar( $value ) && null !== $value ) {
+				return new WP_Error( 'spdb_invalid_saved_view_filter', __( 'A saved-view filter contains a non-scalar value.', 'sabri-publishing-dashboard' ) );
 			}
 
 			$normalized = self::normalize_filter_value( $key, $value );
@@ -291,8 +343,6 @@ final class SPDB_Saved_Views {
 			return '';
 		}
 
-		// ISO dates contain enough digits and separators to resemble a phone
-		// number. Validate them before the generic sensitive-number detector.
 		if ( in_array( $key, array( 'date_from', 'date_to' ), true ) ) {
 			if ( 1 !== preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $value, $parts ) || ! checkdate( (int) $parts[2], (int) $parts[3], (int) $parts[1] ) ) {
 				return new WP_Error( 'spdb_invalid_saved_view_date', __( 'The saved-view date must use a valid YYYY-MM-DD value.', 'sabri-publishing-dashboard' ) );
