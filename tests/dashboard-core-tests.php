@@ -77,6 +77,33 @@ $GLOBALS['spdb_test_query_vars'] = array();
 $invalid = SPDB_Saved_Views::normalize_definition( array( 'label' => '' ) );
 spdb_core_assert( 'spdb_invalid_saved_view_label' === spdb_core_error_code( $invalid ), 'Blank saved-view labels must be rejected.' );
 
+$sensitive_label = SPDB_Saved_Views::normalize_definition( array( 'label' => 'Patient patient@example.com' ) );
+spdb_core_assert( 'spdb_sensitive_saved_view_label' === spdb_core_error_code( $sensitive_label ), 'Contact details must be rejected from saved-view labels.' );
+
+$invalid_sort = SPDB_Saved_Views::normalize_definition(
+	array(
+		'label'   => 'Invalid sort',
+		'filters' => array( 'sort' => 'delete-everything' ),
+	)
+);
+spdb_core_assert( 'spdb_invalid_saved_view_sort' === spdb_core_error_code( $invalid_sort ), 'Unregistered sort values must be rejected.' );
+
+$invalid_date = SPDB_Saved_Views::normalize_definition(
+	array(
+		'label'   => 'Invalid date',
+		'filters' => array( 'date_from' => '2026-02-31' ),
+	)
+);
+spdb_core_assert( 'spdb_invalid_saved_view_date' === spdb_core_error_code( $invalid_date ), 'Impossible saved-view dates must be rejected.' );
+
+$sensitive_filter = SPDB_Saved_Views::normalize_definition(
+	array(
+		'label'   => 'Private filter',
+		'filters' => array( 'provider' => 'https://example.test/private?token=secret' ),
+	)
+);
+spdb_core_assert( 'spdb_sensitive_saved_view_filter' === spdb_core_error_code( $sensitive_filter ), 'URLs and tokens must not enter saved-view filters.' );
+
 $normalized = SPDB_Saved_Views::normalize_definition(
 	array(
 		'label'   => 'Scheduled articles',
@@ -85,6 +112,8 @@ $normalized = SPDB_Saved_Views::normalize_definition(
 			'provider'   => 'file21',
 			'patient_id' => 'must-not-persist',
 			'unknown'    => 'ignored',
+			'date_from'  => '2026-07-01',
+			'direction'  => 'desc',
 		),
 	)
 );
@@ -92,6 +121,8 @@ spdb_core_assert( is_array( $normalized ), 'Valid saved-view definition must nor
 spdb_core_assert( ! isset( $normalized['filters']['patient_id'] ), 'Patient identifiers must not enter saved-view storage.' );
 spdb_core_assert( ! isset( $normalized['filters']['unknown'] ), 'Unregistered filter keys must be discarded.' );
 spdb_core_assert( 'scheduled' === $normalized['filters']['status'], 'Allowlisted operational filters must be retained.' );
+spdb_core_assert( '2026-07-01' === $normalized['filters']['date_from'], 'Valid ISO dates must be retained.' );
+spdb_core_assert( 'desc' === $normalized['filters']['direction'], 'Allowlisted sort direction must be retained.' );
 
 $GLOBALS['spdb_test_user_meta'][7]['spdb_saved_views_v1'] = array(
 	array(
