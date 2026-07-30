@@ -9,12 +9,12 @@
 - Parent branch: `phase/23a-governance-contracts`
 - Parent pull request: Draft PR #1, reviewed technically, unmerged
 - Phase 23B pull request: Draft PR #2, open and unmerged
-- Plugin version: `0.2.0`
+- Plugin version: `0.2.1`
 - Adapter contract: `2.0.0`
 - Production readiness: Not ready
 - Staging readiness: Not ready
-- Merge readiness: Blocked pending exact-head QA, WordPress staging acceptance, accessibility acceptance, and Founder acceptance
-- Technical status: Source review, defect correction, and corrective re-review completed; final exact-head automated evidence pending
+- Merge readiness: Blocked pending second-review exact-head QA, WordPress staging acceptance, accessibility acceptance, and Founder acceptance
+- Technical status: Second independent source review completed and all newly discovered source defects corrected; exact-current-head rerun pending
 
 ## Why Phase 23B Is Stacked
 
@@ -24,49 +24,55 @@ The Founder authorized continued construction while preserving the permanent rul
 
 - [x] Protected `/publishing-dashboard/` route
 - [x] Upgrade-safe rewrite registration
-- [x] Authentication and File 00 capability gate
-- [x] Founder, trusted-doctor, doctor, restricted, denied, and dependency-failure workspace resolution
-- [x] Current-user binding for workspace authority and status privacy
-- [x] Private no-store/noindex route and shortcode response headers
-- [x] Private no-store policy for `/spdb/v1` REST responses
-- [x] Responsive accessible dashboard shell
+- [x] Authentication and File 00 account-state gate
+- [x] Activation/upgrade reconciliation of File 23 capabilities on existing File 00 roles
+- [x] Founder, trusted-doctor, doctor, reviewer, moderator, restricted, denied, and dependency-failure boundaries
+- [x] Current-user binding for workspace authority, saved views, and status privacy
+- [x] Private no-store/noindex route and directly protected shortcode response policy
+- [x] Cache-plugin `DONOTCACHEPAGE` interoperability marker
+- [x] Private no-store policy for successful and error `/spdb/v1` REST responses
+- [x] Responsive accessible dashboard shell with unique render IDs
 - [x] Truthful overview without fabricated publishing counts
-- [x] Provider-readiness projection
+- [x] Provider-readiness projection and isolated provider registration callbacks
 - [x] Non-sensitive system-state projection
 - [x] Personal bounded saved views
 - [x] Separate saved-view read and approved-account write permissions
 - [x] Typed write-time and read-time saved-view validation
+- [x] Exact ID validation and concurrent-update conflict protection
 - [x] Patient-sensitive key, URL, email, phone-pattern, and invalid-date exclusion
-- [x] JavaScript first-view, empty-state, create, and delete behavior
-- [x] Phase 23B executable tests added
-- [x] CI requirements extended to PHP 8.0–8.3, JavaScript syntax, REST privacy, and architecture checks
+- [x] Multi-instance JavaScript create/delete behavior and persistent empty state
+- [x] Visible skip-target focus correction
+- [x] Exact-head CI checkout verification and retained QA artifacts
+- [x] Phase 23B executable tests extended for the second corrective review
 
 ## Phase 23B Review and Acceptance Gates
 
-- [x] Independent source review completed
-- [x] Defects documented
-- [x] All discovered source defects corrected
+- [x] First independent source review completed
+- [x] First review defects documented and corrected
+- [x] Second independent source review completed
+- [x] Second review defects documented
+- [x] All newly discovered source defects corrected
 - [x] Corrective source re-review completed
 - [ ] Exact-current-head PHP 8.0–8.3 checks green
-- [ ] Dashboard-core and REST privacy tests green on exact current head
+- [ ] Contract, dashboard-core, REST privacy, capability-installer, and provider-isolation tests green
 - [ ] Architecture boundary guard green on exact current head
+- [ ] Exact-head QA artifacts retained
 - [ ] Protected route tested on WordPress staging
 - [ ] Private cache and indexing headers verified through the staging cache stack
 - [ ] Founder workspace verified with a real Founder account
-- [ ] Verified-doctor workspace verified with a real doctor account
+- [ ] Verified and non-verified doctor workspaces verified with real accounts
 - [ ] Pending and suspended read-only workspaces verified
 - [ ] Mobile and accessibility acceptance completed
 - [ ] Founder review completed
 - [ ] Founder acceptance recorded
 - [ ] Pull request ready for merge
 
-## Corrective Review Record
+## Corrective Review Records
 
-The Phase 23B source audit is recorded in:
+- First audit: `docs/AUDIT-PHASE-23B-2026-07-30.md`
+- Second audit: `docs/AUDIT-PHASE-23B-SECOND-REVIEW-2026-07-30.md`
 
-`docs/AUDIT-PHASE-23B-2026-07-30.md`
-
-The audit records route-header timing, shortcode privacy and asset timing, restricted mutation, read-time validation, deletion persistence, first-view JavaScript, cross-user status privacy, typed filter validation, date handling, REST cache policy, rewrite upgrades, asset registration, and regression-test defects and corrections.
+The second audit records the real File 00 capability-integration gap, synthetic merge-ref CI evidence, provider callback isolation, REST error privacy, indirect shortcode protection, cache-plugin interoperability, saved-view route validation, nested values, concurrency, cross-user projection, persistent empty states, duplicate render IDs, focus visibility, and retained evidence artifacts.
 
 ## Phase 23A Baseline
 
@@ -100,4 +106,4 @@ Its PR remains Draft and unmerged until the applicable acceptance is explicitly 
 
 ## Next Technical Step
 
-Run the complete workflow on the exact current head. After it is green, record the exact SHA and workflow run in Draft PR #2. Then perform the outstanding Hostinger WordPress staging, role, cache-header, responsive, accessibility, and Founder acceptance tests. Both PRs remain unmerged.
+Run the complete workflow on the exact current head. After it is green, record the exact SHA, workflow run, and artifacts in Draft PR #2. Then perform the outstanding Hostinger WordPress staging, role, cache-header, responsive, accessibility, rollback, and Founder acceptance tests. Both PRs remain unmerged.
