@@ -57,7 +57,7 @@ jobs:
             docs/AUDIT-2026-07-30.md docs/AUDIT-PHASE-23B-2026-07-30.md
             docs/AUDIT-PHASE-23B-SECOND-REVIEW-2026-07-30.md docs/AUDIT-PHASE-23C-2026-07-30.md
             docs/AUDIT-PHASE-23D-2026-07-30.md docs/ROLE-WORKSPACES.md docs/PHASE-23D-REVIEW-GATE.md
-            docs/REVIEW-CALENDAR.md docs/PHASE-23E-REVIEW-GATE.md
+            docs/AUDIT-PHASE-23E-2026-07-30.md docs/REVIEW-CALENDAR.md docs/PHASE-23E-REVIEW-GATE.md
             includes/interface-spdb-provider-adapter.php includes/interface-spdb-workspace-provider-adapter.php
             includes/interface-spdb-review-calendar-provider-adapter.php
             includes/class-spdb-adapter-registry.php includes/class-spdb-membership-guard.php
@@ -105,27 +105,32 @@ jobs:
         run: php tests/inventory-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
       - name: Run corrective role-workspace tests
         run: php tests/workspace-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run initial review and calendar tests
+      - name: Run corrective review and calendar tests
         run: php tests/review-calendar-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
       - name: Run architecture boundary guard
         run: php tests/architecture-guard.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
 
-      - name: Verify Phase 23E controls
+      - name: Verify corrective Phase 23E controls
         shell: bash
         run: |
           set -euo pipefail
           grep -q "SPDB_Review_Calendar_Provider_Adapter" includes/interface-spdb-review-calendar-provider-adapter.php
-          grep -q "get_review_queue" includes/interface-spdb-review-calendar-provider-adapter.php
-          grep -q "get_calendar_entries" includes/interface-spdb-review-calendar-provider-adapter.php
+          grep -q "normalize_query" includes/class-spdb-review-calendar-validator.php
+          grep -q "operation_contract" includes/class-spdb-review-calendar-validator.php
+          grep -q "MAX_REPORTED_TOTAL" includes/class-spdb-review-calendar-validator.php
+          grep -q "normalize_utc_timestamp" includes/class-spdb-review-calendar-validator.php
+          grep -q "authorize_operation" includes/class-spdb-review-calendar-service.php
+          grep -q "reviewer_target_is_eligible" includes/class-spdb-review-calendar-service.php
+          grep -q "provider_query" includes/class-spdb-review-calendar-service.php
+          grep -q "accessible_total" includes/class-spdb-review-calendar-service.php
           grep -q "is_environment_write_eligible" includes/class-spdb-review-calendar-service.php
-          grep -q "get_allowed_operations" includes/class-spdb-review-calendar-service.php
-          grep -q "separation_required" includes/class-spdb-review-calendar-service.php
-          grep -q "native_timezone" includes/class-spdb-review-calendar-validator.php
-          grep -q "strict_nonnegative_integer" includes/class-spdb-review-calendar-validator.php
+          grep -q "valid_rest_nonce" includes/class-spdb-review-calendar-rest-controller.php
+          grep -q "spdb_operation_payload_field_invalid" includes/class-spdb-review-calendar-rest-controller.php
+          grep -q "spdb_native_confirmation_invalid" includes/class-spdb-review-calendar-rest-controller.php
           grep -q "native_refetched" includes/class-spdb-review-calendar-rest-controller.php
-          grep -q "idempotency_key" includes/class-spdb-review-calendar-rest-controller.php
-          grep -q "object_version" includes/class-spdb-review-calendar-rest-controller.php
-          grep -q "audit_reason" includes/class-spdb-review-calendar-rest-controller.php
+          grep -q "Accessible validated window" templates/review.php
+          grep -q "Accessible validated window" templates/calendar.php
+          grep -q "spdb-pagination" assets/css/review-calendar.css
           grep -q "route_url( 'review'" includes/class-spdb-workspace-resolver.php
           grep -q "route_url( 'calendar'" includes/class-spdb-workspace-resolver.php
           ! grep -Eq '<form\b|<button\b' templates/review.php
@@ -135,10 +140,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "Version:[[:space:]]*0.5.0" sabri-publishing-dashboard.php
-          grep -q "Stable tag: 0.5.0" readme.txt
-          grep -q "SPDB_VERSION.*0.5.0" sabri-publishing-dashboard.php
-          grep -q "SPDB_VERSION.*0.5.0" tests/bootstrap.php
+          grep -q "Version:[[:space:]]*0.5.1" sabri-publishing-dashboard.php
+          grep -q "Stable tag: 0.5.1" readme.txt
+          grep -q "SPDB_VERSION.*0.5.1" sabri-publishing-dashboard.php
+          grep -q "SPDB_VERSION.*0.5.1" tests/bootstrap.php
           grep -q "SPDB_CONTRACT_VERSION.*2.0.0" sabri-publishing-dashboard.php
           grep -q "'phase'[[:space:]]*=>[[:space:]]*'23E'" includes/class-spdb-system-state.php
 
@@ -146,9 +151,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23D-2026-07-30.md
-          grep -qi "DO NOT MERGE" docs/PHASE-23E-REVIEW-GATE.md
-          grep -qi "Independent review" docs/PHASE-23E-REVIEW-GATE.md
+          grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23E-2026-07-30.md
+          grep -qi "twenty-four" docs/AUDIT-PHASE-23E-2026-07-30.md
+          grep -qi "Corrective source re-review completed" docs/PHASE-23E-REVIEW-GATE.md
           grep -qi "Founder review completed" STATUS.md
           grep -qi "No Merge before Completed Review" DECISION-LOG.md
 
@@ -163,7 +168,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-23e-initial-qa-php-${{ matrix.php }}-${{ github.run_id }}
+          name: phase-23e-corrective-qa-php-${{ matrix.php }}-${{ github.run_id }}
           path: qa-evidence/
           if-no-files-found: error
           retention-days: 30
