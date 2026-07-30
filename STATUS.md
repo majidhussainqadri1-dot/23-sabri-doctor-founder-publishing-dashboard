@@ -12,7 +12,7 @@
 - Production readiness: Not ready
 - Staging readiness: Not ready
 - Merge readiness: Blocked pending Founder acceptance
-- Technical status: Review complete; discovered defects corrected; corrective re-review complete; exact current-head PHP 8.0–8.3 checks green
+- Technical status: Review complete; discovered defects corrected; corrective re-review complete; current-head PHP 8.0–8.3 checks are mandatory
 
 ## Phase 23A Acceptance Gates
 
@@ -40,27 +40,23 @@
 - [x] Executable contract tests committed
 - [x] Architecture boundary guard committed
 - [x] PHP 8.0–8.3 CI matrix committed
-- [x] Exact current-head automated checks green
 - [x] Corrective re-review completed
+- [x] Exact current-head checks must be green before merge consideration
 - [ ] Founder review completed
 - [ ] Founder acceptance recorded
 
-## Corrective Evidence
+## Corrective Evidence Rule
 
-- Final reviewed head: `deae730c1a2a61898945ef796c66e1be0b821045`
-- GitHub Actions workflow: Baseline Integrity
-- Final evidence run: #84
-- PHP 8.0: success
-- PHP 8.1: success
-- PHP 8.2: success
-- PHP 8.3: success
-- PHP syntax: success
-- Executable contract tests: success
-- Architecture boundary guard: success
-- Version/contract alignment: success
-- Audit and merge-gate verification: success
+The authoritative exact-head commit SHA and GitHub Actions run are recorded in Draft PR #1 after the final run. The required workflow is **Baseline Integrity**, and every PHP 8.0, 8.1, 8.2, and 8.3 matrix job must pass:
 
-Any later branch commit invalidates this exact-head evidence and requires another review and complete rerun before merge consideration.
+- required-file verification;
+- PHP syntax;
+- executable contract tests;
+- architecture boundary guard;
+- version/contract alignment;
+- audit and merge-gate verification.
+
+Any later branch commit invalidates previous exact-head evidence and requires another review and complete rerun before merge consideration.
 
 ## Non-Negotiable Restrictions
 
