@@ -62,6 +62,13 @@ final class SPDB_Workspace_Resolver {
 			),
 		);
 
+		if ( SPDB_Capabilities::current_user_can( 'spdb_view_own_content' ) ) {
+			$items['inventory'] = array(
+				'label' => __( 'Content Inventory', 'sabri-publishing-dashboard' ),
+				'url'   => SPDB_Dashboard_Router::route_url( 'inventory' ),
+			);
+		}
+
 		if ( 'denied' !== $workspace['key'] && 'dependency_unavailable' !== $workspace['key'] ) {
 			$items['saved-views'] = array(
 				'label' => __( 'Saved Views', 'sabri-publishing-dashboard' ),
