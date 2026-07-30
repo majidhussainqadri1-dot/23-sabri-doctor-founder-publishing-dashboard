@@ -71,18 +71,30 @@
 
 **Decision:** Native provider authorization remains mandatory, but File 23 also requires a validated `owner_user_id`, independently enforces own versus Founder institution scope, and revalidates every returned item against normalized filters before rendering or inspection.
 
-**Reason:** A provider defect, stale adapter, or ignored query must not become a cross-doctor IDOR or a widened dashboard result.
-
-**Test impact:** Cross-owner list and inspector denial, Founder institution access, and provider-filter mismatch tests are mandatory.
-
 ## 2026-07-30 — D-018 — Bounded Pagination Must Be Truthful
 
 **Decision:** File 23 distinguishes native reported total, accessible total within the 200-item safety window, and validated-window count. Pagination must never imply that results outside the retrieved safety window are reachable.
-
-**Reason:** A full native total is informative, but it is not evidence that File 23 has fetched, validated, sorted, or can page through every object.
 
 ## 2026-07-30 — D-019 — Strict Runtime URL and Timestamp Contract
 
 **Decision:** Inventory timestamps require absolute RFC 3339. Canonical, thumbnail, edit, preview, and public URLs require exact same origin, no credentials, no fragment, and no secret-bearing or nested-redirect query data.
 
-**Reason:** Relative dates create unstable ordering, while fragments, external thumbnails, signed links, and redirects can leak private dashboard context or bypass destination boundaries.
+## 2026-07-30 — D-020 — Role Workspaces Are Native Projections
+
+**Decision:** Founder and Doctor workspaces render validated native cards, policy, profile, knowledge, activity, alerts, and safe destinations. File 23 does not import or become the master owner of those records.
+
+**Reason:** Role-specific operations require a unified command center without creating parallel publication, profile, knowledge, or activity backends.
+
+## 2026-07-30 — D-021 — Official Publishing Is Founder-Only
+
+**Decision:** `official_create` destinations require server-verified Founder identity in addition to current capability, approved account state, safe destination, environment, and File 23-controlled adapter acceptance. A Doctor or trusted Doctor cannot obtain official-publishing authority from a provider label or browser parameter.
+
+## 2026-07-30 — D-022 — Workspace Launch Actions Are Gated Native Destinations
+
+**Decision:** Phase 23D may display a safe native launch destination but does not execute native mutation from the workspace. Mutating destinations are hidden unless all current authority and adapter-acceptance gates pass.
+
+**Reason:** File 22 and the native providers remain responsible for creation and publication execution, while File 23 supplies role-aware orchestration and oversight.
+
+## 2026-07-30 — D-023 — Missing Workspace Data Must Remain Unavailable
+
+**Decision:** Measured cards require numeric native values and absolute source timestamps. Missing profile, knowledge, activity, or count data is shown as unavailable; File 23 does not estimate or fabricate operational numbers.
