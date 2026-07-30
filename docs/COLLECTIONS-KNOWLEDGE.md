@@ -9,10 +9,13 @@ Persistent collection and knowledge metadata may contain only:
 - provider key;
 - native object type;
 - native object identifier;
+- observed native version;
 - relationship type;
 - bounded ordering, scope, contributor, target, and schedule metadata;
 - current File 23 metadata version;
-- actor-scoped idempotency hash and canonical-reference hash;
+- actor-scoped idempotency hash and canonical request fingerprint;
+- canonical-reference or relation hash;
+- bounded created/last audit reason;
 - created, updated, and archived timestamps.
 
 File 23 does **not** persist native edit, preview, public, signed, expiring, or patient-document destinations. A destination is freshly re-resolved from the native owner and safety-validated only when an authorized current request needs it.
@@ -27,13 +30,15 @@ Phase 23F declares exactly three narrowly bounded metadata domains:
 2. `spdb_collection_items` — canonical references that place native objects inside a collection;
 3. `spdb_knowledge_links` — typed relationships between native objects.
 
-These tables are organizational indexes, not replacement content, reporting, workflow, or analytics repositories. Schema version `2` removes the initial candidate’s progress, results, report URL, and persisted destination fields. Installation is accepted only after WordPress verifies that all three tables exist.
+These tables are organizational indexes, not replacement content, reporting, workflow, or analytics repositories. Schema Version `3` verifies all required tables, columns, and indexes before the repository reports readiness. It persists request fingerprints, bounded audit reasons, and observed native versions while continuing to exclude native destinations and parallel result/report fields.
 
 ## Collections
 
 An own-scope collection belongs to the current approved user and requires `spdb_manage_own_content`. It cannot delegate contributors. An institution-scope collection is Founder-governed and requires `spdb_manage_campaigns`.
 
 A collection may group canonical references from News, Learning, Encyclopedia, Research, Video, Reels, PDF Library, Clinical Cases, Remedy Archive, Disease Archive, Profiles, and Search. Archiving a collection or item changes File 23 metadata only; it never deletes, edits, unpublishes, or reclassifies a native object.
+
+The current concrete repository implements verified collection reads and idempotent collection creation. Collection update, archive, item creation, reorder, update, and archive remain explicitly disabled until their separate review gates are complete.
 
 ## Campaigns
 
@@ -56,24 +61,32 @@ A knowledge link connects two distinct canonical native objects through an allow
 
 Own-scope links require current approved-account and own-content management authority. Institution-scope links require current Founder identity and campaign-management capability. Self-links, malformed references, unknown relations, duplicate canonical values, and sensitive free text fail closed.
 
-A native-reference resolver must freshly confirm exact provider/type/ID, existence, visibility, current permission to reference, current owner, and native version. An optional destination may be returned for the current request only after exact-origin safety validation; it is not persisted.
+A native-reference resolver must freshly confirm exact provider/type/ID, exact authorized scope, existence, visibility, current permission to reference, current owner, and native version. An optional destination may be returned for the current request only after exact-origin safety validation; it is not persisted.
+
+The concrete repository implements verified knowledge-link reads and idempotent knowledge-link persistence, but runtime creation remains unavailable until a reviewed native resolver is injected. Knowledge-link update and archive remain disabled.
 
 ## Runtime State
 
-The next coding stage has begun with:
+The corrected runtime now includes:
 
-- `SPDB_Native_Reference_Resolver`;
+- `SPDB_Native_Reference_Resolver` contract;
 - `SPDB_Collections_Service`;
-- truthful repository/resolver health;
+- `SPDB_WP_Collections_Repository`;
+- separate read, collection-write, and knowledge-write readiness;
+- verified tables, columns, and indexes;
 - bounded read-query normalization;
-- current-user visibility checks;
+- approved-current-account read authority;
+- fail-closed institution scope;
+- repository-envelope and projected-row IDOR validation;
+- exact replay and same-key/different-payload conflict handling;
 - contributor eligibility rechecks;
-- development/staging-only write enablement.
+- native owner, version, visibility, and permission validation;
+- development/staging-only write configuration.
 
-The default plugin runtime injects neither a concrete repository nor a concrete resolver. `SPDB_PHASE23F_WRITES_ENABLED` is false unless explicitly defined, and production is denied even when the constant is defined. No Phase 23F mutation REST route exists.
+The default plugin runtime injects the concrete repository for verified server-side reads but does not inject a native resolver. `SPDB_PHASE23F_WRITES_ENABLED` is false unless explicitly defined, and production is denied even when the constant is defined. No Phase 23F mutation REST route exists.
 
 ## Privacy and Failure Semantics
 
 Free-text metadata rejects markup, URLs, email addresses, Pakistani mobile numbers, CNIC-like identifiers, control characters, and excessive Unicode character length. Patient-identifying and clinical content remains with its protected native owner.
 
-Missing repositories, resolvers, providers, permissions, or native objects produce explicit unavailable, forbidden, or not-found states. File 23 must never fabricate native titles, counts, destinations, relationships, persistence success, or authorization.
+Missing or unhealthy schemas, repositories, resolvers, providers, permissions, native objects, malformed repository envelopes, cross-user records, and idempotency payload conflicts produce explicit unavailable, forbidden, not-found, or conflict states. File 23 must never fabricate native titles, counts, destinations, relationships, persistence success, or authorization.
