@@ -33,7 +33,13 @@ final class SPDB_Operation_Broker {
 			return new WP_Error( 'spdb_invalid_operation_route', __( 'The provider or operation route is invalid.', 'sabri-publishing-dashboard' ) );
 		}
 
-		if ( ! SPDB_Adapter_Registry::is_canonical_key( $object_type ) || '' === trim( $object_id ) || strlen( $object_id ) > 191 ) {
+		if (
+			! SPDB_Adapter_Registry::is_canonical_key( $object_type )
+			|| '' === $object_id
+			|| trim( $object_id ) !== $object_id
+			|| strlen( $object_id ) > 191
+			|| preg_match( '/[\x00-\x1F\x7F]/', $object_id )
+		) {
 			return new WP_Error( 'spdb_invalid_object_reference', __( 'The native object reference is invalid.', 'sabri-publishing-dashboard' ) );
 		}
 
@@ -72,11 +78,16 @@ final class SPDB_Operation_Broker {
 			return new WP_Error( 'spdb_idempotency_key_required', __( 'A valid idempotency key is required.', 'sabri-publishing-dashboard' ) );
 		}
 
-		if ( $definition['requires_audit_reason'] && strlen( trim( (string) ( $payload['audit_reason'] ?? '' ) ) ) < 10 ) {
+		$audit_reason = trim( (string) ( $payload['audit_reason'] ?? '' ) );
+		if ( '' !== $audit_reason && ( strlen( $audit_reason ) > 500 || preg_match( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $audit_reason ) ) ) {
+			return new WP_Error( 'spdb_invalid_audit_reason', __( 'The audit reason is invalid or too long.', 'sabri-publishing-dashboard' ) );
+		}
+
+		if ( $definition['requires_audit_reason'] && strlen( $audit_reason ) < 10 ) {
 			return new WP_Error( 'spdb_audit_reason_required', __( 'A meaningful audit reason is required.', 'sabri-publishing-dashboard' ) );
 		}
 
-		foreach ( array( 'provider_key', 'author_id', 'role', 'status', 'capability' ) as $reserved_key ) {
+		foreach ( array( 'provider_key', 'author_id', 'role', 'status', 'capability', 'environment', 'acceptance_state' ) as $reserved_key ) {
 			if ( array_key_exists( $reserved_key, $payload ) ) {
 				return new WP_Error( 'spdb_reserved_payload_field', __( 'The payload contains a reserved authority field.', 'sabri-publishing-dashboard' ) );
 			}
