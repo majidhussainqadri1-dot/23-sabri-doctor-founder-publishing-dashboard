@@ -1,6 +1,6 @@
 <?php
 /**
- * Phase 23F policy and validation boundary for cross-module metadata.
+ * Phase 23F policy boundary for cross-module collection and knowledge metadata.
  *
  * @package Sabri_Publishing_Dashboard
  */
@@ -8,12 +8,6 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Collections_Policy {
-	public const MAX_TITLE          = 200;
-	public const MAX_OBJECTIVE      = 1000;
-	public const MAX_ETHICS         = 1000;
-	public const MAX_CONTRIBUTORS   = 25;
-	public const MAX_SURFACES       = 20;
-
 	/** @return string[] */
 	public static function record_types(): array {
 		return array( 'collection', 'campaign' );
@@ -50,7 +44,7 @@ final class SPDB_Collections_Policy {
 
 	/**
 	 * Validate File 23-owned collection/campaign metadata only.
-	 * Native publication bodies and native workflow state are never accepted.
+	 * Publication bodies and native workflow state are deliberately forbidden.
 	 *
 	 * @return array<string,mixed>|WP_Error
 	 */
@@ -64,31 +58,31 @@ final class SPDB_Collections_Policy {
 			return self::error( 'spdb_collection_field_forbidden', 'The collection payload contains a field that File 23 does not own.' );
 		}
 
-		$type   = self::enum( $input['record_type'] ?? '', self::record_types(), 'spdb_collection_type_invalid' );
-		$scope  = self::enum( $input['scope'] ?? 'own', self::scopes(), 'spdb_collection_scope_invalid' );
-		$status = self::enum( $input['status'] ?? 'draft', self::statuses(), 'spdb_collection_status_invalid' );
-		$title  = self::plain_text( $input['title'] ?? '', self::MAX_TITLE, false, 'spdb_collection_title_invalid' );
-		$objective = self::plain_text( $input['objective'] ?? '', self::MAX_OBJECTIVE, true, 'spdb_collection_objective_invalid' );
-		$ethics = self::plain_text( $input['ethical_declaration'] ?? '', self::MAX_ETHICS, true, 'spdb_collection_ethics_invalid' );
+		$type   = self::enum_value( $input['record_type'] ?? '', self::record_types(), 'spdb_collection_type_invalid' );
+		$scope  = self::enum_value( $input['scope'] ?? 'own', self::scopes(), 'spdb_collection_scope_invalid' );
+		$status = self::enum_value( $input['status'] ?? 'draft', self::statuses(), 'spdb_collection_status_invalid' );
+		$title  = self::plain_text( $input['title'] ?? '', 200, false, 'spdb_collection_title_invalid' );
+		$objective = self::plain_text( $input['objective'] ?? '', 1000, true, 'spdb_collection_objective_invalid' );
+		$ethics = self::plain_text( $input['ethical_declaration'] ?? '', 1000, true, 'spdb_collection_ethics_invalid' );
+		$audit  = self::plain_text( $input['audit_reason'] ?? '', 500, false, 'spdb_collection_audit_reason_invalid' );
 		$idempotency = self::idempotency_key( $input['idempotency_key'] ?? '' );
-		$audit_reason = self::plain_text( $input['audit_reason'] ?? '', 500, false, 'spdb_collection_audit_reason_invalid' );
-		foreach ( array( $type, $scope, $status, $title, $objective, $ethics, $idempotency, $audit_reason ) as $value ) {
+		foreach ( array( $type, $scope, $status, $title, $objective, $ethics, $audit, $idempotency ) as $value ) {
 			if ( is_wp_error( $value ) ) {
 				return $value;
 			}
 		}
-		if ( strlen( $audit_reason ) < 10 ) {
+		if ( strlen( $audit ) < 10 ) {
 			return self::error( 'spdb_collection_audit_reason_invalid', 'A meaningful audit reason is required.' );
 		}
 
-		$contributors = self::positive_integer_list( $input['contributors'] ?? array() );
-		$surfaces     = self::canonical_list( $input['target_surfaces'] ?? array(), self::target_surfaces(), self::MAX_SURFACES, 'spdb_collection_surfaces_invalid' );
+		$contributors = self::positive_integer_list( $input['contributors'] ?? array(), 25, 'spdb_collection_contributors_invalid' );
+		$surfaces = self::canonical_list( $input['target_surfaces'] ?? array(), self::target_surfaces(), 20, 'spdb_collection_surfaces_invalid' );
 		if ( is_wp_error( $contributors ) || is_wp_error( $surfaces ) ) {
 			return is_wp_error( $contributors ) ? $contributors : $surfaces;
 		}
 
-		$start = self::utc_timestamp( $input['start_at_gmt'] ?? '', true );
-		$end   = self::utc_timestamp( $input['end_at_gmt'] ?? '', true );
+		$start = self::utc_timestamp( $input['start_at_gmt'] ?? '' );
+		$end   = self::utc_timestamp( $input['end_at_gmt'] ?? '' );
 		if ( is_wp_error( $start ) || is_wp_error( $end ) ) {
 			return is_wp_error( $start ) ? $start : $end;
 		}
@@ -96,18 +90,19 @@ final class SPDB_Collections_Policy {
 			return self::error( 'spdb_collection_date_range_invalid', 'The end date cannot precede the start date.' );
 		}
 
-		if ( 'institution' === $scope && ! self::current_user_is_founder() ) {
-			return self::error( 'spdb_collection_institution_forbidden', 'Institution collections and campaigns are Founder-governed.' );
+		$is_founder = self::current_user_is_founder();
+		if ( 'institution' === $scope && ! $is_founder ) {
+			return self::error( 'spdb_collection_institution_forbidden', 'Institution metadata is Founder-governed.' );
 		}
 		if ( 'campaign' === $type ) {
-			if ( ! self::current_user_is_founder() ) {
+			if ( ! $is_founder ) {
 				return self::error( 'spdb_campaign_founder_required', 'Only the Founder may create an institution campaign.' );
 			}
-			if ( '' === $objective || '' === $ethics || '' === $start || '' === $end || array() === $surfaces ) {
-				return self::error( 'spdb_campaign_metadata_incomplete', 'Campaign objective, ethical declaration, dates, and target surfaces are required.' );
+			if ( 'institution' !== $scope || '' === $objective || '' === $ethics || '' === $start || '' === $end || array() === $surfaces ) {
+				return self::error( 'spdb_campaign_metadata_incomplete', 'A campaign requires institution scope, objective, ethical declaration, dates, and target surfaces.' );
 			}
 			if ( self::contains_prohibited_campaign_pattern( $objective . ' ' . $ethics ) ) {
-				return self::error( 'spdb_campaign_ethics_invalid', 'Fear, false urgency, fake scarcity, fabricated metrics, or cure guarantees are prohibited.' );
+				return self::error( 'spdb_campaign_ethics_invalid', 'Fear, false urgency, fake scarcity, fabricated metrics, and cure guarantees are prohibited.' );
 			}
 		}
 
@@ -118,12 +113,12 @@ final class SPDB_Collections_Policy {
 			'objective'           => $objective,
 			'ethical_declaration' => $ethics,
 			'contributors'        => $contributors,
-			'target_surfaces'     => $surfaces,
+			target_surfaces'     => $surfaces,
 			'status'              => $status,
 			'start_at_gmt'        => $start,
 			'end_at_gmt'          => $end,
 			'idempotency_key'     => $idempotency,
-			'audit_reason'        => $audit_reason,
+			'audit_reason'        => $audit,
 		);
 	}
 
@@ -142,10 +137,10 @@ final class SPDB_Collections_Policy {
 			'source_provider_key' => self::canonical_key( $input['source_provider_key'] ?? '', 'spdb_knowledge_source_provider_invalid' ),
 			'source_object_type'  => self::canonical_key( $input['source_object_type'] ?? '', 'spdb_knowledge_source_type_invalid' ),
 			'source_object_id'    => self::object_id( $input['source_object_id'] ?? '', 'spdb_knowledge_source_id_invalid' ),
-			target_provider_key' => self::canonical_key( $input['target_provider_key'] ?? '', 'spdb_knowledge_target_provider_invalid' ),
+			'target_provider_key' => self::canonical_key( $input['target_provider_key'] ?? '', 'spdb_knowledge_target_provider_invalid' ),
 			'target_object_type'  => self::canonical_key( $input['target_object_type'] ?? '', 'spdb_knowledge_target_type_invalid' ),
 			'target_object_id'    => self::object_id( $input['target_object_id'] ?? '', 'spdb_knowledge_target_id_invalid' ),
-			'relation_type'       => self::enum( $input['relation_type'] ?? '', self::knowledge_relations(), 'spdb_knowledge_relation_invalid' ),
+			'relation_type'       => self::enum_value( $input['relation_type'] ?? '', self::knowledge_relations(), 'spdb_knowledge_relation_invalid' ),
 			'idempotency_key'     => self::idempotency_key( $input['idempotency_key'] ?? '' ),
 			'audit_reason'        => self::plain_text( $input['audit_reason'] ?? '', 500, false, 'spdb_knowledge_audit_reason_invalid' ),
 		);
@@ -180,7 +175,7 @@ final class SPDB_Collections_Policy {
 	}
 
 	/** @return string|WP_Error */
-	private static function enum( $raw, array $allowed, string $code ) {
+	private static function enum_value( $raw, array $allowed, string $code ) {
 		$value = is_scalar( $raw ) ? trim( (string) $raw ) : '';
 		return in_array( $value, $allowed, true ) ? $value : self::error( $code, 'A metadata enumeration value is invalid.' );
 	}
@@ -219,9 +214,9 @@ final class SPDB_Collections_Policy {
 	}
 
 	/** @return string|WP_Error */
-	private static function utc_timestamp( $raw, bool $allow_empty ) {
+	private static function utc_timestamp( $raw ) {
 		$value = is_scalar( $raw ) ? trim( (string) $raw ) : '';
-		if ( '' === $value && $allow_empty ) {
+		if ( '' === $value ) {
 			return '';
 		}
 		if ( 1 !== preg_match( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $value ) ) {
@@ -238,15 +233,15 @@ final class SPDB_Collections_Policy {
 	}
 
 	/** @return int[]|WP_Error */
-	private static function positive_integer_list( $raw ) {
-		if ( ! is_array( $raw ) || count( $raw ) > self::MAX_CONTRIBUTORS || array_keys( $raw ) !== range( 0, count( $raw ) - 1 ) ) {
-			return self::error( 'spdb_collection_contributors_invalid', 'The contributor list is malformed or oversized.' );
+	private static function positive_integer_list( $raw, int $maximum, string $code ) {
+		if ( ! is_array( $raw ) || ! self::is_list( $raw ) || count( $raw ) > $maximum ) {
+			return self::error( $code, 'The contributor list is malformed or oversized.' );
 		}
 		$result = array();
 		foreach ( $raw as $item ) {
 			$value = is_int( $item ) ? $item : ( is_string( $item ) && ctype_digit( $item ) ? (int) $item : 0 );
 			if ( $value < 1 || in_array( $value, $result, true ) ) {
-				return self::error( 'spdb_collection_contributors_invalid', 'The contributor list contains an invalid or duplicate user identifier.' );
+				return self::error( $code, 'The contributor list contains an invalid or duplicate user identifier.' );
 			}
 			$result[] = $value;
 		}
@@ -255,7 +250,7 @@ final class SPDB_Collections_Policy {
 
 	/** @return string[]|WP_Error */
 	private static function canonical_list( $raw, array $allowed, int $maximum, string $code ) {
-		if ( ! is_array( $raw ) || count( $raw ) > $maximum || array_keys( $raw ) !== range( 0, count( $raw ) - 1 ) ) {
+		if ( ! is_array( $raw ) || ! self::is_list( $raw ) || count( $raw ) > $maximum ) {
 			return self::error( $code, 'A canonical metadata list is malformed or oversized.' );
 		}
 		$result = array();
@@ -267,6 +262,17 @@ final class SPDB_Collections_Policy {
 			$result[] = $value;
 		}
 		return $result;
+	}
+
+	private static function is_list( array $value ): bool {
+		$expected = 0;
+		foreach ( $value as $key => $unused ) {
+			if ( $key !== $expected ) {
+				return false;
+			}
+			++$expected;
+		}
+		return true;
 	}
 
 	private static function error( string $code, string $message ): WP_Error {
