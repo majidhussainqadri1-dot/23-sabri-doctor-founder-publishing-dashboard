@@ -3,7 +3,7 @@
  * Plugin Name: Sabri Doctor and Founder Publishing Dashboard
  * Plugin URI:  https://www.sabrihomeopathy.com/
  * Description: A private, role-aware, federated publishing operations dashboard for the Founder and verified doctors of the Sabri Social Homeopathy Platform.
- * Version:     0.1.0
+ * Version:     0.1.1
  * Author:      Dr. Allamah Majid Hussain Sabri Muhaddith Mursheed
  * Text Domain: sabri-publishing-dashboard
  * Domain Path: /languages
@@ -14,8 +14,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'SPDB_VERSION', '0.1.0' );
-define( 'SPDB_CONTRACT_VERSION', '1.0.0' );
+define( 'SPDB_VERSION', '0.1.1' );
+define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
 define( 'SPDB_PLUGIN_FILE', __FILE__ );
 define( 'SPDB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SPDB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -24,11 +24,18 @@ require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-plugin.php';
 
 /**
  * Return the plugin singleton.
- *
- * @return SPDB_Plugin
  */
 function spdb(): SPDB_Plugin {
 	return SPDB_Plugin::instance();
+}
+
+/**
+ * Return the canonical File 23 capability keys.
+ *
+ * @return string[]
+ */
+function spdb_get_capabilities(): array {
+	return SPDB_Capabilities::all();
 }
 
 spdb()->boot();
