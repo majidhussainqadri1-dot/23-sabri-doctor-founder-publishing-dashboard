@@ -4,23 +4,24 @@
  */
 
 define( 'ABSPATH', __DIR__ . '/' );
-define( 'SPDB_VERSION', '0.2.1' );
+define( 'SPDB_VERSION', '0.3.0' );
 define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
 
-$GLOBALS['spdb_test_environment']       = 'production';
-$GLOBALS['spdb_test_logged_in']         = true;
-$GLOBALS['spdb_test_user_id']           = 7;
-$GLOBALS['spdb_test_capabilities']      = array();
-$GLOBALS['spdb_test_member_status']     = 'draft';
-$GLOBALS['spdb_test_founder']           = false;
-$GLOBALS['spdb_test_trusted']           = false;
-$GLOBALS['spdb_test_query_vars']        = array();
-$GLOBALS['spdb_test_user_meta']         = array();
-$GLOBALS['spdb_test_options']           = array();
-$GLOBALS['spdb_test_roles']             = array();
-$GLOBALS['spdb_test_force_meta_conflict'] = false;
-$GLOBALS['wp_filter']                   = array();
-$GLOBALS['wp']                          = (object) array( 'query_vars' => array() );
+$GLOBALS['spdb_test_environment']          = 'production';
+$GLOBALS['spdb_test_logged_in']            = true;
+$GLOBALS['spdb_test_user_id']              = 7;
+$GLOBALS['spdb_test_capabilities']         = array();
+$GLOBALS['spdb_test_member_status']        = 'draft';
+$GLOBALS['spdb_test_founder']              = false;
+$GLOBALS['spdb_test_trusted']              = false;
+$GLOBALS['spdb_test_query_vars']           = array();
+$GLOBALS['spdb_test_user_meta']            = array();
+$GLOBALS['spdb_test_options']              = array();
+$GLOBALS['spdb_test_roles']                = array();
+$GLOBALS['spdb_test_force_meta_conflict']  = false;
+$GLOBALS['spdb_test_last_inventory_query'] = array();
+$GLOBALS['wp_filter']                      = array();
+$GLOBALS['wp']                             = (object) array( 'query_vars' => array() );
 
 if ( ! class_exists( 'WP_Error' ) ) {
 	class WP_Error {
@@ -59,15 +60,37 @@ if ( ! class_exists( 'WP_HTTP_Response' ) ) {
 }
 
 if ( ! class_exists( 'WP_REST_Request' ) ) {
-	class WP_REST_Request {
+	class WP_REST_Request implements ArrayAccess {
 		private string $route;
+		private array $params;
 
-		public function __construct( string $route = '' ) {
-			$this->route = $route;
+		public function __construct( string $route = '', array $params = array() ) {
+			$this->route  = $route;
+			$this->params = $params;
 		}
 
 		public function get_route(): string {
 			return $this->route;
+		}
+
+		public function get_params(): array {
+			return $this->params;
+		}
+
+		public function offsetExists( $offset ): bool {
+			return isset( $this->params[ $offset ] );
+		}
+
+		public function offsetGet( $offset ) {
+			return $this->params[ $offset ] ?? null;
+		}
+
+		public function offsetSet( $offset, $value ): void {
+			$this->params[ $offset ] = $value;
+		}
+
+		public function offsetUnset( $offset ): void {
+			unset( $this->params[ $offset ] );
 		}
 	}
 }
@@ -133,9 +156,26 @@ function home_url( string $path = '' ): string {
 	return 'https://example.test' . $path;
 }
 
-function add_query_arg( string $key, string $value, string $url ): string {
+function wp_parse_url( string $url ) {
+	return parse_url( $url );
+}
+
+function esc_url_raw( string $url ): string {
+	return filter_var( $url, FILTER_SANITIZE_URL ) ?: '';
+}
+
+function add_query_arg( $key, $value = null, $url = null ): string {
+	if ( is_array( $key ) ) {
+		$base = (string) $value;
+		foreach ( $key as $query_key => $query_value ) {
+			$base = add_query_arg( (string) $query_key, (string) $query_value, $base );
+		}
+		return $base;
+	}
+
+	$url = (string) $url;
 	$separator = false === strpos( $url, '?' ) ? '?' : '&';
-	return $url . $separator . rawurlencode( $key ) . '=' . rawurlencode( $value );
+	return $url . $separator . rawurlencode( (string) $key ) . '=' . rawurlencode( (string) $value );
 }
 
 function get_user_meta( int $user_id, string $key, bool $single = false ) {
@@ -190,6 +230,9 @@ require_once dirname( __DIR__ ) . '/includes/class-spdb-capabilities.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-capability-installer.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-operation-broker.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-provider-registration.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-inventory-query.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-projection-validator.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-federated-inventory.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-dashboard-router.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-workspace-resolver.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-saved-views.php';
