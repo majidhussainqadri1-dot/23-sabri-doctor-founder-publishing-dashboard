@@ -1,5 +1,5 @@
 <?php
-/** Executable query, projection, navigation, and accessibility tests for the Phase 23F Collections UI. */
+/** Executable query, projection, navigation, and accessibility tests for the Phase 23F Collections UI retained in Phase 23G. */
 require_once __DIR__ . '/bootstrap.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-collections-view.php';
 if ( ! defined( 'SMC_VERSION' ) ) { define( 'SMC_VERSION', '1.0.1' ); }
@@ -8,10 +8,7 @@ if ( ! function_exists( 'smc_is_founder' ) ) { function smc_is_founder( $user_id
 if ( ! function_exists( 'smc_is_trusted_publisher' ) ) { function smc_is_trusted_publisher( $user_id ) { return false; } }
 
 final class SPDB_Test_Collections_UI_Repository implements SPDB_Collections_Repository {
-	public array $collection;
-	public array $item;
-	public array $link;
-	public int $item_queries = 0;
+	public array $collection; public array $item; public array $link; public int $item_queries = 0;
 	public function __construct() {
 		$this->collection = array( 'collection_id' => 'collection_123e4567e89b12d3a456000000000099', 'record_type' => 'collection', 'scope' => 'own', 'title' => 'Study Set', 'objective' => '', 'ethical_declaration' => '', 'owner_user_id' => 7, 'contributors' => array(), 'target_surfaces' => array(), 'status' => 'draft', 'start_at_gmt' => '', 'end_at_gmt' => '', 'version' => 1, 'created_by' => 7, 'created_at_gmt' => '2026-07-31T00:00:00Z', 'updated_at_gmt' => '2026-07-31T00:00:00Z', 'archived_at_gmt' => '' );
 		$this->item = array( 'item_id' => 'item_123e4567e89b12d3a456000000000001', 'collection_id' => $this->collection['collection_id'], 'provider_key' => 'file21', 'object_type' => 'publication', 'object_id' => 'post-101', 'relation_type' => 'contains', 'native_version' => 'v1', 'position' => 0, 'version' => 1, 'added_by' => 7, 'created_at_gmt' => '2026-07-31T00:00:00Z', 'updated_at_gmt' => '2026-07-31T00:00:00Z', 'archived_at_gmt' => '' );
@@ -38,67 +35,33 @@ final class SPDB_Test_Collections_UI_Repository implements SPDB_Collections_Repo
 $tests = 0; $failed = 0;
 function spdb_ui_assert( bool $condition, string $message ): void { global $tests, $failed; ++$tests; if ( ! $condition ) { ++$failed; fwrite( STDERR, "FAIL: {$message}\n" ); } }
 function spdb_ui_code( $value ): string { return $value instanceof WP_Error ? $value->get_error_code() : ''; }
-
-$GLOBALS['spdb_test_user_id'] = 7;
-$GLOBALS['spdb_test_member_status'] = 'approved';
-$GLOBALS['spdb_test_member_statuses'][7] = 'approved';
-$GLOBALS['spdb_test_capabilities']['spdb_view_dashboard'] = true;
-$GLOBALS['spdb_test_capabilities']['spdb_view_own_content'] = true;
-$GLOBALS['spdb_test_capabilities']['spdb_manage_own_content'] = true;
-$GLOBALS['spdb_test_capabilities']['spdb_manage_campaigns'] = false;
-$GLOBALS['spdb_test_founder'] = false;
-
-$repository = new SPDB_Test_Collections_UI_Repository();
-$view = new SPDB_Collections_View( new SPDB_Collections_Service( $repository ) );
-
+$GLOBALS['spdb_test_user_id'] = 7; $GLOBALS['spdb_test_member_status'] = 'approved'; $GLOBALS['spdb_test_member_statuses'][7] = 'approved';
+$GLOBALS['spdb_test_capabilities']['spdb_view_dashboard'] = true; $GLOBALS['spdb_test_capabilities']['spdb_view_own_content'] = true; $GLOBALS['spdb_test_capabilities']['spdb_manage_own_content'] = true; $GLOBALS['spdb_test_capabilities']['spdb_manage_campaigns'] = false; $GLOBALS['spdb_test_founder'] = false;
+$repository = new SPDB_Test_Collections_UI_Repository(); $view = new SPDB_Collections_View( new SPDB_Collections_Service( $repository ) );
 spdb_ui_assert( 'collections' === SPDB_Dashboard_Router::normalize_view( 'collections' ), 'The protected router must accept the Collections view.' );
 spdb_ui_assert( 'overview' === SPDB_Dashboard_Router::normalize_view( 'collections/delete' ), 'Unknown or mutation-like view names must normalize to Overview.' );
-$workspace_resolver = new SPDB_Workspace_Resolver();
-$approved_navigation = $workspace_resolver->navigation( $workspace_resolver->resolve( 7 ) );
+$workspace_resolver = new SPDB_Workspace_Resolver(); $approved_navigation = $workspace_resolver->navigation( $workspace_resolver->resolve( 7 ) );
 spdb_ui_assert( isset( $approved_navigation['collections'] ), 'Approved users with read authority must receive the Collections navigation destination.' );
-$GLOBALS['spdb_test_member_status'] = 'submitted'; $GLOBALS['spdb_test_member_statuses'][7] = 'submitted';
-$restricted_navigation = $workspace_resolver->navigation( $workspace_resolver->resolve( 7 ) );
+$GLOBALS['spdb_test_member_status'] = 'submitted'; $GLOBALS['spdb_test_member_statuses'][7] = 'submitted'; $restricted_navigation = $workspace_resolver->navigation( $workspace_resolver->resolve( 7 ) );
 spdb_ui_assert( ! isset( $restricted_navigation['collections'] ), 'Pending accounts must not receive the Collections navigation destination.' );
 $GLOBALS['spdb_test_member_status'] = 'approved'; $GLOBALS['spdb_test_member_statuses'][7] = 'approved';
-
-$unknown = $view->resolve( array( 'view' => 'collections', 'user_id' => 99 ) );
-spdb_ui_assert( 'spdb_collections_view_query_invalid' === spdb_ui_code( $unknown ), 'Client-supplied authority fields must be rejected by the UI query contract.' );
-$overflow = $view->resolve( array( 'view' => 'collections', 'page' => str_repeat( '9', 80 ) ) );
-spdb_ui_assert( 'spdb_collections_view_query_invalid' === spdb_ui_code( $overflow ), 'Overflowing UI pagination must fail closed.' );
-$item_without_parent = $view->resolve( array( 'view' => 'collections', 'item_id' => $repository->item['item_id'] ) );
-spdb_ui_assert( 'spdb_collections_view_query_invalid' === spdb_ui_code( $item_without_parent ), 'An item detail request must include its parent collection.' );
-$mixed_section = $view->resolve( array( 'view' => 'collections', 'section' => 'knowledge', 'collection_id' => $repository->collection['collection_id'] ) );
-spdb_ui_assert( 'spdb_collections_view_query_invalid' === spdb_ui_code( $mixed_section ), 'Knowledge mode must reject collection parameters.' );
-$invalid_status = $view->resolve( array( 'view' => 'collections', 'record_type' => 'collection', 'status' => 'paused' ) );
-spdb_ui_assert( 'spdb_collections_view_query_invalid' === spdb_ui_code( $invalid_status ), 'UI filters must bind status to the selected record type.' );
-
-$list = $view->resolve( array( 'view' => 'collections', 'section' => 'collections', 'scope' => 'own', 'page' => 1, 'per_page' => 20 ) );
-spdb_ui_assert( is_array( $list ) && 'collection_list' === $list['mode'] && 1 === count( $list['list']['items'] ), 'The view model must return an authorized collection-list projection.' );
-$detail = $view->resolve( array( 'view' => 'collections', 'section' => 'collections', 'collection_id' => $repository->collection['collection_id'], 'per_page' => 20 ) );
-spdb_ui_assert( is_array( $detail ) && 'collection_detail' === $detail['mode'] && 1 === count( $detail['items']['items'] ), 'Collection detail must include parent-authorized active items.' );
-$item = $view->resolve( array( 'view' => 'collections', 'section' => 'collections', 'collection_id' => $repository->collection['collection_id'], 'item_id' => $repository->item['item_id'] ) );
-spdb_ui_assert( is_array( $item ) && 'collection_item' === $item['mode'] && $repository->item['item_id'] === $item['item']['item_id'], 'Item detail must flow through the parent-authorized service path.' );
-$knowledge = $view->resolve( array( 'view' => 'collections', 'section' => 'knowledge', 'scope' => 'own', 'page' => 1, 'per_page' => 10 ) );
-spdb_ui_assert( is_array( $knowledge ) && 'knowledge_list' === $knowledge['mode'] && 1 === count( $knowledge['list']['items'] ), 'The view model must return an authorized knowledge-list projection.' );
-$knowledge_detail = $view->resolve( array( 'view' => 'collections', 'section' => 'knowledge', 'link_id' => $repository->link['link_id'] ) );
-spdb_ui_assert( is_array( $knowledge_detail ) && 'knowledge_detail' === $knowledge_detail['mode'], 'The view model must return an authorized knowledge-detail projection.' );
-
-$queries_before = $repository->item_queries;
-$repository->collection['owner_user_id'] = 99;
-$foreign_item = $view->resolve( array( 'view' => 'collections', 'collection_id' => $repository->collection['collection_id'], 'item_id' => $repository->item['item_id'] ) );
-spdb_ui_assert( 'spdb_collection_not_found' === spdb_ui_code( $foreign_item ) && $queries_before === $repository->item_queries, 'Foreign parent collection denial must occur before an item query.' );
-$repository->collection['owner_user_id'] = 7;
-
-$root = dirname( __DIR__ );
-$template = file_get_contents( $root . '/templates/collections.php' );
-$dashboard = file_get_contents( $root . '/templates/dashboard.php' );
-$css = file_get_contents( $root . '/assets/css/collections.css' );
-$page = file_get_contents( $root . '/includes/class-spdb-dashboard-page.php' );
+$unknown = $view->resolve( array( 'view' => 'collections', 'user_id' => 99 ) ); spdb_ui_assert( 'spdb_collections_view_query_invalid' === spdb_ui_code( $unknown ), 'Client-supplied authority fields must be rejected by the UI query contract.' );
+$overflow = $view->resolve( array( 'view' => 'collections', 'page' => str_repeat( '9', 80 ) ) ); spdb_ui_assert( 'spdb_collections_view_query_invalid' === spdb_ui_code( $overflow ), 'Overflowing UI pagination must fail closed.' );
+$item_without_parent = $view->resolve( array( 'view' => 'collections', 'item_id' => $repository->item['item_id'] ) ); spdb_ui_assert( 'spdb_collections_view_query_invalid' === spdb_ui_code( $item_without_parent ), 'An item detail request must include its parent collection.' );
+$mixed_section = $view->resolve( array( 'view' => 'collections', 'section' => 'knowledge', 'collection_id' => $repository->collection['collection_id'] ) ); spdb_ui_assert( 'spdb_collections_view_query_invalid' === spdb_ui_code( $mixed_section ), 'Knowledge mode must reject collection parameters.' );
+$invalid_status = $view->resolve( array( 'view' => 'collections', 'record_type' => 'collection', 'status' => 'paused' ) ); spdb_ui_assert( 'spdb_collections_view_query_invalid' === spdb_ui_code( $invalid_status ), 'UI filters must bind status to the selected record type.' );
+$list = $view->resolve( array( 'view' => 'collections', 'section' => 'collections', 'scope' => 'own', 'page' => 1, 'per_page' => 20 ) ); spdb_ui_assert( is_array( $list ) && 'collection_list' === $list['mode'] && 1 === count( $list['list']['items'] ), 'The view model must return an authorized collection-list projection.' );
+$detail = $view->resolve( array( 'view' => 'collections', 'section' => 'collections', 'collection_id' => $repository->collection['collection_id'], 'per_page' => 20 ) ); spdb_ui_assert( is_array( $detail ) && 'collection_detail' === $detail['mode'] && 1 === count( $detail['items']['items'] ), 'Collection detail must include parent-authorized active items.' );
+$item = $view->resolve( array( 'view' => 'collections', 'section' => 'collections', 'collection_id' => $repository->collection['collection_id'], 'item_id' => $repository->item['item_id'] ) ); spdb_ui_assert( is_array( $item ) && 'collection_item' === $item['mode'] && $repository->item['item_id'] === $item['item']['item_id'], 'Item detail must flow through the parent-authorized service path.' );
+$knowledge = $view->resolve( array( 'view' => 'collections', 'section' => 'knowledge', 'scope' => 'own', 'page' => 1, 'per_page' => 10 ) ); spdb_ui_assert( is_array( $knowledge ) && 'knowledge_list' === $knowledge['mode'] && 1 === count( $knowledge['list']['items'] ), 'The view model must return an authorized knowledge-list projection.' );
+$knowledge_detail = $view->resolve( array( 'view' => 'collections', 'section' => 'knowledge', 'link_id' => $repository->link['link_id'] ) ); spdb_ui_assert( is_array( $knowledge_detail ) && 'knowledge_detail' === $knowledge_detail['mode'], 'The view model must return an authorized knowledge-detail projection.' );
+$queries_before = $repository->item_queries; $repository->collection['owner_user_id'] = 99; $foreign_item = $view->resolve( array( 'view' => 'collections', 'collection_id' => $repository->collection['collection_id'], 'item_id' => $repository->item['item_id'] ) );
+spdb_ui_assert( 'spdb_collection_not_found' === spdb_ui_code( $foreign_item ) && $queries_before === $repository->item_queries, 'Foreign parent collection denial must occur before an item query.' ); $repository->collection['owner_user_id'] = 7;
+$root = dirname( __DIR__ ); $template = file_get_contents( $root . '/templates/collections.php' ); $dashboard = file_get_contents( $root . '/templates/dashboard.php' ); $css = file_get_contents( $root . '/assets/css/collections.css' ); $page = file_get_contents( $root . '/includes/class-spdb-dashboard-page.php' );
 spdb_ui_assert( is_string( $template ) && str_contains( $template, '<caption>' ) && str_contains( $template, 'aria-current="page"' ) && str_contains( $template, 'role="region"' ) && str_contains( $template, '<dl>'), 'The Collections template must provide semantic captions, current state, regions, and definition lists.' );
 spdb_ui_assert( is_string( $template ) && ! preg_match( '/method\s*=\s*["\']post["\']|\b(?:create|update|delete|archive|reorder)_(?:collection|item|link)\b|WP_REST_Server::(?:CREATABLE|EDITABLE|DELETABLE)/i', $template ), 'The Collections template must not expose mutation controls.' );
-spdb_ui_assert( is_string( $dashboard ) && str_contains( $dashboard, 'templates/collections.php' ) && str_contains( $dashboard, 'Phase 23F' ) && str_contains( $dashboard, 'Collections and Knowledge' ), 'The main dashboard must integrate the Collections template and truthful phase label.' );
+spdb_ui_assert( is_string( $dashboard ) && str_contains( $dashboard, 'templates/collections.php' ) && str_contains( $dashboard, 'Phase 23G' ) && str_contains( $dashboard, 'Native Reference Governance' ), 'The main dashboard must retain Collections integration and identify the active governance phase truthfully.' );
 spdb_ui_assert( is_string( $css ) && str_contains( $css, ':focus-visible' ) && str_contains( $css, '[dir="rtl"]' ) && str_contains( $css, 'prefers-reduced-motion' ) && str_contains( $css, 'forced-colors' ), 'Collections CSS must include focus, RTL, reduced-motion, and forced-color controls.' );
 spdb_ui_assert( is_string( $page ) && str_contains( $page, 'SPDB_Collections_View' ) && str_contains( $page, "'page_id', 'p', 'post_type'" ) && str_contains( $page, 'assets/css/collections.css' ) && str_contains( $page, 'collections_request_input' ), 'The dashboard page must use the view model, preserve shortcode routing compatibility, load Collections CSS, and strictly collect the query.' );
-
-if ( $failed > 0 ) { fwrite( STDERR, "{$failed} of {$tests} Phase 23F Collections UI tests failed.\n" ); exit( 1 ); }
-echo "All {$tests} Phase 23F Collections UI boundary tests passed.\n";
+if ( $failed > 0 ) { fwrite( STDERR, "{$failed} of {$tests} retained Collections UI tests failed.\n" ); exit( 1 ); }
+echo "All {$tests} retained Collections UI boundary tests passed.\n";
