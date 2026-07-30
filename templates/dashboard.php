@@ -4,7 +4,7 @@
  *
  * Available variables: $workspace, $navigation, $current, $overview,
  * $system_state, $saved_views, $inventory_result, $inventory_item,
- * $inventory_providers, and $instance_id.
+ * $inventory_providers, $role_workspace, and $instance_id.
  *
  * @package Sabri_Publishing_Dashboard
  */
@@ -31,8 +31,8 @@ $provider_title_id = $instance_id . '-provider-title';
 			</p>
 		</div>
 		<div class="spdb-phase" aria-label="<?php esc_attr_e( 'Implementation phase', 'sabri-publishing-dashboard' ); ?>">
-			<span><?php esc_html_e( 'Phase 23C', 'sabri-publishing-dashboard' ); ?></span>
-			<strong><?php esc_html_e( 'Federated Inventory', 'sabri-publishing-dashboard' ); ?></strong>
+			<span><?php esc_html_e( 'Phase 23D', 'sabri-publishing-dashboard' ); ?></span>
+			<strong><?php esc_html_e( 'Role Workspaces', 'sabri-publishing-dashboard' ); ?></strong>
 		</div>
 	</header>
 
@@ -50,7 +50,9 @@ $provider_title_id = $instance_id . '-provider-title';
 		</nav>
 
 		<main id="<?php echo esc_attr( $main_id ); ?>" class="spdb-main" tabindex="-1">
-			<?php if ( 'inventory' === $current ) : ?>
+			<?php if ( 'workspace' === $current ) : ?>
+				<?php include SPDB_PLUGIN_DIR . 'templates/workspace.php'; ?>
+			<?php elseif ( 'inventory' === $current ) : ?>
 				<?php include SPDB_PLUGIN_DIR . 'templates/inventory.php'; ?>
 			<?php elseif ( 'saved-views' === $current ) : ?>
 				<section aria-labelledby="<?php echo esc_attr( $saved_title_id ); ?>">
