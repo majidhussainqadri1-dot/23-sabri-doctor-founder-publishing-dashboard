@@ -3,16 +3,17 @@
  * Main private dashboard template.
  *
  * Available variables: $workspace, $navigation, $current, $overview,
- * $system_state, $saved_views, and $instance_id.
+ * $system_state, $saved_views, $inventory_result, $inventory_item,
+ * $inventory_providers, and $instance_id.
  *
  * @package Sabri_Publishing_Dashboard
  */
 
 defined( 'ABSPATH' ) || exit;
 
-$main_id          = $instance_id . '-main';
-$saved_title_id   = $instance_id . '-saved-views-title';
-$system_title_id  = $instance_id . '-system-status-title';
+$main_id           = $instance_id . '-main';
+$saved_title_id    = $instance_id . '-saved-views-title';
+$system_title_id   = $instance_id . '-system-status-title';
 $overview_title_id = $instance_id . '-overview-title';
 $provider_title_id = $instance_id . '-provider-title';
 ?>
@@ -30,8 +31,8 @@ $provider_title_id = $instance_id . '-provider-title';
 			</p>
 		</div>
 		<div class="spdb-phase" aria-label="<?php esc_attr_e( 'Implementation phase', 'sabri-publishing-dashboard' ); ?>">
-			<span><?php esc_html_e( 'Phase 23B', 'sabri-publishing-dashboard' ); ?></span>
-			<strong><?php esc_html_e( 'Core', 'sabri-publishing-dashboard' ); ?></strong>
+			<span><?php esc_html_e( 'Phase 23C', 'sabri-publishing-dashboard' ); ?></span>
+			<strong><?php esc_html_e( 'Federated Inventory', 'sabri-publishing-dashboard' ); ?></strong>
 		</div>
 	</header>
 
@@ -49,7 +50,9 @@ $provider_title_id = $instance_id . '-provider-title';
 		</nav>
 
 		<main id="<?php echo esc_attr( $main_id ); ?>" class="spdb-main" tabindex="-1">
-			<?php if ( 'saved-views' === $current ) : ?>
+			<?php if ( 'inventory' === $current ) : ?>
+				<?php include SPDB_PLUGIN_DIR . 'templates/inventory.php'; ?>
+			<?php elseif ( 'saved-views' === $current ) : ?>
 				<section aria-labelledby="<?php echo esc_attr( $saved_title_id ); ?>">
 					<div class="spdb-section-heading">
 						<div>
