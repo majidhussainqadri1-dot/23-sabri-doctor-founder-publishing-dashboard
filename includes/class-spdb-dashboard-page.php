@@ -14,6 +14,7 @@ final class SPDB_Dashboard_Page {
 	private SPDB_Saved_Views $saved_views;
 	private SPDB_Federated_Inventory $inventory;
 	private SPDB_Role_Workspace_Service $role_workspace_service;
+	private SPDB_Review_Calendar_Service $review_calendar_service;
 	private bool $assets_localized = false;
 	private bool $shortcode_page_protected = false;
 	private int $render_count = 0;
@@ -24,14 +25,16 @@ final class SPDB_Dashboard_Page {
 		SPDB_System_State $system_state,
 		SPDB_Saved_Views $saved_views,
 		SPDB_Federated_Inventory $inventory,
-		SPDB_Role_Workspace_Service $role_workspace_service
+		SPDB_Role_Workspace_Service $role_workspace_service,
+		SPDB_Review_Calendar_Service $review_calendar_service
 	) {
-		$this->workspace_resolver     = $workspace_resolver;
-		$this->overview_service       = $overview_service;
-		$this->system_state           = $system_state;
-		$this->saved_views            = $saved_views;
-		$this->inventory              = $inventory;
-		$this->role_workspace_service = $role_workspace_service;
+		$this->workspace_resolver      = $workspace_resolver;
+		$this->overview_service        = $overview_service;
+		$this->system_state            = $system_state;
+		$this->saved_views             = $saved_views;
+		$this->inventory               = $inventory;
+		$this->role_workspace_service  = $role_workspace_service;
+		$this->review_calendar_service = $review_calendar_service;
 	}
 
 	public function register(): void {
@@ -40,87 +43,47 @@ final class SPDB_Dashboard_Page {
 		add_action( 'template_redirect', array( $this, 'protect_shortcode_page' ), -1 );
 	}
 
-	/**
-	 * A shortcode fallback must inherit the same private cache and indexing
-	 * policy as the virtual route. Only a directly detectable singular-page
-	 * shortcode is accepted; indirect widget/template execution fails closed.
-	 */
 	public function protect_shortcode_page(): void {
 		if ( ! is_singular() ) {
 			return;
 		}
-
 		$post = get_post();
 		if ( ! $post instanceof WP_Post || ! has_shortcode( (string) $post->post_content, 'sabri_publishing_dashboard' ) ) {
 			return;
 		}
-
 		$this->shortcode_page_protected = true;
 		SPDB_Dashboard_Router::mark_private_request();
 		SPDB_Dashboard_Router::emit_private_headers();
-
 		$user_id = get_current_user_id();
-		if (
-			is_user_logged_in()
-			&& SPDB_Membership_Guard::can_user_view_restricted_dashboard( $user_id )
-			&& SPDB_Capabilities::current_user_can( 'spdb_view_dashboard' )
-		) {
+		if ( is_user_logged_in() && SPDB_Membership_Guard::can_user_view_restricted_dashboard( $user_id ) && SPDB_Capabilities::current_user_can( 'spdb_view_dashboard' ) ) {
 			$this->enqueue_assets();
 		}
 	}
 
 	public function register_assets(): void {
 		if ( ! wp_style_is( 'spdb-dashboard', 'registered' ) ) {
-			wp_register_style(
-				'spdb-dashboard',
-				SPDB_PLUGIN_URL . 'assets/css/dashboard.css',
-				array(),
-				SPDB_VERSION
-			);
+			wp_register_style( 'spdb-dashboard', SPDB_PLUGIN_URL . 'assets/css/dashboard.css', array(), SPDB_VERSION );
 		}
-
 		if ( ! wp_style_is( 'spdb-dashboard-corrections', 'registered' ) ) {
-			wp_register_style(
-				'spdb-dashboard-corrections',
-				SPDB_PLUGIN_URL . 'assets/css/dashboard-corrections.css',
-				array( 'spdb-dashboard' ),
-				SPDB_VERSION
-			);
+			wp_register_style( 'spdb-dashboard-corrections', SPDB_PLUGIN_URL . 'assets/css/dashboard-corrections.css', array( 'spdb-dashboard' ), SPDB_VERSION );
 		}
-
 		if ( ! wp_style_is( 'spdb-inventory', 'registered' ) ) {
-			wp_register_style(
-				'spdb-inventory',
-				SPDB_PLUGIN_URL . 'assets/css/inventory.css',
-				array( 'spdb-dashboard-corrections' ),
-				SPDB_VERSION
-			);
+			wp_register_style( 'spdb-inventory', SPDB_PLUGIN_URL . 'assets/css/inventory.css', array( 'spdb-dashboard-corrections' ), SPDB_VERSION );
 		}
-
 		if ( ! wp_style_is( 'spdb-workspace', 'registered' ) ) {
-			wp_register_style(
-				'spdb-workspace',
-				SPDB_PLUGIN_URL . 'assets/css/workspace.css',
-				array( 'spdb-dashboard-corrections' ),
-				SPDB_VERSION
-			);
+			wp_register_style( 'spdb-workspace', SPDB_PLUGIN_URL . 'assets/css/workspace.css', array( 'spdb-dashboard-corrections' ), SPDB_VERSION );
 		}
-
+		if ( ! wp_style_is( 'spdb-review-calendar', 'registered' ) ) {
+			wp_register_style( 'spdb-review-calendar', SPDB_PLUGIN_URL . 'assets/css/review-calendar.css', array( 'spdb-dashboard-corrections' ), SPDB_VERSION );
+		}
 		if ( ! wp_script_is( 'spdb-dashboard', 'registered' ) ) {
-			wp_register_script(
-				'spdb-dashboard',
-				SPDB_PLUGIN_URL . 'assets/js/dashboard.js',
-				array( 'wp-api-fetch', 'wp-i18n' ),
-				SPDB_VERSION,
-				true
-			);
+			wp_register_script( 'spdb-dashboard', SPDB_PLUGIN_URL . 'assets/js/dashboard.js', array( 'wp-api-fetch', 'wp-i18n' ), SPDB_VERSION, true );
 		}
 	}
 
 	public function enqueue_assets(): void {
 		$this->register_assets();
 		wp_enqueue_style( 'spdb-dashboard-corrections' );
-
 		$current = SPDB_Dashboard_Router::current_view();
 		if ( 'inventory' === $current ) {
 			wp_enqueue_style( 'spdb-inventory' );
@@ -128,16 +91,16 @@ final class SPDB_Dashboard_Page {
 		if ( 'workspace' === $current ) {
 			wp_enqueue_style( 'spdb-workspace' );
 		}
-
+		if ( in_array( $current, array( 'review', 'calendar' ), true ) ) {
+			wp_enqueue_style( 'spdb-review-calendar' );
+		}
 		if ( 'saved-views' !== $current ) {
 			return;
 		}
-
 		wp_enqueue_script( 'spdb-dashboard' );
 		if ( $this->assets_localized ) {
 			return;
 		}
-
 		wp_localize_script(
 			'spdb-dashboard',
 			'SPDBDashboard',
@@ -163,7 +126,7 @@ final class SPDB_Dashboard_Page {
 		$this->enqueue_assets();
 		status_header( 200 );
 		get_header();
-		echo $this->render_markup(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- All template fields are escaped at rendering boundaries.
+		echo $this->render_markup(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 		get_footer();
 	}
 
@@ -171,19 +134,13 @@ final class SPDB_Dashboard_Page {
 		if ( ! SPDB_Dashboard_Router::is_dashboard_request() && ! $this->shortcode_page_protected ) {
 			return '<div class="spdb-notice spdb-notice--critical" role="alert">' . esc_html__( 'The publishing dashboard shortcode may only be used directly on a protected singular page.', 'sabri-publishing-dashboard' ) . '</div>';
 		}
-
 		if ( ! is_user_logged_in() ) {
 			return '<div class="spdb-notice spdb-notice--warning" role="status">' . esc_html__( 'Sign in to access the publishing dashboard.', 'sabri-publishing-dashboard' ) . '</div>';
 		}
-
 		$user_id = get_current_user_id();
-		if (
-			! SPDB_Membership_Guard::can_user_view_restricted_dashboard( $user_id )
-			|| ! SPDB_Capabilities::current_user_can( 'spdb_view_dashboard' )
-		) {
+		if ( ! SPDB_Membership_Guard::can_user_view_restricted_dashboard( $user_id ) || ! SPDB_Capabilities::current_user_can( 'spdb_view_dashboard' ) ) {
 			return '<div class="spdb-notice spdb-notice--critical" role="alert">' . esc_html__( 'You are not authorized to access the publishing dashboard.', 'sabri-publishing-dashboard' ) . '</div>';
 		}
-
 		$this->enqueue_assets();
 		return $this->render_markup();
 	}
@@ -192,33 +149,37 @@ final class SPDB_Dashboard_Page {
 		$workspace  = $this->workspace_resolver->resolve( get_current_user_id() );
 		$navigation = $this->workspace_resolver->navigation( $workspace );
 		$current    = SPDB_Dashboard_Router::current_view();
-
 		if ( ! isset( $navigation[ $current ] ) ) {
 			$current = 'overview';
 		}
-
 		$overview       = $this->overview_service->build( $workspace );
 		$system_state   = $this->system_state->snapshot( $workspace );
 		$saved_views    = $this->saved_views->get_for_user( get_current_user_id() );
 		$instance_id    = 'spdb-' . (string) ++$this->render_count;
 		$role_workspace = null;
-
+		$review_result  = null;
+		$calendar_result = null;
 		$inventory_result    = null;
 		$inventory_item      = null;
 		$inventory_providers = array();
+
 		if ( 'inventory' === $current ) {
 			$inventory_result    = $this->inventory->list_items( $this->inventory_request_input() );
 			$inventory_providers = $this->inventory->provider_options();
-			$reference           = $this->inspection_reference();
+			$reference = $this->inspection_reference();
 			if ( null !== $reference ) {
 				$inventory_item = $this->inventory->inspect_item( $reference['provider'], $reference['object_type'], $reference['object_id'] );
 			}
 		}
-
 		if ( 'workspace' === $current ) {
 			$role_workspace = $this->role_workspace_service->build( $workspace );
 		}
-
+		if ( 'review' === $current ) {
+			$review_result = $this->review_calendar_service->review_queue( $this->review_request_input() );
+		}
+		if ( 'calendar' === $current ) {
+			$calendar_result = $this->review_calendar_service->calendar( $this->calendar_request_input() );
+		}
 		ob_start();
 		include SPDB_PLUGIN_DIR . 'templates/dashboard.php';
 		return (string) ob_get_clean();
@@ -226,11 +187,26 @@ final class SPDB_Dashboard_Page {
 
 	/** @return array<string,mixed> */
 	private function inventory_request_input(): array {
+		return $this->read_query( array( 'page', 'per_page', 'search', 'provider', 'object_type', 'lifecycle_state', 'review_state', 'visibility_state', 'operational_state', 'language', 'topic', 'date_from', 'date_to', 'sort', 'direction', 'scope' ) );
+	}
+
+	/** @return array<string,mixed> */
+	private function review_request_input(): array {
+		return $this->read_query( array( 'provider', 'review_state', 'assigned', 'due_from', 'due_to', 'page', 'per_page' ) );
+	}
+
+	/** @return array<string,mixed> */
+	private function calendar_request_input(): array {
+		return $this->read_query( array( 'provider', 'status', 'date_from', 'date_to', 'timezone', 'page', 'per_page' ) );
+	}
+
+	/** @return array<string,mixed> */
+	private function read_query( array $keys ): array {
 		$input = array();
-		foreach ( array( 'page', 'per_page', 'search', 'provider', 'object_type', 'lifecycle_state', 'review_state', 'visibility_state', 'operational_state', 'language', 'topic', 'date_from', 'date_to', 'sort', 'direction', 'scope' ) as $key ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only inventory filter.
+		foreach ( $keys as $key ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only projection filter.
 			if ( isset( $_GET[ $key ] ) ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only inventory filter.
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only projection filter.
 				$input[ $key ] = wp_unslash( $_GET[ $key ] );
 			}
 		}
@@ -248,10 +224,6 @@ final class SPDB_Dashboard_Page {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only inspector selection.
 			$values[ $key ] = (string) wp_unslash( $_GET[ $key ] );
 		}
-		return array(
-			'provider'    => $values['inspect_provider'],
-			'object_type' => $values['inspect_type'],
-			'object_id'   => $values['inspect_id'],
-		);
+		return array( 'provider' => $values['inspect_provider'], 'object_type' => $values['inspect_type'], 'object_id' => $values['inspect_id'] );
 	}
 }
