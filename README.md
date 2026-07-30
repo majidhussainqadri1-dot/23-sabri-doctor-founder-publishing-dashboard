@@ -20,28 +20,30 @@ File 23 does not own publication bodies, native drafts, profile identities, nati
 
 ## Current Phase
 
-**Phase 23F — Corrected Collections, Campaigns, and Knowledge Links Runtime**
+**Phase 23F — Third-Corrected Collections, Campaigns, Knowledge Links, and Read API**
 
-Development version `0.6.1` provides:
+Development version `0.6.2` provides:
 
 - exactly three File 23-owned metadata tables under Schema Version `3`;
 - verification of required tables, columns, and indexes before repository readiness;
+- request-cached repository health to avoid repeated schema inspection inside one request;
 - metadata-only collections, Founder campaigns, collection-item references, and knowledge links;
-- approved current-account, capability, scope, Founder, and object-level visibility authority;
+- approved current-account, capability, scope, Founder, parent-collection, and object-level visibility authority;
 - actor-scoped idempotency hashes and request fingerprints;
-- exact replay and same-key/different-payload conflict handling;
+- exact replay, same-key/different-payload conflict, and duplicate canonical-relation conflict handling;
 - bounded audit-reason and observed native-version persistence;
 - no persisted native destinations or parallel content/results/reporting backend;
-- a concrete WordPress repository for verified server-side reads and idempotent creates;
-- validated repository envelopes and fail-closed cross-user record rejection;
-- a versioned native-reference resolver contract and strict native reference validation;
-- separate read, collection-write, and knowledge-write readiness;
+- a concrete WordPress repository with strict direct-query and persistence-record validation;
+- strict repository envelopes, lifecycle ordering, collection-item projections, and fail-closed cross-user rejection;
+- six explicit read-only REST projections with private/no-store behavior and truthful pagination headers;
+- a versioned native-reference resolver contract and strict native-reference validation;
+- separate read, collection-write, knowledge-write, and any-write readiness;
 - local/development/staging-only explicit write configuration;
 - production writes, mutation REST, update, reorder, and archive execution disabled;
-- policy, runtime-authority, schema, replay, payload-conflict, and repository tests;
+- policy, runtime-authority, schema, replay, payload-conflict, repository, item-IDOR, and read-REST tests;
 - retained Phase 23A–23E regression and architecture gates.
 
-## Implemented Views
+## Implemented Views and Read Surfaces
 
 1. **Overview** — workspace, account state, provider readiness, and safety notices.
 2. **Founder/Doctor Workspace** — role policy, native cards, gated destinations, profile, knowledge, and activity projections.
@@ -50,8 +52,9 @@ Development version `0.6.1` provides:
 5. **Federated Publishing Calendar** — bounded native schedules, timezones, conflicts, failures, and current authorization metadata.
 6. **Saved Views** — bounded non-clinical personal filters.
 7. **System Status** — capability-protected, non-sensitive diagnostics.
+8. **Phase 23F read API** — explicit GET projections for collections, collection details, collection items, item details, knowledge links, and link details.
 
-The Phase 23F Collections UI and REST routes are not yet exposed. The concrete repository currently supplies internal verified reads; knowledge-link creation remains unavailable until a reviewed native resolver is injected.
+The Phase 23F visual Collections UI is not yet implemented. Knowledge-link creation remains unavailable in the default runtime until a separately reviewed native resolver is injected. No Phase 23F mutation REST route exists.
 
 ## Repository Workflow
 
@@ -61,13 +64,13 @@ The Phase 23F Collections UI and REST routes are not yet exposed. The concrete r
 - Phase 23C Draft PR #3: reviewed, corrected, QA-green, unmerged
 - Phase 23D Draft PR #4: source-reviewed, corrected, QA-green, unmerged
 - Phase 23E stacked branch and PRs: source-reviewed, corrected, unmerged
-- Phase 23F Draft PR #7: second corrective review in progress, unmerged
+- Phase 23F Draft PR #7: third corrective cycle in progress, unmerged
 - Active stacked branch: `phase/23f-collections-knowledge`
 - **No merge before completed review, correction, corrective re-review, exact-head QA, staging acceptance, rollback evidence, and Founder acceptance.**
 
 ## Versions
 
-- Plugin: `0.6.1`
+- Plugin: `0.6.2`
 - Metadata Schema: `3`
 - Adapter Contract: `2.0.0`
 - WordPress: 6.5+
@@ -78,14 +81,16 @@ The Phase 23F Collections UI and REST routes are not yet exposed. The concrete r
 
 - `docs/AUDIT-PHASE-23F-2026-07-30.md`
 - `docs/AUDIT-PHASE-23F-RUNTIME-SECOND-REVIEW-2026-07-30.md`
+- `docs/AUDIT-PHASE-23F-THIRD-REVIEW-2026-07-31.md`
 - `docs/COLLECTIONS-KNOWLEDGE.md`
 - `docs/PHASE-23F-REVIEW-GATE.md`
 - `docs/PHASE-23F-STATUS.md`
 - `tests/phase23f-policy-tests.php`
 - `tests/phase23f-runtime-tests.php`
 - `tests/phase23f-repository-tests.php`
+- `tests/phase23f-read-rest-tests.php`
 - `tests/architecture-guard.php`
 
 ## Status
 
-The first Phase 23F review found eighteen foundation defects. A second independent review of the runtime and persistence slice found another eighteen defects. Both defect sets have corrective source changes. The second exact-head PHP 8.0–8.3 automated gate, WordPress Schema Version 3 migration, real File 00 accounts, real native providers, Hostinger staging, privacy/accessibility/cache/backup/restore/rollback testing, Founder review, and explicit merge authorization remain mandatory. All pull requests remain Draft and unmerged.
+Three independent Phase 23F review cycles have now recorded eighteen foundation defects, eighteen runtime/persistence defects, and sixteen third-review persistence/item/REST defects. Corrective source changes for all recorded findings are present. The documentation-inclusive PHP 8.0–8.3 exact-head gate must pass again after these changes. WordPress Schema Version 3 migration, real File 00 accounts, real native providers, Hostinger staging, privacy/accessibility/cache/backup/restore/rollback testing, Founder review, and explicit merge authorization remain mandatory. All pull requests remain Draft and unmerged.
