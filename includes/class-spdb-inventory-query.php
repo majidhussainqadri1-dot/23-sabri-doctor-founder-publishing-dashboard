@@ -8,8 +8,8 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Inventory_Query {
-	public const MAX_PER_PAGE = 50;
-	public const MAX_WINDOW   = 200;
+	public const MAX_PER_PAGE  = 50;
+	public const MAX_WINDOW    = 200;
 	public const MAX_PROVIDERS = 10;
 	public const MAX_TYPES     = 20;
 
@@ -18,24 +18,25 @@ final class SPDB_Inventory_Query {
 	 * @return array<string,mixed>|WP_Error
 	 */
 	public static function normalize( array $input ) {
-		$page     = isset( $input['page'] ) ? (int) $input['page'] : 1;
-		$per_page = isset( $input['per_page'] ) ? (int) $input['per_page'] : 20;
-
-		if ( $page < 1 || $per_page < 1 || $per_page > self::MAX_PER_PAGE || $page * $per_page > self::MAX_WINDOW ) {
-			return new WP_Error(
-				'spdb_inventory_window_invalid',
-				__( 'The requested inventory page is outside the bounded query window.', 'sabri-publishing-dashboard' ),
-				array( 'status' => 400 )
-			);
+		$page_raw     = self::scalar_string( $input['page'] ?? '1', 'spdb_inventory_window_invalid' );
+		$per_page_raw = self::scalar_string( $input['per_page'] ?? '20', 'spdb_inventory_window_invalid' );
+		if ( is_wp_error( $page_raw ) || is_wp_error( $per_page_raw ) || ! ctype_digit( $page_raw ) || ! ctype_digit( $per_page_raw ) ) {
+			return self::error( 'spdb_inventory_window_invalid', 'The requested inventory page is outside the bounded query window.' );
 		}
 
-		$search = isset( $input['search'] ) ? trim( sanitize_text_field( (string) $input['search'] ) ) : '';
+		$page     = (int) $page_raw;
+		$per_page = (int) $per_page_raw;
+		if ( $page < 1 || $per_page < 1 || $per_page > self::MAX_PER_PAGE || $page * $per_page > self::MAX_WINDOW ) {
+			return self::error( 'spdb_inventory_window_invalid', 'The requested inventory page is outside the bounded query window.' );
+		}
+
+		$search_raw = self::scalar_string( $input['search'] ?? '', 'spdb_inventory_search_invalid' );
+		if ( is_wp_error( $search_raw ) ) {
+			return $search_raw;
+		}
+		$search = trim( sanitize_text_field( $search_raw ) );
 		if ( strlen( $search ) > 100 || self::contains_sensitive_pattern( $search ) ) {
-			return new WP_Error(
-				'spdb_inventory_search_invalid',
-				__( 'Inventory search must be short and must not contain contact details or URLs.', 'sabri-publishing-dashboard' ),
-				array( 'status' => 400 )
-			);
+			return self::error( 'spdb_inventory_search_invalid', 'Inventory search must be short and must not contain contact details or URLs.' );
 		}
 
 		$providers = self::normalize_key_list( $input['provider'] ?? ( $input['providers'] ?? array() ), self::MAX_PROVIDERS, 'provider' );
@@ -50,13 +51,13 @@ final class SPDB_Inventory_Query {
 
 		$states = array();
 		foreach ( array( 'lifecycle_state', 'review_state', 'visibility_state', 'operational_state', 'language', 'topic' ) as $field ) {
-			$value = isset( $input[ $field ] ) ? sanitize_key( (string) $input[ $field ] ) : '';
+			$raw = self::scalar_string( $input[ $field ] ?? '', 'spdb_inventory_filter_invalid' );
+			if ( is_wp_error( $raw ) ) {
+				return $raw;
+			}
+			$value = sanitize_key( $raw );
 			if ( '' !== $value && 1 !== preg_match( '/^[a-z0-9][a-z0-9_-]{0,63}$/', $value ) ) {
-				return new WP_Error(
-					'spdb_inventory_filter_invalid',
-					__( 'An inventory filter value is invalid.', 'sabri-publishing-dashboard' ),
-					array( 'status' => 400 )
-				);
+				return self::error( 'spdb_inventory_filter_invalid', 'An inventory filter value is invalid.' );
 			}
 			$states[ $field ] = $value;
 		}
@@ -70,24 +71,32 @@ final class SPDB_Inventory_Query {
 			return $date_to;
 		}
 		if ( '' !== $date_from && '' !== $date_to && $date_from > $date_to ) {
-			return new WP_Error(
-				'spdb_inventory_date_range_invalid',
-				__( 'The inventory start date must not be later than the end date.', 'sabri-publishing-dashboard' ),
-				array( 'status' => 400 )
-			);
+			return self::error( 'spdb_inventory_date_range_invalid', 'The inventory start date must not be later than the end date.' );
 		}
 
-		$sort = isset( $input['sort'] ) ? sanitize_key( (string) $input['sort'] ) : 'modified_at';
+		$sort_raw = self::scalar_string( $input['sort'] ?? 'modified_at', 'spdb_inventory_filter_invalid' );
+		if ( is_wp_error( $sort_raw ) ) {
+			return $sort_raw;
+		}
+		$sort = sanitize_key( $sort_raw );
 		if ( ! in_array( $sort, array( 'modified_at', 'created_at', 'scheduled_at', 'published_at', 'title' ), true ) ) {
 			$sort = 'modified_at';
 		}
 
-		$direction = isset( $input['direction'] ) ? sanitize_key( (string) $input['direction'] ) : 'desc';
+		$direction_raw = self::scalar_string( $input['direction'] ?? 'desc', 'spdb_inventory_filter_invalid' );
+		if ( is_wp_error( $direction_raw ) ) {
+			return $direction_raw;
+		}
+		$direction = sanitize_key( $direction_raw );
 		if ( ! in_array( $direction, array( 'asc', 'desc' ), true ) ) {
 			$direction = 'desc';
 		}
 
-		$scope = isset( $input['scope'] ) ? sanitize_key( (string) $input['scope'] ) : 'own';
+		$scope_raw = self::scalar_string( $input['scope'] ?? 'own', 'spdb_inventory_filter_invalid' );
+		if ( is_wp_error( $scope_raw ) ) {
+			return $scope_raw;
+		}
+		$scope = sanitize_key( $scope_raw );
 		if ( ! in_array( $scope, array( 'own', 'institution' ), true ) ) {
 			$scope = 'own';
 		}
@@ -120,35 +129,26 @@ final class SPDB_Inventory_Query {
 		if ( '' === $value || null === $value ) {
 			return array();
 		}
+		if ( is_object( $value ) ) {
+			return self::error( 'spdb_inventory_' . $label . '_invalid', 'An inventory filter value has an invalid shape.' );
+		}
 
 		$values = is_array( $value ) ? $value : preg_split( '/\s*,\s*/', (string) $value );
 		if ( ! is_array( $values ) || count( $values ) > $limit ) {
-			return new WP_Error(
-				'spdb_inventory_' . $label . '_list_invalid',
-				__( 'An inventory filter contains too many values.', 'sabri-publishing-dashboard' ),
-				array( 'status' => 400 )
-			);
+			return self::error( 'spdb_inventory_' . $label . '_list_invalid', 'An inventory filter contains too many values.' );
 		}
 
 		$clean = array();
 		foreach ( $values as $item ) {
-			if ( is_array( $item ) || is_object( $item ) ) {
-				return new WP_Error(
-					'spdb_inventory_' . $label . '_invalid',
-					__( 'An inventory filter value has an invalid shape.', 'sabri-publishing-dashboard' ),
-					array( 'status' => 400 )
-				);
+			if ( is_array( $item ) || is_object( $item ) || is_resource( $item ) ) {
+				return self::error( 'spdb_inventory_' . $label . '_invalid', 'An inventory filter value has an invalid shape.' );
 			}
 			$key = sanitize_key( (string) $item );
 			if ( '' === $key ) {
 				continue;
 			}
 			if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9_-]{1,63}$/', $key ) ) {
-				return new WP_Error(
-					'spdb_inventory_' . $label . '_invalid',
-					__( 'An inventory filter key is not canonical.', 'sabri-publishing-dashboard' ),
-					array( 'status' => 400 )
-				);
+				return self::error( 'spdb_inventory_' . $label . '_invalid', 'An inventory filter key is not canonical.' );
 			}
 			$clean[] = $key;
 		}
@@ -161,18 +161,30 @@ final class SPDB_Inventory_Query {
 	 * @return string|WP_Error
 	 */
 	private static function normalize_date( $value ) {
-		$value = trim( sanitize_text_field( (string) $value ) );
+		$raw = self::scalar_string( $value, 'spdb_inventory_date_invalid' );
+		if ( is_wp_error( $raw ) ) {
+			return $raw;
+		}
+		$value = trim( sanitize_text_field( $raw ) );
 		if ( '' === $value ) {
 			return '';
 		}
 		if ( 1 !== preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $value, $parts ) || ! checkdate( (int) $parts[2], (int) $parts[3], (int) $parts[1] ) ) {
-			return new WP_Error(
-				'spdb_inventory_date_invalid',
-				__( 'Inventory dates must use valid YYYY-MM-DD values.', 'sabri-publishing-dashboard' ),
-				array( 'status' => 400 )
-			);
+			return self::error( 'spdb_inventory_date_invalid', 'Inventory dates must use valid YYYY-MM-DD values.' );
 		}
 		return $value;
+	}
+
+	/**
+	 * @param mixed  $value Raw scalar.
+	 * @param string $code Error code.
+	 * @return string|WP_Error
+	 */
+	private static function scalar_string( $value, string $code ) {
+		if ( is_array( $value ) || is_object( $value ) || is_resource( $value ) ) {
+			return self::error( $code, 'An inventory query value has an invalid shape.' );
+		}
+		return (string) $value;
 	}
 
 	private static function contains_sensitive_pattern( string $value ): bool {
@@ -183,5 +195,9 @@ final class SPDB_Inventory_Query {
 			'~(?:https?://|www\.|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|\+?\d[\d\s().-]{6,}\d)~i',
 			$value
 		);
+	}
+
+	private static function error( string $code, string $message ): WP_Error {
+		return new WP_Error( $code, __( $message, 'sabri-publishing-dashboard' ), array( 'status' => 400 ) );
 	}
 }
