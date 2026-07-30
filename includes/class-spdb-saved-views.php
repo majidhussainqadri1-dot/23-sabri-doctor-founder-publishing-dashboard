@@ -228,13 +228,19 @@ final class SPDB_Saved_Views {
 			return new WP_Error( 'spdb_invalid_saved_view', __( 'The saved-view payload is invalid.', 'sabri-publishing-dashboard' ) );
 		}
 
-		$label = isset( $input['label'] ) ? trim( sanitize_text_field( (string) $input['label'] ) ) : '';
-		if ( '' === $label || strlen( $label ) > 80 ) {
+		$label        = isset( $input['label'] ) ? trim( sanitize_text_field( (string) $input['label'] ) ) : '';
+		$label_length = function_exists( 'mb_strlen' ) ? mb_strlen( $label ) : strlen( $label );
+		if ( '' === $label || $label_length > 80 ) {
 			return new WP_Error( 'spdb_invalid_saved_view_label', __( 'The saved-view label must contain 1 to 80 characters.', 'sabri-publishing-dashboard' ) );
+		}
+
+		if ( self::contains_sensitive_pattern( $label ) ) {
+			return new WP_Error( 'spdb_sensitive_saved_view_label', __( 'Saved-view labels must not contain contact details, URLs, or sensitive identifiers.', 'sabri-publishing-dashboard' ) );
 		}
 
 		$filters = isset( $input['filters'] ) && is_array( $input['filters'] ) ? $input['filters'] : array();
 		$allowed = array( 'status', 'type', 'provider', 'language', 'sort', 'direction', 'date_from', 'date_to' );
+		$multi   = array( 'status', 'type', 'provider', 'language' );
 		$clean   = array();
 
 		foreach ( $filters as $key => $value ) {
@@ -244,14 +250,31 @@ final class SPDB_Saved_Views {
 			}
 
 			if ( is_array( $value ) ) {
-				$value = array_slice( $value, 0, 20 );
-				$value = array_values( array_filter( array_map( array( __CLASS__, 'sanitize_filter_value' ), $value ), 'strlen' ) );
-			} else {
-				$value = self::sanitize_filter_value( $value );
+				if ( ! in_array( $key, $multi, true ) || count( $value ) > 20 ) {
+					return new WP_Error( 'spdb_invalid_saved_view_filter', __( 'A saved-view filter has an invalid value shape.', 'sabri-publishing-dashboard' ) );
+				}
+
+				$values = array();
+				foreach ( $value as $entry ) {
+					$normalized = self::normalize_filter_value( $key, $entry );
+					if ( is_wp_error( $normalized ) ) {
+						return $normalized;
+					}
+					$values[] = $normalized;
+				}
+				$values = array_values( array_unique( array_filter( $values, 'strlen' ) ) );
+				if ( array() !== $values ) {
+					$clean[ $key ] = $values;
+				}
+				continue;
 			}
 
-			if ( array() !== $value && '' !== $value ) {
-				$clean[ $key ] = $value;
+			$normalized = self::normalize_filter_value( $key, $value );
+			if ( is_wp_error( $normalized ) ) {
+				return $normalized;
+			}
+			if ( '' !== $normalized ) {
+				$clean[ $key ] = $normalized;
 			}
 		}
 
@@ -260,9 +283,54 @@ final class SPDB_Saved_Views {
 
 	/**
 	 * @param mixed $value Raw filter value.
+	 * @return string|WP_Error
 	 */
-	public static function sanitize_filter_value( $value ): string {
-		$value = sanitize_text_field( (string) $value );
-		return function_exists( 'mb_substr' ) ? mb_substr( $value, 0, 100 ) : substr( $value, 0, 100 );
+	private static function normalize_filter_value( string $key, $value ) {
+		$value = trim( sanitize_text_field( (string) $value ) );
+		if ( '' === $value ) {
+			return '';
+		}
+
+		if ( self::contains_sensitive_pattern( $value ) ) {
+			return new WP_Error( 'spdb_sensitive_saved_view_filter', __( 'Saved-view filters must not contain contact details, URLs, or sensitive identifiers.', 'sabri-publishing-dashboard' ) );
+		}
+
+		if ( in_array( $key, array( 'status', 'type', 'provider', 'language' ), true ) ) {
+			$value = sanitize_key( $value );
+			if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9_-]{0,63}$/', $value ) ) {
+				return new WP_Error( 'spdb_invalid_saved_view_filter_key', __( 'A saved-view filter value is not a canonical key.', 'sabri-publishing-dashboard' ) );
+			}
+			return $value;
+		}
+
+		if ( 'sort' === $key ) {
+			$value = sanitize_key( $value );
+			return in_array( $value, array( 'modified', 'created', 'title' ), true )
+				? $value
+				: new WP_Error( 'spdb_invalid_saved_view_sort', __( 'The saved-view sort value is invalid.', 'sabri-publishing-dashboard' ) );
+		}
+
+		if ( 'direction' === $key ) {
+			$value = sanitize_key( $value );
+			return in_array( $value, array( 'asc', 'desc' ), true )
+				? $value
+				: new WP_Error( 'spdb_invalid_saved_view_direction', __( 'The saved-view direction is invalid.', 'sabri-publishing-dashboard' ) );
+		}
+
+		if ( in_array( $key, array( 'date_from', 'date_to' ), true ) ) {
+			if ( 1 !== preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $value, $parts ) || ! checkdate( (int) $parts[2], (int) $parts[3], (int) $parts[1] ) ) {
+				return new WP_Error( 'spdb_invalid_saved_view_date', __( 'The saved-view date must use a valid YYYY-MM-DD value.', 'sabri-publishing-dashboard' ) );
+			}
+			return $value;
+		}
+
+		return new WP_Error( 'spdb_invalid_saved_view_filter', __( 'The saved-view filter is invalid.', 'sabri-publishing-dashboard' ) );
+	}
+
+	private static function contains_sensitive_pattern( string $value ): bool {
+		return 1 === preg_match(
+			'~(?:https?://|www\.|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|\+?\d[\d\s().-]{6,}\d)~i',
+			$value
+		);
 	}
 }
