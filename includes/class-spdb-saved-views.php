@@ -23,12 +23,12 @@ final class SPDB_Saved_Views {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'rest_list' ),
-					'permission_callback' => array( $this, 'permission_check' ),
+					'permission_callback' => array( $this, 'read_permission_check' ),
 				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'rest_create' ),
-					'permission_callback' => array( $this, 'permission_check' ),
+					'permission_callback' => array( $this, 'write_permission_check' ),
 				),
 			)
 		);
@@ -39,7 +39,7 @@ final class SPDB_Saved_Views {
 			array(
 				'methods'             => WP_REST_Server::DELETABLE,
 				'callback'            => array( $this, 'rest_delete' ),
-				'permission_callback' => array( $this, 'permission_check' ),
+				'permission_callback' => array( $this, 'write_permission_check' ),
 				'args'                => array(
 					'id' => array(
 						'required'          => true,
@@ -51,13 +51,12 @@ final class SPDB_Saved_Views {
 	}
 
 	/**
-	 * Personal preferences are available to any authenticated File 00 member
-	 * who has explicitly been granted dashboard access, including restricted
-	 * read-only accounts. They do not grant publishing authority.
+	 * Restricted accounts may list their existing personal preferences, but the
+	 * workspace remains read-only.
 	 *
 	 * @return true|WP_Error
 	 */
-	public function permission_check() {
+	public function read_permission_check() {
 		$user_id = get_current_user_id();
 		if (
 			$user_id < 1
@@ -66,7 +65,31 @@ final class SPDB_Saved_Views {
 		) {
 			return new WP_Error(
 				'spdb_saved_views_forbidden',
-				__( 'You are not authorized to manage dashboard saved views.', 'sabri-publishing-dashboard' ),
+				__( 'You are not authorized to access dashboard saved views.', 'sabri-publishing-dashboard' ),
+				array( 'status' => 403 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Personal preference mutation requires an approved or verified File 00
+	 * account. Pending, rejected, expired, appeal-review, and suspended accounts
+	 * remain strictly read-only.
+	 *
+	 * @return true|WP_Error
+	 */
+	public function write_permission_check() {
+		$read_permission = $this->read_permission_check();
+		if ( is_wp_error( $read_permission ) ) {
+			return $read_permission;
+		}
+
+		if ( ! SPDB_Membership_Guard::current_user_is_approved() ) {
+			return new WP_Error(
+				'spdb_saved_views_read_only',
+				__( 'This dashboard workspace is read-only.', 'sabri-publishing-dashboard' ),
 				array( 'status' => 403 )
 			);
 		}
