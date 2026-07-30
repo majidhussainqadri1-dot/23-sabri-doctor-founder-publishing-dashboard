@@ -6,6 +6,10 @@
 	background: #fffaf5;
 }
 
+.spdb-inventory-table {
+	min-width: 62rem;
+}
+
 .spdb-inventory-table td strong,
 .spdb-inventory-table td small {
 	display: block;
@@ -68,15 +72,6 @@
 }
 
 @media (max-width: 720px) {
-	.spdb-inventory-table th:nth-child(4),
-	.spdb-inventory-table td:nth-child(4),
-	.spdb-inventory-table th:nth-child(5),
-	.spdb-inventory-table td:nth-child(5),
-	.spdb-inventory-table th:nth-child(6),
-	.spdb-inventory-table td:nth-child(6) {
-		display: none;
-	}
-
 	.spdb-destination-actions .spdb-button,
 	.spdb-pagination .spdb-button {
 		width: 100%;
