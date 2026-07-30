@@ -89,7 +89,8 @@ final class SPDB_Dashboard_Router {
 
 	public static function current_view(): string {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only route selection.
-		$requested = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : 'overview';
+		$raw = isset( $_GET['view'] ) ? wp_unslash( $_GET['view'] ) : 'overview';
+		$requested = is_string( $raw ) ? sanitize_key( $raw ) : 'overview';
 		return self::normalize_view( $requested );
 	}
 
