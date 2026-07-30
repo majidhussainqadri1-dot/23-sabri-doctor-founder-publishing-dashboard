@@ -54,7 +54,7 @@ The workspace view does not execute native publication mutations. Mutating nativ
 - Phase 23A Draft PR #1: unmerged
 - Phase 23B Draft PR #2: unmerged
 - Phase 23C Draft PR #3: reviewed, corrected, QA-green, unmerged
-- Phase 23D Draft PR #4: source-reviewed, corrected, awaiting final exact-head QA, unmerged
+- Phase 23D Draft PR #4: source-reviewed, corrected, corrective regression matrix green, unmerged
 - Active stacked branch: `phase/23d-role-workspaces`
 - **No merge before completed review, correction, corrective re-review, exact-head QA, staging acceptance, rollback evidence, and Founder acceptance.**
 
@@ -87,4 +87,4 @@ The workspace view does not execute native publication mutations. Mutating nativ
 
 ## Status
 
-Phase 23D independent source review, correction, and corrective source re-review are complete. Final exact-head QA, real native adapters, Hostinger staging, real-account/privacy/accessibility/rollback testing, and Founder acceptance remain mandatory. All pull requests remain Draft and unmerged.
+Phase 23D independent source review, correction, corrective source re-review, and the complete corrective PHP 8.0–8.3 regression matrix are complete. One final documentation-inclusive exact-head evidence run, real native adapters, Hostinger staging, real-account/privacy/accessibility/rollback testing, and Founder acceptance remain mandatory. All pull requests remain Draft and unmerged.
