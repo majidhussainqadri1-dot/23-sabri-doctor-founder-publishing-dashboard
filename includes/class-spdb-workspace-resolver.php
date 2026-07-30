@@ -10,16 +10,17 @@ defined( 'ABSPATH' ) || exit;
 final class SPDB_Workspace_Resolver {
 	/**
 	 * Resolve only the currently authenticated user. File 23 must not use this
-	 * current-user capability path to project another person's workspace.
+	 * current-user capability path to project another person's workspace or
+	 * Membership Core status.
 	 *
 	 * @return array<string,mixed>
 	 */
 	public function resolve( int $user_id ): array {
-		$status = SPDB_Membership_Guard::user_status( $user_id );
-
 		if ( $user_id < 1 || $user_id !== get_current_user_id() ) {
-			return $this->workspace( 'denied', __( 'Access Denied', 'sabri-publishing-dashboard' ), true, $status, $user_id );
+			return $this->workspace( 'denied', __( 'Access Denied', 'sabri-publishing-dashboard' ), true, 'unknown', $user_id );
 		}
+
+		$status = SPDB_Membership_Guard::user_status( $user_id );
 
 		if ( ! SPDB_Membership_Guard::is_available() ) {
 			return $this->workspace( 'dependency_unavailable', __( 'Dependency Unavailable', 'sabri-publishing-dashboard' ), true, $status, $user_id );
