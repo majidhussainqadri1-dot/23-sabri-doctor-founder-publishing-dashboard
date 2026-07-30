@@ -26,10 +26,11 @@ eval( 'function smc_user_status( $user_id ) { return (string) $GLOBALS["spdb_tes
 eval( 'function smc_is_founder( $user_id ) { return (bool) $GLOBALS["spdb_test_founder"]; }' );
 eval( 'function smc_is_trusted_publisher( $user_id ) { return (bool) $GLOBALS["spdb_test_trusted"]; }' );
 
-$GLOBALS['spdb_test_capabilities']['spdb_view_dashboard']   = true;
-$GLOBALS['spdb_test_capabilities']['spdb_view_own_content'] = true;
-$GLOBALS['spdb_test_capabilities']['spdb_run_system_check'] = true;
-$GLOBALS['spdb_test_member_status']                         = 'approved';
+$GLOBALS['spdb_test_capabilities']['spdb_view_dashboard']          = true;
+$GLOBALS['spdb_test_capabilities']['spdb_view_own_content']        = true;
+$GLOBALS['spdb_test_capabilities']['spdb_view_review_queue']       = true;
+$GLOBALS['spdb_test_capabilities']['spdb_run_system_check']        = true;
+$GLOBALS['spdb_test_member_status']                                = 'approved';
 
 $resolver = new SPDB_Workspace_Resolver();
 
@@ -66,6 +67,8 @@ $GLOBALS['spdb_test_member_status'] = 'approved';
 spdb_core_assert( 'overview' === SPDB_Dashboard_Router::normalize_view( 'unknown' ), 'Unknown dashboard views must fall back to overview.' );
 spdb_core_assert( 'workspace' === SPDB_Dashboard_Router::normalize_view( 'workspace' ), 'Implemented role-workspace route must be accepted.' );
 spdb_core_assert( 'inventory' === SPDB_Dashboard_Router::normalize_view( 'inventory' ), 'Implemented inventory route must be accepted.' );
+spdb_core_assert( 'review' === SPDB_Dashboard_Router::normalize_view( 'review' ), 'Implemented Review Inbox route must be accepted.' );
+spdb_core_assert( 'calendar' === SPDB_Dashboard_Router::normalize_view( 'calendar' ), 'Implemented Publishing Calendar route must be accepted.' );
 spdb_core_assert( 'saved-views' === SPDB_Dashboard_Router::normalize_view( 'saved-views' ), 'Implemented saved-views route must be accepted.' );
 spdb_core_assert( 'https://example.test/publishing-dashboard/' === SPDB_Dashboard_Router::route_url(), 'Canonical dashboard URL must be stable.' );
 spdb_core_assert( false !== strpos( SPDB_Dashboard_Router::route_url( 'system-status' ), 'view=system-status' ), 'Implemented subview URL must use an allowlisted query value.' );
@@ -79,46 +82,19 @@ $GLOBALS['spdb_test_query_vars'] = array();
 
 $invalid = SPDB_Saved_Views::normalize_definition( array( 'label' => '' ) );
 spdb_core_assert( 'spdb_invalid_saved_view_label' === spdb_core_error_code( $invalid ), 'Blank saved-view labels must be rejected.' );
-
 $invalid_label_shape = SPDB_Saved_Views::normalize_definition( array( 'label' => array( 'not', 'scalar' ) ) );
 spdb_core_assert( 'spdb_invalid_saved_view_label' === spdb_core_error_code( $invalid_label_shape ), 'Nested saved-view labels must be rejected without conversion warnings.' );
-
 $sensitive_label = SPDB_Saved_Views::normalize_definition( array( 'label' => 'Patient patient@example.com' ) );
 spdb_core_assert( 'spdb_sensitive_saved_view_label' === spdb_core_error_code( $sensitive_label ), 'Contact details must be rejected from saved-view labels.' );
-
 $invalid_filters_shape = SPDB_Saved_Views::normalize_definition( array( 'label' => 'Bad filters', 'filters' => 'status=draft' ) );
 spdb_core_assert( 'spdb_invalid_saved_view_filter' === spdb_core_error_code( $invalid_filters_shape ), 'Saved-view filters must be a structured object.' );
-
-$invalid_nested_filter = SPDB_Saved_Views::normalize_definition(
-	array(
-		'label'   => 'Nested filter',
-		'filters' => array( 'status' => array( array( 'draft' ) ) ),
-	)
-);
+$invalid_nested_filter = SPDB_Saved_Views::normalize_definition( array( 'label' => 'Nested filter', 'filters' => array( 'status' => array( array( 'draft' ) ) ) ) );
 spdb_core_assert( 'spdb_invalid_saved_view_filter' === spdb_core_error_code( $invalid_nested_filter ), 'Nested saved-view filter values must be rejected.' );
-
-$invalid_sort = SPDB_Saved_Views::normalize_definition(
-	array(
-		'label'   => 'Invalid sort',
-		'filters' => array( 'sort' => 'delete-everything' ),
-	)
-);
+$invalid_sort = SPDB_Saved_Views::normalize_definition( array( 'label' => 'Invalid sort', 'filters' => array( 'sort' => 'delete-everything' ) ) );
 spdb_core_assert( 'spdb_invalid_saved_view_sort' === spdb_core_error_code( $invalid_sort ), 'Unregistered sort values must be rejected.' );
-
-$invalid_date = SPDB_Saved_Views::normalize_definition(
-	array(
-		'label'   => 'Invalid date',
-		'filters' => array( 'date_from' => '2026-02-31' ),
-	)
-);
+$invalid_date = SPDB_Saved_Views::normalize_definition( array( 'label' => 'Invalid date', 'filters' => array( 'date_from' => '2026-02-31' ) ) );
 spdb_core_assert( 'spdb_invalid_saved_view_date' === spdb_core_error_code( $invalid_date ), 'Impossible saved-view dates must be rejected.' );
-
-$sensitive_filter = SPDB_Saved_Views::normalize_definition(
-	array(
-		'label'   => 'Private filter',
-		'filters' => array( 'provider' => 'https://example.test/private?token=secret' ),
-	)
-);
+$sensitive_filter = SPDB_Saved_Views::normalize_definition( array( 'label' => 'Private filter', 'filters' => array( 'provider' => 'https://example.test/private?token=secret' ) ) );
 spdb_core_assert( 'spdb_sensitive_saved_view_filter' === spdb_core_error_code( $sensitive_filter ), 'URLs and tokens must not enter saved-view filters.' );
 
 $normalized = SPDB_Saved_Views::normalize_definition(
@@ -171,7 +147,6 @@ $GLOBALS['spdb_test_member_status'] = 'submitted';
 spdb_core_assert( true === $saved_views->read_permission_check(), 'Restricted account may list existing saved views.' );
 $restricted_write = $saved_views->write_permission_check();
 spdb_core_assert( 'spdb_saved_views_read_only' === spdb_core_error_code( $restricted_write ), 'Restricted account must not create or delete saved views.' );
-
 $GLOBALS['spdb_test_member_status'] = 'approved';
 spdb_core_assert( true === $saved_views->write_permission_check(), 'Approved account may pass the personal saved-view mutation gate.' );
 
@@ -180,15 +155,15 @@ $state_service = new SPDB_System_State( $registry );
 $workspace     = $resolver->resolve( 7 );
 $state         = $state_service->snapshot( $workspace );
 spdb_core_assert( 0 === $state['provider_count'], 'An empty registry must report zero providers without fabricated counts.' );
-spdb_core_assert( false === $state['production_writes'], 'Phase 23D system state must declare production writes disabled.' );
-spdb_core_assert( '23D' === $state['phase'], 'System state must identify the active implementation phase.' );
+spdb_core_assert( false === $state['production_writes'], 'Phase 23E system state must declare production writes disabled.' );
+spdb_core_assert( '23E' === $state['phase'], 'System state must identify the active implementation phase.' );
 
 $overview = ( new SPDB_Overview_Service( $state_service ) )->build( $workspace );
 spdb_core_assert( 4 === count( $overview['cards'] ), 'Overview must provide the bounded dashboard summary cards.' );
 spdb_core_assert( ! empty( $overview['alerts'] ), 'No-provider state must produce an explicit truthful notice.' );
 
 $navigation = $resolver->navigation( $workspace );
-spdb_core_assert( isset( $navigation['overview'], $navigation['workspace'], $navigation['inventory'], $navigation['saved-views'], $navigation['system-status'] ), 'Only implemented and authorized dashboard destinations must be exposed.' );
+spdb_core_assert( isset( $navigation['overview'], $navigation['workspace'], $navigation['inventory'], $navigation['review'], $navigation['calendar'], $navigation['saved-views'], $navigation['system-status'] ), 'Only implemented and authorized Phase 23E dashboard destinations must be exposed.' );
 
 if ( $failed > 0 ) {
 	fwrite( STDERR, "{$failed} of {$tests} dashboard-core tests failed.\n" );
