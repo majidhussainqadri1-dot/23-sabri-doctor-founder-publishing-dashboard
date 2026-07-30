@@ -1,4 +1,4 @@
-name: Phase 23F Collections UI
+name: Collections UI Regression
 
 on:
   push:
@@ -45,6 +45,7 @@ jobs:
           set -euo pipefail
           required=(
             docs/AUDIT-PHASE-23F-COLLECTIONS-UI-2026-07-31.md
+            docs/AUDIT-PHASE-23G-NATIVE-REFERENCE-RESOLUTION-2026-07-31.md
             includes/class-spdb-collections-view.php
             includes/class-spdb-dashboard-page.php
             includes/class-spdb-dashboard-router.php
@@ -88,7 +89,7 @@ jobs:
         shell: bash
         run: set -o pipefail; php tests/architecture-guard.php | tee -a "qa-evidence/collections-ui-tests-php-${{ matrix.php }}.log"
 
-      - name: Verify read-only UI controls
+      - name: Verify retained read-only UI controls
         shell: bash
         run: |
           set -euo pipefail
@@ -98,9 +99,10 @@ jobs:
           grep -q "collections_request_input" includes/class-spdb-dashboard-page.php
           grep -q "assets/css/collections.css" includes/class-spdb-dashboard-page.php
           grep -q "templates/collections.php" templates/dashboard.php
-          grep -q "Phase 23F" templates/dashboard.php
-          grep -q "Collections and Knowledge" templates/dashboard.php
+          grep -q "Phase 23G" templates/dashboard.php
+          grep -q "Native Reference Governance" templates/dashboard.php
           grep -q "Collections reads" templates/dashboard.php
+          grep -q "Native resolvers registered" templates/dashboard.php
           grep -q '<caption>' templates/collections.php
           grep -q 'aria-current="page"' templates/collections.php
           grep -q '\$is_founder' templates/collections.php
@@ -134,9 +136,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "Version:[[:space:]]*0.6.2" sabri-publishing-dashboard.php
-          grep -q "Stable tag: 0.6.2" readme.txt
+          grep -q "Version:[[:space:]]*0.7.0" sabri-publishing-dashboard.php
+          grep -q "Stable tag: 0.7.0" readme.txt
           grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23F-COLLECTIONS-UI-2026-07-31.md
+          grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23G-NATIVE-REFERENCE-RESOLUTION-2026-07-31.md
           grep -qi "Founder review completed" STATUS.md
 
       - name: Record source checksums
@@ -161,7 +164,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-23f-collections-ui-qa-php-${{ matrix.php }}-${{ github.run_id }}
+          name: phase-23g-retained-collections-ui-qa-php-${{ matrix.php }}-${{ github.run_id }}
           path: qa-evidence/
           if-no-files-found: error
           retention-days: 30
