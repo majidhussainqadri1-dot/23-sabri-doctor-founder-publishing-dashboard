@@ -13,6 +13,7 @@ final class SPDB_Dashboard_Page {
 	private SPDB_System_State $system_state;
 	private SPDB_Saved_Views $saved_views;
 	private SPDB_Federated_Inventory $inventory;
+	private SPDB_Role_Workspace_Service $role_workspace_service;
 	private bool $assets_localized = false;
 	private bool $shortcode_page_protected = false;
 	private int $render_count = 0;
@@ -22,13 +23,15 @@ final class SPDB_Dashboard_Page {
 		SPDB_Overview_Service $overview_service,
 		SPDB_System_State $system_state,
 		SPDB_Saved_Views $saved_views,
-		SPDB_Federated_Inventory $inventory
+		SPDB_Federated_Inventory $inventory,
+		SPDB_Role_Workspace_Service $role_workspace_service
 	) {
-		$this->workspace_resolver = $workspace_resolver;
-		$this->overview_service   = $overview_service;
-		$this->system_state       = $system_state;
-		$this->saved_views        = $saved_views;
-		$this->inventory          = $inventory;
+		$this->workspace_resolver     = $workspace_resolver;
+		$this->overview_service       = $overview_service;
+		$this->system_state           = $system_state;
+		$this->saved_views            = $saved_views;
+		$this->inventory              = $inventory;
+		$this->role_workspace_service = $role_workspace_service;
 	}
 
 	public function register(): void {
@@ -94,6 +97,15 @@ final class SPDB_Dashboard_Page {
 			);
 		}
 
+		if ( ! wp_style_is( 'spdb-workspace', 'registered' ) ) {
+			wp_register_style(
+				'spdb-workspace',
+				SPDB_PLUGIN_URL . 'assets/css/workspace.css',
+				array( 'spdb-dashboard-corrections' ),
+				SPDB_VERSION
+			);
+		}
+
 		if ( ! wp_script_is( 'spdb-dashboard', 'registered' ) ) {
 			wp_register_script(
 				'spdb-dashboard',
@@ -112,6 +124,9 @@ final class SPDB_Dashboard_Page {
 		$current = SPDB_Dashboard_Router::current_view();
 		if ( 'inventory' === $current ) {
 			wp_enqueue_style( 'spdb-inventory' );
+		}
+		if ( 'workspace' === $current ) {
+			wp_enqueue_style( 'spdb-workspace' );
 		}
 
 		if ( 'saved-views' !== $current ) {
@@ -182,13 +197,14 @@ final class SPDB_Dashboard_Page {
 			$current = 'overview';
 		}
 
-		$overview     = $this->overview_service->build( $workspace );
-		$system_state = $this->system_state->snapshot( $workspace );
-		$saved_views  = $this->saved_views->get_for_user( get_current_user_id() );
-		$instance_id  = 'spdb-' . (string) ++$this->render_count;
+		$overview       = $this->overview_service->build( $workspace );
+		$system_state   = $this->system_state->snapshot( $workspace );
+		$saved_views    = $this->saved_views->get_for_user( get_current_user_id() );
+		$instance_id    = 'spdb-' . (string) ++$this->render_count;
+		$role_workspace = null;
 
-		$inventory_result   = null;
-		$inventory_item     = null;
+		$inventory_result    = null;
+		$inventory_item      = null;
 		$inventory_providers = array();
 		if ( 'inventory' === $current ) {
 			$inventory_result    = $this->inventory->list_items( $this->inventory_request_input() );
@@ -197,6 +213,10 @@ final class SPDB_Dashboard_Page {
 			if ( null !== $reference ) {
 				$inventory_item = $this->inventory->inspect_item( $reference['provider'], $reference['object_type'], $reference['object_id'] );
 			}
+		}
+
+		if ( 'workspace' === $current ) {
+			$role_workspace = $this->role_workspace_service->build( $workspace );
 		}
 
 		ob_start();
