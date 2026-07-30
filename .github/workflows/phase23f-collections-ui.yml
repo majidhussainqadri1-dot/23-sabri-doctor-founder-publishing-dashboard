@@ -53,6 +53,7 @@ jobs:
             templates/collections.php
             assets/css/collections.css
             tests/phase23f-collections-ui-tests.php
+            tests/phase23f-collections-ui-corrective-tests.php
             tests/dashboard-router-malformed-view-tests.php
           )
           for file in "${required[@]}"; do test -s "$file" || { echo "Missing or empty: $file"; exit 1; }; done
@@ -68,11 +69,16 @@ jobs:
           php -l templates/dashboard.php
           php -l templates/collections.php
           php -l tests/phase23f-collections-ui-tests.php
+          php -l tests/phase23f-collections-ui-corrective-tests.php
           php -l tests/dashboard-router-malformed-view-tests.php
 
       - name: Run Collections UI boundary tests
         shell: bash
         run: set -o pipefail; php tests/phase23f-collections-ui-tests.php | tee "qa-evidence/collections-ui-tests-php-${{ matrix.php }}.log"
+
+      - name: Run corrective UI assertions
+        shell: bash
+        run: set -o pipefail; php tests/phase23f-collections-ui-corrective-tests.php | tee -a "qa-evidence/collections-ui-tests-php-${{ matrix.php }}.log"
 
       - name: Run malformed view regression tests
         shell: bash
@@ -94,8 +100,12 @@ jobs:
           grep -q "templates/collections.php" templates/dashboard.php
           grep -q "Phase 23F" templates/dashboard.php
           grep -q "Collections and Knowledge" templates/dashboard.php
+          grep -q "Collections reads" templates/dashboard.php
           grep -q '<caption>' templates/collections.php
           grep -q 'aria-current="page"' templates/collections.php
+          grep -q '\$is_founder' templates/collections.php
+          grep -q 'Collection mutation UI:' templates/collections.php
+          ! grep -q '&larr;' templates/collections.php
           grep -q ':focus-visible' assets/css/collections.css
           grep -q '\[dir="rtl"\]' assets/css/collections.css
           grep -q 'prefers-reduced-motion' assets/css/collections.css
@@ -143,6 +153,7 @@ jobs:
             templates/collections.php \
             assets/css/collections.css \
             tests/phase23f-collections-ui-tests.php \
+            tests/phase23f-collections-ui-corrective-tests.php \
             tests/dashboard-router-malformed-view-tests.php \
             > "qa-evidence/collections-ui-checksums-php-${{ matrix.php }}.sha256"
 
