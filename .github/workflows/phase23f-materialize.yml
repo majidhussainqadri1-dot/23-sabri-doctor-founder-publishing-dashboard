@@ -1,0 +1,45 @@
+name: Phase 23F Materialize
+
+on:
+  push:
+    branches: ['phase/23f-collections-knowledge']
+    paths:
+      - 'tools/phase23f-source.part-*'
+      - '.github/workflows/phase23f-materialize.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: ${{ !contains(github.event.head_commit.message, 'Materialize initial Phase 23F candidate') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Phase 23F branch
+        uses: actions/checkout@v5
+        with:
+          ref: phase/23f-collections-knowledge
+          fetch-depth: 0
+
+      - name: Verify and materialize Phase 23F source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat tools/phase23f-source.part-* > /tmp/phase23f-source.b64
+          echo 'c0d50a65bf0a6d83246e5ba605388bb851e449ff357e017c8bd54b0c53c8510e  /tmp/phase23f-source.b64' | sha256sum -c -
+          base64 --decode /tmp/phase23f-source.b64 > /tmp/phase23f-source.tar.gz
+          echo '5ee8875359e5c0c3eda5485ac987498c31c8304ef6ec096d994da28da589770d  /tmp/phase23f-source.tar.gz' | sha256sum -c -
+          tar -xzf /tmp/phase23f-source.tar.gz -C .
+          python tools/phase23f-patch.py
+          rm -rf tools/__pycache__
+          rm -f tools/phase23f-patch.py tools/phase23f-source.part-* .github/workflows/phase23f-materialize.yml
+
+      - name: Commit materialized candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Materialize initial Phase 23F candidate'
+          git push origin HEAD:phase/23f-collections-knowledge
