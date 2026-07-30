@@ -53,7 +53,7 @@ function spdb_23f_link( array $overrides = array() ): array {
 }
 
 if ( ! defined( 'SMC_VERSION' ) ) { define( 'SMC_VERSION', '1.0.1' ); }
-if ( ! function_exists( 'smc_user_status' ) ) { function smc_user_status( $user_id ) { return (string) ( $GLOBALS['spdb_test_member_statuses'][ $user_id ] ?? $GLOBALS['spdb_test_member_status'] ); } }
+if ( ! function_exists( 'smc_user_status' ) ) { function smc_user_status( $user_id ) { return (string) ( $user_id === $GLOBALS['spdb_test_user_id'] ? $GLOBALS['spdb_test_member_status'] : ( $GLOBALS['spdb_test_member_statuses'][ $user_id ] ?? 'unknown' ) ); } }
 if ( ! function_exists( 'smc_is_founder' ) ) { function smc_is_founder( $user_id ) { return (bool) $GLOBALS['spdb_test_founder']; } }
 if ( ! function_exists( 'smc_is_trusted_publisher' ) ) { function smc_is_trusted_publisher( $user_id ) { return false; } }
 
