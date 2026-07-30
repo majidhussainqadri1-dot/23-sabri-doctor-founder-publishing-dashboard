@@ -1,7 +1,7 @@
 <?php
 /** Minimal WordPress-compatible test bootstrap for File 23 executable tests. */
 define( 'ABSPATH', __DIR__ . '/' );
-define( 'SPDB_VERSION', '0.5.1' );
+define( 'SPDB_VERSION', '0.6.0' );
 define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
 $GLOBALS['spdb_test_environment'] = 'production';
 $GLOBALS['spdb_test_logged_in'] = true;
@@ -82,6 +82,8 @@ function remove_all_actions( string $hook ): void { unset( $GLOBALS['wp_filter']
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-provider-adapter.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-workspace-provider-adapter.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-review-calendar-provider-adapter.php';
+require_once dirname( __DIR__ ) . '/includes/interface-spdb-collections-repository.php';
+require_once dirname( __DIR__ ) . '/includes/interface-spdb-native-reference-resolver.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-adapter-registry.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-membership-guard.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-capabilities.php';
@@ -97,6 +99,8 @@ require_once dirname( __DIR__ ) . '/includes/class-spdb-role-workspace-service.p
 require_once dirname( __DIR__ ) . '/includes/class-spdb-review-calendar-validator.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-review-calendar-service.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-review-calendar-rest-controller.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-collections-policy.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-collections-service.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-dashboard-router.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-workspace-resolver.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-saved-views.php';
