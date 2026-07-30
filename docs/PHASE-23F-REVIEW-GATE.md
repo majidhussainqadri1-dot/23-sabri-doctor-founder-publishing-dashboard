@@ -4,33 +4,37 @@
 
 **DO NOT MERGE before completed review.**
 
-Phase 23F remains a stacked Draft candidate. Schema, contracts, policy code, repository code, runtime services, tests, documentation, REST work, and UI work must each be independently reviewed, corrected, re-reviewed, and tested on the exact corrected head.
+Phase 23F remains a stacked Draft candidate. Schema, contracts, policy code, repository code, runtime services, tests, documentation, REST work, UI work, migration work, and every later mutation must each be independently reviewed, corrected, re-reviewed, and tested on the exact corrected head.
 
 ## Review History
 
 The initial foundation was independently reviewed. Eighteen defects were recorded in `docs/AUDIT-PHASE-23F-2026-07-30.md`, corrected, re-reviewed, and tested.
 
-The subsequent runtime and persistence slice was independently reviewed again. A second set of eighteen defects was recorded in `docs/AUDIT-PHASE-23F-RUNTIME-SECOND-REVIEW-2026-07-30.md`. Corrective source work includes Schema Version 3, table/column/index verification, a concrete WordPress repository, repository-envelope validation, approved-account read authority, fail-closed institution scope, request fingerprints, audit-reason persistence, observed native versions, and separate read/collection-write/knowledge-write readiness.
+The subsequent runtime and persistence slice was independently reviewed again. A second set of eighteen defects was recorded in `docs/AUDIT-PHASE-23F-RUNTIME-SECOND-REVIEW-2026-07-30.md`, corrected, re-reviewed, and tested.
 
-The mandatory corrective re-review then identified output-field allowlisting, strict projection normalization, and public-request schema-verification overhead defects. Those findings were corrected, executable regression coverage was added, and the complete PHP 8.0–8.3 source gate passed again.
+The collection-item and read-API boundary was then independently reviewed a third time. Sixteen principal defects were recorded in `docs/AUDIT-PHASE-23F-THIRD-REVIEW-2026-07-31.md`. Corrections added strict direct repository validation, request-cached health, truthful continuation state, lifecycle semantics, parent collection item authorization, deterministic relation conflicts, and six explicit GET-only REST projections.
 
-**Corrective source re-review completed** refers only to the current Phase 23F source slice. It does not approve WordPress staging, a real native resolver, REST mutation, UI, production use, Founder acceptance, or merge.
+The mandatory third corrective re-review then found an optional-filter regression, overflowing decimal saturation, invalid UTF-8 acceptance, and malformed optional timestamp erasure. All four edge defects were corrected and executable tests were added.
+
+**Corrective source re-review completed** applies only after the GitHub checks attached to the current documentation-inclusive commit are green. It does not approve WordPress staging, a real native resolver, REST mutation, accessible UI, production use, Founder acceptance, or merge.
 
 ## Current Candidate
 
 - Branch: `phase/23f-collections-knowledge`
 - Parent: corrected Phase 23E head
-- Scope: Collections, Founder-governed campaigns, and cross-module knowledge links
-- Plugin development version: `0.6.1`
+- Scope: Collections, Founder-governed campaigns, collection-item projections, and cross-module knowledge links
+- Plugin development version: `0.6.2`
 - Metadata schema version: `3`
 - Native ownership: preserved
 - Concrete File 23 repository: implemented for verified reads and idempotent creates
-- Strict allowlisted output projections: implemented
+- Strict persistence and output projections: implemented
+- Collection-item parent authorization: implemented
+- Phase 23F read-only REST routes: six explicit GET projections
 - Native-reference resolver injection: absent
 - Production mutation: disabled
 - Phase 23F REST mutation routes: absent
 - Update, reorder, and archive execution: disabled
-- Source readiness: corrective source gate completed
+- Exact-head automated state: determined by current GitHub checks, never by a prior run number in this static document
 - Staging readiness: not ready
 - Merge readiness: blocked
 
@@ -41,68 +45,83 @@ The mandatory corrective re-review then identified output-field allowlisting, st
 - [x] Initial corrective foundation source re-review completed
 - [x] Runtime and persistence slice independently reviewed
 - [x] Second eighteen defects documented and corrected
-- [x] Corrective re-review findings documented and corrected
+- [x] Second corrective source re-review completed
+- [x] Collection-item, lifecycle, repository, and read-API slice independently reviewed
+- [x] Third sixteen principal defects documented and corrected
+- [x] Third corrective re-review edge findings documented and corrected
 - [x] Metadata-only ownership boundary preserved
 - [x] No native publication, profile, knowledge, clinical, media, destination, report, or analytics duplication in the schema
 - [x] Collection scope and approved current-account authority reviewed
 - [x] Campaign Founder authority and capability reviewed
 - [x] Campaign phrase screening documented as defense in depth, not complete moderation
-- [x] Knowledge relation allowlist and self-link rejection reviewed
+- [x] Knowledge relation allowlist, self-link rejection, replay, and duplicate-relation conflict reviewed
 - [x] Native-reference contract and exact scope validation reviewed
 - [x] Schema tables, columns, indexes, uniqueness, and lifecycle verification reviewed
-- [x] Schema verification removed from every public request
+- [x] Schema verification removed from every public request and cached per repository request
 - [x] Actor-scoped idempotency and request-fingerprint conflict behavior reviewed
 - [x] Bounded audit-reason and native-version persistence reviewed
-- [x] Repository envelope and projected-row IDOR validation reviewed
-- [x] Strict output-field allowlists and reconstructed projections reviewed
-- [x] Unknown fields, malformed numeric values, text, lists, enums, and timestamps fail closed
+- [x] Repository envelope, continuation state, projected-row IDOR, and lifecycle validation reviewed
+- [x] Strict persistence and output-field allowlists reviewed
+- [x] Overflowing integers, invalid UTF-8, malformed timestamps, unknown fields, text, lists, enums, and versions fail closed
+- [x] Parent collection authorization precedes every collection-item query
+- [x] Archived collection items are excluded consistently from default reads
 - [x] Concrete WordPress repository reads and creates reviewed
-- [x] Unsupported update, reorder, and archive operations fail closed
-- [x] Prior Phase 23A–23E architecture guards retained
-- [x] Corrective exact-head automated source evidence completed
+- [x] Six explicit Phase 23F GET-only REST routes reviewed
+- [x] Strict REST query allowlists, approved-account permission, pagination headers, and private/no-store coverage reviewed
+- [x] Unsupported create/update/reorder/archive REST and repository operations fail closed
+- [x] Prior Phase 23A–23E architecture controls retained
+- [ ] The current documentation-inclusive commit must have a green exact-head PHP 8.0–8.3 matrix and retained artifacts
 - [ ] Real native-reference resolver implementation reviewed
 - [ ] Object-level authorization against real providers reviewed
 - [ ] Cross-user and cross-doctor IDOR staging evidence completed
 - [ ] Optimistic concurrency update execution reviewed
 - [ ] Canonical shared audit-service integration reviewed
-- [ ] Phase 23F REST nonce and strict mutation payload allowlists reviewed
+- [ ] Phase 23F REST nonce and strict mutation payload allowlists reviewed before any future mutation route
 - [ ] Phase 23F accessible responsive UI and RTL source review completed
 
 ## Exact-Head Automated Gate
 
-- [x] PHP 8.0 successful on final corrected source head
-- [x] PHP 8.1 successful on final corrected source head
-- [x] PHP 8.2 successful on final corrected source head
-- [x] PHP 8.3 successful on final corrected source head
-- [x] PHP syntax successful
-- [x] JavaScript syntax successful
-- [x] Phase 23A–23E regressions successful
-- [x] Phase 23F policy tests successful
-- [x] Phase 23F runtime-authority tests successful
-- [x] Phase 23F concrete-repository tests successful
-- [x] Schema Version 3 verification tests successful
-- [x] Strict projection and unknown-field rejection tests successful
-- [x] Replay and same-key/different-payload conflict tests successful
-- [x] Restored architecture guard successful
-- [x] Forbidden native ownership and persisted-destination checks successful
-- [x] Privacy tests successful
-- [x] Version and required-file checks successful
-- [x] QA artifacts and exact-head checksums retained
+These controls must all be successful on the **same current commit**. A prior green run is invalid after any source or documentation change.
+
+- [ ] PHP 8.0 successful on current documentation-inclusive head
+- [ ] PHP 8.1 successful on current documentation-inclusive head
+- [ ] PHP 8.2 successful on current documentation-inclusive head
+- [ ] PHP 8.3 successful on current documentation-inclusive head
+- [ ] PHP syntax successful
+- [ ] JavaScript syntax successful
+- [ ] Phase 23A–23E regressions successful
+- [ ] Phase 23F policy tests successful
+- [ ] Phase 23F runtime-authority tests successful
+- [ ] Phase 23F concrete-repository tests successful
+- [ ] Phase 23F collection-item and read-REST tests successful
+- [ ] Schema Version 3 verification tests successful
+- [ ] Strict persistence, UTF-8, overflow, optional-timestamp, and lifecycle tests successful
+- [ ] Replay, payload-conflict, and duplicate-relation tests successful
+- [ ] Architecture and GET-only REST controls successful
+- [ ] Forbidden native ownership and persisted-destination checks successful
+- [ ] Privacy tests successful
+- [ ] Version and required-file checks successful
+- [ ] QA artifacts and exact-head checksums retained
+
+The authoritative state of these boxes is the GitHub check suite and artifacts for the current commit, not this static pre-run checklist.
 
 ## WordPress Staging Gate
 
 - [ ] Fresh activation without fatal error
 - [ ] Upgrade from corrected Phase 23E and Schema Version 2 without data loss
 - [ ] Schema Version 3 tables, columns, and indexes verified through WordPress migration APIs
-- [ ] Founder institution collection
-- [ ] Doctor own-scope collection
-- [ ] Founder campaign creation
+- [ ] Verified read-only REST routes under real WordPress routing and authentication
+- [ ] Founder institution collection read
+- [ ] Doctor own-scope collection read
+- [ ] Parent-authorized collection-item list and detail
+- [ ] Foreign collection/item enumeration resistance
+- [ ] Founder campaign creation in explicitly enabled staging only
 - [ ] Non-Founder campaign rejection
 - [ ] Ethical campaign validation and human moderation
 - [ ] Cross-module object resolution against real providers
 - [ ] Missing, deleted, private, suspended, or permission-lost native object handling
 - [ ] Cross-doctor IDOR resistance
-- [ ] Exact idempotent replay and payload-conflict behavior
+- [ ] Exact idempotent replay, payload conflict, and duplicate-relation conflict behavior
 - [ ] Concurrent metadata update conflicts after update operations are separately approved
 - [ ] Archive without native deletion after archive operations are separately approved
 - [ ] LiteSpeed and hosting-cache privacy
