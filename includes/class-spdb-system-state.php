@@ -45,23 +45,23 @@ final class SPDB_System_State {
 		$degraded   = ! $membership['available'] || $errors > 0;
 
 		return array(
-			'environment'         => function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production',
-			'plugin_version'      => SPDB_VERSION,
-			'contract_version'    => SPDB_CONTRACT_VERSION,
-			'workspace'           => array(
+			'environment'       => function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production',
+			'plugin_version'    => SPDB_VERSION,
+			'contract_version'  => SPDB_CONTRACT_VERSION,
+			'workspace'         => array(
 				'key'            => (string) $workspace['key'],
 				'label'          => (string) $workspace['label'],
 				'read_only'      => (bool) $workspace['read_only'],
 				'account_status' => (string) $workspace['account_status'],
 			),
-			'membership'          => $membership,
-			'provider_count'      => count( $providers ),
-			'provider_errors'     => $errors,
-			'providers'           => $providers,
-			'degraded'            => $degraded,
-			'generated_at_gmt'    => gmdate( 'c' ),
-			'production_writes'   => false,
-			'phase'               => '23C',
+			'membership'        => $membership,
+			'provider_count'    => count( $providers ),
+			'provider_errors'   => $errors,
+			'providers'         => $providers,
+			'degraded'          => $degraded,
+			'generated_at_gmt'  => gmdate( 'c' ),
+			'production_writes' => false,
+			'phase'             => '23D',
 		);
 	}
 }
