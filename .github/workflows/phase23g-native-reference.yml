@@ -52,6 +52,7 @@ jobs:
             includes/class-spdb-system-state.php
             tests/fixtures/class-test-native-reference-provider.php
             tests/phase23g-native-reference-tests.php
+            tests/phase23g-native-reference-drift-tests.php
           )
           for file in "${required[@]}"; do test -s "$file" || { echo "Missing or empty: $file"; exit 1; }; done
 
@@ -66,10 +67,15 @@ jobs:
           php -l includes/class-spdb-system-state.php
           php -l tests/fixtures/class-test-native-reference-provider.php
           php -l tests/phase23g-native-reference-tests.php
+          php -l tests/phase23g-native-reference-drift-tests.php
 
       - name: Run Phase 23G native resolver tests
         shell: bash
         run: set -o pipefail; php tests/phase23g-native-reference-tests.php | tee "qa-evidence/phase23g-tests-php-${{ matrix.php }}.log"
+
+      - name: Run contract drift regression tests
+        shell: bash
+        run: set -o pipefail; php tests/phase23g-native-reference-drift-tests.php | tee -a "qa-evidence/phase23g-tests-php-${{ matrix.php }}.log"
 
       - name: Run Phase 23F runtime regression
         shell: bash
@@ -89,6 +95,8 @@ jobs:
           grep -q 'adapter_acceptance_state' includes/class-spdb-native-reference-registry.php
           grep -q 'validated_context' includes/class-spdb-native-reference-registry.php
           grep -q 'spdb_native_resolver_provider_error' includes/class-spdb-native-reference-registry.php
+          grep -q 'provider_contract_is_current' includes/class-spdb-native-reference-registry.php
+          grep -q 'contract_drift' includes/class-spdb-native-reference-registry.php
           grep -q 'spdb/register_native_reference_resolvers' includes/class-spdb-native-reference-registration.php
           grep -q 'new SPDB_Native_Reference_Registry( \$this->adapter_registry, array() )' includes/class-spdb-plugin.php
           grep -q "register_provider_adapters' ), 30" includes/class-spdb-plugin.php
@@ -115,6 +123,7 @@ jobs:
             includes/class-spdb-system-state.php \
             tests/fixtures/class-test-native-reference-provider.php \
             tests/phase23g-native-reference-tests.php \
+            tests/phase23g-native-reference-drift-tests.php \
             docs/AUDIT-PHASE-23G-NATIVE-REFERENCE-RESOLUTION-2026-07-31.md \
             > "qa-evidence/phase23g-checksums-php-${{ matrix.php }}.sha256"
 
