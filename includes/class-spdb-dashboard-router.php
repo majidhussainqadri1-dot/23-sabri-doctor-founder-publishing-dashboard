@@ -8,8 +8,9 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Dashboard_Router {
-	public const QUERY_VAR = 'spdb_dashboard';
-	public const ROUTE     = 'publishing-dashboard';
+	public const QUERY_VAR      = 'spdb_dashboard';
+	public const ROUTE          = 'publishing-dashboard';
+	public const REWRITE_VERSION = '1';
 
 	/** @var callable */
 	private $renderer;
@@ -23,6 +24,7 @@ final class SPDB_Dashboard_Router {
 
 	public function register(): void {
 		add_action( 'init', array( __CLASS__, 'register_rewrite_rule' ) );
+		add_action( 'init', array( __CLASS__, 'maybe_flush_rewrite_rules' ), 99 );
 		add_filter( 'query_vars', array( $this, 'register_query_var' ) );
 		add_action( 'template_redirect', array( $this, 'dispatch' ), 0 );
 		add_action( 'send_headers', array( $this, 'send_private_headers' ) );
@@ -37,9 +39,23 @@ final class SPDB_Dashboard_Router {
 		);
 	}
 
+	/**
+	 * Flush once after an upgrade that introduces or changes the route. This
+	 * avoids requiring deactivation/reactivation on an already active plugin.
+	 */
+	public static function maybe_flush_rewrite_rules(): void {
+		if ( self::REWRITE_VERSION === (string) get_option( 'spdb_rewrite_version', '' ) ) {
+			return;
+		}
+
+		flush_rewrite_rules( false );
+		update_option( 'spdb_rewrite_version', self::REWRITE_VERSION, false );
+	}
+
 	public static function activate(): void {
 		self::register_rewrite_rule();
 		flush_rewrite_rules( false );
+		update_option( 'spdb_rewrite_version', self::REWRITE_VERSION, false );
 	}
 
 	public static function deactivate(): void {
@@ -60,7 +76,7 @@ final class SPDB_Dashboard_Router {
 	}
 
 	public static function route_url( string $view = 'overview' ): string {
-		$url = home_url( '/' . self::ROUTE . '/' );
+		$url  = home_url( '/' . self::ROUTE . '/' );
 		$view = self::normalize_view( $view );
 
 		return 'overview' === $view ? $url : add_query_arg( 'view', $view, $url );
@@ -114,6 +130,7 @@ final class SPDB_Dashboard_Router {
 		header( 'X-Robots-Tag: noindex, nofollow, noarchive, nosnippet', true );
 		header( 'Referrer-Policy: same-origin', true );
 		header( 'X-Content-Type-Options: nosniff', true );
+		header( 'Permissions-Policy: camera=(), microphone=(), geolocation=()', true );
 	}
 
 	/**
