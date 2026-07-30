@@ -27,6 +27,7 @@ require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-collections-schema.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-collections-policy.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-wp-collections-repository.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-collections-service.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-collections-rest-controller.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-dashboard-router.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-workspace-resolver.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-saved-views.php';
@@ -47,6 +48,7 @@ final class SPDB_Plugin {
 	private SPDB_Review_Calendar_REST_Controller $review_calendar_rest;
 	private SPDB_WP_Collections_Repository $collections_repository;
 	private SPDB_Collections_Service $collections_service;
+	private SPDB_Collections_REST_Controller $collections_rest;
 	private SPDB_Saved_Views $saved_views;
 	private SPDB_REST_Privacy $rest_privacy;
 	private SPDB_System_State $system_state;
@@ -68,6 +70,7 @@ final class SPDB_Plugin {
 		// Reads use the verified File 23 repository. Knowledge writes still fail
 		// closed because no reviewed native-reference resolver is injected.
 		$this->collections_service = new SPDB_Collections_Service( $this->collections_repository );
+		$this->collections_rest = new SPDB_Collections_REST_Controller( $this->collections_service );
 		$this->saved_views = new SPDB_Saved_Views();
 		$this->rest_privacy = new SPDB_REST_Privacy();
 		$this->system_state = new SPDB_System_State( $this->adapter_registry, $this->collections_service );
@@ -103,10 +106,11 @@ final class SPDB_Plugin {
 		$this->saved_views->register();
 		$this->inventory_rest->register();
 		$this->review_calendar_rest->register();
+		$this->collections_rest->register();
 		$this->rest_privacy->register();
 		add_action( 'init', array( 'SPDB_Capability_Installer', 'maybe_upgrade' ), 1 );
 		// Full table/column/index verification is intentionally restricted to
-		// activation, administrative lifecycle checks, and repository health.
+		// activation, administrative lifecycle checks, and cached repository health.
 		add_action( 'admin_init', array( 'SPDB_Collections_Schema', 'maybe_upgrade' ), 2 );
 		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
 		add_action( 'plugins_loaded', array( $this, 'register_provider_adapters' ), 30 );
