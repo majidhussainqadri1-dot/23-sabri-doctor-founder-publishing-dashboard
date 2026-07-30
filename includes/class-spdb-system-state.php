@@ -9,9 +9,11 @@ defined( 'ABSPATH' ) || exit;
 
 final class SPDB_System_State {
 	private SPDB_Adapter_Registry $registry;
+	private ?SPDB_Collections_Service $collections_service;
 
-	public function __construct( SPDB_Adapter_Registry $registry ) {
-		$this->registry = $registry;
+	public function __construct( SPDB_Adapter_Registry $registry, ?SPDB_Collections_Service $collections_service = null ) {
+		$this->registry            = $registry;
+		$this->collections_service = $collections_service;
 	}
 
 	/**
@@ -39,7 +41,15 @@ final class SPDB_System_State {
 			$errors += is_array( $provider_errors ) ? count( $provider_errors ) : 0;
 		}
 		$membership = SPDB_Membership_Guard::health_snapshot();
-		$degraded   = ! $membership['available'] || $errors > 0;
+		$collections = null !== $this->collections_service
+			? $this->collections_service->health()
+			: array(
+				'repository_available' => false,
+				'resolver_available'   => false,
+				'write_enabled'        => false,
+				'repository_health'    => array( 'healthy' => false, 'code' => 'service_unavailable' ),
+			);
+		$degraded = ! $membership['available'] || $errors > 0 || empty( $collections['repository_available'] ) || empty( $collections['resolver_available'] );
 		return array(
 			'environment'       => function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production',
 			'plugin_version'    => SPDB_VERSION,
@@ -54,10 +64,11 @@ final class SPDB_System_State {
 			'provider_count'    => count( $providers ),
 			'provider_errors'   => $errors,
 			'providers'         => $providers,
+			'collections'       => $collections,
 			'degraded'          => $degraded,
 			'generated_at_gmt'  => gmdate( 'c' ),
 			'production_writes' => false,
-			'phase'             => '23E',
+			'phase'             => '23F',
 		);
 	}
 }
