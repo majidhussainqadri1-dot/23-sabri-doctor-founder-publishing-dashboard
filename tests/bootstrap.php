@@ -4,7 +4,7 @@
  */
 
 define( 'ABSPATH', __DIR__ . '/' );
-define( 'SPDB_VERSION', '0.3.1' );
+define( 'SPDB_VERSION', '0.4.0' );
 define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
 
 $GLOBALS['spdb_test_environment']          = 'production';
@@ -20,6 +20,7 @@ $GLOBALS['spdb_test_options']              = array();
 $GLOBALS['spdb_test_roles']                = array();
 $GLOBALS['spdb_test_force_meta_conflict']  = false;
 $GLOBALS['spdb_test_last_inventory_query'] = array();
+$GLOBALS['spdb_test_workspace_context']    = array();
 $GLOBALS['wp_filter']                      = array();
 $GLOBALS['wp']                             = (object) array( 'query_vars' => array() );
 
@@ -99,13 +100,14 @@ function update_user_meta( int $user_id, string $key, $value, $previous_value = 
 	return true;
 }
 function wp_generate_uuid4(): string { return '123e4567-e89b-12d3-a456-426614174000'; }
-function current_time( string $type, bool $gmt = false ): string { return '2026-07-30 02:27:00'; }
+function current_time( string $type, bool $gmt = false ): string { return '2026-07-30 09:44:00'; }
 function get_role( string $role_key ) { return $GLOBALS['spdb_test_roles'][ $role_key ] ?? null; }
 function get_option( string $key, $default = false ) { return $GLOBALS['spdb_test_options'][ $key ] ?? $default; }
 function update_option( string $key, $value, $autoload = null ): bool { $GLOBALS['spdb_test_options'][ $key ] = $value; return true; }
 function remove_all_actions( string $hook ): void { unset( $GLOBALS['wp_filter'][ $hook ] ); }
 
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-provider-adapter.php';
+require_once dirname( __DIR__ ) . '/includes/interface-spdb-workspace-provider-adapter.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-adapter-registry.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-membership-guard.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-capabilities.php';
@@ -115,6 +117,9 @@ require_once dirname( __DIR__ ) . '/includes/class-spdb-provider-registration.ph
 require_once dirname( __DIR__ ) . '/includes/class-spdb-inventory-query.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-projection-validator.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-federated-inventory.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-safe-destination.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-workspace-projection-validator.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-role-workspace-service.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-dashboard-router.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-workspace-resolver.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-saved-views.php';
