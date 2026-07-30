@@ -4,72 +4,70 @@
 
 - Project: File 23 — Doctor and Founder Publishing Dashboard
 - Specification: Harmonized Draft 2
-- Active phase: 23D — Founder and Doctor Role Workspaces
-- Branch: `phase/23d-role-workspaces`
-- Parent branch: `phase/23c-federated-inventory`
+- Active phase: 23E — Universal Review Inbox and Federated Publishing Calendar
+- Branch: `phase/23e-review-calendar`
+- Parent branch: `phase/23d-role-workspaces`
 - Phase 23A PR #1: Draft, unmerged
 - Phase 23B PR #2: Draft, twice source-reviewed, unmerged
 - Phase 23C PR #3: Draft, source-reviewed, corrected, exact-head QA-green, unmerged
-- Phase 23D PR #4: Draft, open, source-reviewed, corrected, automated-QA-green, unmerged
-- Plugin version: `0.4.1`
+- Phase 23D PR #4: Draft, source-reviewed, corrected, exact-head QA-green, unmerged
+- Phase 23E PR: not yet opened
+- Plugin version: `0.5.0`
 - Adapter contract: `2.0.0`
 - Production readiness: Not ready
 - Staging readiness: Not ready
-- Merge readiness: Blocked by WordPress staging, real-account/privacy/accessibility/rollback testing, and Founder acceptance
-- Technical status: Phase 23D independent source review completed; sixteen findings corrected; complete PHP 8.0–8.3 regression matrix passed; one final exact-head evidence run is required after this documentation update
+- Merge readiness: Blocked by Phase 23E independent review, defect correction, corrective re-review, exact-head QA, WordPress staging, real-account/privacy/accessibility/rollback testing, and Founder acceptance
+- Technical status: Initial Phase 23E implementation candidate completed; initial exact-head workflow and independent review remain pending
 
-## Corrected Phase 23D Scope
+## Implemented Phase 23E Candidate Scope
 
-- [x] Optional native role-workspace adapter interface
-- [x] File 00 re-derived Founder, trusted-doctor, Doctor, restricted, and read-only authority
-- [x] Truthful bounded measured cards with mandatory source timestamps
-- [x] Founder official-publishing and Doctor reviewed-publishing policies
-- [x] Canonical action-type mutability, capability, and Founder-only contract
-- [x] Provider-declared capability enforcement
-- [x] Current-user owner scope and Founder-only institution scope
-- [x] Exact-origin HTTP(S), matching-port, fragment-free, non-secret native destinations
-- [x] Raw-query duplicate/array/encoding rejection and recursive nested-target rejection
-- [x] Adapter acceptance and environment gate for mutating launch destinations
-- [x] Profile and knowledge destinations routed through centralized action gates
-- [x] Native profile completion, verification, eligibility, and mandatory source timestamps
-- [x] Native knowledge portfolio and successful-case aggregates with mandatory source timestamps
-- [x] Global provider, card, action, activity, alert, profile, and knowledge bounds
-- [x] Duplicate launch-action suppression and explicit truncation notice
-- [x] Provider exception and invalid-projection isolation
-- [x] Truthful no-provider and unavailable states
-- [x] Responsive and accessible role-workspace template
-- [x] Localized native-management disclosure
-- [x] Expanded corrective workspace tests and architecture guards
-- [x] Independent corrective audit recorded
+- [x] Optional native review/calendar projection interface
+- [x] Server-derived current user, account, Founder, reviewer, scope, capability, and environment context
+- [x] Universal Review Inbox as a bounded native projection
+- [x] Native review state, reviewer assignment, due date, flags, version, freshness, and destination validation
+- [x] Separation-of-duties removal of final self-approval and self-rejection
+- [x] Federated Publishing Calendar as a bounded native projection
+- [x] Native UTC schedule, IANA timezone, conflicts, failures, version, freshness, and destination validation
+- [x] Explicit approve, request-changes, reject, and assign-reviewer routes
+- [x] Explicit schedule, reschedule, and unschedule routes
+- [x] Guarded operation-broker execution
+- [x] Object-version, idempotency-key, and audit-reason requirements
+- [x] Native object re-fetch before confirmed success
+- [x] Provider-declared operation and native allowed-operation intersection
+- [x] File 23-controlled environment acceptance gate
+- [x] Strict totals, text, flags, timestamps, timezones, references, and same-origin URLs
+- [x] Provider failure isolation and global provider/item limits
+- [x] Responsive Review Inbox and Calendar templates
+- [x] Executable Phase 23E tests
+- [x] Phase 23E architecture and no-merge documentation
 
-## Phase 23D Review and Acceptance Gates
+## Phase 23E Review and Acceptance Gates
 
-- [x] Stacked branch created from the exact reviewed Phase 23C head
-- [x] Initial implementation completed
-- [x] Draft stacked PR #4 opened
-- [x] Independent source review completed
-- [x] Sixteen defects documented
-- [x] Every identified source defect corrected
-- [x] Corrective source re-review completed
-- [x] PHP 8.0 corrective matrix successful
-- [x] PHP 8.1 corrective matrix successful
-- [x] PHP 8.2 corrective matrix successful
-- [x] PHP 8.3 corrective matrix successful
-- [x] Contract, Dashboard Core, and inventory regressions green
-- [x] Corrective workspace tests green
-- [x] REST privacy, capability-installer, and provider-isolation tests green
-- [x] Architecture boundary guard green
-- [x] QA artifacts and source checksums retained for corrected source
-- [ ] Final exact-current-documentation-head evidence retained
-- [ ] Real File 21 official/professional projections accepted on staging
-- [ ] Real File 22 Composer destinations accepted on staging
-- [ ] Real File 03 profile projections accepted on staging
-- [ ] Native knowledge portfolio projections accepted on staging
-- [ ] Founder workspace verified with a real Founder account
-- [ ] Doctor and trusted-doctor workspaces verified with real accounts
-- [ ] Pending and suspended restricted workspaces verified
-- [ ] Cross-doctor scope and destination privacy accepted
-- [ ] LiteSpeed and hosting cache privacy verified
+- [x] Stacked branch created from the exact corrected Phase 23D head
+- [x] Initial implementation candidate completed
+- [ ] Draft stacked PR opened
+- [ ] Independent source review completed
+- [ ] Every defect documented
+- [ ] Every defect corrected
+- [ ] Corrective source re-review completed
+- [ ] PHP 8.0 exact-head workflow successful
+- [ ] PHP 8.1 exact-head workflow successful
+- [ ] PHP 8.2 exact-head workflow successful
+- [ ] PHP 8.3 exact-head workflow successful
+- [ ] Contract, Dashboard Core, inventory, and role-workspace regressions green
+- [ ] Phase 23E review/calendar tests green
+- [ ] REST privacy, capability-installer, and provider-isolation tests green
+- [ ] Architecture boundary guard green
+- [ ] QA artifacts and source checksums retained
+- [ ] Real File 21 Newsroom queue and decisions accepted on staging
+- [ ] Real File 22 Composer/schedule routes accepted on staging
+- [ ] Founder institution review/calendar scope verified
+- [ ] Assigned reviewer scope and separation of duties verified
+- [ ] Pending and suspended accounts denied review/schedule mutations
+- [ ] Native timezone, conflicts, failures, and cron reconciliation verified
+- [ ] Author suspension, permission loss, privacy hold, and copyright hold revalidated
+- [ ] Cross-doctor IDOR and enumeration resistance accepted
+- [ ] LiteSpeed and hosting-cache privacy verified
 - [ ] Desktop, tablet, mobile, keyboard, screen-reader, zoom, contrast, reduced-motion, and RTL accepted
 - [ ] Upgrade, deactivation/reactivation, backup/restore, and rollback accepted
 - [ ] Founder review completed
@@ -78,19 +76,19 @@
 
 ## Non-Negotiable Restrictions
 
-1. No duplicate publication, Composer, profile, knowledge, Newsroom, review, schedule, source, media, comment, correction, retraction, or analytics backend.
+1. No duplicate publication, Composer, profile, knowledge, Newsroom, review, reviewer-assignment, schedule, cron, source, media, comment, correction, retraction, or analytics backend.
 2. No provider self-acceptance for staging or production.
-3. No caller-supplied user, role, Founder flag, owner, scope, read-only state, capability, status, or environment is trusted.
-4. No provider may redefine action mutability, required capability, or Founder-only semantics.
-5. No Doctor receives Founder-only official publishing.
-6. No restricted account receives mutating native launch actions.
-7. No profile or knowledge destination bypasses centralized action gates.
-8. No measured card appears without a bounded numeric native value and absolute source timestamp.
-9. No unsafe, cross-origin, signed, secret-bearing, expiring, credentialed, fragment, duplicate-query, or nested-target destination is rendered.
-10. No patient-identifying content enters workspace cards, actions, activity, alerts, profile, knowledge, logs, errors, or URLs.
-11. The workspace view does not execute native mutations.
+3. No caller-supplied user, role, Founder flag, reviewer, author, scope, capability, account state, or environment is trusted.
+4. No generic unrestricted action endpoint.
+5. No review or schedule mutation outside the guarded operation broker.
+6. No mutation without current capability, approved File 00 account state, provider declaration, native authorization, environment acceptance, object version, idempotency key, and audit reason.
+7. No final self-approval or self-rejection where separation of duties is required.
+8. No visual or optimistic state is treated as success before native execution and re-fetch.
+9. No non-IANA timezone, relative timestamp, malformed total, unsafe destination, or unbounded projection is accepted.
+10. No patient-identifying content, contact information, secret, or signed URL enters review/calendar projections, logs, errors, or routes.
+11. File 23 creates no native review or schedule table.
 12. No merge before review, correction, re-review, exact-head QA, staging, rollback, and Founder acceptance.
 
 ## Next Technical Step
 
-Complete the final workflow against this documentation-inclusive head, retain its artifacts and checksums, update Draft PR #4 without changing repository source, and keep PRs #1–#4 unmerged.
+Open Draft PR #5, run the complete PHP 8.0–8.3 exact-head workflow, inspect every job and artifact, correct any failure immediately, and then begin an independent Phase 23E source review. PRs #1–#5 must remain Draft and unmerged.
