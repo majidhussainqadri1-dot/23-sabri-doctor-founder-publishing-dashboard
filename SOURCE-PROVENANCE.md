@@ -6,6 +6,22 @@ This repository implements File 23 — **Doctor and Founder Publishing Dashboard
 
 The immediate implementation basis is the consolidated **Harmonized Draft 2** prepared on 30 July 2026 after the original encyclopedic plan and its corrective architectural review were reconciled.
 
+## Verified File 00 Dependency Source
+
+The corrective review inspected the supplied original package:
+
+- Package: `00 sabri-membership-core-1.0.1.zip`
+- SHA-256: `1418dff3410ebd66f6d440453f4bc4fe487828920d8fdaf8190df42844d426af`
+- Declared version: `1.0.1`
+- Verified canonical symbols:
+  - `SMC_VERSION`
+  - `smc_user_status()`
+  - `smc_is_founder()`
+  - `smc_is_trusted_publisher()`
+- Verified account statuses include draft/pending states, `approved`, `verified`, `rejected`, `suspended`, `expired_document`, and `appeal_review`.
+
+This source verification caused two corrections: File 23 now enforces an explicit File 00 version range and preserves the plan-required restricted read-only/status/appeal workspace for non-approved doctors without granting mutation authority.
+
 ## Governing Architectural Decisions
 
 - File 23 is a separate plugin and repository.
@@ -16,7 +32,8 @@ The immediate implementation basis is the consolidated **Harmonized Draft 2** pr
 - Native ownership is preserved through versioned adapters.
 - A four-dimensional display projection replaces a destructive universal state machine.
 - Capabilities, not presentation labels, control authority.
-- Production write actions require Production-Accepted adapters.
+- Providers declare technical capability; File 23 governance independently records staging/production acceptance.
+- Production write actions require File 23-controlled Production-Accepted status and complete operation authorization.
 
 ## Repository Creation Record
 
