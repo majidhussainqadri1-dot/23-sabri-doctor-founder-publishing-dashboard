@@ -1,0 +1,85 @@
+.spdb-inventory-filter {
+	margin: 1.25rem 0;
+	padding: 1rem;
+	border: 1px solid #d9d9d9;
+	border-radius: 0.75rem;
+	background: #fffaf5;
+}
+
+.spdb-inventory-table td strong,
+.spdb-inventory-table td small {
+	display: block;
+}
+
+.spdb-inventory-table td small {
+	margin-top: 0.25rem;
+	color: #5b6470;
+}
+
+.spdb-inspector {
+	margin-top: 1.5rem;
+	padding: 1.25rem;
+	border: 1px solid #d9d9d9;
+	border-radius: 0.875rem;
+	background: #ffffff;
+}
+
+.spdb-inspector-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+	gap: 0.75rem;
+	margin: 1rem 0;
+}
+
+.spdb-inspector-grid > div {
+	padding: 0.75rem;
+	border: 1px solid #e3e5e8;
+	border-radius: 0.625rem;
+	background: #fafafa;
+}
+
+.spdb-inspector-grid dt {
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: #5b6470;
+}
+
+.spdb-inspector-grid dd {
+	margin: 0.25rem 0 0;
+	overflow-wrap: anywhere;
+}
+
+.spdb-destination-actions,
+.spdb-pagination {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	margin: 1rem 0;
+}
+
+.spdb-compliance-list {
+	list-style: none;
+	padding: 0;
+}
+
+.spdb-compliance-list li {
+	margin-bottom: 0.5rem;
+}
+
+@media (max-width: 720px) {
+	.spdb-inventory-table th:nth-child(4),
+	.spdb-inventory-table td:nth-child(4),
+	.spdb-inventory-table th:nth-child(5),
+	.spdb-inventory-table td:nth-child(5),
+	.spdb-inventory-table th:nth-child(6),
+	.spdb-inventory-table td:nth-child(6) {
+		display: none;
+	}
+
+	.spdb-destination-actions .spdb-button,
+	.spdb-pagination .spdb-button {
+		width: 100%;
+		text-align: center;
+	}
+}
