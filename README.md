@@ -21,63 +21,82 @@ This plugin provides one private, role-aware, federated publishing command cente
 
 File 23 must not duplicate publication bodies, native drafts, review decisions, native schedules, source records, media binaries, comments, corrections, retractions, raw analytics events, profiles, identities, or notification delivery records.
 
-## Corrective Architecture
+## Security Baseline
 
-The Phase 23A review found that the original bootstrap trusted provider-declared production acceptance and a caller-supplied environment flag. Corrective build `0.1.1` closes those paths:
+Corrective Phase 23A established:
 
-- Adapter Contract: `2.0.0`
-- providers declare technical capability only;
-- File 23 governance independently controls staging/production acceptance;
-- WordPress resolves the environment server-side;
-- File 00 compatibility and current account state are checked server-side;
-- pending/suspended accounts may receive only explicitly assigned restricted read-only routes;
-- all dashboard mutations pass through the guarded operation broker;
-- provider exceptions are isolated;
-- native object re-read is required before confirmed success;
-- executable contract tests run on PHP 8.0–8.3.
+- Adapter Contract `2.0.0`;
+- technical capability separated from File 23-controlled acceptance;
+- server-resolved WordPress environment;
+- compatible File 00 dependency and account-state checks;
+- restricted read-only routes for explicitly authorized non-approved accounts;
+- guarded native operation broker;
+- object-version and idempotency controls;
+- adapter exception isolation;
+- exact native-object re-read after successful mutation;
+- executable contract and architecture tests on PHP 8.0–8.3.
 
 ## Current Phase
 
-**Phase 23A — Governance, Contracts, Corrective Audit, and Bootstrap**
+**Phase 23B — Dashboard Core**
 
-This phase establishes:
+Version `0.2.0` adds:
 
-- responsibility and data-ownership matrices;
-- fail-closed capability and Membership Core contracts;
-- versioned provider adapter contracts;
-- independent adapter acceptance gates;
-- four-dimensional state projection;
-- guarded native operation routing;
-- security and privacy boundaries;
-- executable contract and architecture tests;
-- baseline plugin bootstrap and automated integrity checks.
+- protected `/publishing-dashboard/` route;
+- shortcode fallback `[sabri_publishing_dashboard]`;
+- Founder, trusted-doctor, doctor, restricted, denied, and dependency-failure workspace resolution;
+- current-user-bound authority;
+- private no-store and noindex headers;
+- responsive accessible dashboard shell;
+- truthful overview and provider-readiness projection;
+- non-sensitive system-status view;
+- bounded personal saved views with REST permission and validation controls;
+- dashboard-core executable tests and JavaScript syntax checks.
 
-No production publishing action is enabled in this phase.
+No production publishing action is enabled in Phase 23B.
+
+## Implemented Dashboard Views
+
+1. **Overview** — current workspace, account state, provider readiness, and safety notices.
+2. **Saved Views** — personal non-clinical filters stored under File 23 ownership.
+3. **System Status** — capability-protected, non-sensitive environment and adapter diagnostics.
+
+The navigation exposes only implemented destinations. Later content, review, calendar, analytics, interaction, media, source, and report views require separate reviewed phases.
 
 ## Repository Workflow
 
 - Default branch: `main`
-- Active implementation branch: `phase/23a-governance-contracts`
-- Draft pull request: `#1`
+- Phase 23A branch: `phase/23a-governance-contracts`
+- Phase 23A Draft PR: `#1`, technically reviewed, unmerged
+- Active stacked branch: `phase/23b-dashboard-core`
 - Changes are promoted only through completed review and accepted pull requests.
-- **No merge is permitted before review completion, defect correction, exact-head test rerun, and acceptance.**
-- Authoritative current-head SHA and workflow evidence are maintained in the Draft PR description, so no evidence-only commit invalidates the checked head.
+- **No merge is permitted before review completion, defect correction, corrective re-review, exact-head QA, staging acceptance, and Founder acceptance.**
 
 ## Package Target
 
 `23-sabri-doctor-founder-publishing-dashboard-1.0.0.zip`
 
-## Current Corrective Version
+## Current Development Versions
 
-- Plugin: `0.1.1`
+- Plugin: `0.2.0`
 - Adapter Contract: `2.0.0`
 
 ## Minimum Environment
 
 - WordPress 6.5+
 - PHP 8.0+
-- Sabri Membership Core 1.0.1 or a formally accepted compatible 1.x version for privileged use
+- Sabri Membership Core 1.0.1 or a formally accepted compatible 1.x version for dashboard access
+
+## Documentation
+
+- `docs/DASHBOARD-CORE.md`
+- `docs/PHASE-23B-REVIEW-GATE.md`
+- `docs/ADAPTER-CONTRACT.md`
+- `docs/DATA-OWNERSHIP.md`
+- `docs/CAPABILITIES.md`
+- `docs/STATE-PROJECTION.md`
+- `SECURITY.md`
 
 ## Status
 
-Implementation started on 30 July 2026. Phase 23A technical review and defect correction are complete. PR #1 remains Draft and unmerged pending explicit Founder review and acceptance.
+Phase 23B construction has started as a stacked branch so progress can continue without prematurely merging PR #1. The current implementation is not staging-accepted, production-ready, or merge-ready.
