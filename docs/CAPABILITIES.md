@@ -4,13 +4,13 @@
 
 Roles are labels; capabilities are authority. Every privileged action must be authorized server-side against the current authenticated user, current Membership Core approval/suspension state, current object ownership, provider policy, native state, and object version.
 
-A WordPress capability alone is insufficient. File 23 capability checks fail closed when File 00 is unavailable or the current account is not `approved` or `verified`.
+A WordPress capability alone is insufficient. File 23 fails closed when the compatible File 00 contract is unavailable. Pending, rejected, expired-document, appeal-review, and suspended accounts may receive only the explicitly assigned restricted read-only capabilities required for status, appeal, and owned-content visibility; every mutable or institution-wide capability requires an `approved` or `verified` account.
 
 ## Core Capabilities
 
 | Capability | Purpose |
 |---|---|
-| `spdb_view_dashboard` | Open the private dashboard |
+| `spdb_view_dashboard` | Open the private or status-restricted dashboard |
 | `spdb_view_own_content` | View federated content owned by the current user |
 | `spdb_manage_own_content` | Invoke permitted native actions on owned content |
 | `spdb_view_review_queue` | View assigned or authorized review projections |
@@ -29,12 +29,31 @@ A WordPress capability alone is insufficient. File 23 capability checks fail clo
 
 File 23 defines these keys but does not automatically create editorial WordPress roles. File 00 or an explicitly approved administrator process assigns them.
 
+## Restricted Read-Only Capabilities
+
+Only these capabilities may pass for a non-approved File 00 status, and only when they are actually assigned by WordPress/File 00 policy:
+
+- `spdb_view_dashboard`
+- `spdb_view_own_content`
+
+They provide no submit, edit, review, schedule, interaction, analytics, export, delegation, repair, or Safe Mode authority. The eventual UI must show only status/appeal and policy-permitted owned-content read-only routes.
+
+## Membership Core Compatibility
+
+File 23 currently accepts Membership Core `>= 1.0.1` and `< 2.0.0` together with the canonical functions:
+
+- `smc_user_status()`
+- `smc_is_founder()`
+- `smc_is_trusted_publisher()`
+
+A new major File 00 version requires explicit compatibility review rather than optimistic acceptance.
+
 ## Executable Authorization Order
 
 For a mutable provider operation, File 23 must verify:
 
 1. current logged-in user;
-2. File 00 contract availability;
+2. compatible File 00 contract availability;
 3. approved/verified and non-suspended Membership Core status;
 4. canonical File 23 capability;
 5. provider institutional acceptance for the server environment;
@@ -53,8 +72,9 @@ Founder publications may receive direct-publish authority only through explicit 
 
 - Verified Doctor: submit for review by default.
 - Trusted Verified Doctor: direct publishing only for explicit content types and surfaces.
-- Pending Doctor: restricted read-only/private draft view according to Membership Core policy.
-- Suspended Doctor: every File 23 privileged action denied.
+- Pending Doctor: restricted status/appeal and policy-permitted owned-content read-only view.
+- Rejected or expired-document Doctor: restricted status/appeal view only where assigned.
+- Suspended Doctor: every privileged/mutable action denied; restricted status/appeal and read-only routes may remain where policy permits.
 
 ## Delegation
 
