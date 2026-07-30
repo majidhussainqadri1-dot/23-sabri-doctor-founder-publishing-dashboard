@@ -12,21 +12,42 @@ require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-adapter-registry.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-membership-guard.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-capabilities.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-operation-broker.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-dashboard-router.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-workspace-resolver.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-saved-views.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-system-state.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-overview-service.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-dashboard-page.php';
 
 final class SPDB_Plugin {
 	private static ?SPDB_Plugin $instance = null;
 
 	private SPDB_Adapter_Registry $adapter_registry;
-
 	private SPDB_Operation_Broker $operation_broker;
-
+	private SPDB_Workspace_Resolver $workspace_resolver;
+	private SPDB_Saved_Views $saved_views;
+	private SPDB_System_State $system_state;
+	private SPDB_Overview_Service $overview_service;
+	private SPDB_Dashboard_Page $dashboard_page;
+	private SPDB_Dashboard_Router $dashboard_router;
 	private bool $booted = false;
 
 	private function __construct() {
-		// Phase 23A does not load persisted acceptance. All providers therefore
-		// remain unreviewed and write-ineligible until a later approved phase.
-		$this->adapter_registry = new SPDB_Adapter_Registry();
-		$this->operation_broker = new SPDB_Operation_Broker( $this->adapter_registry );
+		// Provider acceptance is still not persisted in Phase 23B. All providers
+		// remain write-ineligible until a later reviewed governance phase.
+		$this->adapter_registry   = new SPDB_Adapter_Registry();
+		$this->operation_broker   = new SPDB_Operation_Broker( $this->adapter_registry );
+		$this->workspace_resolver = new SPDB_Workspace_Resolver();
+		$this->saved_views        = new SPDB_Saved_Views();
+		$this->system_state       = new SPDB_System_State( $this->adapter_registry );
+		$this->overview_service   = new SPDB_Overview_Service( $this->system_state );
+		$this->dashboard_page     = new SPDB_Dashboard_Page(
+			$this->workspace_resolver,
+			$this->overview_service,
+			$this->system_state,
+			$this->saved_views
+		);
+		$this->dashboard_router   = new SPDB_Dashboard_Router( array( $this->dashboard_page, 'render' ) );
 	}
 
 	public static function instance(): SPDB_Plugin {
@@ -43,6 +64,10 @@ final class SPDB_Plugin {
 		}
 
 		$this->booted = true;
+
+		$this->dashboard_router->register();
+		$this->dashboard_page->register();
+		$this->saved_views->register();
 
 		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
 		add_action( 'plugins_loaded', array( $this, 'register_provider_adapters' ), 30 );
@@ -100,6 +125,10 @@ final class SPDB_Plugin {
 
 	public function broker(): SPDB_Operation_Broker {
 		return $this->operation_broker;
+	}
+
+	public function router(): SPDB_Dashboard_Router {
+		return $this->dashboard_router;
 	}
 
 	/**
