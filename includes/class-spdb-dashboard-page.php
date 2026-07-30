@@ -73,6 +73,15 @@ final class SPDB_Dashboard_Page {
 			);
 		}
 
+		if ( ! wp_style_is( 'spdb-dashboard-corrections', 'registered' ) ) {
+			wp_register_style(
+				'spdb-dashboard-corrections',
+				SPDB_PLUGIN_URL . 'assets/css/dashboard-corrections.css',
+				array( 'spdb-dashboard' ),
+				SPDB_VERSION
+			);
+		}
+
 		if ( ! wp_script_is( 'spdb-dashboard', 'registered' ) ) {
 			wp_register_script(
 				'spdb-dashboard',
@@ -86,7 +95,7 @@ final class SPDB_Dashboard_Page {
 
 	public function enqueue_assets(): void {
 		$this->register_assets();
-		wp_enqueue_style( 'spdb-dashboard' );
+		wp_enqueue_style( 'spdb-dashboard-corrections' );
 
 		if ( 'saved-views' !== SPDB_Dashboard_Router::current_view() ) {
 			return;
