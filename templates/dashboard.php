@@ -2,8 +2,8 @@
 /**
  * Main private dashboard template.
  *
- * Available variables include role, inventory, review, calendar, saved-view,
- * overview, and system projections resolved by the dashboard page service.
+ * Available variables include role, inventory, collections, review, calendar,
+ * saved-view, overview, and system projections resolved by the dashboard page.
  *
  * @package Sabri_Publishing_Dashboard
  */
@@ -28,8 +28,8 @@ $provider_title_id = $instance_id . '-provider-title';
 			</p>
 		</div>
 		<div class="spdb-phase" aria-label="<?php esc_attr_e( 'Implementation phase', 'sabri-publishing-dashboard' ); ?>">
-			<span><?php esc_html_e( 'Phase 23E', 'sabri-publishing-dashboard' ); ?></span>
-			<strong><?php esc_html_e( 'Review and Calendar', 'sabri-publishing-dashboard' ); ?></strong>
+			<span><?php esc_html_e( 'Phase 23F', 'sabri-publishing-dashboard' ); ?></span>
+			<strong><?php esc_html_e( 'Collections and Knowledge', 'sabri-publishing-dashboard' ); ?></strong>
 		</div>
 	</header>
 
@@ -47,6 +47,8 @@ $provider_title_id = $instance_id . '-provider-title';
 				<?php include SPDB_PLUGIN_DIR . 'templates/workspace.php'; ?>
 			<?php elseif ( 'inventory' === $current ) : ?>
 				<?php include SPDB_PLUGIN_DIR . 'templates/inventory.php'; ?>
+			<?php elseif ( 'collections' === $current ) : ?>
+				<?php include SPDB_PLUGIN_DIR . 'templates/collections.php'; ?>
 			<?php elseif ( 'review' === $current ) : ?>
 				<?php include SPDB_PLUGIN_DIR . 'templates/review.php'; ?>
 			<?php elseif ( 'calendar' === $current ) : ?>
