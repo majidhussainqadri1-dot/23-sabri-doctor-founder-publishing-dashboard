@@ -14,6 +14,10 @@ require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-capabilities.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-capability-installer.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-operation-broker.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-provider-registration.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-inventory-query.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-projection-validator.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-federated-inventory.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-inventory-rest-controller.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-dashboard-router.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-workspace-resolver.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-saved-views.php';
@@ -27,6 +31,8 @@ final class SPDB_Plugin {
 
 	private SPDB_Adapter_Registry $adapter_registry;
 	private SPDB_Operation_Broker $operation_broker;
+	private SPDB_Federated_Inventory $inventory;
+	private SPDB_Inventory_REST_Controller $inventory_rest;
 	private SPDB_Workspace_Resolver $workspace_resolver;
 	private SPDB_Saved_Views $saved_views;
 	private SPDB_REST_Privacy $rest_privacy;
@@ -37,10 +43,13 @@ final class SPDB_Plugin {
 	private bool $booted = false;
 
 	private function __construct() {
-		// Provider acceptance is still not persisted in Phase 23B. All providers
-		// remain write-ineligible until a later reviewed governance phase.
+		// Provider acceptance is not persisted in Phase 23C. Inventory reads are
+		// permitted from read-capable adapters, while mutation execution remains
+		// unavailable until a later reviewed governance phase.
 		$this->adapter_registry   = new SPDB_Adapter_Registry();
 		$this->operation_broker   = new SPDB_Operation_Broker( $this->adapter_registry );
+		$this->inventory          = new SPDB_Federated_Inventory( $this->adapter_registry );
+		$this->inventory_rest     = new SPDB_Inventory_REST_Controller( $this->inventory );
 		$this->workspace_resolver = new SPDB_Workspace_Resolver();
 		$this->saved_views        = new SPDB_Saved_Views();
 		$this->rest_privacy       = new SPDB_REST_Privacy();
@@ -50,7 +59,8 @@ final class SPDB_Plugin {
 			$this->workspace_resolver,
 			$this->overview_service,
 			$this->system_state,
-			$this->saved_views
+			$this->saved_views,
+			$this->inventory
 		);
 		$this->dashboard_router   = new SPDB_Dashboard_Router( array( $this->dashboard_page, 'render' ) );
 	}
@@ -85,6 +95,7 @@ final class SPDB_Plugin {
 		$this->dashboard_router->register();
 		$this->dashboard_page->register();
 		$this->saved_views->register();
+		$this->inventory_rest->register();
 		$this->rest_privacy->register();
 
 		add_action( 'init', array( 'SPDB_Capability_Installer', 'maybe_upgrade' ), 1 );
@@ -128,6 +139,10 @@ final class SPDB_Plugin {
 
 	public function broker(): SPDB_Operation_Broker {
 		return $this->operation_broker;
+	}
+
+	public function inventory(): SPDB_Federated_Inventory {
+		return $this->inventory;
 	}
 
 	public function router(): SPDB_Dashboard_Router {
