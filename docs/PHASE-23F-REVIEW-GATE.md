@@ -10,9 +10,11 @@ Phase 23F remains a stacked Draft candidate. Schema, contracts, policy code, rep
 
 The initial foundation was independently reviewed. Eighteen defects were recorded in `docs/AUDIT-PHASE-23F-2026-07-30.md`, corrected, re-reviewed, and tested.
 
-The subsequent runtime and persistence slice was independently reviewed again. A second set of eighteen defects was recorded in `docs/AUDIT-PHASE-23F-RUNTIME-SECOND-REVIEW-2026-07-30.md`. Corrective source work now includes Schema Version 3, table/column/index verification, a concrete WordPress repository, repository-envelope validation, approved-account read authority, fail-closed institution scope, request fingerprints, audit-reason persistence, observed native versions, and separate read/collection-write/knowledge-write readiness.
+The subsequent runtime and persistence slice was independently reviewed again. A second set of eighteen defects was recorded in `docs/AUDIT-PHASE-23F-RUNTIME-SECOND-REVIEW-2026-07-30.md`. Corrective source work includes Schema Version 3, table/column/index verification, a concrete WordPress repository, repository-envelope validation, approved-account read authority, fail-closed institution scope, request fingerprints, audit-reason persistence, observed native versions, and separate read/collection-write/knowledge-write readiness.
 
-**Corrective source re-review completed** applies only after the second corrected exact head passes all automated gates recorded below. It does not approve WordPress staging, a real native resolver, REST mutation, UI, production use, Founder acceptance, or merge.
+The mandatory corrective re-review then identified output-field allowlisting, strict projection normalization, and public-request schema-verification overhead defects. Those findings were corrected, executable regression coverage was added, and the complete PHP 8.0–8.3 source gate passed again.
+
+**Corrective source re-review completed** refers only to the current Phase 23F source slice. It does not approve WordPress staging, a real native resolver, REST mutation, UI, production use, Founder acceptance, or merge.
 
 ## Current Candidate
 
@@ -23,10 +25,12 @@ The subsequent runtime and persistence slice was independently reviewed again. A
 - Metadata schema version: `3`
 - Native ownership: preserved
 - Concrete File 23 repository: implemented for verified reads and idempotent creates
+- Strict allowlisted output projections: implemented
 - Native-reference resolver injection: absent
 - Production mutation: disabled
 - Phase 23F REST mutation routes: absent
 - Update, reorder, and archive execution: disabled
+- Source readiness: corrective source gate completed
 - Staging readiness: not ready
 - Merge readiness: blocked
 
@@ -36,8 +40,8 @@ The subsequent runtime and persistence slice was independently reviewed again. A
 - [x] Eighteen initial defects documented and corrected
 - [x] Initial corrective foundation source re-review completed
 - [x] Runtime and persistence slice independently reviewed
-- [x] Second eighteen defects documented
-- [x] Second corrective source changes implemented
+- [x] Second eighteen defects documented and corrected
+- [x] Corrective re-review findings documented and corrected
 - [x] Metadata-only ownership boundary preserved
 - [x] No native publication, profile, knowledge, clinical, media, destination, report, or analytics duplication in the schema
 - [x] Collection scope and approved current-account authority reviewed
@@ -46,13 +50,16 @@ The subsequent runtime and persistence slice was independently reviewed again. A
 - [x] Knowledge relation allowlist and self-link rejection reviewed
 - [x] Native-reference contract and exact scope validation reviewed
 - [x] Schema tables, columns, indexes, uniqueness, and lifecycle verification reviewed
+- [x] Schema verification removed from every public request
 - [x] Actor-scoped idempotency and request-fingerprint conflict behavior reviewed
 - [x] Bounded audit-reason and native-version persistence reviewed
 - [x] Repository envelope and projected-row IDOR validation reviewed
+- [x] Strict output-field allowlists and reconstructed projections reviewed
+- [x] Unknown fields, malformed numeric values, text, lists, enums, and timestamps fail closed
 - [x] Concrete WordPress repository reads and creates reviewed
 - [x] Unsupported update, reorder, and archive operations fail closed
 - [x] Prior Phase 23A–23E architecture guards retained
-- [ ] Second corrective exact-head automated evidence completed
+- [x] Corrective exact-head automated source evidence completed
 - [ ] Real native-reference resolver implementation reviewed
 - [ ] Object-level authorization against real providers reviewed
 - [ ] Cross-user and cross-doctor IDOR staging evidence completed
@@ -63,23 +70,24 @@ The subsequent runtime and persistence slice was independently reviewed again. A
 
 ## Exact-Head Automated Gate
 
-- [ ] PHP 8.0 successful on final corrected head
-- [ ] PHP 8.1 successful on final corrected head
-- [ ] PHP 8.2 successful on final corrected head
-- [ ] PHP 8.3 successful on final corrected head
-- [ ] PHP syntax successful
-- [ ] JavaScript syntax successful
-- [ ] Phase 23A–23E regressions successful
-- [ ] Phase 23F policy tests successful
-- [ ] Phase 23F runtime-authority tests successful
-- [ ] Phase 23F concrete-repository tests successful
-- [ ] Schema Version 3 verification tests successful
-- [ ] Replay and same-key/different-payload conflict tests successful
-- [ ] Restored architecture guard successful
-- [ ] Forbidden native ownership and persisted-destination checks successful
-- [ ] Privacy tests successful
-- [ ] Version and required-file checks successful
-- [ ] QA artifacts and exact-head checksums retained
+- [x] PHP 8.0 successful on final corrected source head
+- [x] PHP 8.1 successful on final corrected source head
+- [x] PHP 8.2 successful on final corrected source head
+- [x] PHP 8.3 successful on final corrected source head
+- [x] PHP syntax successful
+- [x] JavaScript syntax successful
+- [x] Phase 23A–23E regressions successful
+- [x] Phase 23F policy tests successful
+- [x] Phase 23F runtime-authority tests successful
+- [x] Phase 23F concrete-repository tests successful
+- [x] Schema Version 3 verification tests successful
+- [x] Strict projection and unknown-field rejection tests successful
+- [x] Replay and same-key/different-payload conflict tests successful
+- [x] Restored architecture guard successful
+- [x] Forbidden native ownership and persisted-destination checks successful
+- [x] Privacy tests successful
+- [x] Version and required-file checks successful
+- [x] QA artifacts and exact-head checksums retained
 
 ## WordPress Staging Gate
 
