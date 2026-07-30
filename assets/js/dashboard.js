@@ -7,38 +7,7 @@
 
 	var apiFetch = window.wp.apiFetch;
 	var config = window.SPDBDashboard;
-	var form = document.querySelector( '[data-spdb-saved-view-form]' );
-	var list = document.querySelector( '[data-spdb-saved-view-list]' );
-	var emptyState = document.querySelector( '.spdb-empty-state' );
-	var status = document.querySelector( '[data-spdb-status]' );
-
 	apiFetch.use( apiFetch.createNonceMiddleware( config.nonce ) );
-
-	if ( form && ! list ) {
-		list = document.createElement( 'ul' );
-		list.className = 'spdb-saved-view-list';
-		list.setAttribute( 'data-spdb-saved-view-list', '' );
-
-		if ( emptyState && emptyState.parentNode ) {
-			emptyState.parentNode.insertBefore( list, emptyState.nextSibling );
-		} else {
-			form.insertAdjacentElement( 'afterend', list );
-		}
-	}
-
-	function announce( message, isError ) {
-		if ( ! status ) {
-			return;
-		}
-		status.textContent = message || '';
-		status.setAttribute( 'data-error', isError ? 'true' : 'false' );
-	}
-
-	function setEmptyState( isEmpty ) {
-		if ( emptyState ) {
-			emptyState.hidden = ! isEmpty;
-		}
-	}
 
 	function filtersSummary( filters ) {
 		var keys = Object.keys( filters || {} );
@@ -88,14 +57,40 @@
 		return filters;
 	}
 
-	if ( form && list ) {
+	function initializeShell( shell ) {
+		var form = shell.querySelector( '[data-spdb-saved-view-form]' );
+		var list = shell.querySelector( '[data-spdb-saved-view-list]' );
+		var emptyState = shell.querySelector( '.spdb-empty-state' );
+		var status = shell.querySelector( '[data-spdb-status]' );
+
+		function announce( message, isError ) {
+			if ( ! status ) {
+				return;
+			}
+			status.textContent = message || '';
+			status.setAttribute( 'data-error', isError ? 'true' : 'false' );
+		}
+
+		function setEmptyState( isEmpty ) {
+			if ( emptyState ) {
+				emptyState.hidden = ! isEmpty;
+			}
+		}
+
+		if ( ! form || ! list ) {
+			return;
+		}
+
 		form.addEventListener( 'submit', function ( event ) {
 			event.preventDefault();
 			var submit = form.querySelector( 'button[type="submit"]' );
-			var label = form.elements.label ? form.elements.label.value.trim() : '';
+			var labelInput = form.elements.label;
+			var label = labelInput ? labelInput.value.trim() : '';
 
-			if ( ! label ) {
-				form.elements.label.focus();
+			if ( ! label || ! submit ) {
+				if ( labelInput ) {
+					labelInput.focus();
+				}
 				return;
 			}
 
@@ -122,7 +117,12 @@
 		} );
 
 		list.addEventListener( 'click', function ( event ) {
-			var button = event.target.closest( '[data-spdb-delete-view]' );
+			var target = event.target;
+			if ( ! target || 'function' !== typeof target.closest ) {
+				return;
+			}
+
+			var button = target.closest( '[data-spdb-delete-view]' );
 			if ( ! button || ! list.contains( button ) ) {
 				return;
 			}
@@ -149,4 +149,6 @@
 			} );
 		} );
 	}
+
+	document.querySelectorAll( '.spdb-shell' ).forEach( initializeShell );
 }() );
