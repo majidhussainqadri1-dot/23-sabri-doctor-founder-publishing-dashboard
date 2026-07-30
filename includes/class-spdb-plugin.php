@@ -15,6 +15,7 @@ require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-operation-broker.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-dashboard-router.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-workspace-resolver.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-saved-views.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-rest-privacy.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-system-state.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-overview-service.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-dashboard-page.php';
@@ -26,6 +27,7 @@ final class SPDB_Plugin {
 	private SPDB_Operation_Broker $operation_broker;
 	private SPDB_Workspace_Resolver $workspace_resolver;
 	private SPDB_Saved_Views $saved_views;
+	private SPDB_REST_Privacy $rest_privacy;
 	private SPDB_System_State $system_state;
 	private SPDB_Overview_Service $overview_service;
 	private SPDB_Dashboard_Page $dashboard_page;
@@ -39,6 +41,7 @@ final class SPDB_Plugin {
 		$this->operation_broker   = new SPDB_Operation_Broker( $this->adapter_registry );
 		$this->workspace_resolver = new SPDB_Workspace_Resolver();
 		$this->saved_views        = new SPDB_Saved_Views();
+		$this->rest_privacy       = new SPDB_REST_Privacy();
 		$this->system_state       = new SPDB_System_State( $this->adapter_registry );
 		$this->overview_service   = new SPDB_Overview_Service( $this->system_state );
 		$this->dashboard_page     = new SPDB_Dashboard_Page(
@@ -68,6 +71,7 @@ final class SPDB_Plugin {
 		$this->dashboard_router->register();
 		$this->dashboard_page->register();
 		$this->saved_views->register();
+		$this->rest_privacy->register();
 
 		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
 		add_action( 'plugins_loaded', array( $this, 'register_provider_adapters' ), 30 );
