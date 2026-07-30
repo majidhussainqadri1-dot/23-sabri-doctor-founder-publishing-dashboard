@@ -8,8 +8,8 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Dashboard_Router {
-	public const QUERY_VAR      = 'spdb_dashboard';
-	public const ROUTE          = 'publishing-dashboard';
+	public const QUERY_VAR       = 'spdb_dashboard';
+	public const ROUTE           = 'publishing-dashboard';
 	public const REWRITE_VERSION = '1';
 
 	/** @var callable */
@@ -71,7 +71,15 @@ final class SPDB_Dashboard_Router {
 		return array_values( array_unique( $query_vars ) );
 	}
 
+	/**
+	 * Detect the route both before and after WP_Query is populated. WordPress
+	 * fires `send_headers` before the final query object is always available.
+	 */
 	public static function is_dashboard_request(): bool {
+		if ( isset( $GLOBALS['wp']->query_vars[ self::QUERY_VAR ] ) ) {
+			return '1' === (string) $GLOBALS['wp']->query_vars[ self::QUERY_VAR ];
+		}
+
 		return '1' === (string) get_query_var( self::QUERY_VAR, '' );
 	}
 
@@ -120,17 +128,21 @@ final class SPDB_Dashboard_Router {
 	}
 
 	public function send_private_headers(): void {
-		if ( ! self::is_dashboard_request() ) {
-			return;
+		if ( self::is_dashboard_request() ) {
+			self::emit_private_headers();
 		}
+	}
 
+	/**
+	 * Emit headers shared by the virtual route and shortcode fallback page.
+	 */
+	public static function emit_private_headers(): void {
 		nocache_headers();
 		header( 'Cache-Control: private, no-store, no-cache, must-revalidate, max-age=0', true );
 		header( 'Pragma: no-cache', true );
 		header( 'X-Robots-Tag: noindex, nofollow, noarchive, nosnippet', true );
 		header( 'Referrer-Policy: same-origin', true );
 		header( 'X-Content-Type-Options: nosniff', true );
-		header( 'Permissions-Policy: camera=(), microphone=(), geolocation=()', true );
 	}
 
 	/**
