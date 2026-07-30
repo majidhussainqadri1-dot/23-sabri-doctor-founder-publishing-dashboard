@@ -137,11 +137,22 @@ final class SPDB_Saved_Views {
 			);
 		}
 
-		update_user_meta( $user_id, self::META_KEY, $kept );
+		if ( ! update_user_meta( $user_id, self::META_KEY, $kept ) ) {
+			return new WP_Error(
+				'spdb_saved_view_delete_failed',
+				__( 'The saved view could not be deleted.', 'sabri-publishing-dashboard' ),
+				array( 'status' => 500 )
+			);
+		}
+
 		return rest_ensure_response( array( 'deleted' => true, 'id' => $id ) );
 	}
 
 	/**
+	 * Read File 23-owned preferences through the same validation boundary used
+	 * for incoming requests. Direct database tampering must not bypass the
+	 * non-clinical allowlist when values are projected to the browser or REST.
+	 *
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function get_for_user( int $user_id ): array {
@@ -155,10 +166,26 @@ final class SPDB_Saved_Views {
 			if ( ! is_array( $view ) || empty( $view['id'] ) || empty( $view['label'] ) || ! isset( $view['filters'] ) || ! is_array( $view['filters'] ) ) {
 				continue;
 			}
+
+			$id = sanitize_key( (string) $view['id'] );
+			if ( 1 !== preg_match( '/^view_[a-z0-9]{32}$/', $id ) ) {
+				continue;
+			}
+
+			$definition = self::normalize_definition(
+				array(
+					'label'   => $view['label'],
+					'filters' => $view['filters'],
+				)
+			);
+			if ( is_wp_error( $definition ) ) {
+				continue;
+			}
+
 			$validated[] = array(
-				'id'         => sanitize_key( (string) $view['id'] ),
-				'label'      => sanitize_text_field( (string) $view['label'] ),
-				'filters'    => $view['filters'],
+				'id'         => $id,
+				'label'      => $definition['label'],
+				'filters'    => $definition['filters'],
 				'created_at' => isset( $view['created_at'] ) ? sanitize_text_field( (string) $view['created_at'] ) : '',
 				'version'    => isset( $view['version'] ) ? max( 1, (int) $view['version'] ) : 1,
 			);
@@ -213,6 +240,6 @@ final class SPDB_Saved_Views {
 	 */
 	public static function sanitize_filter_value( $value ): string {
 		$value = sanitize_text_field( (string) $value );
-		return substr( $value, 0, 100 );
+		return function_exists( 'mb_substr' ) ? mb_substr( $value, 0, 100 ) : substr( $value, 0, 100 );
 	}
 }
