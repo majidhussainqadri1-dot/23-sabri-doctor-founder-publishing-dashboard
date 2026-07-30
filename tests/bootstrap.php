@@ -1,7 +1,7 @@
 <?php
 /** Minimal WordPress-compatible test bootstrap for File 23 executable tests. */
 define( 'ABSPATH', __DIR__ . '/' );
-define( 'SPDB_VERSION', '0.6.2' );
+define( 'SPDB_VERSION', '0.7.0' );
 define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
 if ( ! defined( 'ARRAY_A' ) ) { define( 'ARRAY_A', 'ARRAY_A' ); }
 $GLOBALS['spdb_test_environment'] = 'production';
@@ -100,7 +100,10 @@ require_once dirname( __DIR__ ) . '/includes/interface-spdb-workspace-provider-a
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-review-calendar-provider-adapter.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-collections-repository.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-native-reference-resolver.php';
+require_once dirname( __DIR__ ) . '/includes/interface-spdb-native-reference-provider.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-adapter-registry.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-native-reference-registry.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-native-reference-registration.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-membership-guard.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-capabilities.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-capability-installer.php';
