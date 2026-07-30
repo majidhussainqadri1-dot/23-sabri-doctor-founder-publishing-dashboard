@@ -13,33 +13,33 @@ File 23 of the **Sabri Social Homeopathy Platform**.
 - File 20 owns the global application shell and global Safe Mode.
 - File 21 owns social/news publications, Newsroom review, sources, comments, corrections, retractions, schedules, cron reconciliation, and public feed behavior.
 - File 22 owns creation, drafts, autosave, editing, preview, validation, submission, and native Composer/schedule orchestration.
-- File 23 owns operational projections, dashboard preferences, saved views, explicit guarded routing, bounded aggregate caches, adapter health, and dashboard audit events.
+- File 23 owns federated operations, bounded cross-module organizational metadata, dashboard preferences, saved views, explicit guarded routing, bounded aggregate caches, adapter health, and dashboard audit evidence.
 - File 25 owns final public profile timelines and visual presentation under the amended numbering.
 
-File 23 does not own publication bodies, native drafts, profile identities, knowledge records, review decisions, reviewer assignments, native schedules, cron state, source records, media binaries, comments, corrections, retractions, raw analytics events, or notification delivery records.
+File 23 does not own publication bodies, native drafts, profile identities, native knowledge bodies, review decisions, reviewer assignments, native schedules, cron state, source records, media binaries, comments, corrections, retractions, clinical records, patient identifiers, raw analytics events, or notification delivery records.
 
 ## Current Phase
 
-**Phase 23E — Corrected Universal Review Inbox and Federated Publishing Calendar**
+**Phase 23F — Corrected Collections, Campaigns, and Knowledge Links Runtime**
 
-Development version `0.5.1` provides:
+Development version `0.6.1` provides:
 
-- native review and schedule projections over Adapter Contract `2.0.0`;
-- current File 00 reviewer, Founder, account-state, capability, scope, and environment authority;
-- fail-closed filters, bounded first-window provider queries, global sorting, and central pagination;
-- separate native-reported, accessible-window, current-page, and page-count values;
-- explicit File 23 operation contracts for capability, Founder-only policy, state, assignment, ownership, and separation of duties;
-- fresh native projection authorization before every review or schedule mutation;
-- independent self-approval and self-rejection denial;
-- Founder-only reviewer assignment with approved capable target validation;
-- REST nonce, strict payload allowlist, object version, idempotency key, audit reason, and required operation fields;
-- canonical UTC schedule timestamp and IANA timezone validation;
-- exact-origin destinations, privacy-safe projected and submitted text, strict flags, operations, totals, and continuation state;
-- broker execution followed by a matching native object re-fetch;
-- provider failure isolation, bounded totals, responsive tables, keyboard focus, accessible pagination, and reduced-motion support;
-- corrective tests and architecture gates for the twenty-four audit findings.
-
-No review or schedule mutation occurs in projection services or templates. Mutation routes are explicit, freshly authorized, broker-only, and fail closed without File 23-controlled provider acceptance.
+- exactly three File 23-owned metadata tables under Schema Version `3`;
+- verification of required tables, columns, and indexes before repository readiness;
+- metadata-only collections, Founder campaigns, collection-item references, and knowledge links;
+- approved current-account, capability, scope, Founder, and object-level visibility authority;
+- actor-scoped idempotency hashes and request fingerprints;
+- exact replay and same-key/different-payload conflict handling;
+- bounded audit-reason and observed native-version persistence;
+- no persisted native destinations or parallel content/results/reporting backend;
+- a concrete WordPress repository for verified server-side reads and idempotent creates;
+- validated repository envelopes and fail-closed cross-user record rejection;
+- a versioned native-reference resolver contract and strict native reference validation;
+- separate read, collection-write, and knowledge-write readiness;
+- local/development/staging-only explicit write configuration;
+- production writes, mutation REST, update, reorder, and archive execution disabled;
+- policy, runtime-authority, schema, replay, payload-conflict, and repository tests;
+- retained Phase 23A–23E regression and architecture gates.
 
 ## Implemented Views
 
@@ -51,33 +51,41 @@ No review or schedule mutation occurs in projection services or templates. Mutat
 6. **Saved Views** — bounded non-clinical personal filters.
 7. **System Status** — capability-protected, non-sensitive diagnostics.
 
+The Phase 23F Collections UI and REST routes are not yet exposed. The concrete repository currently supplies internal verified reads; knowledge-link creation remains unavailable until a reviewed native resolver is injected.
+
 ## Repository Workflow
 
 - Default branch: `main`
 - Phase 23A Draft PR #1: unmerged
 - Phase 23B Draft PR #2: unmerged
 - Phase 23C Draft PR #3: reviewed, corrected, QA-green, unmerged
-- Phase 23D Draft PR #4: source-reviewed, corrected, exact-head QA-green, unmerged
-- Phase 23E Draft PR #5: source-reviewed, corrected, corrective exact-head QA pending, unmerged
-- Active stacked branch: `phase/23e-review-calendar`
+- Phase 23D Draft PR #4: source-reviewed, corrected, QA-green, unmerged
+- Phase 23E stacked branch and PRs: source-reviewed, corrected, unmerged
+- Phase 23F Draft PR #7: second corrective review in progress, unmerged
+- Active stacked branch: `phase/23f-collections-knowledge`
 - **No merge before completed review, correction, corrective re-review, exact-head QA, staging acceptance, rollback evidence, and Founder acceptance.**
 
 ## Versions
 
-- Plugin: `0.5.1`
+- Plugin: `0.6.1`
+- Metadata Schema: `3`
 - Adapter Contract: `2.0.0`
 - WordPress: 6.5+
 - PHP: 8.0+
 - Sabri Membership Core: 1.0.1 or formally accepted compatible 1.x
 
-## Phase 23E Evidence
+## Phase 23F Evidence
 
-- `docs/AUDIT-PHASE-23E-2026-07-30.md`
-- `docs/REVIEW-CALENDAR.md`
-- `docs/PHASE-23E-REVIEW-GATE.md`
-- `tests/review-calendar-tests.php`
+- `docs/AUDIT-PHASE-23F-2026-07-30.md`
+- `docs/AUDIT-PHASE-23F-RUNTIME-SECOND-REVIEW-2026-07-30.md`
+- `docs/COLLECTIONS-KNOWLEDGE.md`
+- `docs/PHASE-23F-REVIEW-GATE.md`
+- `docs/PHASE-23F-STATUS.md`
+- `tests/phase23f-policy-tests.php`
+- `tests/phase23f-runtime-tests.php`
+- `tests/phase23f-repository-tests.php`
 - `tests/architecture-guard.php`
 
 ## Status
 
-Phase 23E independent source review found twenty-four defects. All documented source defects were corrected and corrective source re-review completed. Final documentation-inclusive PHP 8.0–8.3 exact-head evidence, real File 21/File 22 adapters, Hostinger staging, real-account/privacy/accessibility/cache/rollback testing, and Founder acceptance remain mandatory. All pull requests remain Draft and unmerged.
+The first Phase 23F review found eighteen foundation defects. A second independent review of the runtime and persistence slice found another eighteen defects. Both defect sets have corrective source changes. The second exact-head PHP 8.0–8.3 automated gate, WordPress Schema Version 3 migration, real File 00 accounts, real native providers, Hostinger staging, privacy/accessibility/cache/backup/restore/rollback testing, Founder review, and explicit merge authorization remain mandatory. All pull requests remain Draft and unmerged.
