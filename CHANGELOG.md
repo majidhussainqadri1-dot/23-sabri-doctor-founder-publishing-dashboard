@@ -6,6 +6,36 @@ All notable changes to File 23 are documented here.
 
 Phase 23F remains Draft, unmerged, not staging-accepted, and not production-ready.
 
+## [0.6.2] — Phase 23F Third Corrective Review and Read API
+
+### Fixed
+
+- Preserved raw database scalar shapes until strict projection validation instead of permissively casting malformed stored values.
+- Rejected malformed direct repository owner IDs, filters, create records, unknown fields, hashes, lists, timestamps, and actors.
+- Made JSON encoding failure explicit instead of silently persisting empty arrays.
+- Cached repository health and Schema Version 3 inspection for one request.
+- Replaced ambiguous aggregate write diagnostics with truthful collection-write, knowledge-write, and any-write readiness.
+- Enforced mathematically consistent page, per-page, total, count, and continuation metadata.
+- Added parent collection authorization before every collection-item repository query.
+- Excluded archived collection items consistently from default list and detail reads.
+- Added strict collection-item projection and lifecycle validation.
+- Enforced created, updated, archived, and status lifecycle consistency for collections and knowledge links.
+- Returned deterministic `409` conflicts for duplicate canonical knowledge relationships.
+
+### Added
+
+- Six explicit read-only REST routes for collections, collection details, collection items, item details, knowledge links, and link details.
+- Strict REST query allowlists, private/no-store protection, and truthful pagination headers.
+- Executable item-IDOR, malformed-persistence, continuation, lifecycle, duplicate-relation, health-cache, and read-REST tests.
+- `docs/AUDIT-PHASE-23F-THIRD-REVIEW-2026-07-31.md`.
+
+### Restrictions retained
+
+- No Phase 23F REST mutation route.
+- No production write enablement.
+- No collection update/archive, item create/reorder/update/archive, or knowledge-link update/archive execution.
+- No concrete native resolver before its separate review and staging gate.
+
 ## [0.6.1] — Phase 23F Runtime and Repository Second Corrective Review
 
 ### Fixed
