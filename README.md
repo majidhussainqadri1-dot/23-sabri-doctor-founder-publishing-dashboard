@@ -29,7 +29,8 @@ The Phase 23A review found that the original bootstrap trusted provider-declared
 - providers declare technical capability only;
 - File 23 governance independently controls staging/production acceptance;
 - WordPress resolves the environment server-side;
-- File 00 availability and approved/verified status are mandatory;
+- File 00 compatibility and current account state are checked server-side;
+- pending/suspended accounts may receive only explicitly assigned restricted read-only routes;
 - all dashboard mutations pass through the guarded operation broker;
 - provider exceptions are isolated;
 - native object re-read is required before confirmed success;
@@ -60,6 +61,7 @@ No production publishing action is enabled in this phase.
 - Draft pull request: `#1`
 - Changes are promoted only through completed review and accepted pull requests.
 - **No merge is permitted before review completion, defect correction, exact-head test rerun, and acceptance.**
+- Authoritative current-head SHA and workflow evidence are maintained in the Draft PR description, so no evidence-only commit invalidates the checked head.
 
 ## Package Target
 
@@ -74,8 +76,8 @@ No production publishing action is enabled in this phase.
 
 - WordPress 6.5+
 - PHP 8.0+
-- Sabri Membership Core 1.0.1 or a formally accepted compatible version for privileged use
+- Sabri Membership Core 1.0.1 or a formally accepted compatible 1.x version for privileged use
 
 ## Status
 
-Implementation started on 30 July 2026. Phase 23A review is complete and corrective commits are present, but PR #1 remains Draft and unmerged pending exact corrected-head CI and Founder acceptance.
+Implementation started on 30 July 2026. Phase 23A technical review and defect correction are complete. PR #1 remains Draft and unmerged pending explicit Founder review and acceptance.
