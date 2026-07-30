@@ -12,6 +12,7 @@ final class SPDB_Dashboard_Page {
 	private SPDB_Overview_Service $overview_service;
 	private SPDB_System_State $system_state;
 	private SPDB_Saved_Views $saved_views;
+	private bool $assets_localized = false;
 
 	public function __construct(
 		SPDB_Workspace_Resolver $workspace_resolver,
@@ -31,25 +32,39 @@ final class SPDB_Dashboard_Page {
 	}
 
 	public function register_assets(): void {
-		wp_register_style(
-			'spdb-dashboard',
-			SPDB_PLUGIN_URL . 'assets/css/dashboard.css',
-			array(),
-			SPDB_VERSION
-		);
+		if ( ! wp_style_is( 'spdb-dashboard', 'registered' ) ) {
+			wp_register_style(
+				'spdb-dashboard',
+				SPDB_PLUGIN_URL . 'assets/css/dashboard.css',
+				array(),
+				SPDB_VERSION
+			);
+		}
 
-		wp_register_script(
-			'spdb-dashboard',
-			SPDB_PLUGIN_URL . 'assets/js/dashboard.js',
-			array( 'wp-api-fetch', 'wp-i18n' ),
-			SPDB_VERSION,
-			true
-		);
+		if ( ! wp_script_is( 'spdb-dashboard', 'registered' ) ) {
+			wp_register_script(
+				'spdb-dashboard',
+				SPDB_PLUGIN_URL . 'assets/js/dashboard.js',
+				array( 'wp-api-fetch', 'wp-i18n' ),
+				SPDB_VERSION,
+				true
+			);
+		}
 	}
 
 	public function enqueue_assets(): void {
+		$this->register_assets();
 		wp_enqueue_style( 'spdb-dashboard' );
+
+		if ( 'saved-views' !== SPDB_Dashboard_Router::current_view() ) {
+			return;
+		}
+
 		wp_enqueue_script( 'spdb-dashboard' );
+		if ( $this->assets_localized ) {
+			return;
+		}
+
 		wp_localize_script(
 			'spdb-dashboard',
 			'SPDBDashboard',
@@ -58,16 +73,17 @@ final class SPDB_Dashboard_Page {
 				'nonce'    => wp_create_nonce( 'wp_rest' ),
 				'viewUrl'  => esc_url_raw( SPDB_Dashboard_Router::route_url( 'saved-views' ) ),
 				'strings'  => array(
-					'loading'       => __( 'Loading saved views…', 'sabri-publishing-dashboard' ),
-					'empty'         => __( 'No saved views yet.', 'sabri-publishing-dashboard' ),
-					'createFailed'  => __( 'The saved view could not be created.', 'sabri-publishing-dashboard' ),
-					'deleteFailed'  => __( 'The saved view could not be deleted.', 'sabri-publishing-dashboard' ),
-					'deleteLabel'   => __( 'Delete', 'sabri-publishing-dashboard' ),
-					'created'       => __( 'Saved view created.', 'sabri-publishing-dashboard' ),
-					'deleted'       => __( 'Saved view deleted.', 'sabri-publishing-dashboard' ),
+					'loading'      => __( 'Loading saved views…', 'sabri-publishing-dashboard' ),
+					'empty'        => __( 'No saved views yet.', 'sabri-publishing-dashboard' ),
+					'createFailed' => __( 'The saved view could not be created.', 'sabri-publishing-dashboard' ),
+					'deleteFailed' => __( 'The saved view could not be deleted.', 'sabri-publishing-dashboard' ),
+					'deleteLabel'  => __( 'Delete', 'sabri-publishing-dashboard' ),
+					'created'      => __( 'Saved view created.', 'sabri-publishing-dashboard' ),
+					'deleted'      => __( 'Saved view deleted.', 'sabri-publishing-dashboard' ),
 				),
 			)
 		);
+		$this->assets_localized = true;
 	}
 
 	public function render(): void {
@@ -104,7 +120,7 @@ final class SPDB_Dashboard_Page {
 			$current = 'overview';
 		}
 
-		$overview    = $this->overview_service->build( $workspace );
+		$overview     = $this->overview_service->build( $workspace );
 		$system_state = $this->system_state->snapshot( $workspace );
 		$saved_views  = $this->saved_views->get_for_user( get_current_user_id() );
 
