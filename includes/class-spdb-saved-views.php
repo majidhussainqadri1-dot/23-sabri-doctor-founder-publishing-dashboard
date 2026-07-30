@@ -291,6 +291,15 @@ final class SPDB_Saved_Views {
 			return '';
 		}
 
+		// ISO dates contain enough digits and separators to resemble a phone
+		// number. Validate them before the generic sensitive-number detector.
+		if ( in_array( $key, array( 'date_from', 'date_to' ), true ) ) {
+			if ( 1 !== preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $value, $parts ) || ! checkdate( (int) $parts[2], (int) $parts[3], (int) $parts[1] ) ) {
+				return new WP_Error( 'spdb_invalid_saved_view_date', __( 'The saved-view date must use a valid YYYY-MM-DD value.', 'sabri-publishing-dashboard' ) );
+			}
+			return $value;
+		}
+
 		if ( self::contains_sensitive_pattern( $value ) ) {
 			return new WP_Error( 'spdb_sensitive_saved_view_filter', __( 'Saved-view filters must not contain contact details, URLs, or sensitive identifiers.', 'sabri-publishing-dashboard' ) );
 		}
@@ -315,13 +324,6 @@ final class SPDB_Saved_Views {
 			return in_array( $value, array( 'asc', 'desc' ), true )
 				? $value
 				: new WP_Error( 'spdb_invalid_saved_view_direction', __( 'The saved-view direction is invalid.', 'sabri-publishing-dashboard' ) );
-		}
-
-		if ( in_array( $key, array( 'date_from', 'date_to' ), true ) ) {
-			if ( 1 !== preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $value, $parts ) || ! checkdate( (int) $parts[2], (int) $parts[3], (int) $parts[1] ) ) {
-				return new WP_Error( 'spdb_invalid_saved_view_date', __( 'The saved-view date must use a valid YYYY-MM-DD value.', 'sabri-publishing-dashboard' ) );
-			}
-			return $value;
 		}
 
 		return new WP_Error( 'spdb_invalid_saved_view_filter', __( 'The saved-view filter is invalid.', 'sabri-publishing-dashboard' ) );
