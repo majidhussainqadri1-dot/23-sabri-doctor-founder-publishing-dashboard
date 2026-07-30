@@ -1,6 +1,6 @@
 <?php
 /**
- * Executable Phase 23B dashboard-core tests.
+ * Executable File 23 dashboard-core regression tests.
  */
 
 require_once __DIR__ . '/bootstrap.php';
@@ -27,6 +27,7 @@ eval( 'function smc_is_founder( $user_id ) { return (bool) $GLOBALS["spdb_test_f
 eval( 'function smc_is_trusted_publisher( $user_id ) { return (bool) $GLOBALS["spdb_test_trusted"]; }' );
 
 $GLOBALS['spdb_test_capabilities']['spdb_view_dashboard']   = true;
+$GLOBALS['spdb_test_capabilities']['spdb_view_own_content'] = true;
 $GLOBALS['spdb_test_capabilities']['spdb_run_system_check'] = true;
 $GLOBALS['spdb_test_member_status']                         = 'approved';
 
@@ -63,6 +64,7 @@ $GLOBALS['spdb_test_capabilities']['spdb_view_dashboard'] = true;
 $GLOBALS['spdb_test_member_status'] = 'approved';
 
 spdb_core_assert( 'overview' === SPDB_Dashboard_Router::normalize_view( 'unknown' ), 'Unknown dashboard views must fall back to overview.' );
+spdb_core_assert( 'inventory' === SPDB_Dashboard_Router::normalize_view( 'inventory' ), 'Implemented inventory route must be accepted.' );
 spdb_core_assert( 'saved-views' === SPDB_Dashboard_Router::normalize_view( 'saved-views' ), 'Implemented saved-views route must be accepted.' );
 spdb_core_assert( 'https://example.test/publishing-dashboard/' === SPDB_Dashboard_Router::route_url(), 'Canonical dashboard URL must be stable.' );
 spdb_core_assert( false !== strpos( SPDB_Dashboard_Router::route_url( 'system-status' ), 'view=system-status' ), 'Implemented subview URL must use an allowlisted query value.' );
@@ -177,15 +179,15 @@ $state_service = new SPDB_System_State( $registry );
 $workspace     = $resolver->resolve( 7 );
 $state         = $state_service->snapshot( $workspace );
 spdb_core_assert( 0 === $state['provider_count'], 'An empty registry must report zero providers without fabricated counts.' );
-spdb_core_assert( false === $state['production_writes'], 'Phase 23B system state must declare production writes disabled.' );
-spdb_core_assert( '23B' === $state['phase'], 'System state must identify the active implementation phase.' );
+spdb_core_assert( false === $state['production_writes'], 'Phase 23C system state must declare production writes disabled.' );
+spdb_core_assert( '23C' === $state['phase'], 'System state must identify the active implementation phase.' );
 
 $overview = ( new SPDB_Overview_Service( $state_service ) )->build( $workspace );
-spdb_core_assert( 4 === count( $overview['cards'] ), 'Overview must provide the bounded Phase 23B summary cards.' );
+spdb_core_assert( 4 === count( $overview['cards'] ), 'Overview must provide the bounded dashboard summary cards.' );
 spdb_core_assert( ! empty( $overview['alerts'] ), 'No-provider state must produce an explicit truthful notice.' );
 
 $navigation = $resolver->navigation( $workspace );
-spdb_core_assert( isset( $navigation['overview'], $navigation['saved-views'], $navigation['system-status'] ), 'Only implemented and authorized Phase 23B destinations must be exposed.' );
+spdb_core_assert( isset( $navigation['overview'], $navigation['inventory'], $navigation['saved-views'], $navigation['system-status'] ), 'Only implemented and authorized dashboard destinations must be exposed.' );
 
 if ( $failed > 0 ) {
 	fwrite( STDERR, "{$failed} of {$tests} dashboard-core tests failed.\n" );
