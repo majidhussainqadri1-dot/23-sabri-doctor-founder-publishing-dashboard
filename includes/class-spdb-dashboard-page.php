@@ -34,8 +34,8 @@ final class SPDB_Dashboard_Page {
 
 	/**
 	 * A shortcode fallback must inherit the same private cache and indexing
-	 * policy as the virtual route. Otherwise a theme page containing private
-	 * dashboard markup could be cached or indexed before the shortcode runs.
+	 * policy as the virtual route. Assets must also be enqueued before wp_head;
+	 * enqueueing only while the shortcode renders is too late for styles.
 	 */
 	public function protect_shortcode_page(): void {
 		if ( ! is_singular() ) {
@@ -48,6 +48,15 @@ final class SPDB_Dashboard_Page {
 		}
 
 		SPDB_Dashboard_Router::emit_private_headers();
+
+		$user_id = get_current_user_id();
+		if (
+			is_user_logged_in()
+			&& SPDB_Membership_Guard::can_user_view_restricted_dashboard( $user_id )
+			&& SPDB_Capabilities::current_user_can( 'spdb_view_dashboard' )
+		) {
+			$this->enqueue_assets();
+		}
 	}
 
 	public function register_assets(): void {
