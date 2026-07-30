@@ -1,6 +1,7 @@
 <?php
-/** Executable query, projection, and static accessibility tests for the Phase 23F Collections UI. */
+/** Executable query, projection, navigation, and accessibility tests for the Phase 23F Collections UI. */
 require_once __DIR__ . '/bootstrap.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-collections-view.php';
 if ( ! defined( 'SMC_VERSION' ) ) { define( 'SMC_VERSION', '1.0.1' ); }
 if ( ! function_exists( 'smc_user_status' ) ) { function smc_user_status( $user_id ) { return (string) ( $GLOBALS['spdb_test_member_statuses'][ $user_id ] ?? $GLOBALS['spdb_test_member_status'] ); } }
 if ( ! function_exists( 'smc_is_founder' ) ) { function smc_is_founder( $user_id ) { return (bool) $GLOBALS['spdb_test_founder']; } }
@@ -41,6 +42,7 @@ function spdb_ui_code( $value ): string { return $value instanceof WP_Error ? $v
 $GLOBALS['spdb_test_user_id'] = 7;
 $GLOBALS['spdb_test_member_status'] = 'approved';
 $GLOBALS['spdb_test_member_statuses'][7] = 'approved';
+$GLOBALS['spdb_test_capabilities']['spdb_view_dashboard'] = true;
 $GLOBALS['spdb_test_capabilities']['spdb_view_own_content'] = true;
 $GLOBALS['spdb_test_capabilities']['spdb_manage_own_content'] = true;
 $GLOBALS['spdb_test_capabilities']['spdb_manage_campaigns'] = false;
@@ -51,6 +53,13 @@ $view = new SPDB_Collections_View( new SPDB_Collections_Service( $repository ) )
 
 spdb_ui_assert( 'collections' === SPDB_Dashboard_Router::normalize_view( 'collections' ), 'The protected router must accept the Collections view.' );
 spdb_ui_assert( 'overview' === SPDB_Dashboard_Router::normalize_view( 'collections/delete' ), 'Unknown or mutation-like view names must normalize to Overview.' );
+$workspace_resolver = new SPDB_Workspace_Resolver();
+$approved_navigation = $workspace_resolver->navigation( $workspace_resolver->resolve( 7 ) );
+spdb_ui_assert( isset( $approved_navigation['collections'] ), 'Approved users with read authority must receive the Collections navigation destination.' );
+$GLOBALS['spdb_test_member_status'] = 'submitted'; $GLOBALS['spdb_test_member_statuses'][7] = 'submitted';
+$restricted_navigation = $workspace_resolver->navigation( $workspace_resolver->resolve( 7 ) );
+spdb_ui_assert( ! isset( $restricted_navigation['collections'] ), 'Pending accounts must not receive the Collections navigation destination.' );
+$GLOBALS['spdb_test_member_status'] = 'approved'; $GLOBALS['spdb_test_member_statuses'][7] = 'approved';
 
 $unknown = $view->resolve( array( 'view' => 'collections', 'user_id' => 99 ) );
 spdb_ui_assert( 'spdb_collections_view_query_invalid' === spdb_ui_code( $unknown ), 'Client-supplied authority fields must be rejected by the UI query contract.' );
@@ -87,9 +96,9 @@ $css = file_get_contents( $root . '/assets/css/collections.css' );
 $page = file_get_contents( $root . '/includes/class-spdb-dashboard-page.php' );
 spdb_ui_assert( is_string( $template ) && str_contains( $template, '<caption>' ) && str_contains( $template, 'aria-current="page"' ) && str_contains( $template, 'role="region"' ) && str_contains( $template, '<dl>'), 'The Collections template must provide semantic captions, current state, regions, and definition lists.' );
 spdb_ui_assert( is_string( $template ) && ! preg_match( '/method\s*=\s*["\']post["\']|\b(?:create|update|delete|archive|reorder)_(?:collection|item|link)\b|WP_REST_Server::(?:CREATABLE|EDITABLE|DELETABLE)/i', $template ), 'The Collections template must not expose mutation controls.' );
-spdb_ui_assert( is_string( $dashboard ) && str_contains( $dashboard, 'templates/collections.php' ) && str_contains( $dashboard, 'Phase 23F — Collections and Knowledge' ), 'The main dashboard must integrate the Collections template and truthful phase label.' );
+spdb_ui_assert( is_string( $dashboard ) && str_contains( $dashboard, 'templates/collections.php' ) && str_contains( $dashboard, 'Phase 23F' ) && str_contains( $dashboard, 'Collections and Knowledge' ), 'The main dashboard must integrate the Collections template and truthful phase label.' );
 spdb_ui_assert( is_string( $css ) && str_contains( $css, ':focus-visible' ) && str_contains( $css, '[dir="rtl"]' ) && str_contains( $css, 'prefers-reduced-motion' ) && str_contains( $css, 'forced-colors' ), 'Collections CSS must include focus, RTL, reduced-motion, and forced-color controls.' );
-spdb_ui_assert( is_string( $page ) && str_contains( $page, 'SPDB_Collections_View' ) && str_contains( $page, "'page_id', 'p', 'post_type'" ) && str_contains( $page, 'assets/css/collections.css' ), 'The dashboard page must use the view model, preserve shortcode routing compatibility, and load Collections CSS.' );
+spdb_ui_assert( is_string( $page ) && str_contains( $page, 'SPDB_Collections_View' ) && str_contains( $page, "'page_id', 'p', 'post_type'" ) && str_contains( $page, 'assets/css/collections.css' ) && str_contains( $page, 'collections_request_input' ), 'The dashboard page must use the view model, preserve shortcode routing compatibility, load Collections CSS, and strictly collect the query.' );
 
 if ( $failed > 0 ) { fwrite( STDERR, "{$failed} of {$tests} Phase 23F Collections UI tests failed.\n" ); exit( 1 ); }
 echo "All {$tests} Phase 23F Collections UI boundary tests passed.\n";
