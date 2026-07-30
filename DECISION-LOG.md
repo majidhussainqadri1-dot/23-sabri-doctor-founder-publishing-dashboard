@@ -83,8 +83,6 @@
 
 **Decision:** Founder and Doctor workspaces render validated native cards, policy, profile, knowledge, activity, alerts, and safe destinations. File 23 does not import or become the master owner of those records.
 
-**Reason:** Role-specific operations require a unified command center without creating parallel publication, profile, knowledge, or activity backends.
-
 ## 2026-07-30 — D-021 — Official Publishing Is Founder-Only
 
 **Decision:** `official_create` destinations require server-verified Founder identity in addition to current capability, approved account state, safe destination, environment, and File 23-controlled adapter acceptance. A Doctor or trusted Doctor cannot obtain official-publishing authority from a provider label or browser parameter.
@@ -93,8 +91,36 @@
 
 **Decision:** Phase 23D may display a safe native launch destination but does not execute native mutation from the workspace. Mutating destinations are hidden unless all current authority and adapter-acceptance gates pass.
 
-**Reason:** File 22 and the native providers remain responsible for creation and publication execution, while File 23 supplies role-aware orchestration and oversight.
-
 ## 2026-07-30 — D-023 — Missing Workspace Data Must Remain Unavailable
 
 **Decision:** Measured cards require numeric native values and absolute source timestamps. Missing profile, knowledge, activity, or count data is shown as unavailable; File 23 does not estimate or fabricate operational numbers.
+
+## 2026-07-30 — D-024 — Role Authority Is Re-derived, Not Accepted from Workspace Input
+
+**Decision:** Phase 23D uses the incoming workspace only to confirm the current authenticated user binding. Founder, trusted-publisher, Doctor, restricted, read-only, and account-state authority are re-derived from compatible File 00 functions on every build.
+
+**Reason:** A stale resolver object, compromised caller, or forged array must not expose Founder policy or writable operations.
+
+## 2026-07-30 — D-025 — Canonical Workspace Action Semantics
+
+**Decision:** Every workspace action type has one File 23-owned contract for mutability, required capability, and Founder-only status. Providers supply candidate destinations and labels but cannot weaken the semantic contract.
+
+**Reason:** A provider must not label creation or editing as non-mutating, downgrade its capability, or remove Founder-only protection.
+
+## 2026-07-30 — D-026 — Profile and Knowledge Destinations Use the Same Action Gate
+
+**Decision:** Profile edit, public-profile, and knowledge destinations are synthesized into canonical workspace actions. Direct destination fields are removed before profile or knowledge panels render.
+
+**Reason:** No auxiliary panel may bypass account-state, capability, ownership, destination, environment, or adapter-acceptance controls.
+
+## 2026-07-30 — D-027 — Globally Bounded Role Workspace
+
+**Decision:** The role workspace has global limits across providers, cards, actions, profiles, knowledge projections, activity, and alerts, with a truthful truncation notice.
+
+**Reason:** Per-provider limits alone do not prevent aggregate UI, memory, or denial-of-service pressure when many adapters register.
+
+## 2026-07-30 — D-028 — Raw Query Validation for Native Destinations
+
+**Decision:** Workspace destinations are parsed from raw query pairs. Duplicate, bracketed, empty, malformed, sensitive, recursively encoded nested-target, and ambiguous parameters are rejected before rendering.
+
+**Reason:** Generic query normalization can collapse conflicting parameters or conceal encoded redirect and secret-bearing values.
