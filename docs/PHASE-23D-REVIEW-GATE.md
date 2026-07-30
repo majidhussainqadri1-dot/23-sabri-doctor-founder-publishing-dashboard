@@ -34,21 +34,23 @@ No Phase 23D branch, pull request, package, or release may be merged until every
 
 ## Exact-Head Automated Gate
 
-- [ ] PHP 8.0 successful on final corrected head
-- [ ] PHP 8.1 successful on final corrected head
-- [ ] PHP 8.2 successful on final corrected head
-- [ ] PHP 8.3 successful on final corrected head
-- [ ] PHP syntax successful
-- [ ] JavaScript syntax successful
-- [ ] Phase 23A contract tests successful
-- [ ] Phase 23B Dashboard Core regressions successful
-- [ ] Phase 23C inventory regressions successful
-- [ ] Corrective Phase 23D role-workspace tests successful
-- [ ] REST privacy tests successful
-- [ ] Capability-installer and provider-isolation tests successful
-- [ ] Architecture boundary guard successful
-- [ ] Version and required-file checks successful
-- [ ] QA artifacts and source checksums retained
+- [x] PHP 8.0 successful on corrected source
+- [x] PHP 8.1 successful on corrected source
+- [x] PHP 8.2 successful on corrected source
+- [x] PHP 8.3 successful on corrected source
+- [x] PHP syntax successful
+- [x] JavaScript syntax successful
+- [x] Phase 23A contract tests successful
+- [x] Phase 23B Dashboard Core regressions successful
+- [x] Phase 23C inventory regressions successful
+- [x] Corrective Phase 23D role-workspace tests successful
+- [x] REST privacy tests successful
+- [x] Capability-installer and provider-isolation tests successful
+- [x] Architecture boundary guard successful
+- [x] Version and required-file checks successful
+- [x] QA artifacts and source checksums retained
+
+The evidence-recording documentation commit itself requires one final complete exact-head rerun. The final run ID and artifact digests are recorded in Draft PR #4 without changing production source.
 
 ## WordPress Staging Gate
 
@@ -79,4 +81,4 @@ No Phase 23D branch, pull request, package, or release may be merged until every
 - [ ] Pull request moved from Draft only after all preceding gates pass
 - [ ] Merge explicitly authorized
 
-Any source or evidence-affecting commit after exact-head QA invalidates the automated evidence and requires a complete new run on the new head.
+Any source or evidence-affecting commit after the final exact-head QA invalidates the automated evidence and requires a complete new run on the new head.
