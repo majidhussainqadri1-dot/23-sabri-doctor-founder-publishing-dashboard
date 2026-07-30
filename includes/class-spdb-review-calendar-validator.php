@@ -27,10 +27,8 @@ final class SPDB_Review_Calendar_Validator {
 				$query[ $key ] = $value;
 			}
 		}
-
 		$query['page']     = self::bounded_integer( $query['page'] ?? '1', 1, 1000, 1 );
 		$query['per_page'] = self::bounded_integer( $query['per_page'] ?? '25', 1, 50, 25 );
-
 		if ( isset( $query['provider'] ) && ! SPDB_Adapter_Registry::is_canonical_key( $query['provider'] ) ) {
 			unset( $query['provider'] );
 		}
@@ -47,6 +45,7 @@ final class SPDB_Review_Calendar_Validator {
 			if ( isset( $query[ $date_key ] ) && ! self::valid_date( $query[ $date_key ] ) ) {
 				unset( $query[ $date_key ] );
 			}
+		}
 		if ( isset( $query['timezone'] ) && ! self::valid_timezone( $query['timezone'] ) ) {
 			unset( $query['timezone'] );
 		}
@@ -57,6 +56,14 @@ final class SPDB_Review_Calendar_Validator {
 	public static function normalize_review_queue( $raw, string $provider_key, array $metadata, array $context ) {
 		if ( ! is_array( $raw ) || ! isset( $raw['items'] ) || ! is_array( $raw['items'] ) || count( $raw['items'] ) > self::MAX_PROVIDER_ITEMS ) {
 			return self::error( 'spdb_review_queue_invalid', 'The provider returned a malformed or oversized review queue.' );
+		}
+		$total = self::strict_nonnegative_integer( $raw['total'] ?? count( $raw['items'] ), 'spdb_review_total_invalid' );
+		if ( is_wp_error( $total ) ) {
+			return $total;
+		}
+		$provider_name = self::required_text( $metadata['provider_name'] ?? $provider_key, 160, 'spdb_review_provider_name_invalid' );
+		if ( is_wp_error( $provider_name ) ) {
+			return $provider_name;
 		}
 		$items = array();
 		$seen  = array();
@@ -73,11 +80,11 @@ final class SPDB_Review_Calendar_Validator {
 			$items[] = $normalized;
 		}
 		return array(
-			'provider_key' => $provider_key,
-			'provider_name' => self::safe_text( $metadata['provider_name'] ?? $provider_key, 160, false ),
-			'items'        => $items,
-			'reported_total' => self::strict_nonnegative_integer( $raw['total'] ?? count( $items ), 'spdb_review_total_invalid' ),
-			'has_more'     => true === ( $raw['has_more'] ?? false ),
+			'provider_key'   => $provider_key,
+			'provider_name'  => $provider_name,
+			'items'          => $items,
+			'reported_total' => $total,
+			'has_more'       => true === ( $raw['has_more'] ?? false ),
 		);
 	}
 
@@ -85,6 +92,14 @@ final class SPDB_Review_Calendar_Validator {
 	public static function normalize_calendar( $raw, string $provider_key, array $metadata, array $context ) {
 		if ( ! is_array( $raw ) || ! isset( $raw['items'] ) || ! is_array( $raw['items'] ) || count( $raw['items'] ) > self::MAX_PROVIDER_ITEMS ) {
 			return self::error( 'spdb_calendar_invalid', 'The provider returned a malformed or oversized calendar projection.' );
+		}
+		$total = self::strict_nonnegative_integer( $raw['total'] ?? count( $raw['items'] ), 'spdb_calendar_total_invalid' );
+		if ( is_wp_error( $total ) ) {
+			return $total;
+		}
+		$provider_name = self::required_text( $metadata['provider_name'] ?? $provider_key, 160, 'spdb_calendar_provider_name_invalid' );
+		if ( is_wp_error( $provider_name ) ) {
+			return $provider_name;
 		}
 		$items = array();
 		$seen  = array();
@@ -101,11 +116,11 @@ final class SPDB_Review_Calendar_Validator {
 			$items[] = $normalized;
 		}
 		return array(
-			'provider_key' => $provider_key,
-			'provider_name' => self::safe_text( $metadata['provider_name'] ?? $provider_key, 160, false ),
-			'items'        => $items,
-			'reported_total' => self::strict_nonnegative_integer( $raw['total'] ?? count( $items ), 'spdb_calendar_total_invalid' ),
-			'has_more'     => true === ( $raw['has_more'] ?? false ),
+			'provider_key'   => $provider_key,
+			'provider_name'  => $provider_name,
+			'items'          => $items,
+			'reported_total' => $total,
+			'has_more'       => true === ( $raw['has_more'] ?? false ),
 		);
 	}
 
@@ -131,6 +146,10 @@ final class SPDB_Review_Calendar_Validator {
 		if ( ! $is_founder && 0 !== $reviewer_id && $reviewer_id !== $user_id ) {
 			return self::error( 'spdb_review_assignment_forbidden', 'A review item is assigned to another reviewer.' );
 		}
+		$reviewer_name = self::optional_text( $raw['assigned_reviewer_name'] ?? '', 120, 'spdb_review_reviewer_name_invalid' );
+		if ( is_wp_error( $reviewer_name ) ) {
+			return $reviewer_name;
+		}
 		$due_at = self::optional_timestamp( $raw['due_at'] ?? '' );
 		if ( is_wp_error( $due_at ) ) {
 			return $due_at;
@@ -143,6 +162,14 @@ final class SPDB_Review_Calendar_Validator {
 		if ( is_wp_error( $operations ) ) {
 			return $operations;
 		}
+		$flags = array();
+		foreach ( array( 'privacy_flags', 'safety_flags', 'source_flags', 'copyright_flags' ) as $flag_key ) {
+			$normalized_flags = self::normalize_flags( $raw[ $flag_key ] ?? array() );
+			if ( is_wp_error( $normalized_flags ) ) {
+				return $normalized_flags;
+			}
+			$flags[ $flag_key ] = $normalized_flags;
+		}
 		$separation_required = true === ( $raw['separation_required'] ?? false );
 		if ( $separation_required && (int) $reference['author_id'] === $user_id ) {
 			$operations = array_values( array_diff( $operations, array( 'approve_review', 'reject_review' ) ) );
@@ -151,13 +178,13 @@ final class SPDB_Review_Calendar_Validator {
 			$reference,
 			array(
 				'review_state'          => $state,
-				'assigned_reviewer_id'   => $reviewer_id,
-				'assigned_reviewer_name' => self::safe_text( $raw['assigned_reviewer_name'] ?? '', 120, true ),
+				'assigned_reviewer_id'  => $reviewer_id,
+				'assigned_reviewer_name'=> $reviewer_name,
 				'due_at'                => $due_at,
-				'privacy_flags'         => self::normalize_flags( $raw['privacy_flags'] ?? array() ),
-				'safety_flags'          => self::normalize_flags( $raw['safety_flags'] ?? array() ),
-				'source_flags'          => self::normalize_flags( $raw['source_flags'] ?? array() ),
-				'copyright_flags'       => self::normalize_flags( $raw['copyright_flags'] ?? array() ),
+				'privacy_flags'         => $flags['privacy_flags'],
+				'safety_flags'          => $flags['safety_flags'],
+				'source_flags'          => $flags['source_flags'],
+				'copyright_flags'       => $flags['copyright_flags'],
 				'native_review_url'     => $url,
 				'allowed_operations'    => $operations,
 				'separation_required'   => $separation_required,
@@ -182,7 +209,7 @@ final class SPDB_Review_Calendar_Validator {
 		if ( is_wp_error( $scheduled_at ) ) {
 			return $scheduled_at;
 		}
-		$timezone = trim( (string) ( $raw['native_timezone'] ?? '' ) );
+		$timezone = is_scalar( $raw['native_timezone'] ?? null ) ? trim( (string) $raw['native_timezone'] ) : '';
 		if ( ! self::valid_timezone( $timezone ) ) {
 			return self::error( 'spdb_calendar_timezone_invalid', 'The native schedule time zone is invalid.' );
 		}
@@ -194,13 +221,17 @@ final class SPDB_Review_Calendar_Validator {
 		if ( is_wp_error( $operations ) ) {
 			return $operations;
 		}
+		$conflicts = self::normalize_flags( $raw['conflicts'] ?? array() );
+		if ( is_wp_error( $conflicts ) ) {
+			return $conflicts;
+		}
 		return array_merge(
 			$reference,
 			array(
 				'status'             => $status,
 				'scheduled_at_utc'   => $scheduled_at,
 				'native_timezone'    => $timezone,
-				'conflicts'          => self::normalize_flags( $raw['conflicts'] ?? array() ),
+				'conflicts'          => $conflicts,
 				'native_edit_url'    => $url,
 				'allowed_operations' => $operations,
 			)
@@ -209,8 +240,8 @@ final class SPDB_Review_Calendar_Validator {
 
 	/** @return array<string,mixed>|WP_Error */
 	private static function reference( array $raw, string $provider_key, array $metadata, array $context ) {
-		$object_type = trim( (string) ( $raw['object_type'] ?? '' ) );
-		$object_id   = trim( (string) ( $raw['object_id'] ?? '' ) );
+		$object_type = is_scalar( $raw['object_type'] ?? null ) ? trim( (string) $raw['object_type'] ) : '';
+		$object_id   = is_scalar( $raw['object_id'] ?? null ) ? trim( (string) $raw['object_id'] ) : '';
 		if ( ! SPDB_Adapter_Registry::is_canonical_key( $object_type ) || ! in_array( $object_type, $metadata['object_types'] ?? array(), true ) ) {
 			return self::error( 'spdb_projection_object_type_invalid', 'The projected object type is invalid.' );
 		}
@@ -231,7 +262,7 @@ final class SPDB_Review_Calendar_Validator {
 		if ( 'institution' === $scope && empty( $context['is_founder'] ) && empty( $context['can_review'] ) ) {
 			return self::error( 'spdb_projection_institution_forbidden', 'Institution scope is not authorized.' );
 		}
-		$version = trim( (string) ( $raw['native_version'] ?? '' ) );
+		$version = is_scalar( $raw['native_version'] ?? null ) ? trim( (string) $raw['native_version'] ) : '';
 		if ( '' === $version || strlen( $version ) > 191 || preg_match( '/[\x00-\x1F\x7F]/', $version ) ) {
 			return self::error( 'spdb_projection_version_invalid', 'The native object version is invalid.' );
 		}
@@ -239,16 +270,24 @@ final class SPDB_Review_Calendar_Validator {
 		if ( is_wp_error( $last_synced ) ) {
 			return $last_synced;
 		}
+		$title = self::required_text( $raw['title'] ?? '', 200, 'spdb_projection_title_invalid' );
+		if ( is_wp_error( $title ) ) {
+			return $title;
+		}
+		$author_name = self::required_text( $raw['author_name'] ?? '', 120, 'spdb_projection_author_name_invalid' );
+		if ( is_wp_error( $author_name ) ) {
+			return $author_name;
+		}
 		return array(
-			'provider_key' => $provider_key,
-			'object_type'  => $object_type,
-			'object_id'    => $object_id,
-			'title'        => self::safe_text( $raw['title'] ?? '', 200, false ),
-			'author_id'    => $author_id,
-			'author_name'  => self::safe_text( $raw['author_name'] ?? '', 120, false ),
-			'scope'        => $scope,
-			'native_version' => $version,
-			'last_synced_at' => $last_synced,
+			'provider_key'  => $provider_key,
+			'object_type'   => $object_type,
+			'object_id'     => $object_id,
+			'title'         => $title,
+			'author_id'     => $author_id,
+			'author_name'   => $author_name,
+			'scope'         => $scope,
+			'native_version'=> $version,
+			'last_synced_at'=> $last_synced,
 		);
 	}
 
@@ -260,7 +299,7 @@ final class SPDB_Review_Calendar_Validator {
 		$declared = array_keys( is_array( $metadata['operation_definitions'] ?? null ) ? $metadata['operation_definitions'] : array() );
 		$result   = array();
 		foreach ( $raw as $operation ) {
-			$operation = (string) $operation;
+			$operation = is_scalar( $operation ) ? (string) $operation : '';
 			if ( ! in_array( $operation, $allowed, true ) || ! in_array( $operation, $declared, true ) ) {
 				return self::error( 'spdb_projection_operation_invalid', 'The provider projected an undeclared or unsupported operation.' );
 			}
@@ -276,7 +315,7 @@ final class SPDB_Review_Calendar_Validator {
 		}
 		$flags = array();
 		foreach ( $raw as $flag ) {
-			$flag = (string) $flag;
+			$flag = is_scalar( $flag ) ? (string) $flag : '';
 			if ( ! SPDB_Adapter_Registry::is_canonical_key( $flag ) ) {
 				return self::error( 'spdb_projection_flag_invalid', 'A projected flag is invalid.' );
 			}
@@ -305,18 +344,36 @@ final class SPDB_Review_Calendar_Validator {
 		return array( 'scheduled', 'processing', 'published', 'failed', 'on_hold', 'unknown' );
 	}
 
-	private static function safe_text( $raw, int $max, bool $allow_empty ): string {
-		if ( ! is_scalar( $raw ) ) {
+	/** @return string|WP_Error */
+	private static function required_text( $raw, int $max, string $code ) {
+		$value = self::text_value( $raw, $max );
+		if ( null === $value || '' === $value ) {
+			return self::error( $code, 'A required projection text field is invalid.' );
+		}
+		return $value;
+	}
+
+	/** @return string|WP_Error */
+	private static function optional_text( $raw, int $max, string $code ) {
+		if ( null === $raw || '' === $raw ) {
 			return '';
+		}
+		$value = self::text_value( $raw, $max );
+		return null === $value ? self::error( $code, 'An optional projection text field is invalid.' ) : $value;
+	}
+
+	private static function text_value( $raw, int $max ): ?string {
+		if ( ! is_scalar( $raw ) ) {
+			return null;
 		}
 		$value = trim( wp_strip_all_tags( (string) $raw ) );
 		if ( strlen( $value ) > $max || preg_match( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $value ) ) {
-			return '';
+			return null;
 		}
 		if ( preg_match( '/(?:https?:\/\/|www\.|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|\b(?:\+?92|0)?3\d{9}\b|\b\d{5}-\d{7}-\d\b)/i', $value ) ) {
-			return '';
+			return null;
 		}
-		return '' === $value && ! $allow_empty ? '' : $value;
+		return $value;
 	}
 
 	/** @return string|WP_Error */
