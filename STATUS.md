@@ -12,7 +12,7 @@
 - Production readiness: Not ready
 - Staging readiness: Not ready
 - Merge readiness: Blocked pending Founder acceptance
-- Technical status: Review complete; discovered defects corrected; corrective re-review complete; PHP 8.0–8.3 checks green
+- Technical status: Review complete; discovered defects corrected; corrective re-review complete; exact current-head PHP 8.0–8.3 checks green
 
 ## Phase 23A Acceptance Gates
 
@@ -40,15 +40,16 @@
 - [x] Executable contract tests committed
 - [x] Architecture boundary guard committed
 - [x] PHP 8.0–8.3 CI matrix committed
-- [x] Corrected code/governance head automated checks green
+- [x] Exact current-head automated checks green
 - [x] Corrective re-review completed
 - [ ] Founder review completed
 - [ ] Founder acceptance recorded
 
 ## Corrective Evidence
 
+- Final reviewed head: `deae730c1a2a61898945ef796c66e1be0b821045`
 - GitHub Actions workflow: Baseline Integrity
-- Evidence run: #76
+- Final evidence run: #84
 - PHP 8.0: success
 - PHP 8.1: success
 - PHP 8.2: success
@@ -59,7 +60,7 @@
 - Version/contract alignment: success
 - Audit and merge-gate verification: success
 
-The final status/audit documentation commit must also retain a green workflow result before the PR is considered technically settled; any later code change invalidates prior exact-head evidence and requires another review and rerun.
+Any later branch commit invalidates this exact-head evidence and requires another review and complete rerun before merge consideration.
 
 ## Non-Negotiable Restrictions
 
