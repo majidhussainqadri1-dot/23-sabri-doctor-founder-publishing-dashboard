@@ -47,7 +47,7 @@ foreach ( $iterator as $file ) {
 	}
 
 	$normalized = preg_replace( '/\s+/', ' ', $content ) ?? $content;
-	if ( preg_match( '/CREATE\s+TABLE[^;]*(publication|draft|review|schedule|comment|correction|retraction|source|media|notification|appointment|clinical|prescription|analytics_event)/i', $normalized ) ) {
+	if ( preg_match( '/CREATE\s+TABLE[^;]*(publication|draft|review|schedule|comment|correction|retraction|source|media|notification|appointment|clinical|prescription|analytics_event|profile|knowledge)/i', $normalized ) ) {
 		$violations[] = "{$relative}: forbidden native-domain table ownership";
 	}
 }
@@ -59,7 +59,7 @@ if ( is_file( $inventory_controller ) ) {
 		$violations[] = 'Unable to read includes/class-spdb-inventory-rest-controller.php';
 	} else {
 		if ( preg_match( '/WP_REST_Server::(?:CREATABLE|EDITABLE|DELETABLE)/', $inventory_content ) ) {
-			$violations[] = 'includes/class-spdb-inventory-rest-controller.php: Phase 23C inventory endpoints must remain read-only';
+			$violations[] = 'includes/class-spdb-inventory-rest-controller.php: inventory endpoints must remain read-only';
 		}
 		if ( preg_match( '/\b(?:POST|PUT|PATCH|DELETE)\b/i', $inventory_content ) ) {
 			$violations[] = 'includes/class-spdb-inventory-rest-controller.php: mutation HTTP method detected';
@@ -81,6 +81,33 @@ if ( is_file( $inventory_service ) ) {
 		if ( ! preg_match( "/\['execution_exposed'\]\s*=\s*false\s*;/", $inventory_content ) && ! preg_match( "/'execution_exposed'\s*=>\s*false/", $inventory_content ) ) {
 			$violations[] = 'includes/class-spdb-federated-inventory.php: mutation execution boundary marker missing';
 		}
+	}
+}
+
+$workspace_service = $root . '/includes/class-spdb-role-workspace-service.php';
+if ( is_file( $workspace_service ) ) {
+	$workspace_content = file_get_contents( $workspace_service );
+	if ( false === $workspace_content ) {
+		$violations[] = 'Unable to read includes/class-spdb-role-workspace-service.php';
+	} else {
+		foreach ( array( 'execute_operation', 'wp_insert_post', 'wp_update_post', 'wp_delete_post', 'update_user_meta', 'update_option' ) as $forbidden_call ) {
+			if ( preg_match( '/\b' . preg_quote( $forbidden_call, '/' ) . '\s*\(/', $workspace_content ) ) {
+				$violations[] = "includes/class-spdb-role-workspace-service.php: forbidden mutation call {$forbidden_call}";
+			}
+		}
+		if ( ! str_contains( $workspace_content, 'is_environment_write_eligible' ) || ! str_contains( $workspace_content, 'founder_only' ) ) {
+			$violations[] = 'includes/class-spdb-role-workspace-service.php: required action gates are missing';
+		}
+	}
+}
+
+$workspace_template = $root . '/templates/workspace.php';
+if ( is_file( $workspace_template ) ) {
+	$template_content = file_get_contents( $workspace_template );
+	if ( false === $template_content ) {
+		$violations[] = 'Unable to read templates/workspace.php';
+	} elseif ( preg_match( '/<form\b|<button\b/i', $template_content ) ) {
+		$violations[] = 'templates/workspace.php: Phase 23D workspace must not contain a native mutation form or button';
 	}
 }
 
