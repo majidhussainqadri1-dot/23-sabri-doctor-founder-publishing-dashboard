@@ -7,97 +7,86 @@
 - Active phase: 23C — Federated Content Inventory
 - Branch: `phase/23c-federated-inventory`
 - Parent branch: `phase/23b-dashboard-core`
-- Phase 23A pull request: Draft PR #1, unmerged
-- Phase 23B pull request: Draft PR #2, twice reviewed technically, unmerged
-- Phase 23C pull request: Draft PR #3, open and unmerged
-- Plugin version: `0.3.0`
+- Phase 23A PR #1: Draft, unmerged
+- Phase 23B PR #2: Draft, twice source-reviewed, unmerged
+- Phase 23C PR #3: Draft, open, unmerged
+- Plugin version: `0.3.1`
 - Adapter contract: `2.0.0`
 - Production readiness: Not ready
 - Staging readiness: Not ready
-- Merge readiness: Blocked pending Phase 23C independent review, correction, exact-head QA, WordPress staging, accessibility, rollback, and Founder acceptance
-- Technical status: Initial Phase 23C implementation and Draft PR are present; independent source review and acceptance remain pending
+- Merge readiness: Blocked by corrected exact-head QA, WordPress staging, real-account/privacy/accessibility/rollback testing, and Founder acceptance
+- Technical status: Phase 23C independent source review completed; fourteen findings corrected; exact-current-head evidence must be recorded after the final documentation head
 
-## Why Phase 23C Is Stacked
-
-The Founder authorized continued construction while preserving the permanent rule that no work is merged before review completion. Phase 23C therefore starts from the exact Phase 23B reviewed head. PR #1, PR #2, and PR #3 remain Draft and unmerged.
-
-## Implemented Phase 23C Candidate Scope
+## Corrective Phase 23C Scope
 
 - [x] Read-only federated inventory service
-- [x] Bounded query normalizer and 200-item maximum federated window
-- [x] Provider, object-type, state, language, topic, date, sort, direction, and scope filters
+- [x] 200-item maximum accessible federated window
+- [x] Exact-canonical provider/type/state/language/topic/sort/scope validation
 - [x] Server-injected current user ID
-- [x] Doctor own-content scope
+- [x] File 23 defense-in-depth own-content enforcement
 - [x] Founder-only institution scope
-- [x] Four-dimensional lifecycle/review/visibility/operational projection
-- [x] Unknown native state mapping warning
-- [x] Canonical object reference and native version validation
-- [x] Privacy-class validation against provider declaration
-- [x] Same-origin, non-secret edit/preview/public destination validation
-- [x] Provider exception isolation and partial-result diagnostics
-- [x] Read-only item inspector
-- [x] Native operation metadata projection with execution disabled
-- [x] Read-only REST list and inspector endpoints
-- [x] Responsive accessible inventory template
-- [x] Phase 23C executable inventory tests
-- [x] Architecture guard extended for read-only inventory boundaries
-- [x] Phase 23C contract and review-gate documentation
+- [x] Cross-doctor list and inspector denial
+- [x] Provider filter revalidation
+- [x] Duplicate canonical-reference suppression
+- [x] Strict provider-total validation
+- [x] Reported, accessible, and validated-window totals separated
+- [x] Four-dimensional state projection and unknown mapping warnings
+- [x] Strict RFC 3339 timestamps
+- [x] Same-origin, fragment-free, non-secret destination and thumbnail validation
+- [x] Generic provider failure diagnostics
+- [x] Read-only inspector and REST endpoints
+- [x] Operation metadata inspection with execution disabled
+- [x] Active filters preserved in inspector and pagination links
+- [x] Mobile inventory retains material status columns
+- [x] Expanded executable IDOR, filter, pagination, URL, timestamp, duplicate, total, and failure tests
+- [x] Independent corrective audit recorded
 
-## Phase 23C Review and Acceptance Gates
+## Review and Acceptance Gates
 
-- [x] Draft stacked pull request opened
-- [ ] Independent source review completed
-- [ ] Every defect documented
-- [ ] Every defect corrected
-- [ ] Corrective source re-review completed
-- [ ] Exact-current-head PHP 8.0–8.3 checks green
-- [ ] Contract and Dashboard Core regression tests green
+- [x] Draft stacked PR opened
+- [x] Independent review of Phase 23C changed source completed
+- [x] Fourteen defects documented
+- [x] All identified source defects corrected
+- [x] Corrective source re-review completed
+- [ ] Exact-current-head PHP 8.0 successful
+- [ ] Exact-current-head PHP 8.1 successful
+- [ ] Exact-current-head PHP 8.2 successful
+- [ ] Exact-current-head PHP 8.3 successful
+- [ ] Contract and Dashboard Core regressions green
 - [ ] REST privacy, capability-installer, and provider-isolation tests green
-- [ ] Inventory tests green
+- [ ] Corrective inventory tests green
 - [ ] Architecture boundary guard green
-- [ ] Exact-head QA artifacts and source checksums retained
-- [ ] Real File 21 adapter accepted on WordPress staging
-- [ ] Real File 22/native Composer destinations accepted on staging
+- [ ] Exact-head artifacts and source checksums retained
+- [ ] Real File 21 adapter accepted on staging
+- [ ] Real File 22/Composer destinations accepted on staging
 - [ ] Founder institution inventory verified with a real account
-- [ ] Verified doctor own-content inventory verified with a real account
+- [ ] Doctor own-content inventory verified with real accounts
 - [ ] Pending and suspended read-only inventory verified
-- [ ] Cross-doctor IDOR/privacy tests accepted
+- [ ] Cross-doctor IDOR/privacy accepted against native records
 - [ ] LiteSpeed and hosting cache privacy verified
-- [ ] Mobile, keyboard, screen-reader, zoom, contrast, RTL, and responsive acceptance completed
+- [ ] Desktop, tablet, mobile, keyboard, screen-reader, zoom, contrast, and RTL accepted
 - [ ] Upgrade, deactivation/reactivation, backup/restore, and rollback accepted
 - [ ] Founder review completed
 - [ ] Founder acceptance recorded
 - [ ] Pull request ready for merge
 
-## Exact-Head Evidence Rule
+## Review Record
 
-The authoritative current head SHA, workflow run, matrix results, and retained artifact digests are maintained in Draft PR #3. Any later source commit invalidates earlier exact-head evidence and requires a complete rerun. This tracked status file therefore records gates without duplicating a moving evidence pointer.
-
-## Completed Parent Baselines
-
-### Phase 23A
-
-Technically reviewed governance, native ownership, Adapter Contract 2.0.0, File 00 fail-closed authorization, provider acceptance separation, server-controlled environment, guarded operation broker, object-version/idempotency controls, tests, and architecture boundaries. PR #1 remains Draft and unmerged.
-
-### Phase 23B
-
-Twice-reviewed private route, role-aware workspaces, real File 00 role capability provisioning, private route/REST cache policy, responsive shell, truthful overview, saved views, provider callback isolation, conflict protection, and exact-head QA artifacts. PR #2 remains Draft and unmerged pending staging and Founder acceptance.
+`docs/AUDIT-PHASE-23C-2026-07-30.md` records the complete finding and correction set. Any later source or evidence-affecting commit invalidates prior exact-head evidence and requires a complete rerun.
 
 ## Non-Negotiable Restrictions
 
-1. No duplicate publication backend.
-2. No duplicate Composer.
-3. No duplicate Newsroom or review ledger.
-4. No duplicate native schedule, correction, retraction, source, media, comment, or raw analytics store.
-5. No provider may self-declare staging or production acceptance.
-6. No production write action is enabled in Phase 23C.
-7. No client-supplied role, user ID, author, provider authority, status, capability, or environment is trusted.
-8. No patient-identifying content may be stored in File 23-owned data, logs, tasks, caches, notifications, or exports.
-9. Unknown native states remain unknown until an adapter mapping is reviewed.
-10. No inventory endpoint, form, or button may execute a native mutation.
-11. No navigation item or button may point to an unimplemented action.
-12. No merge occurs before review completion, defect correction, corrective re-review, exact-head QA, staging acceptance, and Founder acceptance.
+1. No duplicate publication, Composer, Newsroom, review, schedule, source, media, comment, correction, retraction, or analytics backend.
+2. No provider self-acceptance for staging or production.
+3. No production write action in Phase 23C.
+4. No client-supplied user, role, owner, authority, capability, status, or environment is trusted.
+5. Own scope requires a validated native owner match at the File 23 boundary.
+6. Unknown native states remain unknown.
+7. Inventory endpoints, forms, and buttons remain read-only.
+8. No patient-identifying data in File 23 storage, logs, errors, caches, URLs, or exports.
+9. No material status column is removed from mobile access.
+10. No merge before review, correction, re-review, exact-head QA, staging, and Founder acceptance.
 
 ## Next Technical Step
 
-Run the complete workflow on the exact current PR head, inspect every failure, and correct all defects. After automated QA is green, conduct the mandatory independent source review and immediate corrective cycle before any staging or merge decision. All pull requests remain Draft and unmerged.
+Complete the exact-current-head PHP 8.0–8.3 workflow, inspect every job and artifact, correct any failure immediately, update Draft PR #3 with the final evidence, and keep PRs #1–#3 unmerged.
