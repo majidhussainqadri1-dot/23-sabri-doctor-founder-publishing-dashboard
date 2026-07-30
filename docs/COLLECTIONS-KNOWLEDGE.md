@@ -34,11 +34,27 @@ These tables are organizational indexes, not replacement content, reporting, wor
 
 ## Collections
 
-An own-scope collection belongs to the current approved user and requires `spdb_manage_own_content`. It cannot delegate contributors. An institution-scope collection is Founder-governed and requires `spdb_manage_campaigns`.
+An own-scope collection belongs to the current approved user and requires `spdb_manage_own_content` for management and `spdb_view_own_content` for reads. It cannot delegate contributors. An institution-scope collection is Founder-governed and requires current Founder identity plus `spdb_manage_campaigns`.
 
 A collection may group canonical references from News, Learning, Encyclopedia, Research, Video, Reels, PDF Library, Clinical Cases, Remedy Archive, Disease Archive, Profiles, and Search. Archiving a collection or item changes File 23 metadata only; it never deletes, edits, unpublishes, or reclassifies a native object.
 
-The current concrete repository implements verified collection reads and idempotent collection creation. Collection update, archive, item creation, reorder, update, and archive remain explicitly disabled until their separate review gates are complete.
+The concrete repository implements verified collection reads and idempotent collection creation. Collection update, archive, item creation, reorder, update, and archive remain explicitly disabled until their separate review gates are complete.
+
+## Collection-Item Read Boundary
+
+Collection items are never readable through the repository alone. The service must first resolve the parent collection through current approved-account, capability, scope, Founder, and owner authorization. If the parent is missing, foreign-owned, institution-restricted, or malformed, no item query is executed.
+
+Default item list and detail reads exclude archived items. Every projected item must contain only the allowlisted fields and must pass:
+
+- exact parent collection ID;
+- canonical item ID, provider key, object type, object ID, and relation type;
+- valid UTF-8 bounded native version;
+- strict non-negative position;
+- strict positive item version and actor ID;
+- canonical lifecycle timestamps with `created <= updated`;
+- empty archived timestamp for the default active-item view.
+
+Malformed, overflowing, foreign-parent, archived, or unknown-field item records fail closed.
 
 ## Campaigns
 
@@ -63,7 +79,24 @@ Own-scope links require current approved-account and own-content management auth
 
 A native-reference resolver must freshly confirm exact provider/type/ID, exact authorized scope, existence, visibility, current permission to reference, current owner, and native version. An optional destination may be returned for the current request only after exact-origin safety validation; it is not persisted.
 
-The concrete repository implements verified knowledge-link reads and idempotent knowledge-link persistence, but runtime creation remains unavailable until a reviewed native resolver is injected. Knowledge-link update and archive remain disabled.
+The concrete repository implements verified knowledge-link reads and idempotent knowledge-link persistence, but runtime creation remains unavailable until a reviewed native resolver is injected. A duplicate canonical relation submitted with another idempotency key returns a deterministic conflict. Knowledge-link update and archive remain disabled.
+
+## Read-Only REST Contract
+
+Phase 23F exposes exactly six explicit GET projections:
+
+1. `GET /wp-json/spdb/v1/collections`
+2. `GET /wp-json/spdb/v1/collections/{collection_id}`
+3. `GET /wp-json/spdb/v1/collections/{collection_id}/items`
+4. `GET /wp-json/spdb/v1/collections/{collection_id}/items/{item_id}`
+5. `GET /wp-json/spdb/v1/knowledge-links`
+6. `GET /wp-json/spdb/v1/knowledge-links/{link_id}`
+
+Every route requires a currently approved File 00 account and `spdb_view_own_content`. Institution queries additionally require current Founder identity and `spdb_manage_campaigns`. Detail routes reject unsupported query parameters; list routes accept only their declared filters and bounded pagination.
+
+List responses expose validated `X-WP-Total`, `X-WP-TotalPages`, and `X-SPDB-Has-More` headers. The global REST privacy layer applies private/no-store caching and non-sensitive error handling to the entire `/spdb/v1` namespace.
+
+No Phase 23F POST, PUT, PATCH, DELETE, generic action, create, update, reorder, or archive REST route exists in this slice.
 
 ## Runtime State
 
@@ -72,21 +105,27 @@ The corrected runtime now includes:
 - `SPDB_Native_Reference_Resolver` contract;
 - `SPDB_Collections_Service`;
 - `SPDB_WP_Collections_Repository`;
-- separate read, collection-write, and knowledge-write readiness;
+- `SPDB_Collections_REST_Controller`;
+- separate read, collection-write, knowledge-write, and any-write readiness;
 - verified tables, columns, and indexes;
+- request-cached repository health with explicit refresh;
 - bounded read-query normalization;
 - approved-current-account read authority;
 - fail-closed institution scope;
-- repository-envelope and projected-row IDOR validation;
-- exact replay and same-key/different-payload conflict handling;
+- repository-envelope, lifecycle, strict projection, and IDOR validation;
+- exact replay, same-key/different-payload conflict, and duplicate-relation conflict handling;
 - contributor eligibility rechecks;
 - native owner, version, visibility, and permission validation;
+- overflow-resistant integer parsing and valid UTF-8 enforcement;
+- malformed optional timestamp preservation and rejection;
 - development/staging-only write configuration.
 
 The default plugin runtime injects the concrete repository for verified server-side reads but does not inject a native resolver. `SPDB_PHASE23F_WRITES_ENABLED` is false unless explicitly defined, and production is denied even when the constant is defined. No Phase 23F mutation REST route exists.
 
 ## Privacy and Failure Semantics
 
-Free-text metadata rejects markup, URLs, email addresses, Pakistani mobile numbers, CNIC-like identifiers, control characters, and excessive Unicode character length. Patient-identifying and clinical content remains with its protected native owner.
+Free-text metadata rejects invalid UTF-8, markup, URLs, email addresses, Pakistani mobile numbers, CNIC-like identifiers, control characters, and excessive Unicode character length. Patient-identifying and clinical content remains with its protected native owner.
 
-Missing or unhealthy schemas, repositories, resolvers, providers, permissions, native objects, malformed repository envelopes, cross-user records, and idempotency payload conflicts produce explicit unavailable, forbidden, not-found, or conflict states. File 23 must never fabricate native titles, counts, destinations, relationships, persistence success, or authorization.
+Numeric identifiers, versions, positions, totals, pages, and page sizes must be canonical decimal integers that round-trip exactly without overflow. Malformed optional database timestamps remain visibly invalid and are rejected rather than silently normalized to empty.
+
+Missing or unhealthy schemas, repositories, resolvers, providers, permissions, native objects, malformed repository envelopes, cross-user records, invalid lifecycle state, duplicate canonical relations, and idempotency payload conflicts produce explicit unavailable, forbidden, not-found, or conflict states. File 23 must never fabricate native titles, counts, destinations, relationships, persistence success, or authorization.
