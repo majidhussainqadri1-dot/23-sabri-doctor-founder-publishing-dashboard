@@ -125,5 +125,6 @@ require_once dirname( __DIR__ ) . '/includes/class-spdb-operation-broker.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-dashboard-router.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-workspace-resolver.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-saved-views.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-rest-privacy.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-system-state.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-overview-service.php';
