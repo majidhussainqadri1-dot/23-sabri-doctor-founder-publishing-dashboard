@@ -19,7 +19,7 @@ jobs:
         php: ['8.0', '8.1', '8.2', '8.3']
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -90,6 +90,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "DO NOT MERGE" docs/AUDIT-2026-07-30.md
-          grep -q "Founder review completed" STATUS.md
-          grep -q "No merge before completed review" DECISION-LOG.md
+          grep -qi "DO NOT MERGE" docs/AUDIT-2026-07-30.md
+          grep -qi "Founder review completed" STATUS.md
+          grep -qi "No merge before completed review" DECISION-LOG.md
