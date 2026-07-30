@@ -4,7 +4,7 @@ Tags: publishing, dashboard, editorial, doctors, founder, workflow
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 0.1.1
+Stable tag: 0.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,7 +14,16 @@ A private, role-aware, federated publishing operations dashboard for the Sabri S
 
 File 23 provides one operational dashboard for the Founder and verified doctors while preserving each native module as the source of truth.
 
-The 0.1.1 corrective Phase 23A build establishes governance, fail-closed File 00 authorization, Adapter Contract 2.0.0, independent adapter acceptance, guarded native operation routing, state projections, security boundaries, executable contract tests, and plugin bootstrap code.
+Version 0.2.0 implements the reviewed Phase 23A security contracts plus the Phase 23B private dashboard core:
+
+* protected `/publishing-dashboard/` route;
+* authenticated and capability-checked access;
+* Founder, trusted-doctor, doctor, and restricted read-only workspace resolution;
+* truthful overview cards and provider-readiness projections;
+* private no-store/noindex response headers;
+* graceful no-provider and dependency-failure states;
+* personal non-clinical saved views with bounded REST storage;
+* accessible responsive shell and system-status projection.
 
 No production publishing action is enabled in this phase. A provider cannot self-declare staging or production acceptance.
 
@@ -24,7 +33,9 @@ No production publishing action is enabled in this phase. A provider cannot self
 2. Confirm WordPress and PHP requirements.
 3. Confirm Sabri Membership Core 1.0.1 or a formally accepted compatible version is active.
 4. Activate the plugin.
-5. Confirm the plugin remains fail-closed until File 23 System Check and provider acceptance workflows are implemented and accepted.
+5. Assign `spdb_view_dashboard` through the approved File 00 capability integration.
+6. Open `/publishing-dashboard/` and verify the correct workspace and private headers.
+7. Do not enable or merge later phases until their separate review, correction, and acceptance gates are complete.
 
 == Frequently Asked Questions ==
 
@@ -40,7 +51,15 @@ No. Production write actions require File 23-controlled Production-Accepted stat
 
 No. An adapter declares technical capability only. Staging and production acceptance belong to File 23 governance after review and testing.
 
+= Can pending or suspended accounts enter the dashboard? =
+
+Only when File 00 explicitly grants the restricted dashboard capability. Their workspace remains read-only and does not expose publishing mutations.
+
 == Changelog ==
+
+= 0.2.0 =
+
+* Added the protected front-end dashboard route, role-aware workspace resolver, accessible responsive shell, truthful overview, provider readiness, non-sensitive system status, personal saved views, private cache/indexing controls, and executable dashboard-core tests.
 
 = 0.1.1 =
 
