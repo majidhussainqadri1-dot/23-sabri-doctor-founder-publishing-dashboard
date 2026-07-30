@@ -61,7 +61,7 @@ final class SPDB_System_State {
 			'degraded'            => $degraded,
 			'generated_at_gmt'    => gmdate( 'c' ),
 			'production_writes'   => false,
-			'phase'               => '23B',
+			'phase'               => '23C',
 		);
 	}
 }
