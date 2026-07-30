@@ -16,8 +16,12 @@ final class SPDB_Test_Native_Reference_Provider implements SPDB_Native_Reference
 			'health_code' => 'ready',
 			'health_exception' => false,
 			'resolve_exception' => false,
+			'resolve_error' => false,
 			'invalid_response' => false,
 			'mismatch_response' => false,
+			'scope_mismatch' => false,
+			'unsafe_destination' => false,
+			'extra_response' => false,
 		), $config );
 	}
 	public function get_provider_key(): string { return (string) $this->config['provider_key']; }
@@ -32,8 +36,9 @@ final class SPDB_Test_Native_Reference_Provider implements SPDB_Native_Reference
 	public function resolve_reference( string $object_type, string $object_id, array $context ) {
 		++$this->resolve_calls;
 		if ( $this->config['resolve_exception'] ) { throw new RuntimeException( 'Synthetic resolver exception.' ); }
+		if ( $this->config['resolve_error'] ) { return new WP_Error( 'provider_secret_error', 'Private provider path and patient detail must not escape.', array( 'secret' => 'hidden' ) ); }
 		if ( $this->config['invalid_response'] ) { return 'invalid'; }
-		return array(
+		$response = array(
 			'provider_key' => $this->config['mismatch_response'] ? 'provider_two' : (string) $this->config['provider_key'],
 			'object_type' => $object_type,
 			'object_id' => $object_id,
@@ -42,8 +47,10 @@ final class SPDB_Test_Native_Reference_Provider implements SPDB_Native_Reference
 			'reference_allowed' => true,
 			'owner_user_id' => (int) ( $context['user_id'] ?? 0 ),
 			'native_version' => 'v1',
-			'scope' => (string) ( $context['scope'] ?? 'own' ),
-			'destination' => '',
+			'scope' => $this->config['scope_mismatch'] ? 'institution' : (string) ( $context['scope'] ?? 'own' ),
+			'destination' => $this->config['unsafe_destination'] ? 'https://evil.example/private-token' : '',
 		);
+		if ( $this->config['extra_response'] ) { $response['patient_secret'] = 'must-not-project'; }
+		return $response;
 	}
 }
