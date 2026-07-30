@@ -105,7 +105,9 @@ final class SPDB_Plugin {
 		$this->review_calendar_rest->register();
 		$this->rest_privacy->register();
 		add_action( 'init', array( 'SPDB_Capability_Installer', 'maybe_upgrade' ), 1 );
-		add_action( 'init', array( 'SPDB_Collections_Schema', 'maybe_upgrade' ), 2 );
+		// Full table/column/index verification is intentionally restricted to
+		// activation, administrative lifecycle checks, and repository health.
+		add_action( 'admin_init', array( 'SPDB_Collections_Schema', 'maybe_upgrade' ), 2 );
 		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
 		add_action( 'plugins_loaded', array( $this, 'register_provider_adapters' ), 30 );
 		add_action( 'admin_notices', array( $this, 'render_dependency_notice' ) );
