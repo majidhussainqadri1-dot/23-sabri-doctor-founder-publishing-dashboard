@@ -51,55 +51,67 @@ defined( 'ABSPATH' ) || exit;
 							<h2 id="spdb-saved-views-title"><?php esc_html_e( 'Saved Views', 'sabri-publishing-dashboard' ); ?></h2>
 						</div>
 					</div>
-					<p><?php esc_html_e( 'Save non-clinical dashboard filters for later use. Saved views never grant publishing authority and never store patient information.', 'sabri-publishing-dashboard' ); ?></p>
+					<p><?php esc_html_e( 'Saved views contain only non-clinical dashboard filters. They never grant publishing authority and never store patient information.', 'sabri-publishing-dashboard' ); ?></p>
 
-					<form class="spdb-saved-view-form" data-spdb-saved-view-form>
-						<div class="spdb-form-grid">
-							<label>
-								<span><?php esc_html_e( 'View name', 'sabri-publishing-dashboard' ); ?></span>
-								<input type="text" name="label" maxlength="80" required autocomplete="off">
-							</label>
-							<label>
-								<span><?php esc_html_e( 'Status filter', 'sabri-publishing-dashboard' ); ?></span>
-								<select name="status">
-									<option value=""><?php esc_html_e( 'Any status', 'sabri-publishing-dashboard' ); ?></option>
-									<option value="draft"><?php esc_html_e( 'Draft', 'sabri-publishing-dashboard' ); ?></option>
-									<option value="submitted"><?php esc_html_e( 'Submitted', 'sabri-publishing-dashboard' ); ?></option>
-									<option value="changes_requested"><?php esc_html_e( 'Changes requested', 'sabri-publishing-dashboard' ); ?></option>
-									<option value="scheduled"><?php esc_html_e( 'Scheduled', 'sabri-publishing-dashboard' ); ?></option>
-									<option value="published"><?php esc_html_e( 'Published', 'sabri-publishing-dashboard' ); ?></option>
-								</select>
-							</label>
-							<label>
-								<span><?php esc_html_e( 'Provider key', 'sabri-publishing-dashboard' ); ?></span>
-								<input type="text" name="provider" maxlength="64" pattern="[a-z0-9_-]*" autocomplete="off">
-							</label>
-							<label>
-								<span><?php esc_html_e( 'Sort order', 'sabri-publishing-dashboard' ); ?></span>
-								<select name="sort">
-									<option value="modified"><?php esc_html_e( 'Last modified', 'sabri-publishing-dashboard' ); ?></option>
-									<option value="created"><?php esc_html_e( 'Created date', 'sabri-publishing-dashboard' ); ?></option>
-									<option value="title"><?php esc_html_e( 'Title', 'sabri-publishing-dashboard' ); ?></option>
-								</select>
-							</label>
+					<?php if ( $workspace['read_only'] ) : ?>
+						<div class="spdb-notice spdb-notice--warning" role="status">
+							<?php esc_html_e( 'Your current account status permits viewing existing saved views only. Creating or deleting saved views is disabled.', 'sabri-publishing-dashboard' ); ?>
 						</div>
-						<button type="submit" class="spdb-button"><?php esc_html_e( 'Save View', 'sabri-publishing-dashboard' ); ?></button>
-					</form>
+					<?php else : ?>
+						<form class="spdb-saved-view-form" data-spdb-saved-view-form>
+							<div class="spdb-form-grid">
+								<label>
+									<span><?php esc_html_e( 'View name', 'sabri-publishing-dashboard' ); ?></span>
+									<input type="text" name="label" maxlength="80" required autocomplete="off">
+								</label>
+								<label>
+									<span><?php esc_html_e( 'Status filter', 'sabri-publishing-dashboard' ); ?></span>
+									<select name="status">
+										<option value=""><?php esc_html_e( 'Any status', 'sabri-publishing-dashboard' ); ?></option>
+										<option value="draft"><?php esc_html_e( 'Draft', 'sabri-publishing-dashboard' ); ?></option>
+										<option value="submitted"><?php esc_html_e( 'Submitted', 'sabri-publishing-dashboard' ); ?></option>
+										<option value="changes_requested"><?php esc_html_e( 'Changes requested', 'sabri-publishing-dashboard' ); ?></option>
+										<option value="scheduled"><?php esc_html_e( 'Scheduled', 'sabri-publishing-dashboard' ); ?></option>
+										<option value="published"><?php esc_html_e( 'Published', 'sabri-publishing-dashboard' ); ?></option>
+									</select>
+								</label>
+								<label>
+									<span><?php esc_html_e( 'Provider key', 'sabri-publishing-dashboard' ); ?></span>
+									<input type="text" name="provider" maxlength="64" pattern="[a-z0-9_-]*" autocomplete="off">
+								</label>
+								<label>
+									<span><?php esc_html_e( 'Sort order', 'sabri-publishing-dashboard' ); ?></span>
+									<select name="sort">
+										<option value="modified"><?php esc_html_e( 'Last modified', 'sabri-publishing-dashboard' ); ?></option>
+										<option value="created"><?php esc_html_e( 'Created date', 'sabri-publishing-dashboard' ); ?></option>
+										<option value="title"><?php esc_html_e( 'Title', 'sabri-publishing-dashboard' ); ?></option>
+									</select>
+								</label>
+							</div>
+							<button type="submit" class="spdb-button"><?php esc_html_e( 'Save View', 'sabri-publishing-dashboard' ); ?></button>
+						</form>
+					<?php endif; ?>
 
 					<div class="spdb-live-region" role="status" aria-live="polite" data-spdb-status></div>
-					<ul class="spdb-saved-view-list" data-spdb-saved-view-list>
-						<?php foreach ( $saved_views as $saved_view ) : ?>
-							<li data-view-id="<?php echo esc_attr( $saved_view['id'] ); ?>">
-								<div>
-									<strong><?php echo esc_html( $saved_view['label'] ); ?></strong>
-									<small><?php echo esc_html( wp_json_encode( $saved_view['filters'] ) ); ?></small>
-								</div>
-								<button type="button" class="spdb-button spdb-button--secondary" data-spdb-delete-view="<?php echo esc_attr( $saved_view['id'] ); ?>">
-									<?php esc_html_e( 'Delete', 'sabri-publishing-dashboard' ); ?>
-								</button>
-							</li>
-						<?php endforeach; ?>
-					</ul>
+					<?php if ( empty( $saved_views ) ) : ?>
+						<p class="spdb-empty-state"><?php esc_html_e( 'No saved views are available.', 'sabri-publishing-dashboard' ); ?></p>
+					<?php else : ?>
+						<ul class="spdb-saved-view-list" data-spdb-saved-view-list>
+							<?php foreach ( $saved_views as $saved_view ) : ?>
+								<li data-view-id="<?php echo esc_attr( $saved_view['id'] ); ?>">
+									<div>
+										<strong><?php echo esc_html( $saved_view['label'] ); ?></strong>
+										<small><?php echo esc_html( wp_json_encode( $saved_view['filters'] ) ); ?></small>
+									</div>
+									<?php if ( ! $workspace['read_only'] ) : ?>
+										<button type="button" class="spdb-button spdb-button--secondary" data-spdb-delete-view="<?php echo esc_attr( $saved_view['id'] ); ?>">
+											<?php esc_html_e( 'Delete', 'sabri-publishing-dashboard' ); ?>
+										</button>
+									<?php endif; ?>
+								</li>
+							<?php endforeach; ?>
+						</ul>
+					<?php endif; ?>
 				</section>
 			<?php elseif ( 'system-status' === $current ) : ?>
 				<section aria-labelledby="spdb-system-status-title">
