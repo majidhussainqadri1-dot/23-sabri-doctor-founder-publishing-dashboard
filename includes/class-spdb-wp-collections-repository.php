@@ -27,11 +27,11 @@ final class SPDB_WP_Collections_Repository implements SPDB_Collections_Repositor
 		$database = $this->database_available();
 		$schema   = $database ? SPDB_Collections_Schema::verify() : new WP_Error( 'spdb_collections_database_unavailable' );
 		$this->health_cache = array(
-			'healthy'          => $database && true === $schema,
-			'database_ready'   => $database,
-			'schema_ready'     => true === $schema,
-			'schema_version'   => SPDB_Collections_Schema::VERSION,
-			'code'             => true === $schema ? 'ready' : ( is_wp_error( $schema ) ? $schema->get_error_code() : 'schema_unavailable' ),
+			'healthy'            => $database && true === $schema,
+			'database_ready'     => $database,
+			'schema_ready'       => true === $schema,
+			'schema_version'     => SPDB_Collections_Schema::VERSION,
+			'code'               => true === $schema ? 'ready' : ( is_wp_error( $schema ) ? $schema->get_error_code() : 'schema_unavailable' ),
 			'cached_for_request' => true,
 		);
 		return $this->health_cache;
@@ -355,17 +355,35 @@ final class SPDB_WP_Collections_Repository implements SPDB_Collections_Repositor
 	private function json( $value ) { $json = wp_json_encode( $value ); return is_string( $json ) ? $json : $this->error( 'spdb_repository_json_encode_failed', 'Metadata JSON could not be encoded.', 500 ); }
 	private function decode_list( $value ) { if ( ! is_string( $value ) ) { return $this->error( 'spdb_repository_json_invalid', 'Stored metadata JSON is invalid.', 500 ); } $decoded = json_decode( $value, true ); return is_array( $decoded ) && $this->is_list( $decoded ) ? $decoded : $this->error( 'spdb_repository_json_invalid', 'Stored metadata JSON is invalid.', 500 ); }
 	private function mysql_time( string $value ) { return '' === $value ? null : str_replace( array( 'T', 'Z' ), array( ' ', '' ), $value ); }
-	private function rfc3339( $value ): string { if ( null === $value || '' === $value || '0000-00-00 00:00:00' === $value ) { return ''; } return is_string( $value ) && 1 === preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value ) ? str_replace( ' ', 'T', $value ) . 'Z' : ( is_scalar( $value ) ? (string) $value : '' ); }
+	private function rfc3339( $value ): string {
+		if ( null === $value || '' === $value || '0000-00-00 00:00:00' === $value ) { return ''; }
+		if ( ! is_string( $value ) ) { return '__invalid_timestamp__'; }
+		return 1 === preg_match( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value ) ? str_replace( ' ', 'T', $value ) . 'Z' : $value;
+	}
 	private function bounded_int( $raw, int $minimum, int $maximum ): ?int { $value = $this->strict_positive_integer( $raw ); return null !== $value && $value >= $minimum && $value <= $maximum ? $value : null; }
-	private function strict_positive_integer( $raw ): ?int { if ( is_int( $raw ) ) { return $raw > 0 ? $raw : null; } if ( is_string( $raw ) && 1 === preg_match( '/^[1-9]\d*$/', $raw ) ) { $value = (int) $raw; return $value > 0 ? $value : null; } return null; }
-	private function strict_nonnegative_integer( $raw ): ?int { if ( is_int( $raw ) ) { return $raw >= 0 ? $raw : null; } if ( is_string( $raw ) && 1 === preg_match( '/^(?:0|[1-9]\d*)$/', $raw ) ) { return (int) $raw; } return null; }
+	private function strict_positive_integer( $raw ): ?int {
+		if ( is_int( $raw ) ) { return $raw > 0 ? $raw : null; }
+		if ( is_string( $raw ) && 1 === preg_match( '/^[1-9]\d*$/', $raw ) ) {
+			$value = (int) $raw;
+			return $value > 0 && (string) $value === $raw ? $value : null;
+		}
+		return null;
+	}
+	private function strict_nonnegative_integer( $raw ): ?int {
+		if ( is_int( $raw ) ) { return $raw >= 0 ? $raw : null; }
+		if ( is_string( $raw ) && 1 === preg_match( '/^(?:0|[1-9]\d*)$/', $raw ) ) {
+			$value = (int) $raw;
+			return (string) $value === $raw ? $value : null;
+		}
+		return null;
+	}
 	private function plain_text( $raw, int $maximum, bool $allow_empty ) { if ( ! is_string( $raw ) ) { return $this->error( 'spdb_repository_text_invalid', 'Metadata text has an invalid shape.' ); } $value = trim( $raw ); if ( ( ! $allow_empty && '' === $value ) || $this->text_length( $value ) > $maximum || wp_strip_all_tags( $value ) !== $value || preg_match( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $value ) || preg_match( '/(?:https?:\/\/|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|\b(?:\+?92|0)?3\d{9}\b|\b\d{5}-\d{7}-\d\b)/iu', $value ) ) { return $this->error( 'spdb_repository_text_invalid', 'Metadata text is invalid or sensitive.' ); } return $value; }
 	private function positive_list( $raw, int $maximum ) { if ( ! is_array( $raw ) || ! $this->is_list( $raw ) || count( $raw ) > $maximum ) { return $this->error( 'spdb_repository_list_invalid', 'A metadata integer list is invalid.' ); } $result = array(); foreach ( $raw as $item ) { $value = $this->strict_positive_integer( $item ); if ( null === $value || in_array( $value, $result, true ) ) { return $this->error( 'spdb_repository_list_invalid', 'A metadata integer list is invalid.' ); } $result[] = $value; } return $result; }
 	private function enum_list( $raw, array $allowed, int $maximum ) { if ( ! is_array( $raw ) || ! $this->is_list( $raw ) || count( $raw ) > $maximum ) { return $this->error( 'spdb_repository_list_invalid', 'A metadata enumeration list is invalid.' ); } $result = array(); foreach ( $raw as $item ) { if ( ! is_string( $item ) || ! in_array( $item, $allowed, true ) || in_array( $item, $result, true ) ) { return $this->error( 'spdb_repository_list_invalid', 'A metadata enumeration list is invalid.' ); } $result[] = $item; } return $result; }
 	private function timestamp( $raw, bool $allow_empty ) { if ( ! is_string( $raw ) ) { return $this->error( 'spdb_repository_timestamp_invalid', 'A metadata timestamp has an invalid shape.' ); } $value = trim( $raw ); if ( '' === $value ) { return $allow_empty ? '' : $this->error( 'spdb_repository_timestamp_invalid', 'A metadata timestamp is required.' ); } if ( 1 !== preg_match( '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $value ) ) { return $this->error( 'spdb_repository_timestamp_invalid', 'A metadata timestamp is invalid.' ); } try { $date = new DateTimeImmutable( $value ); } catch ( Throwable $throwable ) { return $this->error( 'spdb_repository_timestamp_invalid', 'A metadata timestamp is invalid.' ); } return $date->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d\TH:i:s\Z' ) === $value ? $value : $this->error( 'spdb_repository_timestamp_invalid', 'A metadata timestamp is not canonical UTC.' ); }
 	private function native_version( $raw ) { if ( ! is_string( $raw ) ) { return $this->error( 'spdb_repository_native_version_invalid', 'A native version is invalid.' ); } $value = trim( $raw ); return '' !== $value && $this->text_length( $value ) <= 191 && ! preg_match( '/[\x00-\x1F\x7F]/u', $value ) ? $value : $this->error( 'spdb_repository_native_version_invalid', 'A native version is invalid.' ); }
 	private function is_list( array $value ): bool { $expected = 0; foreach ( $value as $key => $unused ) { if ( $key !== $expected ) { return false; } ++$expected; } return true; }
-	private function text_length( string $value ): int { if ( function_exists( 'mb_strlen' ) ) { return mb_strlen( $value, 'UTF-8' ); } $count = preg_match_all( '/./us', $value, $matches ); return false === $count ? strlen( $value ) : $count; }
+	private function text_length( string $value ): int { if ( 1 !== preg_match( '//u', $value ) ) { return PHP_INT_MAX; } if ( function_exists( 'mb_strlen' ) ) { return mb_strlen( $value, 'UTF-8' ); } $count = preg_match_all( '/./us', $value, $matches ); return false === $count ? PHP_INT_MAX : $count; }
 	private function array_output() { return defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'; }
 	private function not_implemented( string $operation ): WP_Error { return $this->error( 'spdb_repository_operation_not_implemented', sprintf( 'The %s operation remains disabled pending its separate review gate.', $operation ), 503 ); }
 	private function database_error( string $code, string $message ): WP_Error { return $this->error( $code, $message, 500 ); }
