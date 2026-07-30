@@ -13,6 +13,8 @@ final class SPDB_Dashboard_Page {
 	private SPDB_System_State $system_state;
 	private SPDB_Saved_Views $saved_views;
 	private bool $assets_localized = false;
+	private bool $shortcode_page_protected = false;
+	private int $render_count = 0;
 
 	public function __construct(
 		SPDB_Workspace_Resolver $workspace_resolver,
@@ -34,8 +36,8 @@ final class SPDB_Dashboard_Page {
 
 	/**
 	 * A shortcode fallback must inherit the same private cache and indexing
-	 * policy as the virtual route. Assets must also be enqueued before wp_head;
-	 * enqueueing only while the shortcode renders is too late for styles.
+	 * policy as the virtual route. Only a directly detectable singular-page
+	 * shortcode is accepted; indirect widget/template execution fails closed.
 	 */
 	public function protect_shortcode_page(): void {
 		if ( ! is_singular() ) {
@@ -47,6 +49,8 @@ final class SPDB_Dashboard_Page {
 			return;
 		}
 
+		$this->shortcode_page_protected = true;
+		SPDB_Dashboard_Router::mark_private_request();
 		SPDB_Dashboard_Router::emit_private_headers();
 
 		$user_id = get_current_user_id();
@@ -123,6 +127,10 @@ final class SPDB_Dashboard_Page {
 	}
 
 	public function shortcode(): string {
+		if ( ! SPDB_Dashboard_Router::is_dashboard_request() && ! $this->shortcode_page_protected ) {
+			return '<div class="spdb-notice spdb-notice--critical" role="alert">' . esc_html__( 'The publishing dashboard shortcode may only be used directly on a protected singular page.', 'sabri-publishing-dashboard' ) . '</div>';
+		}
+
 		if ( ! is_user_logged_in() ) {
 			return '<div class="spdb-notice spdb-notice--warning" role="status">' . esc_html__( 'Sign in to access the publishing dashboard.', 'sabri-publishing-dashboard' ) . '</div>';
 		}
@@ -151,6 +159,7 @@ final class SPDB_Dashboard_Page {
 		$overview     = $this->overview_service->build( $workspace );
 		$system_state = $this->system_state->snapshot( $workspace );
 		$saved_views  = $this->saved_views->get_for_user( get_current_user_id() );
+		$instance_id  = 'spdb-' . (string) ++$this->render_count;
 
 		ob_start();
 		include SPDB_PLUGIN_DIR . 'templates/dashboard.php';
