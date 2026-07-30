@@ -12,7 +12,7 @@
 - Staging readiness: not ready
 - Merge readiness: blocked
 
-## Reviews and Corrections
+## Reviews, Corrections, and Source QA
 
 - [x] Initial Phase 23F foundation independently reviewed
 - [x] Initial eighteen defects recorded and corrected
@@ -20,13 +20,19 @@
 - [x] Phase 23F runtime and persistence slice independently reviewed again
 - [x] Second eighteen defects recorded in `docs/AUDIT-PHASE-23F-RUNTIME-SECOND-REVIEW-2026-07-30.md`
 - [x] Second corrective source changes implemented
-- [ ] Second corrective exact-head PHP 8.0–8.3 QA pending
-- [ ] Second corrective source re-review evidence pending
+- [x] Corrective re-review found and corrected strict-projection and frontend schema-verification overhead defects
+- [x] Unknown projection fields and malformed numeric projections covered by executable tests
+- [x] Corrective source re-review completed
+- [x] Exact-head PHP 8.0, 8.1, 8.2, and 8.3 QA completed successfully
+- [x] Phase 23A–23E regression suites completed successfully
+- [x] Phase 23F policy, runtime, repository, schema, replay, payload-conflict, and architecture gates completed successfully
+- [x] Exact-head source checksums and PHP-matrix QA artifacts retained
 
 ## Corrected Foundation and Runtime
 
 - [x] Exactly three File 23-owned metadata tables
 - [x] Schema Version 3 verifies required tables, columns, and indexes
+- [x] Schema verification restricted to activation, administrative lifecycle, and repository-health paths rather than every public request
 - [x] No persisted native destination, content body, result, report, clinical data, media, or raw analytics
 - [x] Persisted observed native versions for collection items and knowledge links
 - [x] Persisted bounded created/last audit reasons
@@ -35,6 +41,8 @@
 - [x] Approved-account, capability, scope, Founder, and object-level visibility gates
 - [x] Unauthorized institution reads fail closed and are never rewritten to own scope
 - [x] Record-type-specific status validation
+- [x] Strict output-field allowlists and reconstructed safe projections
+- [x] Strict positive identifiers and versions; validated text, lists, enums, timestamps, and campaign semantics
 - [x] Unicode-aware bounded text and sensitive-data rejection
 - [x] Fail-closed native reference existence, visibility, permission, owner, version, and destination validation
 - [x] Read readiness separated from collection-write and knowledge-write readiness
@@ -45,7 +53,6 @@
 - [x] No Phase 23F mutation REST route
 - [x] Production writes disabled
 - [x] Update, reorder, and archive repository operations explicitly disabled
-- [x] Corrective policy, runtime, schema, replay, and repository tests added to CI
 
 ## Still Not Implemented or Accepted
 
