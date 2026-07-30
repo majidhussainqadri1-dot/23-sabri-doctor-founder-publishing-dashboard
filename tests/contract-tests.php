@@ -69,18 +69,34 @@ spdb_test_assert( $production_registry->is_environment_write_eligible( 'provider
 $GLOBALS['spdb_test_environment'] = 'staging';
 spdb_test_assert( $staging_registry->is_environment_write_eligible( 'provider_one' ), 'Staging acceptance must authorize the staging environment gate.' );
 
+spdb_test_assert( SPDB_Membership_Guard::supports_version( '1.0.1' ), 'Membership Core 1.0.1 must satisfy the File 23 contract.' );
+spdb_test_assert( SPDB_Membership_Guard::supports_version( '1.9.9' ), 'Compatible Membership Core 1.x versions must satisfy the contract.' );
+spdb_test_assert( ! SPDB_Membership_Guard::supports_version( '1.0.0' ), 'Membership Core versions below 1.0.1 must be rejected.' );
+spdb_test_assert( ! SPDB_Membership_Guard::supports_version( '2.0.0' ), 'Unreviewed Membership Core major versions must be rejected.' );
+spdb_test_assert( ! SPDB_Membership_Guard::supports_version( 'invalid' ), 'Malformed Membership Core versions must be rejected.' );
 spdb_test_assert( ! SPDB_Membership_Guard::is_available(), 'Membership guard must detect a missing File 00 contract.' );
+
 $GLOBALS['spdb_test_capabilities']['spdb_manage_own_content'] = true;
+$GLOBALS['spdb_test_capabilities']['spdb_view_dashboard']     = true;
+$GLOBALS['spdb_test_capabilities']['spdb_view_own_content']   = true;
 spdb_test_assert( ! SPDB_Capabilities::current_user_can( 'spdb_manage_own_content' ), 'Capabilities must fail closed while File 00 is unavailable.' );
+spdb_test_assert( ! SPDB_Capabilities::current_user_can( 'spdb_view_dashboard' ), 'Restricted views must fail closed while File 00 is unavailable.' );
 
 define( 'SMC_VERSION', '1.0.1' );
 eval( 'function smc_user_status( $user_id ) { return (string) $GLOBALS["spdb_test_member_status"]; }' );
 eval( 'function smc_is_founder( $user_id ) { return false; }' );
 eval( 'function smc_is_trusted_publisher( $user_id ) { return false; }' );
 
-spdb_test_assert( SPDB_Membership_Guard::is_available(), 'Membership guard must recognize the canonical File 00 functions.' );
+spdb_test_assert( SPDB_Membership_Guard::is_available(), 'Membership guard must recognize the canonical compatible File 00 functions.' );
+
+$GLOBALS['spdb_test_member_status'] = 'submitted';
+spdb_test_assert( SPDB_Capabilities::current_user_can( 'spdb_view_dashboard' ), 'A pending account with the explicit view capability must receive the restricted dashboard.' );
+spdb_test_assert( SPDB_Capabilities::current_user_can( 'spdb_view_own_content' ), 'A pending account may receive explicitly assigned owned-content read-only access.' );
+spdb_test_assert( ! SPDB_Capabilities::current_user_can( 'spdb_manage_own_content' ), 'A pending account must not receive content mutation authority.' );
+
 $GLOBALS['spdb_test_member_status'] = 'suspended';
-spdb_test_assert( ! SPDB_Capabilities::current_user_can( 'spdb_manage_own_content' ), 'Suspended accounts must be denied even when a WordPress capability exists.' );
+spdb_test_assert( SPDB_Capabilities::current_user_can( 'spdb_view_dashboard' ), 'A suspended account with explicit view capability must retain the restricted status/appeal workspace.' );
+spdb_test_assert( ! SPDB_Capabilities::current_user_can( 'spdb_manage_own_content' ), 'A suspended account must be denied mutation authority.' );
 
 $GLOBALS['spdb_test_member_status'] = 'approved';
 spdb_test_assert( SPDB_Capabilities::current_user_can( 'spdb_manage_own_content' ), 'Approved accounts with the capability may pass the File 23 capability gate.' );
@@ -112,6 +128,18 @@ $reserved_field = $broker->execute(
 	)
 );
 spdb_test_assert( 'spdb_reserved_payload_field' === spdb_test_error_code( $reserved_field ), 'Client-supplied authority fields must be rejected.' );
+
+$invalid_object = $broker->execute(
+	'provider_one',
+	'submit_item',
+	'publication',
+	"42\n",
+	array(
+		'object_version'  => 'v1',
+		'idempotency_key' => '1234567890abcdef',
+	)
+);
+spdb_test_assert( 'spdb_invalid_object_reference' === spdb_test_error_code( $invalid_object ), 'Control characters in native object references must be rejected.' );
 
 $success = $broker->execute(
 	'provider_one',
