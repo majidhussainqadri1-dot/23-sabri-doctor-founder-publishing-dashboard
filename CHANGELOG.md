@@ -4,7 +4,37 @@ All notable changes to File 23 are documented here.
 
 ## [Unreleased]
 
-Phase 23E remains Draft, unmerged, not staging-accepted, and not production-ready.
+Phase 23F remains Draft, unmerged, not staging-accepted, and not production-ready.
+
+## [0.6.1] — Phase 23F Runtime and Repository Second Corrective Review
+
+### Fixed
+
+- Required an approved current File 00 account for collection and knowledge metadata reads.
+- Rejected unauthorized institution scope instead of silently rewriting it to own scope.
+- Bound status filters to their selected collection or campaign record type.
+- Validated repository envelopes and every projected row before returning metadata.
+- Separated read readiness, collection-write readiness, and knowledge-write readiness.
+- Required verified repository and Schema Version 3 health before any enabled staging write.
+- Re-verified required tables, columns, and indexes on every schema lifecycle check.
+- Added request fingerprints to distinguish exact idempotent replay from same-key/different-payload conflict.
+- Added bounded created and last audit-reason persistence.
+- Added observed native-version persistence without native destination persistence.
+- Rejected malformed native owner IDs, versions, contexts, and cross-user repository records.
+- Kept update, reorder, archive, mutation REST, and production writes explicitly fail-closed.
+
+### Added
+
+- Concrete `SPDB_WP_Collections_Repository` for verified reads and idempotent creates.
+- Schema Version 3 migration and verification requirements.
+- Corrective Phase 23F runtime-authority tests.
+- Corrective Phase 23F concrete-repository, replay, payload-conflict, and missing-index tests.
+- `docs/AUDIT-PHASE-23F-RUNTIME-SECOND-REVIEW-2026-07-30.md`.
+
+## [0.6.0] — Phase 23F Foundation Corrective Review
+
+- Corrected eighteen initial Phase 23F foundation defects.
+- Added bounded metadata schema, policy, native-reference contract, and fail-closed runtime foundation.
 
 ## [0.5.1] — Phase 23E Corrective Review
 
