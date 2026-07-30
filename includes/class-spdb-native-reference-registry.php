@@ -91,8 +91,9 @@ final class SPDB_Native_Reference_Registry implements SPDB_Native_Reference_Reso
 		$providers = array();
 		$ready_count = 0;
 		foreach ( $this->metadata as $provider_key => $metadata ) {
-			$health = $this->provider_health( $provider_key );
-			$ready = $this->provider_is_ready( $provider_key, $health );
+			$contract_current = $this->provider_contract_is_current( $provider_key );
+			$health = $contract_current ? $this->provider_health( $provider_key ) : array( 'healthy' => false, 'code' => 'contract_drift' );
+			$ready = $this->provider_is_ready( $provider_key, $health, $contract_current );
 			if ( $ready ) { ++$ready_count; }
 			$providers[] = array(
 				'provider_key'             => $provider_key,
@@ -144,8 +145,8 @@ final class SPDB_Native_Reference_Registry implements SPDB_Native_Reference_Reso
 		if ( ! in_array( $object_type, $metadata['object_types'], true ) ) {
 			return $this->error( 'spdb_native_resolver_object_type_unsupported', 'The native resolver does not support this object type.' );
 		}
-		if ( ! $this->provider_is_ready( $provider_key ) ) {
-			return $this->unavailable( 'spdb_native_resolver_provider_not_ready', 'The native resolver is not accepted and healthy for this environment.' );
+		if ( ! $this->provider_is_ready( $provider_key ) || ! $this->provider_contract_is_current( $provider_key ) ) {
+			return $this->unavailable( 'spdb_native_resolver_provider_not_ready', 'The native resolver is not accepted, healthy, and contract-current for this environment.' );
 		}
 
 		try {
@@ -182,16 +183,16 @@ final class SPDB_Native_Reference_Registry implements SPDB_Native_Reference_Reso
 			$destination = $normalized;
 		}
 		return array(
-			'provider_key'      => $provider_key,
-			'object_type'       => $object_type,
-			'object_id'         => $object_id,
-			'exists'           => $result['exists'],
-			'visible'          => $result['visible'],
-			'reference_allowed'=> $result['reference_allowed'],
-			'owner_user_id'    => $owner,
-			'native_version'   => $native_version,
-			'scope'            => $scope,
-			'destination'      => $destination,
+			'provider_key'       => $provider_key,
+			'object_type'        => $object_type,
+			'object_id'          => $object_id,
+			'exists'             => $result['exists'],
+			'visible'            => $result['visible'],
+			'reference_allowed'  => $result['reference_allowed'],
+			'owner_user_id'      => $owner,
+			'native_version'     => $native_version,
+			'scope'              => $scope,
+			'destination'        => $destination,
 		);
 	}
 
@@ -200,11 +201,27 @@ final class SPDB_Native_Reference_Registry implements SPDB_Native_Reference_Reso
 		return array( self::ACCEPTANCE_UNREVIEWED, self::ACCEPTANCE_STAGING_ACCEPTED, self::ACCEPTANCE_PRODUCTION_ACCEPTED, self::ACCEPTANCE_REVOKED );
 	}
 
-	private function provider_is_ready( string $provider_key, ?array $health = null ): bool {
-		if ( ! $this->acceptance_is_ready( $provider_key ) || ! $this->adapter_acceptance_is_ready( $provider_key ) ) { return false; }
+	private function provider_is_ready( string $provider_key, ?array $health = null, ?bool $contract_current = null ): bool {
+		$contract_current = null === $contract_current ? $this->provider_contract_is_current( $provider_key ) : $contract_current;
+		if ( ! $contract_current || ! $this->acceptance_is_ready( $provider_key ) || ! $this->adapter_acceptance_is_ready( $provider_key ) ) { return false; }
 		if ( ! in_array( $this->technical_state( $provider_key ), array( SPDB_Adapter_Registry::CAPABILITY_READ_ONLY, SPDB_Adapter_Registry::CAPABILITY_WRITE_CAPABLE, SPDB_Adapter_Registry::CAPABILITY_REVIEW_CAPABLE ), true ) ) { return false; }
 		$health = null === $health ? $this->provider_health( $provider_key ) : $health;
-		return true === $health['healthy'];
+		return true === $health['healthy'] && $this->provider_contract_is_current( $provider_key );
+	}
+
+	private function provider_contract_is_current( string $provider_key ): bool {
+		if ( ! isset( $this->providers[ $provider_key ], $this->metadata[ $provider_key ] ) ) { return false; }
+		$metadata = $this->metadata[ $provider_key ];
+		try {
+			$object_types = $this->providers[ $provider_key ]->get_object_types();
+			return is_array( $object_types )
+				&& $provider_key === $this->providers[ $provider_key ]->get_provider_key()
+				&& $metadata['provider_version'] === $this->providers[ $provider_key ]->get_provider_version()
+				&& $metadata['resolver_version'] === $this->providers[ $provider_key ]->get_resolver_version()
+				&& $metadata['object_types'] === array_values( $object_types );
+		} catch ( Throwable $throwable ) {
+			return false;
+		}
 	}
 
 	private function acceptance_is_ready( string $provider_key ): bool { return $this->state_is_ready( $this->acceptance_state( $provider_key ) ); }
