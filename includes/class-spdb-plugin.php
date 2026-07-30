@@ -1,10 +1,5 @@
 <?php
-/**
- * Main File 23 plugin service container.
- *
- * @package Sabri_Publishing_Dashboard
- */
-
+/** Main File 23 plugin service container. */
 defined( 'ABSPATH' ) || exit;
 
 require_once SPDB_PLUGIN_DIR . 'includes/interface-spdb-provider-adapter.php';
@@ -30,6 +25,7 @@ require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-review-calendar-service.php'
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-review-calendar-rest-controller.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-collections-schema.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-collections-policy.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-wp-collections-repository.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-collections-service.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-dashboard-router.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-workspace-resolver.php';
@@ -41,7 +37,6 @@ require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-dashboard-page.php';
 
 final class SPDB_Plugin {
 	private static ?SPDB_Plugin $instance = null;
-
 	private SPDB_Adapter_Registry $adapter_registry;
 	private SPDB_Operation_Broker $operation_broker;
 	private SPDB_Federated_Inventory $inventory;
@@ -50,6 +45,7 @@ final class SPDB_Plugin {
 	private SPDB_Role_Workspace_Service $role_workspace_service;
 	private SPDB_Review_Calendar_Service $review_calendar_service;
 	private SPDB_Review_Calendar_REST_Controller $review_calendar_rest;
+	private SPDB_WP_Collections_Repository $collections_repository;
 	private SPDB_Collections_Service $collections_service;
 	private SPDB_Saved_Views $saved_views;
 	private SPDB_REST_Privacy $rest_privacy;
@@ -60,23 +56,23 @@ final class SPDB_Plugin {
 	private bool $booted = false;
 
 	private function __construct() {
-		// Acceptance remains File 23-controlled and is never provider self-declared.
-		// Phase 23F persistence and native-resolution implementations are injected
-		// only after separate review; the default runtime is read-only and fail-closed.
-		$this->adapter_registry        = new SPDB_Adapter_Registry();
-		$this->operation_broker        = new SPDB_Operation_Broker( $this->adapter_registry );
-		$this->inventory               = new SPDB_Federated_Inventory( $this->adapter_registry );
-		$this->inventory_rest          = new SPDB_Inventory_REST_Controller( $this->inventory );
-		$this->workspace_resolver      = new SPDB_Workspace_Resolver();
-		$this->role_workspace_service  = new SPDB_Role_Workspace_Service( $this->adapter_registry );
+		$this->adapter_registry = new SPDB_Adapter_Registry();
+		$this->operation_broker = new SPDB_Operation_Broker( $this->adapter_registry );
+		$this->inventory = new SPDB_Federated_Inventory( $this->adapter_registry );
+		$this->inventory_rest = new SPDB_Inventory_REST_Controller( $this->inventory );
+		$this->workspace_resolver = new SPDB_Workspace_Resolver();
+		$this->role_workspace_service = new SPDB_Role_Workspace_Service( $this->adapter_registry );
 		$this->review_calendar_service = new SPDB_Review_Calendar_Service( $this->adapter_registry );
-		$this->review_calendar_rest    = new SPDB_Review_Calendar_REST_Controller( $this->review_calendar_service, $this->operation_broker );
-		$this->collections_service     = new SPDB_Collections_Service();
-		$this->saved_views             = new SPDB_Saved_Views();
-		$this->rest_privacy            = new SPDB_REST_Privacy();
-		$this->system_state            = new SPDB_System_State( $this->adapter_registry, $this->collections_service );
-		$this->overview_service        = new SPDB_Overview_Service( $this->system_state );
-		$this->dashboard_page          = new SPDB_Dashboard_Page(
+		$this->review_calendar_rest = new SPDB_Review_Calendar_REST_Controller( $this->review_calendar_service, $this->operation_broker );
+		$this->collections_repository = new SPDB_WP_Collections_Repository();
+		// Reads use the verified File 23 repository. Knowledge writes still fail
+		// closed because no reviewed native-reference resolver is injected.
+		$this->collections_service = new SPDB_Collections_Service( $this->collections_repository );
+		$this->saved_views = new SPDB_Saved_Views();
+		$this->rest_privacy = new SPDB_REST_Privacy();
+		$this->system_state = new SPDB_System_State( $this->adapter_registry, $this->collections_service );
+		$this->overview_service = new SPDB_Overview_Service( $this->system_state );
+		$this->dashboard_page = new SPDB_Dashboard_Page(
 			$this->workspace_resolver,
 			$this->overview_service,
 			$this->system_state,
@@ -89,35 +85,18 @@ final class SPDB_Plugin {
 		$this->dashboard_router = new SPDB_Dashboard_Router( array( $this->dashboard_page, 'render' ) );
 	}
 
-	public static function instance(): SPDB_Plugin {
-		if ( null === self::$instance ) {
-			self::$instance = new self();
-		}
-		return self::$instance;
-	}
-
-	/** Activation installs only File 23-owned metadata and capabilities. */
+	public static function instance(): SPDB_Plugin { if ( null === self::$instance ) { self::$instance = new self(); } return self::$instance; }
 	public static function activate(): void {
 		SPDB_Capability_Installer::ensure();
 		$schema = SPDB_Collections_Schema::install();
 		if ( is_wp_error( $schema ) ) {
-			wp_die(
-				esc_html( $schema->get_error_message() ),
-				esc_html__( 'Sabri Publishing Dashboard activation failed', 'sabri-publishing-dashboard' ),
-				array( 'response' => 500 )
-			);
+			wp_die( esc_html( $schema->get_error_message() ), esc_html__( 'Sabri Publishing Dashboard activation failed', 'sabri-publishing-dashboard' ), array( 'response' => 500 ) );
 		}
 		SPDB_Dashboard_Router::activate();
 	}
-
-	public static function deactivate(): void {
-		SPDB_Dashboard_Router::deactivate();
-	}
-
+	public static function deactivate(): void { SPDB_Dashboard_Router::deactivate(); }
 	public function boot(): void {
-		if ( $this->booted ) {
-			return;
-		}
+		if ( $this->booted ) { return; }
 		$this->booted = true;
 		$this->dashboard_router->register();
 		$this->dashboard_page->register();
@@ -132,26 +111,12 @@ final class SPDB_Plugin {
 		add_action( 'admin_notices', array( $this, 'render_dependency_notice' ) );
 		add_filter( 'spdb/capabilities', array( $this, 'filter_capabilities' ) );
 	}
-
-	public function load_textdomain(): void {
-		load_plugin_textdomain( 'sabri-publishing-dashboard', false, dirname( plugin_basename( SPDB_PLUGIN_FILE ) ) . '/languages' );
-	}
-
-	/** Invoke every provider registration callback behind its own failure boundary. */
-	public function register_provider_adapters(): void {
-		SPDB_Provider_Registration::dispatch( $this->adapter_registry );
-	}
-
-	/** Show a non-sensitive administrator warning when File 00 is unavailable. */
+	public function load_textdomain(): void { load_plugin_textdomain( 'sabri-publishing-dashboard', false, dirname( plugin_basename( SPDB_PLUGIN_FILE ) ) . '/languages' ); }
+	public function register_provider_adapters(): void { SPDB_Provider_Registration::dispatch( $this->adapter_registry ); }
 	public function render_dependency_notice(): void {
-		if ( SPDB_Membership_Guard::is_available() || ! current_user_can( 'activate_plugins' ) ) {
-			return;
-		}
-		echo '<div class="notice notice-error"><p>'
-			. esc_html__( 'Sabri Publishing Dashboard is in fail-closed mode because Sabri Membership Core is unavailable or incompatible. No privileged dashboard action is permitted.', 'sabri-publishing-dashboard' )
-			. '</p></div>';
+		if ( SPDB_Membership_Guard::is_available() || ! current_user_can( 'activate_plugins' ) ) { return; }
+		echo '<div class="notice notice-error"><p>' . esc_html__( 'Sabri Publishing Dashboard is in fail-closed mode because Sabri Membership Core is unavailable or incompatible. No privileged dashboard action is permitted.', 'sabri-publishing-dashboard' ) . '</p></div>';
 	}
-
 	public function registry(): SPDB_Adapter_Registry { return $this->adapter_registry; }
 	public function broker(): SPDB_Operation_Broker { return $this->operation_broker; }
 	public function inventory(): SPDB_Federated_Inventory { return $this->inventory; }
@@ -159,12 +124,6 @@ final class SPDB_Plugin {
 	public function review_calendar(): SPDB_Review_Calendar_Service { return $this->review_calendar_service; }
 	public function collections(): SPDB_Collections_Service { return $this->collections_service; }
 	public function router(): SPDB_Dashboard_Router { return $this->dashboard_router; }
-
-	/**
-	 * @param string[] $capabilities Existing capability list.
-	 * @return string[]
-	 */
-	public function filter_capabilities( array $capabilities ): array {
-		return array_values( array_unique( array_merge( $capabilities, SPDB_Capabilities::all() ) ) );
-	}
+	/** @param string[] $capabilities @return string[] */
+	public function filter_capabilities( array $capabilities ): array { return array_values( array_unique( array_merge( $capabilities, SPDB_Capabilities::all() ) ) ); }
 }
