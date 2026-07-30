@@ -9,6 +9,7 @@ File 23 is a private operational dashboard that can expose high-impact publishin
 - IDOR across doctors, authors, reviews, tasks, exports, or campaigns;
 - forged role, author, provider, status, capability, or environment values;
 - provider self-promotion to staging/production acceptance;
+- accidental mutation authority for pending, rejected, expired-document, or suspended accounts;
 - CSRF on publish, schedule, correction, retraction, bulk, export, or delegation actions;
 - stored/reflected XSS in titles, excerpts, notes, filters, source summaries, and adapter errors;
 - SQL injection in federated filters and File 23-owned queries;
@@ -26,8 +27,11 @@ File 23 is a private operational dashboard that can expose high-impact publishin
 ## Mandatory Controls
 
 - authenticated private routes;
+- compatible Membership Core `>= 1.0.1` and `< 2.0.0`, unless a later range is formally reviewed;
 - server-side canonical File 23 capability and ownership checks;
-- current Membership Core availability, approval, verification, and suspension checks;
+- current Membership Core status checks on every capability decision;
+- only `spdb_view_dashboard` and `spdb_view_own_content` may be used for policy-assigned restricted non-approved views;
+- every mutable/institution-wide capability requires an `approved` or `verified` account;
 - WordPress nonces for browser actions;
 - explicit operation definitions, schemas, and allowlists;
 - independent File 23-controlled staging/production acceptance;
@@ -48,6 +52,10 @@ File 23 is a private operational dashboard that can expose high-impact publishin
 - append-only, access-controlled, tamper-evident audit ledger;
 - native object re-read before confirmed success.
 
+## Restricted Account Boundary
+
+Pending, rejected, expired-document, appeal-review, and suspended accounts may retain an explicitly assigned status/appeal and owned-content read-only workspace. That state must not expose create, submit, edit, review, scheduling, interactions, analytics, export, delegation, repair, policy, or Safe Mode actions. UI visibility is not authorization; every route and API operation must repeat the server-side account-state and capability checks.
+
 ## Adapter Trust Boundary
 
 A native provider may declare only technical capability. It cannot self-declare `staging_accepted` or `production_accepted`. Acceptance belongs to File 23 governance after compatibility, security, integration, staging, and production review.
@@ -67,7 +75,7 @@ The File 23 operation broker is mandatory for dashboard mutations. Calling a pro
 - change publication policy;
 - repair or destructive cleanup.
 
-These operations require dedicated capabilities, current File 00 status, provider acceptance, current-state validation, object-version checks, confirmation, reason capture, idempotency, native authorization, rate limiting, and audit events.
+These operations require dedicated capabilities, approved/verified File 00 status, provider acceptance, current-state validation, object-version checks, confirmation, reason capture, idempotency, native authorization, rate limiting, and audit events.
 
 ## Patient and Clinical Safety
 
