@@ -11,13 +11,13 @@
 - Phase 23B PR #2: Draft, twice source-reviewed, unmerged
 - Phase 23C PR #3: Draft, source-reviewed, corrected, exact-head QA-green, unmerged
 - Phase 23D PR #4: Draft, source-reviewed, corrected, exact-head QA-green, unmerged
-- Phase 23E PR: not yet opened
+- Phase 23E PR #5: Draft, open, unmerged
 - Plugin version: `0.5.0`
 - Adapter contract: `2.0.0`
 - Production readiness: Not ready
 - Staging readiness: Not ready
 - Merge readiness: Blocked by Phase 23E independent review, defect correction, corrective re-review, exact-head QA, WordPress staging, real-account/privacy/accessibility/rollback testing, and Founder acceptance
-- Technical status: Initial Phase 23E implementation candidate completed; initial exact-head workflow and independent review remain pending
+- Technical status: Initial Phase 23E implementation candidate and Draft PR completed; initial exact-head workflow and independent review remain pending
 
 ## Implemented Phase 23E Candidate Scope
 
@@ -45,7 +45,7 @@
 
 - [x] Stacked branch created from the exact corrected Phase 23D head
 - [x] Initial implementation candidate completed
-- [ ] Draft stacked PR opened
+- [x] Draft stacked PR #5 opened
 - [ ] Independent source review completed
 - [ ] Every defect documented
 - [ ] Every defect corrected
@@ -91,4 +91,4 @@
 
 ## Next Technical Step
 
-Open Draft PR #5, run the complete PHP 8.0–8.3 exact-head workflow, inspect every job and artifact, correct any failure immediately, and then begin an independent Phase 23E source review. PRs #1–#5 must remain Draft and unmerged.
+Run the complete PHP 8.0–8.3 exact-head workflow for Draft PR #5, inspect every job and artifact, correct any failure immediately, and then begin an independent Phase 23E source review. PRs #1–#5 must remain Draft and unmerged.
