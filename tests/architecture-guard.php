@@ -4,7 +4,7 @@ $root = dirname( __DIR__ );
 $iterator = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $root, FilesystemIterator::SKIP_DOTS ) );
 $violations = array();
 $patterns = array(
-	'generic action endpoint' => '/POST\s+\/spdb\/v1\/action/i',
+	'generic action endpoint' => '/(?:POST\s+\/spdb\/v1\/action|register_rest_route\s*\([^;]*["\']\/action["\'])/i',
 	'native post-type ownership' => '/\bregister_post_type\s*\(/i',
 	'direct native post insertion' => '/\bwp_insert_post\s*\(/i',
 	'direct native post mutation' => '/\bwp_update_post\s*\(/i',
@@ -24,7 +24,7 @@ foreach ( $iterator as $file ) {
 	foreach ( $patterns as $label => $pattern ) { if ( preg_match( $pattern, $content ) ) { $violations[] = "{$relative}: {$label}"; } }
 	if ( 'includes' . DIRECTORY_SEPARATOR . 'class-spdb-operation-broker.php' !== $relative && preg_match( '/->\s*execute_operation\s*\(/i', $content ) ) { $violations[] = "{$relative}: provider mutation bypasses the operation broker"; }
 	$normalized = preg_replace( '/\s+/', ' ', $content ) ?? $content;
-	if ( preg_match( '/CREATE\s+TABLE[^;]*(publication|draft|review|schedule|comment|correction|retraction|source|media|notification|appointment|clinical|prescription|analytics_event|profile|knowledge)/i', $normalized ) ) { $violations[] = "{$relative}: forbidden native-domain table ownership"; }
+	if ( preg_match( '/CREATE\s+TABLE[^;]*(publication|draft|review|schedule|calendar|reviewer|comment|correction|retraction|source|media|notification|appointment|clinical|prescription|analytics_event|profile|knowledge)/i', $normalized ) ) { $violations[] = "{$relative}: forbidden native-domain table ownership"; }
 }
 $inventory_controller = $root . '/includes/class-spdb-inventory-rest-controller.php';
 if ( is_file( $inventory_controller ) ) {
@@ -53,17 +53,43 @@ if ( is_file( $workspace_service ) ) {
 		foreach ( array( 'derive_context', 'action_contract', 'is_environment_write_eligible', 'MAX_PROVIDERS', 'MAX_ACTIONS', 'gmdate' ) as $marker ) { if ( ! str_contains( $content, $marker ) ) { $violations[] = "includes/class-spdb-role-workspace-service.php: missing corrective gate {$marker}"; } }
 	}
 }
-$validator = $root . '/includes/class-spdb-workspace-projection-validator.php';
-if ( is_file( $validator ) ) {
-	$content = file_get_contents( $validator );
+$review_calendar_service = $root . '/includes/class-spdb-review-calendar-service.php';
+if ( is_file( $review_calendar_service ) ) {
+	$content = file_get_contents( $review_calendar_service );
+	if ( false === $content ) { $violations[] = 'Unable to read includes/class-spdb-review-calendar-service.php'; }
+	else {
+		foreach ( array( 'execute_operation', 'wp_insert_post', 'wp_update_post', 'wp_delete_post', 'update_post_meta', 'update_option' ) as $call ) { if ( preg_match( '/\b' . preg_quote( $call, '/' ) . '\s*\(/', $content ) ) { $violations[] = "includes/class-spdb-review-calendar-service.php: forbidden native mutation call {$call}"; } }
+		foreach ( array( 'SPDB_Review_Calendar_Provider_Adapter', 'get_allowed_operations', 'is_environment_write_eligible', 'MAX_PROVIDERS', 'MAX_ITEMS', 'separation_required' ) as $marker ) { if ( ! str_contains( $content, $marker ) ) { $violations[] = "includes/class-spdb-review-calendar-service.php: missing Phase 23E gate {$marker}"; } }
+	}
+}
+$review_calendar_controller = $root . '/includes/class-spdb-review-calendar-rest-controller.php';
+if ( is_file( $review_calendar_controller ) ) {
+	$content = file_get_contents( $review_calendar_controller );
+	if ( false === $content ) { $violations[] = 'Unable to read includes/class-spdb-review-calendar-rest-controller.php'; }
+	else {
+		foreach ( array( '/approve', '/request-changes', '/reject', '/assign-reviewer', '/schedule', '/reschedule', '/unschedule', 'object_version', 'idempotency_key', 'audit_reason', 'native_refetched' ) as $marker ) { if ( ! str_contains( $content, $marker ) ) { $violations[] = "includes/class-spdb-review-calendar-rest-controller.php: missing explicit operation control {$marker}"; } }
+		if ( ! str_contains( $content, '$this->broker->execute' ) ) { $violations[] = 'includes/class-spdb-review-calendar-rest-controller.php: guarded operation broker is not used'; }
+	}
+}
+$workspace_validator = $root . '/includes/class-spdb-workspace-projection-validator.php';
+if ( is_file( $workspace_validator ) ) {
+	$content = file_get_contents( $workspace_validator );
 	if ( false === $content ) { $violations[] = 'Unable to read includes/class-spdb-workspace-projection-validator.php'; }
 	else { foreach ( array( 'action_contract', 'spdb_workspace_action_contract_mismatch', 'supported_capabilities', 'profile_timestamp_invalid', 'knowledge_timestamp_invalid' ) as $marker ) { if ( ! str_contains( $content, $marker ) ) { $violations[] = "includes/class-spdb-workspace-projection-validator.php: missing semantic validation {$marker}"; } } }
 }
-$template = $root . '/templates/workspace.php';
-if ( is_file( $template ) ) {
+$review_validator = $root . '/includes/class-spdb-review-calendar-validator.php';
+if ( is_file( $review_validator ) ) {
+	$content = file_get_contents( $review_validator );
+	if ( false === $content ) { $violations[] = 'Unable to read includes/class-spdb-review-calendar-validator.php'; }
+	else { foreach ( array( 'strict_nonnegative_integer', 'required_text', 'normalize_flags', 'native_timezone', 'native_version', 'last_synced_at', 'assigned_reviewer_id' ) as $marker ) { if ( ! str_contains( $content, $marker ) ) { $violations[] = "includes/class-spdb-review-calendar-validator.php: missing projection validation {$marker}"; } } }
+}
+foreach ( array( 'workspace.php', 'review.php', 'calendar.php' ) as $template_name ) {
+	$template = $root . '/templates/' . $template_name;
+	if ( ! is_file( $template ) ) { continue; }
 	$content = file_get_contents( $template );
-	if ( false === $content ) { $violations[] = 'Unable to read templates/workspace.php'; }
-	else {
+	if ( false === $content ) { $violations[] = "Unable to read templates/{$template_name}"; continue; }
+	if ( 'workspace.php' !== $template_name && preg_match( '/<form\b|<button\b/i', $content ) ) { $violations[] = "templates/{$template_name}: initial Phase 23E projection must not contain direct mutation forms or buttons"; }
+	if ( 'workspace.php' === $template_name ) {
 		if ( preg_match( '/<form\b|<button\b/i', $content ) ) { $violations[] = 'templates/workspace.php: workspace must not contain a native mutation form or button'; }
 		if ( preg_match( '/\$profile\[(?:\'|\")edit_destination(?:\'|\")\]|\$profile\[(?:\'|\")public_destination(?:\'|\")\]|\$knowledge\[(?:\'|\")destination(?:\'|\")\]/', $content ) ) { $violations[] = 'templates/workspace.php: direct profile or knowledge destination bypasses the action gate'; }
 		if ( ! str_contains( $content, 'Opens native management' ) ) { $violations[] = 'templates/workspace.php: localized management disclosure is missing'; }
