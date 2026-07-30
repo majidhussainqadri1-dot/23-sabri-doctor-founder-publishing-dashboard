@@ -4,7 +4,44 @@ All notable changes to File 23 will be documented here.
 
 ## [Unreleased]
 
-Phase 23B remains under review and is not merge-ready, staging-accepted, or production-ready.
+Phase 23C is an unreviewed stacked candidate. It is not merge-ready, staging-accepted, or production-ready.
+
+## [0.3.0] — Phase 23C Federated Inventory Candidate
+
+### Added
+
+- Read-only federated content inventory over registered native provider adapters.
+- Bounded query contract with a maximum 50 items per page and 200-item federated window.
+- Provider, object type, lifecycle, review, visibility, operational, language, topic, date, sort, direction, and scope filters.
+- Current-user server injection and Founder-only institution-wide scope.
+- Canonical native projection validator for object references, versions, privacy classifications, four-dimensional states, timestamps, authors, destinations, and compliance alerts.
+- Explicit `unknown` mapping state and adapter-mapping warning.
+- Item inspector with native metadata and safe native destinations.
+- Read-only inventory REST list and inspector endpoints.
+- Provider failure isolation and bounded partial-result diagnostics.
+- Responsive inventory and inspector UI.
+- Phase 23C inventory tests and read-only architecture guards.
+- Federated inventory contract and mandatory Phase 23C no-merge review gate.
+
+### Changed
+
+- Plugin version advanced to `0.3.0`.
+- Dashboard phase and system-state projection advanced to `23C`.
+- Authorized users with `spdb_view_own_content` receive the Content Inventory navigation item.
+- Founder-requested institution scope is resolved server-side; every other account is clamped to own scope.
+- Dashboard page now mounts the inventory service and server-rendered inspector.
+- Readme and repository documentation now reflect Phase 23C boundaries.
+
+### Security
+
+- Inventory endpoints are read-only and expose no operation execution route.
+- Native operation metadata remains inspection-only with `execution_exposed=false`.
+- Client-supplied user IDs and institution authority are ignored.
+- Non-scalar query and projection values are rejected.
+- Signed, nonce-bearing, token-bearing, credential-bearing, cross-origin, wrong-port, malformed, and mismatched-object destinations are rejected.
+- Undeclared privacy classifications and unsupported object types are rejected.
+- Provider exceptions degrade to bounded partial results rather than escaping the dashboard.
+- No native publication body or workflow record is stored by File 23.
 
 ## [0.2.1] — Phase 23B Second Corrective Review
 
@@ -25,12 +62,12 @@ Phase 23B remains under review and is not merge-ready, staging-accepted, or prod
 
 - Plugin version advanced to `0.2.1`.
 - Activation now provisions File 23 capabilities on existing approved roles and registers the dashboard route.
-- Saved-view labels and filter values now reject non-scalar or malformed nested values.
+- Saved-view labels and filter values reject non-scalar or malformed nested values.
 - Saved-view projection is bound to the current authenticated user.
 - Indirect shortcode contexts fail closed unless private page protection was established before output.
 - Virtual and shortcode requests mark `DONOTCACHEPAGE` for WordPress cache-stack interoperability.
-- REST privacy policy now covers converted error responses as well as normal responses.
-- Pull-request CI now tests the exact head SHA instead of GitHub's synthetic merge commit.
+- REST privacy policy covers converted error responses as well as normal responses.
+- Pull-request CI tests the exact head SHA instead of GitHub's synthetic merge commit.
 
 ### Security
 
@@ -90,9 +127,9 @@ Phase 23B remains under review and is not merge-ready, staging-accepted, or prod
 - Adapter Contract upgraded from `1.0.0` to `2.0.0`.
 - Provider technical capability separated from File 23-controlled institutional acceptance.
 - Caller-supplied production Boolean replaced with server-resolved WordPress environment.
-- Provider keys and metadata now require exact canonical identifiers and semantic versions.
-- Adapter compatibility now uses declared minimum/maximum contract versions.
-- Operation definitions now require capability, ownership, verification, state, version, idempotency, audit, schema, and rate-limit metadata.
+- Provider keys and metadata require exact canonical identifiers and semantic versions.
+- Adapter compatibility uses declared minimum/maximum contract versions.
+- Operation definitions require capability, ownership, verification, state, version, idempotency, audit, schema, and rate-limit metadata.
 - Stored canonical URL changed to a non-secret destination descriptor contract.
 - File 00 compatibility is explicitly `>= 1.0.1` and `< 2.0.0` pending future review.
 - Pending, rejected, expired, and suspended accounts may retain only explicitly assigned restricted dashboard and owned-content read-only capabilities; mutation remains denied.
