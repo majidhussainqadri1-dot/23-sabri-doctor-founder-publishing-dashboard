@@ -21,24 +21,8 @@ final class SPDB_Review_Calendar_REST_Controller {
 	}
 
 	public function register_routes(): void {
-		register_rest_route(
-			'spdb/v1',
-			'/review',
-			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'rest_review' ),
-				'permission_callback' => array( $this, 'review_read_permission' ),
-			)
-		);
-		register_rest_route(
-			'spdb/v1',
-			'/calendar',
-			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'rest_calendar' ),
-				'permission_callback' => array( $this, 'calendar_read_permission' ),
-			)
-		);
+		register_rest_route( 'spdb/v1', '/review', array( 'methods' => WP_REST_Server::READABLE, 'callback' => array( $this, 'rest_review' ), 'permission_callback' => array( $this, 'review_read_permission' ) ) );
+		register_rest_route( 'spdb/v1', '/calendar', array( 'methods' => WP_REST_Server::READABLE, 'callback' => array( $this, 'rest_calendar' ), 'permission_callback' => array( $this, 'calendar_read_permission' ) ) );
 
 		$routes = array(
 			'/review/(?P<provider>[a-z0-9][a-z0-9_-]{1,63})/(?P<object_type>[a-z0-9][a-z0-9_-]{1,63})/(?P<object_id>[A-Za-z0-9][A-Za-z0-9._:-]{0,127})/approve'         => 'approve_review',
@@ -56,12 +40,8 @@ final class SPDB_Review_Calendar_REST_Controller {
 				$route,
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
-					'callback'            => function ( WP_REST_Request $request ) use ( $operation ) {
-						return $this->execute_operation( $request, $operation );
-					},
-					'permission_callback' => function ( WP_REST_Request $request ) use ( $contract ) {
-						return $this->mutation_permission( $request, is_array( $contract ) ? (string) $contract['capability'] : '' );
-					},
+					'callback'            => function ( WP_REST_Request $request ) use ( $operation ) { return $this->execute_operation( $request, $operation ); },
+					'permission_callback' => function ( WP_REST_Request $request ) use ( $contract ) { return $this->mutation_permission( $request, is_array( $contract ) ? (string) $contract['capability'] : '' ); },
 				)
 			);
 		}
@@ -69,16 +49,12 @@ final class SPDB_Review_Calendar_REST_Controller {
 
 	/** @return true|WP_Error */
 	public function review_read_permission() {
-		return SPDB_Capabilities::current_user_can( 'spdb_view_review_queue' )
-			? true
-			: $this->error( 'spdb_review_forbidden', 'You are not authorized to view the review queue.', 403 );
+		return SPDB_Capabilities::current_user_can( 'spdb_view_review_queue' ) ? true : $this->error( 'spdb_review_forbidden', 'You are not authorized to view the review queue.', 403 );
 	}
 
 	/** @return true|WP_Error */
 	public function calendar_read_permission() {
-		return SPDB_Capabilities::current_user_can( 'spdb_view_own_content' )
-			? true
-			: $this->error( 'spdb_calendar_forbidden', 'You are not authorized to view the publishing calendar.', 403 );
+		return SPDB_Capabilities::current_user_can( 'spdb_view_own_content' ) ? true : $this->error( 'spdb_calendar_forbidden', 'You are not authorized to view the publishing calendar.', 403 );
 	}
 
 	/** @return true|WP_Error */
@@ -86,23 +62,17 @@ final class SPDB_Review_Calendar_REST_Controller {
 		if ( '' === $capability || ! SPDB_Capabilities::current_user_can( $capability ) ) {
 			return $this->error( 'spdb_operation_forbidden', 'You are not authorized to perform this operation.', 403 );
 		}
-		return $this->valid_rest_nonce( $request )
-			? true
-			: $this->error( 'spdb_operation_nonce_invalid', 'A valid REST request nonce is required.', 403 );
+		return $this->valid_rest_nonce( $request ) ? true : $this->error( 'spdb_operation_nonce_invalid', 'A valid REST request nonce is required.', 403 );
 	}
 
 	public function rest_review( WP_REST_Request $request ) {
 		$result = $this->service->review_queue( $request->get_params() );
-		return '' !== (string) ( $result['query_error'] ?? '' )
-			? $this->error( 'spdb_review_query_invalid', 'The review filters are invalid.', 400 )
-			: rest_ensure_response( $result );
+		return '' !== (string) ( $result['query_error'] ?? '' ) ? $this->error( 'spdb_review_query_invalid', 'The review filters are invalid.', 400 ) : rest_ensure_response( $result );
 	}
 
 	public function rest_calendar( WP_REST_Request $request ) {
 		$result = $this->service->calendar( $request->get_params() );
-		return '' !== (string) ( $result['query_error'] ?? '' )
-			? $this->error( 'spdb_calendar_query_invalid', 'The calendar filters are invalid.', 400 )
-			: rest_ensure_response( $result );
+		return '' !== (string) ( $result['query_error'] ?? '' ) ? $this->error( 'spdb_calendar_query_invalid', 'The calendar filters are invalid.', 400 ) : rest_ensure_response( $result );
 	}
 
 	/** @return array<string,mixed>|WP_Error */
@@ -115,14 +85,12 @@ final class SPDB_Review_Calendar_REST_Controller {
 		if ( is_wp_error( $permission ) ) {
 			return $permission;
 		}
-
 		$provider    = is_scalar( $request['provider'] ) ? (string) $request['provider'] : '';
 		$object_type = is_scalar( $request['object_type'] ) ? (string) $request['object_type'] : '';
 		$object_id   = is_scalar( $request['object_id'] ) ? (string) $request['object_id'] : '';
 		if ( ! SPDB_Adapter_Registry::is_canonical_key( $provider ) || ! SPDB_Adapter_Registry::is_canonical_key( $object_type ) || ! SPDB_Projection_Validator::valid_object_id( $object_id ) ) {
 			return $this->error( 'spdb_operation_reference_invalid', 'The native object reference is invalid.', 422 );
 		}
-
 		$payload = $this->payload( $request->get_params(), $operation );
 		if ( is_wp_error( $payload ) ) {
 			return $payload;
@@ -134,7 +102,6 @@ final class SPDB_Review_Calendar_REST_Controller {
 		if ( 'assign_reviewer' === $operation && ! $this->service->reviewer_target_is_eligible( (int) $payload['reviewer_id'] ) ) {
 			return $this->error( 'spdb_reviewer_target_ineligible', 'The requested reviewer is not eligible for assignment.', 422 );
 		}
-
 		$result = $this->broker->execute( $provider, $operation, $object_type, $object_id, $payload );
 		if ( is_wp_error( $result ) ) {
 			return $this->error( 'spdb_native_action_failed', 'The native provider did not confirm the requested action. No success state has been assumed.', 409 );
@@ -143,18 +110,7 @@ final class SPDB_Review_Calendar_REST_Controller {
 		if ( (string) ( $confirmed['object_type'] ?? '' ) !== $object_type || (string) ( $confirmed['object_id'] ?? '' ) !== $object_id ) {
 			return $this->error( 'spdb_native_confirmation_invalid', 'The native provider returned an invalid confirmation reference.', 409 );
 		}
-
-		return rest_ensure_response(
-			array(
-				'provider'         => $provider,
-				'object_type'      => $object_type,
-				'object_id'        => $object_id,
-				'operation'        => $operation,
-				'confirmed'        => true,
-				'native_refetched' => true,
-				'confirmed_at_gmt' => gmdate( 'c' ),
-			)
-		);
+		return rest_ensure_response( array( 'provider' => $provider, 'object_type' => $object_type, 'object_id' => $object_id, 'operation' => $operation, 'confirmed' => true, 'native_refetched' => true, 'confirmed_at_gmt' => gmdate( 'c' ) ) );
 	}
 
 	/** @return array<string,mixed>|WP_Error */
@@ -180,7 +136,6 @@ final class SPDB_Review_Calendar_REST_Controller {
 				return $this->error( 'spdb_operation_payload_shape_invalid', 'An operation payload field has an invalid shape.', 422 );
 			}
 		}
-
 		$payload = array();
 		foreach ( array_merge( array( 'object_version', 'idempotency_key', 'audit_reason' ), $operation_allowed ) as $key ) {
 			if ( array_key_exists( $key, $params ) && is_scalar( $params[ $key ] ) ) {
@@ -198,7 +153,6 @@ final class SPDB_Review_Calendar_REST_Controller {
 		if ( strlen( $payload['audit_reason'] ) < 10 || strlen( $payload['audit_reason'] ) > 500 || preg_match( '/[\x00-\x1F\x7F]/', $payload['audit_reason'] ) || SPDB_Review_Calendar_Validator::sensitive_text( $payload['audit_reason'] ) ) {
 			return $this->error( 'spdb_audit_reason_invalid', 'The audit reason is invalid or contains prohibited sensitive data.', 422 );
 		}
-
 		if ( in_array( $operation, array( 'request_changes', 'reject_review' ), true ) ) {
 			if ( empty( $payload['reason_code'] ) || ! SPDB_Adapter_Registry::is_canonical_key( $payload['reason_code'] ) ) {
 				return $this->error( 'spdb_reason_code_invalid', 'A canonical structured reason code is required.', 422 );
@@ -216,11 +170,14 @@ final class SPDB_Review_Calendar_REST_Controller {
 			$payload['reviewer_id'] = (int) $reviewer_id;
 		}
 		if ( in_array( $operation, array( 'schedule', 'reschedule' ), true ) ) {
-			$scheduled = SPDB_Review_Calendar_Validator::normalize_utc_timestamp( $payload['scheduled_at_utc'] ?? '' );
+			if ( '' === (string) ( $payload['scheduled_at_utc'] ?? '' ) || '' === (string) ( $payload['native_timezone'] ?? '' ) ) {
+				return $this->error( 'spdb_operation_payload_incomplete', 'Schedule and reschedule operations require UTC time and native timezone.', 422 );
+			}
+			$scheduled = SPDB_Review_Calendar_Validator::normalize_utc_timestamp( $payload['scheduled_at_utc'] );
 			if ( is_wp_error( $scheduled ) ) {
 				return $scheduled;
 			}
-			$timezone = (string) ( $payload['native_timezone'] ?? '' );
+			$timezone = (string) $payload['native_timezone'];
 			if ( ! SPDB_Review_Calendar_Validator::valid_timezone( $timezone ) ) {
 				return $this->error( 'spdb_schedule_timezone_invalid', 'A valid IANA native time zone is required.', 422 );
 			}
