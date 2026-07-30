@@ -58,6 +58,7 @@ jobs:
             includes/class-spdb-dashboard-router.php
             includes/class-spdb-workspace-resolver.php
             includes/class-spdb-saved-views.php
+            includes/class-spdb-rest-privacy.php
             includes/class-spdb-system-state.php
             includes/class-spdb-overview-service.php
             includes/class-spdb-dashboard-page.php
@@ -69,6 +70,7 @@ jobs:
             tests/fixtures/class-test-adapter.php
             tests/contract-tests.php
             tests/dashboard-core-tests.php
+            tests/rest-privacy-tests.php
             tests/architecture-guard.php
           )
           for file in "${required[@]}"; do
@@ -92,6 +94,9 @@ jobs:
       - name: Run executable dashboard-core tests
         run: php tests/dashboard-core-tests.php
 
+      - name: Run REST privacy tests
+        run: php tests/rest-privacy-tests.php
+
       - name: Run architecture boundary guard
         run: php tests/architecture-guard.php
 
@@ -103,6 +108,8 @@ jobs:
           grep -q "spdb_view_dashboard" includes/class-spdb-dashboard-router.php
           grep -q "private, no-store" includes/class-spdb-dashboard-router.php
           grep -q "X-Robots-Tag: noindex" includes/class-spdb-dashboard-router.php
+          grep -q "protect_shortcode_page" includes/class-spdb-dashboard-page.php
+          grep -q "rest_post_dispatch" includes/class-spdb-rest-privacy.php
           grep -q "permission_callback" includes/class-spdb-saved-views.php
           grep -q "patient_id" tests/dashboard-core-tests.php
           grep -q "DO NOT MERGE before review is complete" docs/PHASE-23B-REVIEW-GATE.md
