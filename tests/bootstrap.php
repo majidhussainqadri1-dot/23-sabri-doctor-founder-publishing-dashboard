@@ -1,13 +1,15 @@
 <?php
 /** Minimal WordPress-compatible test bootstrap for File 23 executable tests. */
 define( 'ABSPATH', __DIR__ . '/' );
-define( 'SPDB_VERSION', '0.5.0' );
+define( 'SPDB_VERSION', '0.5.1' );
 define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
 $GLOBALS['spdb_test_environment'] = 'production';
 $GLOBALS['spdb_test_logged_in'] = true;
 $GLOBALS['spdb_test_user_id'] = 7;
 $GLOBALS['spdb_test_capabilities'] = array();
+$GLOBALS['spdb_test_user_capabilities'] = array();
 $GLOBALS['spdb_test_member_status'] = 'draft';
+$GLOBALS['spdb_test_member_statuses'] = array();
 $GLOBALS['spdb_test_founder'] = false;
 $GLOBALS['spdb_test_trusted'] = false;
 $GLOBALS['spdb_test_query_vars'] = array();
@@ -19,6 +21,9 @@ $GLOBALS['spdb_test_last_inventory_query'] = array();
 $GLOBALS['spdb_test_workspace_context'] = array();
 $GLOBALS['spdb_test_review_context'] = array();
 $GLOBALS['spdb_test_calendar_context'] = array();
+$GLOBALS['spdb_test_review_query_count'] = 0;
+$GLOBALS['spdb_test_calendar_query_count'] = 0;
+$GLOBALS['spdb_test_last_operation'] = array();
 $GLOBALS['wp_filter'] = array();
 $GLOBALS['wp'] = (object) array( 'query_vars' => array() );
 if ( ! class_exists( 'WP_Error' ) ) {
@@ -33,10 +38,12 @@ if ( ! class_exists( 'WP_Error' ) ) {
 if ( ! class_exists( 'WP_HTTP_Response' ) ) { class WP_HTTP_Response { public array $headers = array(); public function header( string $key, string $value, bool $replace = true ): void { $this->headers[ $key ] = $value; } } }
 if ( ! class_exists( 'WP_REST_Request' ) ) {
 	class WP_REST_Request implements ArrayAccess {
-		private string $route; private array $params;
-		public function __construct( string $route = '', array $params = array() ) { $this->route = $route; $this->params = $params; }
+		private string $route; private array $params; private array $headers = array();
+		public function __construct( string $route = '', array $params = array(), array $headers = array() ) { $this->route = $route; $this->params = $params; foreach ( $headers as $key => $value ) { $this->set_header( (string) $key, (string) $value ); } }
 		public function get_route(): string { return $this->route; }
 		public function get_params(): array { return $this->params; }
+		public function get_header( string $key ): string { return $this->headers[ strtolower( $key ) ] ?? ''; }
+		public function set_header( string $key, string $value ): void { $this->headers[ strtolower( $key ) ] = $value; }
 		public function offsetExists( $offset ): bool { return isset( $this->params[ $offset ] ); }
 		public function offsetGet( $offset ) { return $this->params[ $offset ] ?? null; }
 		public function offsetSet( $offset, $value ): void { $this->params[ $offset ] = $value; }
@@ -55,6 +62,8 @@ function wp_get_environment_type(): string { return (string) $GLOBALS['spdb_test
 function is_user_logged_in(): bool { return (bool) $GLOBALS['spdb_test_logged_in']; }
 function get_current_user_id(): int { return (int) $GLOBALS['spdb_test_user_id']; }
 function current_user_can( string $capability, ...$args ): bool { return ! empty( $GLOBALS['spdb_test_capabilities'][ $capability ] ); }
+function user_can( int $user_id, string $capability, ...$args ): bool { return ! empty( $GLOBALS['spdb_test_user_capabilities'][ $user_id ][ $capability ] ); }
+function wp_verify_nonce( string $nonce, string $action ): int { return 'valid-rest-nonce' === $nonce && 'wp_rest' === $action ? 1 : 0; }
 function get_query_var( string $key, $default = '' ) { return $GLOBALS['spdb_test_query_vars'][ $key ] ?? $default; }
 function home_url( string $path = '' ): string { return 'https://example.test' . $path; }
 function wp_parse_url( string $url ) { return parse_url( $url ); }
