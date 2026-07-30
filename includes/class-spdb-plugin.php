@@ -27,6 +27,7 @@ require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-collections-schema.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-collections-policy.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-wp-collections-repository.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-collections-service.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-collections-view.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-collections-rest-controller.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-dashboard-router.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-workspace-resolver.php';
