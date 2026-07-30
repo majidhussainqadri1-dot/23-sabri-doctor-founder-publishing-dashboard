@@ -1,8 +1,9 @@
 <?php
 /** Minimal WordPress-compatible test bootstrap for File 23 executable tests. */
 define( 'ABSPATH', __DIR__ . '/' );
-define( 'SPDB_VERSION', '0.6.0' );
+define( 'SPDB_VERSION', '0.6.1' );
 define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
+if ( ! defined( 'ARRAY_A' ) ) { define( 'ARRAY_A', 'ARRAY_A' ); }
 $GLOBALS['spdb_test_environment'] = 'production';
 $GLOBALS['spdb_test_logged_in'] = true;
 $GLOBALS['spdb_test_user_id'] = 7;
@@ -40,14 +41,8 @@ if ( ! class_exists( 'WP_REST_Request' ) ) {
 	class WP_REST_Request implements ArrayAccess {
 		private string $route; private array $params; private array $headers = array();
 		public function __construct( string $route = '', array $params = array(), array $headers = array() ) { $this->route = $route; $this->params = $params; foreach ( $headers as $key => $value ) { $this->set_header( (string) $key, (string) $value ); } }
-		public function get_route(): string { return $this->route; }
-		public function get_params(): array { return $this->params; }
-		public function get_header( string $key ): string { return $this->headers[ strtolower( $key ) ] ?? ''; }
-		public function set_header( string $key, string $value ): void { $this->headers[ strtolower( $key ) ] = $value; }
-		public function offsetExists( $offset ): bool { return isset( $this->params[ $offset ] ); }
-		public function offsetGet( $offset ) { return $this->params[ $offset ] ?? null; }
-		public function offsetSet( $offset, $value ): void { $this->params[ $offset ] = $value; }
-		public function offsetUnset( $offset ): void { unset( $this->params[ $offset ] ); }
+		public function get_route(): string { return $this->route; } public function get_params(): array { return $this->params; } public function get_header( string $key ): string { return $this->headers[ strtolower( $key ) ] ?? ''; } public function set_header( string $key, string $value ): void { $this->headers[ strtolower( $key ) ] = $value; }
+		public function offsetExists( $offset ): bool { return isset( $this->params[ $offset ] ); } public function offsetGet( $offset ) { return $this->params[ $offset ] ?? null; } public function offsetSet( $offset, $value ): void { $this->params[ $offset ] = $value; } public function offsetUnset( $offset ): void { unset( $this->params[ $offset ] ); }
 	}
 }
 if ( ! class_exists( 'SPDB_Test_Role' ) ) { class SPDB_Test_Role { public array $capabilities = array(); public function add_cap( string $capability, bool $grant = true ): void { $this->capabilities[ $capability ] = $grant; } } }
@@ -73,12 +68,13 @@ function rest_ensure_response( $value ) { return $value; }
 function add_query_arg( $key, $value = null, $url = null ): string { if ( is_array( $key ) ) { $base = (string) $value; foreach ( $key as $query_key => $query_value ) { $base = add_query_arg( (string) $query_key, (string) $query_value, $base ); } return $base; } $url = (string) $url; $separator = false === strpos( $url, '?' ) ? '?' : '&'; return $url . $separator . rawurlencode( (string) $key ) . '=' . rawurlencode( (string) $value ); }
 function get_user_meta( int $user_id, string $key, bool $single = false ) { return $GLOBALS['spdb_test_user_meta'][ $user_id ][ $key ] ?? ( $single ? '' : array() ); }
 function update_user_meta( int $user_id, string $key, $value, $previous_value = null ): bool { $current = get_user_meta( $user_id, $key, true ); if ( ! empty( $GLOBALS['spdb_test_force_meta_conflict'] ) ) { $GLOBALS['spdb_test_user_meta'][ $user_id ][ $key ] = array( 'concurrent_change' => true ); $GLOBALS['spdb_test_force_meta_conflict'] = false; return false; } if ( 4 === func_num_args() && $current !== $previous_value ) { return false; } $GLOBALS['spdb_test_user_meta'][ $user_id ][ $key ] = $value; return true; }
-function wp_generate_uuid4(): string { return '123e4567-e89b-12d3-a456-426614174000'; }
+function wp_generate_uuid4(): string { static $counter = 0; ++$counter; return sprintf( '123e4567-e89b-12d3-a456-%012d', $counter ); }
 function current_time( string $type, bool $gmt = false ): string { return '2026-07-30 10:26:00'; }
 function get_role( string $role_key ) { return $GLOBALS['spdb_test_roles'][ $role_key ] ?? null; }
 function get_option( string $key, $default = false ) { return $GLOBALS['spdb_test_options'][ $key ] ?? $default; }
 function update_option( string $key, $value, $autoload = null ): bool { $GLOBALS['spdb_test_options'][ $key ] = $value; return true; }
 function remove_all_actions( string $hook ): void { unset( $GLOBALS['wp_filter'][ $hook ] ); }
+
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-provider-adapter.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-workspace-provider-adapter.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-review-calendar-provider-adapter.php';
@@ -99,7 +95,9 @@ require_once dirname( __DIR__ ) . '/includes/class-spdb-role-workspace-service.p
 require_once dirname( __DIR__ ) . '/includes/class-spdb-review-calendar-validator.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-review-calendar-service.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-review-calendar-rest-controller.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-collections-schema.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-collections-policy.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-wp-collections-repository.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-collections-service.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-dashboard-router.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-workspace-resolver.php';
