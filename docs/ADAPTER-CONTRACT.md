@@ -1,80 +1,119 @@
-# Versioned Provider Adapter Contract
+# Versioned Provider Adapter Contract — 2.0.0
 
 ## Purpose
 
-File 23 is a federated operational interface. Every native module integrates through a registered, versioned adapter. The adapter is the only permitted bridge for queries and write operations.
+File 23 is a federated operational interface. Every native module integrates through a registered, versioned adapter. Native data and native state remain authoritative.
 
 ## Required Adapter Metadata
 
-- provider key;
-- adapter contract version;
-- provider plugin name/version;
+An adapter must provide:
+
+- an immutable canonical provider key;
+- provider/plugin name and semantic version;
+- minimum and maximum supported File 23 contract versions;
+- provider-declared technical capability state;
 - supported object types;
-- maturity state;
 - privacy classifications;
-- supported capabilities;
-- health-check callback.
+- supported File 23 capability keys;
+- complete operation definitions;
+- a bounded non-sensitive health callback.
+
+Provider keys, object types, privacy classes, capability keys, and operation keys must arrive already canonical. File 23 must reject, not silently normalize, non-canonical identifiers.
+
+## Contract Compatibility
+
+Compatibility is an explicit inclusive range:
+
+`minimum_contract <= SPDB_CONTRACT_VERSION <= maximum_contract`
+
+All three values must be valid semantic versions. File 23 must not infer compatibility from a loose integer cast or from provider activation.
+
+## Technical Capability and Institutional Acceptance
+
+These are separate domains.
+
+### Provider-declared technical capability
+
+- `unavailable`
+- `detected`
+- `incompatible`
+- `read_only`
+- `write_capable`
+- `review_capable`
+- `temporarily_suspended`
+
+A provider may declare technical ability only. It may not self-declare staging or production acceptance.
+
+### File 23-controlled acceptance
+
+- `unreviewed`
+- `staging_accepted`
+- `production_accepted`
+- `revoked`
+
+Acceptance is supplied by File 23-owned governance after review and testing. Production writes require `production_accepted`. Non-production writes require `staging_accepted` or `production_accepted`. The environment is resolved server-side through WordPress and is never supplied by a request or adapter.
 
 ## Required Read Operations
 
-An adapter must be able to provide, where supported:
+An adapter provides, where supported:
 
-- paginated item listing;
-- item projection;
+- paginated privacy-filtered item listing;
+- one item projection;
 - native lifecycle/review/visibility/operational states;
 - current object version or ETag;
-- canonical edit, preview, and public destinations;
-- allowed operations for the current user;
+- stable non-secret edit, preview, and public destination descriptors;
+- currently allowed operation keys;
 - bounded analytics aggregates;
 - interaction summary;
 - audit destination or summary;
 - source/media compliance summaries.
 
-## Write Operation Registration
+## Operation Definition
 
-Every write operation must register:
+Every mutable operation must be declared before execution with:
 
 - stable operation key;
-- exact request schema;
-- capability callback;
-- ownership callback;
-- verification/suspension callback;
-- current-state guard;
+- required File 23 capability;
+- ownership requirement;
+- approved-account requirement;
+- native current-state guard requirement;
 - object-version/ETag requirement;
-- idempotency requirement;
-- rate limit;
-- audit reason requirement;
-- success and error schema.
+- idempotency-key requirement;
+- audit-reason requirement;
+- exact payload schema;
+- rate-limit policy;
+- success schema;
+- error schema.
 
-Generic unregistered action strings are prohibited.
+Generic unregistered action strings are prohibited. Dashboard controllers must execute provider operations through the File 23 operation broker, never by calling the adapter mutation method directly.
 
-## Adapter Maturity States
+## Authorization Layers
 
-1. `unavailable`
-2. `detected`
-3. `incompatible`
-4. `read_only`
-5. `write_capable`
-6. `review_capable`
-7. `staging_accepted`
-8. `production_accepted`
-9. `temporarily_suspended`
+Environment acceptance is only one gate. Every operation must also pass:
 
-Production writes are allowed only for `production_accepted` adapters. Staging writes require at least `staging_accepted` in staging.
+1. registered provider and operation;
+2. supported object type;
+3. current File 00 approved/verified account state;
+4. current server-side File 23 capability;
+5. provider ownership and policy decision;
+6. native state guard;
+7. object-version/ETag conflict check;
+8. idempotency/replay control;
+9. required audit reason;
+10. provider-side validation and rate limit.
 
-## Failure Rules
+No client-supplied role, author, status, provider, capability, or environment value is authority.
+
+## Failure and Isolation Rules
 
 - One adapter failure must not crash the dashboard.
-- Failed sections show a bounded, non-sensitive error state.
-- Cached data must be visibly marked stale.
-- No failed response may be interpreted as approved, published, public, or deleted.
+- Registration and operation exceptions become bounded non-sensitive `WP_Error` results.
+- Failed sections show an explicit unavailable/stale state.
+- Failure must never be interpreted as approved, published, public, or deleted.
 - The native provider remains the source of truth after every action.
-- The dashboard must re-read the native object after a successful action.
+- File 23 must re-read the native object before reporting confirmed success.
+- Registration failures must be available to System Check without exposing stack traces or patient data.
 
-## Compatibility
+## Concurrency and Idempotency
 
-Adapters must declare minimum and maximum supported contract versions. Incompatible adapters enter read-only or unavailable mode; File 23 must not guess compatibility.
-
-## Idempotency and Concurrency
-
-Write calls must support an idempotency key and object version/ETag when the provider supports mutation. Stale actions must fail with a conflict response rather than overwrite newer decisions.
+Versioned mutation must fail on stale object versions rather than overwrite newer decisions. Required idempotency keys must be bounded and single-purpose. A provider result is not final dashboard truth until the native object is successfully re-read.
