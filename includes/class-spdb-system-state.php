@@ -25,7 +25,6 @@ final class SPDB_System_State {
 			if ( ! is_array( $metadata ) ) {
 				continue;
 			}
-
 			$providers[] = array(
 				'provider_key'        => $provider_key,
 				'provider_name'       => (string) $metadata['provider_name'],
@@ -35,15 +34,12 @@ final class SPDB_System_State {
 				'effective_state'     => $this->registry->get_effective_state( $provider_key ),
 			);
 		}
-
 		$errors = 0;
 		foreach ( $this->registry->registration_errors() as $provider_errors ) {
 			$errors += is_array( $provider_errors ) ? count( $provider_errors ) : 0;
 		}
-
 		$membership = SPDB_Membership_Guard::health_snapshot();
 		$degraded   = ! $membership['available'] || $errors > 0;
-
 		return array(
 			'environment'       => function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production',
 			'plugin_version'    => SPDB_VERSION,
@@ -61,7 +57,7 @@ final class SPDB_System_State {
 			'degraded'          => $degraded,
 			'generated_at_gmt'  => gmdate( 'c' ),
 			'production_writes' => false,
-			'phase'             => '23D',
+			'phase'             => '23E',
 		);
 	}
 }
