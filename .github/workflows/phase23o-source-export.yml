@@ -4,6 +4,8 @@ on:
   push:
     branches: ['phase/23o-collections-service-internal-consumption']
     paths: ['.github/workflows/phase23o-source-export.yml']
+  pull_request:
+    paths: ['.github/workflows/phase23o-source-export.yml']
 
 permissions:
   contents: read
@@ -16,6 +18,7 @@ jobs:
       - name: Checkout exact source
         uses: actions/checkout@v5
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - name: Verify exact branch head
