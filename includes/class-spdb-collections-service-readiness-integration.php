@@ -11,23 +11,20 @@ defined( 'ABSPATH' ) || exit;
 final class SPDB_Collections_Service_Readiness_Integration {
 	private const MAX_CODE_LENGTH = 64;
 	private const HEALTH_KEYS = array(
-		'healthy',
-		'database_ready',
-		'schema_ready',
-		'schema_version',
-		'code',
-		'cached_for_request',
+		'healthy', 'database_ready', 'schema_ready', 'schema_version', 'code', 'cached_for_request',
 	);
 	private const GATE_KEYS = array(
-		'inputs_valid',
-		'gate_code',
-		'resolver_available',
-		'resolver_readiness_available',
-		'resolver_ready',
-		'resolver_code',
-		'collection_write_ready',
-		'knowledge_write_ready',
-		'any_write_ready',
+		'inputs_valid', 'gate_code', 'resolver_available', 'resolver_readiness_available',
+		'resolver_ready', 'resolver_code', 'collection_write_ready',
+		'knowledge_write_ready', 'any_write_ready',
+	);
+	private const GATE_CODES = array(
+		'writes_disabled', 'repository_not_ready', 'collection_ready', 'knowledge_ready',
+	);
+	private const RESOLVER_CODES = array(
+		'resolver_absent', 'resolver_readiness_missing', 'resolver_unavailable',
+		'resolver_not_ready', 'resolver_readiness_invalid', 'resolver_readiness_exception',
+		'resolver_readiness_reentrant', 'resolver_not_evaluated', 'ready',
 	);
 
 	private SPDB_Collections_Service_Readiness_Gate $gate;
@@ -78,49 +75,29 @@ final class SPDB_Collections_Service_Readiness_Integration {
 		);
 	}
 
-	/**
-	 * @param mixed $writes_configured
-	 * @param mixed $repository_available
-	 * @param mixed $repository_health
-	 * @return true|WP_Error
-	 */
+	/** @param mixed $writes_configured @param mixed $repository_available @param mixed $repository_health @return true|WP_Error */
 	public function require_collection_write_ready( $writes_configured, $repository_available, $repository_health ) {
 		$inputs = $this->require_valid_inputs( $writes_configured, $repository_available );
-		if ( is_wp_error( $inputs ) ) {
-			return $inputs;
-		}
+		if ( is_wp_error( $inputs ) ) { return $inputs; }
 		if ( ! $writes_configured ) {
 			return $this->gate->require_collection_write_ready( false, true );
 		}
-
 		$repository = $this->repository_snapshot( $repository_available, $repository_health );
 		$ready      = $this->require_repository_ready( $repository );
-		if ( is_wp_error( $ready ) ) {
-			return $ready;
-		}
+		if ( is_wp_error( $ready ) ) { return $ready; }
 		return $this->gate->require_collection_write_ready( true, true );
 	}
 
-	/**
-	 * @param mixed $writes_configured
-	 * @param mixed $repository_available
-	 * @param mixed $repository_health
-	 * @return true|WP_Error
-	 */
+	/** @param mixed $writes_configured @param mixed $repository_available @param mixed $repository_health @return true|WP_Error */
 	public function require_knowledge_write_ready( $writes_configured, $repository_available, $repository_health ) {
 		$inputs = $this->require_valid_inputs( $writes_configured, $repository_available );
-		if ( is_wp_error( $inputs ) ) {
-			return $inputs;
-		}
+		if ( is_wp_error( $inputs ) ) { return $inputs; }
 		if ( ! $writes_configured ) {
 			return $this->gate->require_knowledge_write_ready( false, true );
 		}
-
 		$repository = $this->repository_snapshot( $repository_available, $repository_health );
 		$ready      = $this->require_repository_ready( $repository );
-		if ( is_wp_error( $ready ) ) {
-			return $ready;
-		}
+		if ( is_wp_error( $ready ) ) { return $ready; }
 		return $this->gate->require_knowledge_write_ready( true, true );
 	}
 
@@ -198,22 +175,12 @@ final class SPDB_Collections_Service_Readiness_Integration {
 
 	/** @param array<string,mixed> $repository @param array<string,mixed> $gate */
 	private function integration_code( bool $writes_configured, array $repository, array $gate ): string {
-		if ( ! $writes_configured ) {
-			return 'writes_disabled';
-		}
-		if ( ! $repository['available'] ) {
-			return 'repository_unavailable';
-		}
-		if ( 'repository_health_invalid' === $repository['code'] ) {
-			return 'repository_health_invalid';
-		}
-		if ( ! $repository['ready'] ) {
-			return 'repository_not_ready';
-		}
-		if ( 'gate_state_invalid' === ( $gate['gate_code'] ?? '' ) ) {
-			return 'gate_state_invalid';
-		}
-		return true === $gate['knowledge_write_ready'] ? 'knowledge_ready' : 'collection_ready';
+		if ( ! $writes_configured ) { return 'writes_disabled'; }
+		if ( ! $repository['available'] ) { return 'repository_unavailable'; }
+		if ( 'repository_health_invalid' === $repository['code'] ) { return 'repository_health_invalid'; }
+		if ( ! $repository['ready'] ) { return 'repository_not_ready'; }
+		if ( 'gate_state_invalid' === $gate['gate_code'] ) { return 'gate_state_invalid'; }
+		return $gate['knowledge_write_ready'] ? 'knowledge_ready' : 'collection_ready';
 	}
 
 	private function valid_gate_projection( $gate ): bool {
@@ -224,50 +191,57 @@ final class SPDB_Collections_Service_Readiness_Integration {
 			return false;
 		}
 		foreach ( array( 'inputs_valid', 'resolver_available', 'resolver_readiness_available', 'resolver_ready', 'collection_write_ready', 'knowledge_write_ready', 'any_write_ready' ) as $key ) {
-			if ( ! is_bool( $gate[ $key ] ) ) {
-				return false;
-			}
+			if ( ! is_bool( $gate[ $key ] ) ) { return false; }
 		}
 		if ( ! is_string( $gate['gate_code'] )
 			|| ! is_string( $gate['resolver_code'] )
-			|| '' === $gate['gate_code']
-			|| '' === $gate['resolver_code']
-			|| strlen( $gate['gate_code'] ) > self::MAX_CODE_LENGTH
-			|| strlen( $gate['resolver_code'] ) > self::MAX_CODE_LENGTH
-			|| ! SPDB_Adapter_Registry::is_canonical_key( $gate['gate_code'] )
-			|| ! SPDB_Adapter_Registry::is_canonical_key( $gate['resolver_code'] )
+			|| ! in_array( $gate['gate_code'], self::GATE_CODES, true )
+			|| ! in_array( $gate['resolver_code'], self::RESOLVER_CODES, true )
 			|| ! $gate['inputs_valid']
+			|| $gate['any_write_ready'] !== ( $gate['collection_write_ready'] || $gate['knowledge_write_ready'] )
 			|| $gate['knowledge_write_ready'] && ! $gate['collection_write_ready']
 			|| $gate['knowledge_write_ready'] && ! $gate['resolver_ready']
-			|| $gate['any_write_ready'] !== ( $gate['collection_write_ready'] || $gate['knowledge_write_ready'] )
+			|| $gate['resolver_ready'] !== ( 'ready' === $gate['resolver_code'] )
+			|| $gate['resolver_ready'] && ( ! $gate['resolver_available'] || ! $gate['resolver_readiness_available'] )
 		) {
 			return false;
 		}
-		return true;
+
+		switch ( $gate['gate_code'] ) {
+			case 'knowledge_ready':
+				return $gate['collection_write_ready'] && $gate['knowledge_write_ready'] && $gate['any_write_ready'] && $gate['resolver_ready'];
+			case 'collection_ready':
+				return $gate['collection_write_ready'] && ! $gate['knowledge_write_ready'] && $gate['any_write_ready'] && ! $gate['resolver_ready'];
+			case 'writes_disabled':
+			case 'repository_not_ready':
+				return ! $gate['collection_write_ready'] && ! $gate['knowledge_write_ready'] && ! $gate['any_write_ready'];
+			default:
+				return false;
+		}
 	}
 
 	/** @return array<string,mixed> */
 	private function invalid_gate_projection(): array {
 		return array(
-			'inputs_valid'                 => true,
-			'gate_code'                    => 'gate_state_invalid',
-			'resolver_available'           => false,
+			'inputs_valid' => true,
+			'gate_code' => 'gate_state_invalid',
+			'resolver_available' => false,
 			'resolver_readiness_available' => false,
-			'resolver_ready'               => false,
-			'resolver_code'                => 'resolver_state_invalid',
-			'collection_write_ready'       => false,
-			'knowledge_write_ready'        => false,
-			'any_write_ready'              => false,
+			'resolver_ready' => false,
+			'resolver_code' => 'resolver_state_invalid',
+			'collection_write_ready' => false,
+			'knowledge_write_ready' => false,
+			'any_write_ready' => false,
 		);
 	}
 
 	/** @return array{available:bool,ready:bool,code:string,schema_version:string,cached_for_request:bool} */
 	private function repository_state( bool $available, bool $ready, string $code, string $schema_version, bool $cached_for_request ): array {
 		return array(
-			'available'          => $available,
-			'ready'              => $ready,
-			'code'               => $code,
-			'schema_version'     => $schema_version,
+			'available' => $available,
+			'ready' => $ready,
+			'code' => $code,
+			'schema_version' => $schema_version,
 			'cached_for_request' => $cached_for_request,
 		);
 	}
@@ -285,23 +259,23 @@ final class SPDB_Collections_Service_Readiness_Integration {
 		array $gate
 	): array {
 		return array(
-			'inputs_valid'                  => $inputs_valid,
-			'integration_code'              => $integration_code,
-			'repository_available'          => $repository_available,
-			'repository_ready'              => $repository_ready,
-			'repository_code'               => $repository_code,
-			'repository_schema_version'     => $repository_schema_version,
+			'inputs_valid' => $inputs_valid,
+			'integration_code' => $integration_code,
+			'repository_available' => $repository_available,
+			'repository_ready' => $repository_ready,
+			'repository_code' => $repository_code,
+			'repository_schema_version' => $repository_schema_version,
 			'repository_cached_for_request' => $repository_cached_for_request,
-			'read_ready'                    => $repository_ready,
-			'write_configured'              => $inputs_valid && $writes_configured,
-			'resolver_available'            => true === ( $gate['resolver_available'] ?? false ),
-			'resolver_readiness_available'  => true === ( $gate['resolver_readiness_available'] ?? false ),
-			'resolver_ready'                => true === ( $gate['resolver_ready'] ?? false ),
-			'resolver_code'                 => is_string( $gate['resolver_code'] ?? null ) ? $gate['resolver_code'] : 'resolver_state_invalid',
-			'collection_write_ready'        => true === ( $gate['collection_write_ready'] ?? false ),
-			'knowledge_write_ready'         => true === ( $gate['knowledge_write_ready'] ?? false ),
-			'any_write_ready'               => true === ( $gate['any_write_ready'] ?? false ),
-			'write_enabled'                 => true === ( $gate['any_write_ready'] ?? false ),
+			'read_ready' => $repository_ready,
+			'write_configured' => $inputs_valid && $writes_configured,
+			'resolver_available' => true === ( $gate['resolver_available'] ?? false ),
+			'resolver_readiness_available' => true === ( $gate['resolver_readiness_available'] ?? false ),
+			'resolver_ready' => true === ( $gate['resolver_ready'] ?? false ),
+			'resolver_code' => is_string( $gate['resolver_code'] ?? null ) ? $gate['resolver_code'] : 'resolver_state_invalid',
+			'collection_write_ready' => true === ( $gate['collection_write_ready'] ?? false ),
+			'knowledge_write_ready' => true === ( $gate['knowledge_write_ready'] ?? false ),
+			'any_write_ready' => true === ( $gate['any_write_ready'] ?? false ),
+			'write_enabled' => true === ( $gate['any_write_ready'] ?? false ),
 		);
 	}
 
