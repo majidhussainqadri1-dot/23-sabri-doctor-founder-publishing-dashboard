@@ -4,7 +4,7 @@
 
 The pre-Phase-23J `SPDB_Collections_Service` treats a non-null native-reference resolver as sufficient for `knowledge_write_ready` and for the knowledge-write gate. Phase 23H and Phase 23I established a formal, bounded readiness contract, but the service does not yet consume it.
 
-The initial Phase 23J slice correctly introduced an isolated fail-closed decision boundary, but corrective re-review found additional defects in the gate, its executable evidence, and its workflow. Those defects have now been corrected on the same Draft branch.
+The initial Phase 23J slice correctly introduced an isolated fail-closed decision boundary. Two corrective reviews then found additional defects in the gate, its executable evidence, and its workflow. Those defects have now been corrected on the same Draft branch.
 
 **DO NOT MERGE.** Phase 23J remains an isolated source candidate. It does not modify `SPDB_Collections_Service`, plugin boot wiring, provider acceptance, mutation REST/UI, production writes, staging state, or live behavior.
 
@@ -25,7 +25,7 @@ The initial Phase 23J slice correctly introduced an isolated fail-closed decisio
 13. The decision boundary must not add REST routes, database writes, options, metadata, or persistent state.
 14. Existing Phase 23H and Phase 23I regressions must remain green.
 
-## Corrective Re-review Findings
+## First Corrective Re-review Findings
 
 The complete coded slice was re-reviewed after initial implementation. Eleven further defects or evidence gaps were found:
 
@@ -41,6 +41,17 @@ The complete coded slice was re-reviewed after initial implementation. Eleven fu
 10. CI syntax coverage omitted the concrete Phase 23H bridge and Phase 23I registry-readiness dependencies used by the gate.
 11. CI lacked bounded runtime/concurrency controls and did not assert the newly required semantic and re-entrancy protections.
 
+## Second Corrective Re-review Findings
+
+A further source review of the corrected head found six additional defects or evidence gaps:
+
+1. PHP weak scalar coercion could convert values such as the string `false` or integer `1` into trusted boolean authority inputs.
+2. Invalid authority inputs could still trigger resolver readiness calls even though no write decision should be evaluated.
+3. The snapshot had no bounded field declaring whether write-configuration and repository-readiness inputs were valid.
+4. An unexpected `Throwable` during readiness validation could leave the internal evaluation flag latched and cause permanent re-entrant denial.
+5. Exception and re-entrancy tests proved denial but did not prove that the same gate instance recovered after the failed evaluation ended.
+6. Tests did not prove that one decision invokes each readiness method at most once and never invokes native resolution.
+
 ## Corrections Applied
 
 - Added `require_collection_write_ready()` as a stable, resolver-independent write boundary.
@@ -49,20 +60,27 @@ The complete coded slice was re-reviewed after initial implementation. Eleven fu
 - Added exact semantic validation: a ready snapshot must use `code=ready`; a non-ready snapshot must not use `code=ready`.
 - Added an internal re-entrancy guard that fails closed without invoking native resolution.
 - Replaced the Phase-23F-specific disabled-write code with `spdb_collections_writes_disabled`.
-- Expanded executable tests for collection gating, error distinction, reordered keys, empty/overlong/unsafe codes, semantic code mismatches, both exception locations, recursive readiness, and zero native-resolution calls.
+- Removed weakly typed boolean authority signatures and added exact runtime `is_bool()` validation.
+- Added `inputs_valid` and bounded `gate_code` fields to the snapshot.
+- Invalid authority inputs now return `gate_input_invalid`, set all write readiness false, expose `resolver_not_evaluated`, and do not call readiness methods.
+- Added `spdb_collections_readiness_input_invalid` to both collection and knowledge write requirements.
+- Wrapped the complete readiness evaluation in `try/catch/finally`, guaranteeing that the re-entrancy flag is released after every outcome.
+- Expanded executable tests for collection gating, error distinction, reordered keys, empty/overlong/unsafe codes, semantic code mismatches, both exception locations, recursive readiness, invalid scalar inputs, no-probe behavior, bounded call counts, recovery, and zero native-resolution calls.
 - Expanded PHP 8.0–8.3 CI syntax and regression coverage to the readiness interface, bridge, registry conformance, gate, and all dependent tests.
 - Added workflow concurrency cancellation and a 15-minute job timeout.
+- Added static guards for exact input validation, invalid-input states, `finally` recovery, and absence of weak boolean method signatures.
 - Preserved the isolation guard: the gate is still not loaded by `SPDB_Plugin` and is still not referenced by `SPDB_Collections_Service`.
 
 ## Corrected Authorized Slice
 
 - `SPDB_Collections_Service_Readiness_Gate` as a pure fail-closed decision boundary;
+- exact runtime validation of write-configuration and repository-readiness authority inputs;
 - resolver-presence and readiness-contract separation;
-- bounded readiness projection and generic service codes;
+- bounded gate and resolver projections;
 - independent collection-write and knowledge-write requirements;
 - exact readiness-code semantics;
-- re-entrancy denial;
-- executable abuse/failure tests;
+- re-entrancy denial and guaranteed evaluation recovery;
+- executable abuse/failure/recovery tests;
 - dedicated exact-head PHP 8.0–8.3 workflow;
 - separate stacked Draft PR.
 
