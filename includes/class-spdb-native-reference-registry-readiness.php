@@ -3,22 +3,30 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Native_Reference_Registry_Readiness implements SPDB_Native_Reference_Readiness {
-	private const MAX_PROVIDERS = 1000;
+	private const MAX_PROVIDERS           = 1000;
+	private const MAX_REGISTRATION_ERRORS = 1000;
+	private const MAX_HEALTH_CODE_LENGTH  = 64;
+
 	private Closure $health_reader;
 
+	private function __construct( Closure $health_reader ) {
+		$this->health_reader = $health_reader;
+	}
+
+	public static function from_registry( SPDB_Native_Reference_Registry $registry ): self {
+		return new self( Closure::fromCallable( array( $registry, 'health_snapshot' ) ) );
+	}
+
 	/**
-	 * @param SPDB_Native_Reference_Registry|Closure $source Registry or isolated test health reader.
+	 * Create a synthetic health source only inside the isolated executable-test runtime.
+	 *
+	 * @throws LogicException When called outside the explicit test runtime.
 	 */
-	public function __construct( $source ) {
-		if ( $source instanceof SPDB_Native_Reference_Registry ) {
-			$this->health_reader = Closure::fromCallable( array( $source, 'health_snapshot' ) );
-			return;
+	public static function from_health_reader_for_tests( Closure $health_reader ): self {
+		if ( ! defined( 'SPDB_TESTING' ) || true !== SPDB_TESTING ) {
+			throw new LogicException( 'Synthetic registry health readers are available only in the isolated test runtime.' );
 		}
-		if ( $source instanceof Closure ) {
-			$this->health_reader = $source;
-			return;
-		}
-		throw new InvalidArgumentException( 'A native-reference registry or health reader is required.' );
+		return new self( $health_reader );
 	}
 
 	public function is_ready(): bool {
@@ -65,41 +73,71 @@ final class SPDB_Native_Reference_Registry_Readiness implements SPDB_Native_Refe
 			return null;
 		}
 
-		$resolver_count = $this->bounded_count( $source['resolver_count'] );
-		$ready_count = $this->bounded_count( $source['ready_count'] );
-		$registration_errors = $this->bounded_count( $source['registration_errors'] );
+		$resolver_count      = $this->bounded_count( $source['resolver_count'], self::MAX_PROVIDERS );
+		$ready_count         = $this->bounded_count( $source['ready_count'], self::MAX_PROVIDERS );
+		$registration_errors = $this->bounded_count( $source['registration_errors'], self::MAX_REGISTRATION_ERRORS );
 		if ( null === $resolver_count || null === $ready_count || null === $registration_errors || $ready_count > $resolver_count || count( $source['providers'] ) !== $resolver_count ) {
+			return null;
+		}
+		if ( ! $source['available'] && ( $source['ready'] || $ready_count > 0 ) ) {
 			return null;
 		}
 
 		$projected_ready_count = 0;
+		$provider_keys         = array();
 		foreach ( $source['providers'] as $provider ) {
-			if ( ! is_array( $provider ) || ! array_key_exists( 'ready', $provider ) || ! is_bool( $provider['ready'] ) ) {
+			if ( ! $this->valid_provider_health( $provider ) ) {
 				return null;
 			}
-			if ( true === $provider['ready'] ) { ++$projected_ready_count; }
+			$provider_key = $provider['provider_key'];
+			if ( isset( $provider_keys[ $provider_key ] ) ) {
+				return null;
+			}
+			$provider_keys[ $provider_key ] = true;
+			if ( true === $provider['ready'] ) {
+				++$projected_ready_count;
+			}
 		}
+
 		$expected_ready = $ready_count > 0;
 		if ( $projected_ready_count !== $ready_count || $source['ready'] !== $expected_ready ) {
 			return null;
 		}
 
 		return array(
-			'available' => $source['available'],
-			'resolver_count' => $resolver_count,
-			'ready_count' => $ready_count,
+			'available'           => $source['available'],
+			'resolver_count'      => $resolver_count,
+			'ready_count'         => $ready_count,
 			'registration_errors' => $registration_errors,
 		);
 	}
 
-	private function bounded_count( $value ): ?int {
-		return is_int( $value ) && $value >= 0 && $value <= self::MAX_PROVIDERS ? $value : null;
+	private function valid_provider_health( $provider ): bool {
+		if ( ! is_array( $provider )
+			|| ! is_string( $provider['provider_key'] ?? null )
+			|| ! SPDB_Adapter_Registry::is_canonical_key( $provider['provider_key'] )
+			|| ! is_bool( $provider['healthy'] ?? null )
+			|| ! is_bool( $provider['ready'] ?? null )
+			|| ! is_string( $provider['code'] ?? null )
+			|| '' === $provider['code']
+			|| strlen( $provider['code'] ) > self::MAX_HEALTH_CODE_LENGTH
+			|| ! SPDB_Adapter_Registry::is_canonical_key( $provider['code'] )
+		) {
+			return false;
+		}
+		return true !== $provider['ready'] || true === $provider['healthy'];
+	}
+
+	private function bounded_count( $value, int $maximum ): ?int {
+		return is_int( $value ) && $value >= 0 && $value <= $maximum ? $value : null;
 	}
 
 	private function is_list( array $value ): bool {
 		$index = 0;
 		foreach ( array_keys( $value ) as $key ) {
-			if ( $key !== $index ) { return false; }
+			if ( $key !== $index ) {
+				return false;
+			}
 			++$index;
 		}
 		return true;
