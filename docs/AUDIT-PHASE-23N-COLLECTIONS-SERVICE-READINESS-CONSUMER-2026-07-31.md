@@ -6,7 +6,7 @@ The accepted Phase 23M binding proves exact repository/resolver composition, but
 
 Phase 23N therefore provides an isolated `SPDB_Collections_Service_Readiness_Consumer`. It converts reviewed probe decisions into the exact existing service-health field names and owns the bounded read, collection-write, and knowledge-write readiness decisions without performing a service operation.
 
-The preliminary head `bbe4071dc84c65f8b2c6a68695d70d67a57b0057` passed automated tests but was not final source acceptance. Corrective review found additional source and evidence defects. Every preliminary or failed Phase 23N run and artifact is invalidated after the corrective source changes.
+The preliminary head `bbe4071dc84c65f8b2c6a68695d70d67a57b0057` passed automated tests but was not final source acceptance. Corrective review found additional source and evidence defects. Every preliminary Phase 23N run and artifact is invalidated. Every failed Phase 23N run and artifact is invalidated. Only a later documentation-inclusive exact head that passes both Phase 23N matrices and all inherited regressions may be cited.
 
 **DO NOT MERGE.** Phase 23N does not modify `SPDB_Collections_Service`, `SPDB_Plugin`, `SPDB_System_State`, REST controllers, provider acceptance, production writes, or staging configuration. It is a reviewed internal contract foundation for a later service-internal consumption slice.
 
@@ -67,6 +67,8 @@ The preliminary head `bbe4071dc84c65f8b2c6a68695d70d67a57b0057` passed automated
 50. The retained Phase 23N static workflow required the former helper name `valid_schema_version` after the implementation had inlined stricter state validation.
 51. Retained and supplemental evidence gates must both pass; a green supplemental matrix does not excuse a stale retained gate.
 52. The failed primary-test run and the later failed retained-static-gate run are invalid evidence.
+53. The corrective audit guard used an exact singular invalidation phrase, while the audit used a combined plural phrase; the evidence contract therefore remained ambiguous.
+54. Preliminary and failed evidence must be invalidated with separate explicit statements.
 
 ## Corrections Applied
 
@@ -90,6 +92,7 @@ The preliminary head `bbe4071dc84c65f8b2c6a68695d70d67a57b0057` passed automated
 - Expanded primary tests for exact raw shape, code allowlists, lifecycle closure, formal readiness, stable errors, one-call bounds, privacy, and isolation.
 - Expanded adversarial tests for every suppressed/denied state, unknown canonical codes, forged readiness, stale schema, malformed health, and contradictory health.
 - Added a dedicated corrective PHP 8.0–8.3 matrix and strengthened exact-source checksums.
+- Added separate explicit invalidation statements for preliminary and failed Phase 23N evidence.
 
 ## Authorized Phase 23N Slice
 
