@@ -44,9 +44,11 @@ jobs:
         run: |
           set -euo pipefail
           required=(
+            .github/workflows/phase23i-registry-readiness.yml
             docs/AUDIT-PHASE-23I-REGISTRY-READINESS-CONFORMANCE-2026-07-31.md
             includes/interface-spdb-native-reference-readiness.php
             includes/class-spdb-native-reference-readiness-bridge.php
+            includes/class-spdb-native-reference-registry.php
             includes/class-spdb-native-reference-registry-readiness.php
             tests/phase23h-readiness-bridge-tests.php
             tests/phase23i-registry-readiness-tests.php
@@ -57,10 +59,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          php -l includes/interface-spdb-native-reference-readiness.php
+          php -l includes/class-spdb-native-reference-readiness-bridge.php
+          php -l includes/class-spdb-native-reference-registry.php
           php -l includes/class-spdb-native-reference-registry-readiness.php
+          php -l tests/phase23h-readiness-bridge-tests.php
           php -l tests/phase23i-registry-readiness-tests.php
 
-      - name: Run Phase 23I registry readiness tests
+      - name: Run corrective Phase 23I registry readiness tests
         shell: bash
         run: set -o pipefail; php tests/phase23i-registry-readiness-tests.php | tee "qa-evidence/phase23i-tests-php-${{ matrix.php }}.log"
 
@@ -81,12 +87,18 @@ jobs:
         run: |
           set -euo pipefail
           grep -q 'implements SPDB_Native_Reference_Readiness' includes/class-spdb-native-reference-registry-readiness.php
+          grep -q 'private function __construct' includes/class-spdb-native-reference-registry-readiness.php
+          grep -q 'from_registry' includes/class-spdb-native-reference-registry-readiness.php
+          grep -q 'from_health_reader_for_tests' includes/class-spdb-native-reference-registry-readiness.php
+          grep -q "defined( 'SPDB_TESTING' )" includes/class-spdb-native-reference-registry-readiness.php
+          grep -q 'valid_provider_health' includes/class-spdb-native-reference-registry-readiness.php
           grep -q 'registry_health_invalid' includes/class-spdb-native-reference-registry-readiness.php
           grep -q 'registry_health_exception' includes/class-spdb-native-reference-registry-readiness.php
           grep -q 'no_ready_provider' includes/class-spdb-native-reference-registry-readiness.php
           ! grep -q 'class-spdb-native-reference-registry-readiness.php' includes/class-spdb-plugin.php
           ! grep -Eq 'register_rest_route\s*\(|WP_REST_Server::(CREATABLE|EDITABLE|DELETABLE)|\b(?:POST|PUT|PATCH|DELETE)\b' includes/class-spdb-native-reference-registry-readiness.php
           ! grep -Eq '\b(?:insert|update|delete)_?(?:option|post|metadata)?\s*\(' includes/class-spdb-native-reference-registry-readiness.php
+          grep -qi 'Corrective Review Findings' docs/AUDIT-PHASE-23I-REGISTRY-READINESS-CONFORMANCE-2026-07-31.md
           grep -qi 'DO NOT MERGE' docs/AUDIT-PHASE-23I-REGISTRY-READINESS-CONFORMANCE-2026-07-31.md
 
       - name: Record source checksums
@@ -95,7 +107,12 @@ jobs:
         run: |
           set -euo pipefail
           sha256sum \
+            .github/workflows/phase23i-registry-readiness.yml \
+            includes/interface-spdb-native-reference-readiness.php \
+            includes/class-spdb-native-reference-readiness-bridge.php \
+            includes/class-spdb-native-reference-registry.php \
             includes/class-spdb-native-reference-registry-readiness.php \
+            tests/phase23h-readiness-bridge-tests.php \
             tests/phase23i-registry-readiness-tests.php \
             docs/AUDIT-PHASE-23I-REGISTRY-READINESS-CONFORMANCE-2026-07-31.md \
             > "qa-evidence/phase23i-checksums-php-${{ matrix.php }}.sha256"
