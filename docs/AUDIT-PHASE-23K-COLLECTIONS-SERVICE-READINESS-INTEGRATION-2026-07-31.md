@@ -1,81 +1,83 @@
-# Phase 23K Collections Service Readiness Integration — Corrective Review Record — 2026-07-31
+# Phase 23K Collections Service Readiness Integration — Independent Review — 2026-07-31
 
 ## Verdict
 
-Phase 23J corrected and proved the isolated resolver-readiness gate. The existing `SPDB_Collections_Service` still derives repository readiness and resolver readiness through separate ad hoc logic, and it still treats non-null resolver presence as sufficient for knowledge-write readiness.
+The first Phase 23K branch was not based on the final corrected Phase 23J head. Its merge base was `4a6926e68653f243c448303a60933a4a1b2101cf`, while the accepted Phase 23J head became `60c2f08e37678c28d550c6c2aeebf4181aacdcdc`. Comparison proved that the Phase 23K branch was ten commits ahead but four corrective Phase 23J commits behind. All earlier Phase 23K runs and evidence were therefore invalidated.
 
-Phase 23K introduces a bounded repository-and-resolver integration object that can later be consumed by `SPDB_Collections_Service` after a separate review gate. This phase does not modify the service, plugin container, REST routes, mutation UI, provider acceptance, or production write configuration.
+The Phase 23K branch was force-reset to the exact accepted Phase 23J head, and the integration boundary was rebuilt from repository source truth.
 
-**DO NOT MERGE.** This remains a stacked Draft source candidate.
+**DO NOT MERGE.** This phase authorizes only an isolated repository-and-resolver readiness integration projection, executable tests, and exact-head CI. It does not authorize modification of `SPDB_Collections_Service`, plugin boot wiring, provider acceptance, mutation REST/UI, production writes, staging acceptance, or merge.
 
-## Initial Review Findings
+## Findings
 
-1. Repository health parsing is embedded directly inside `SPDB_Collections_Service::health()`.
-2. Repository health output can contain provider-specific details that must not become the public readiness contract.
-3. Repository presence, malformed health, not-ready health, and ready health require distinct bounded states.
-4. Repository health booleans require strict validation.
-5. Repository health codes require canonical shape and bounded length.
-6. A ready repository must use the canonical `ready` code.
-7. A non-ready repository must not claim the canonical `ready` code.
-8. Collection-write readiness must require configured writes and a validated ready repository, independently of resolver state.
-9. Knowledge-write readiness must additionally consume the corrected Phase 23J resolver-readiness gate.
-10. Resolver and repository private health details must not be relayed into bounded projections or errors.
-11. The integration boundary must not resolve native objects, write metadata, add mutation REST/UI, or change plugin wiring.
-12. Exact-head PHP 8.0–8.3 executable evidence is required before runtime service modification is authorized.
-
-## Corrective Review Findings
-
-The independent review of the complete initial Phase 23K diff found additional defects and evidence gaps:
-
-1. `database_ready` was present in the native repository health contract but was neither required nor validated.
-2. A response could claim `healthy=true` while `database_ready=false` and still be treated as ready.
-3. The aggregate `healthy` flag was not required to agree with database and schema readiness.
-4. Write requirements checked repository state before the explicit global write-disable gate, causing inconsistent denial precedence and avoidable health disclosure.
-5. The tests did not prove that disabled writes short-circuit before repository and resolver readiness.
-6. The tests did not prove that repository absence or invalidity blocks knowledge writes before resolver evaluation.
-7. Missing, malformed, contradictory, database-not-ready, and schema-not-ready health states lacked complete executable coverage.
-8. Error status and private-detail suppression lacked direct assertions.
-9. The workflow did not syntax-check all reviewed dependency files.
-10. The workflow did not run corrective tests under `E_ALL`.
-11. The no-runtime-wiring guard covered only a narrow subset of WordPress and persistence writes.
-12. The workflow lacked static proof that database readiness and denial-precedence regressions were covered.
-13. The stacked Phase 23K branch had inherited an older Phase 23J gate while the inherited Phase 23J workflow required the later corrected gate contract.
-14. Snapshot projections still evaluated resolver readiness when writes were disabled or the repository was unready, despite the resolver result being unable to authorize any write.
-15. Phase 23K public methods reintroduced weak scalar coercion through `bool` parameter declarations, allowing values such as the string `false` to be coerced before the runtime authority gate could validate them.
+1. The original Phase 23K branch had stale and divergent ancestry.
+2. Previous Phase 23K QA did not include the final six Phase 23J authority and recovery corrections.
+3. The original integration reintroduced weakly typed boolean authority parameters.
+4. The original repository-health validator did not require an exact field set.
+5. Unknown repository-health fields could be silently accepted.
+6. Missing repository-health fields were not explicitly rejected.
+7. The concrete WordPress repository health contract contains exactly `healthy`, `database_ready`, `schema_ready`, `schema_version`, `code`, and `cached_for_request`.
+8. Repository schema readiness must be tied to the current `SPDB_Collections_Schema::VERSION`, not merely a truthy health flag.
+9. Repository aggregate `healthy` must equal the conjunction of database and schema readiness.
+10. Ready repository health must use `code=ready`, while non-ready health must not use `code=ready`.
+11. Repository health codes must remain canonical, bounded, and non-sensitive.
+12. Raw repository health detail must not be relayed into the public integration projection.
+13. Writes-disabled decision precedence must match the executable collection and knowledge requirements.
+14. Invalid authority inputs must fail before repository or resolver authority is trusted.
+15. The downstream Phase 23J gate projection must be exact-shape and semantic validated before integration consumes it.
+16. A malformed gate projection must fail closed with all write states false.
+17. Collection-write readiness must remain independent from resolver readiness.
+18. Knowledge-write readiness must require valid inputs, configured writes, current repository readiness, and formal current resolver readiness.
+19. Integration must never call native reference resolution.
+20. Integration must not persist repository health, resolver health, native objects, destinations, or credentials.
+21. Integration must not add REST mutation routes or WordPress writes.
+22. `SPDB_Collections_Service` and `SPDB_Plugin` must remain unchanged in this slice.
+23. Exact-head CI must prove that the PR head descends from the current PR base SHA.
+24. Phase 23J, Phase 23I, Phase 23H, and architecture regressions must remain green.
 
 ## Corrections Applied
 
-- Required strict boolean `healthy`, `database_ready`, and `schema_ready` fields.
-- Required `healthy === ( database_ready && schema_ready )`.
-- Preserved canonical ready/not-ready code consistency.
-- Added an explicit writes-configured gate before repository parsing or resolver readiness.
-- Kept collection readiness independent of resolver readiness.
-- Kept knowledge readiness dependent on the corrected Phase 23J resolver gate.
-- Reconciled Phase 23K with the latest corrected Phase 23J gate contract.
-- Added fail-closed runtime validation for gate and integration authority inputs.
-- Removed weakly coercible `bool` declarations from the Phase 23K public authority boundary.
-- Prevented resolver readiness calls when writes are disabled or repository readiness is false.
-- Added call counters proving no native resolution and no premature resolver readiness evaluation.
-- Added missing-field, malformed-type, database-down, schema-down, aggregate-mismatch, code-mismatch, private-detail, error-status, and weak-coercion tests.
-- Added dedicated snapshot short-circuit and authority-input regression tests.
-- Expanded PHP syntax, `E_ALL`, architecture, mutation, no-wiring, checksum, and exact-head CI gates.
-- Kept all provider details, native object resolution, persistence, REST mutation, UI mutation, plugin injection, and production write enablement out of Phase 23K.
+- Reset the Phase 23K branch to final Phase 23J head `60c2f08e37678c28d550c6c2aeebf4181aacdcdc`.
+- Invalidated every earlier Phase 23K run and artifact tied to the stale ancestry.
+- Removed weak scalar authority signatures and added exact runtime boolean validation.
+- Added bounded `inputs_valid` and `integration_code` states.
+- Added `integration_input_invalid` and `repository_not_evaluated` fail-closed projections.
+- Implemented the exact six-field concrete repository-health contract.
+- Added exact scalar validation for all repository-health fields.
+- Added current schema-version verification against `SPDB_Collections_Schema::VERSION`.
+- Added aggregate healthy/database/schema consistency validation.
+- Added exact ready-code semantics and bounded canonical code validation.
+- Reduced valid degraded repository detail to `repository_not_ready`.
+- Added writes-disabled-first decision precedence matching executable requirements.
+- Added exact Phase 23J gate-projection shape and semantic validation.
+- Added bounded `gate_state_invalid` and `resolver_state_invalid` fallback states.
+- Preserved independent collection readiness and resolver-dependent knowledge readiness.
+- Added executable tests for invalid authority scalars, missing/unknown fields, malformed types, stale/noncanonical schema versions, health/code contradictions, key-order variation, unavailable/degraded/ready repository states, ready and unready resolver states, decision precedence, and zero native-resolution calls.
 
-## Corrected Phase Boundary
+## Authorized Coding Slice
 
-Phase 23K now owns only the isolated, bounded decision objects and their exact-head evidence. It does not own runtime service consumption or plugin construction.
+- `SPDB_Collections_Service_Readiness_Integration` as an isolated pure decision boundary;
+- exact repository-health validation based on the concrete repository contract;
+- current schema-version enforcement;
+- exact downstream Phase 23J gate validation;
+- bounded integration and repository states;
+- collection and knowledge write requirements;
+- executable PHP 8.0–8.3 tests;
+- exact-head and exact-base ancestry workflow;
+- separate stacked Draft PR.
 
-## Deliberately Deferred
+## Explicitly Deferred
 
-- modifying `SPDB_Collections_Service`;
-- changing `SPDB_Plugin` require order or constructor injection;
-- enabling accepted native-reference providers;
-- enabling mutation REST routes or UI;
-- changing plugin version;
+- changing `SPDB_Collections_Service`;
+- loading the integration from `SPDB_Plugin`;
+- injecting a concrete registry/readiness adapter;
+- enabling provider acceptance;
+- enabling metadata mutation routes or UI;
+- changing plugin or stable version;
 - Hostinger staging or production claims.
 
-## Next Review Gate
+## Acceptance Rule
 
-After the corrected current head passes PHP 8.0–8.3 exact-head QA, the next stacked branch may add the repository-health acquisition/probe boundary that will later permit `SPDB_Collections_Service` to consume the integration object. Direct plugin injection remains a separate later review gate.
+The documentation-inclusive exact head must descend from the current Phase 23J PR base SHA and pass PHP 8.0, 8.1, 8.2, and 8.3 across the dedicated workflow and all inherited regressions. Any later source change invalidates that evidence.
 
-Hostinger staging, real File 00 users, real providers, IDOR/privacy/cache evidence, backup/restore/rollback, Founder review, Founder acceptance, and explicit merge authorization remain mandatory.
+Only a later separately reviewed phase may modify `SPDB_Collections_Service`; plugin injection requires another separately reviewed phase. Hostinger staging, real File 00 accounts and native providers, privacy/IDOR/cache/backup/restore/rollback evidence, Founder acceptance, and explicit merge authorization remain mandatory. All PRs remain Draft and unmerged.
