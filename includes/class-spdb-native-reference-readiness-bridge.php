@@ -25,22 +25,35 @@ final class SPDB_Native_Reference_Readiness_Bridge implements SPDB_Native_Refere
 	public function resolve_reference( string $provider_key, string $object_type, string $object_id, array $context ) {
 		$snapshot = $this->probe();
 		if ( true !== $snapshot['ready'] ) {
-			return new WP_Error(
+			return $this->error(
 				'spdb_native_reference_resolver_not_ready',
-				__( 'The native-reference resolver is not operationally ready.', 'sabri-publishing-dashboard' ),
-				array( 'status' => 503 )
+				'The native-reference resolver is not operationally ready.'
 			);
 		}
 
 		try {
-			return $this->resolver->resolve_reference( $provider_key, $object_type, $object_id, $context );
+			$result = $this->resolver->resolve_reference( $provider_key, $object_type, $object_id, $context );
 		} catch ( Throwable $throwable ) {
-			return new WP_Error(
+			return $this->error(
 				'spdb_native_reference_resolver_failed',
-				__( 'The native-reference resolver failed and was isolated.', 'sabri-publishing-dashboard' ),
-				array( 'status' => 503 )
+				'The native-reference resolver failed and was isolated.'
 			);
 		}
+
+		if ( is_wp_error( $result ) ) {
+			return $this->error(
+				'spdb_native_reference_resolver_error',
+				'The native-reference resolver could not resolve the reference.'
+			);
+		}
+		if ( ! is_array( $result ) ) {
+			return $this->error(
+				'spdb_native_reference_resolver_response_invalid',
+				'The native-reference resolver returned an invalid response.'
+			);
+		}
+
+		return $result;
 	}
 
 	/** @return array{available:bool,ready:bool,code:string} */
@@ -52,10 +65,13 @@ final class SPDB_Native_Reference_Readiness_Bridge implements SPDB_Native_Refere
 			return array( 'available' => false, 'ready' => false, 'code' => 'readiness_exception' );
 		}
 
+		$required_keys = array( 'available', 'ready', 'code' );
+		$source_keys = array_keys( $source );
 		$available = true === ( $source['available'] ?? false );
 		$snapshot_ready = true === ( $source['ready'] ?? false );
 		$shape_valid = 3 === count( $source )
-			&& array_keys( $source ) === array( 'available', 'ready', 'code' )
+			&& ! array_diff( $source_keys, $required_keys )
+			&& ! array_diff( $required_keys, $source_keys )
 			&& is_bool( $source['available'] ?? null )
 			&& is_bool( $source['ready'] ?? null )
 			&& is_string( $source['code'] ?? null );
@@ -71,5 +87,13 @@ final class SPDB_Native_Reference_Readiness_Bridge implements SPDB_Native_Refere
 		}
 
 		return array( 'available' => true, 'ready' => true, 'code' => 'ready' );
+	}
+
+	private function error( string $code, string $message ): WP_Error {
+		return new WP_Error(
+			$code,
+			__( $message, 'sabri-publishing-dashboard' ),
+			array( 'status' => 503 )
+		);
 	}
 }
