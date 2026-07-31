@@ -137,32 +137,76 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          source=includes/class-spdb-collections-service-readiness-integration.php
-          grep -q 'final class SPDB_Collections_Service_Readiness_Integration' "$source"
-          grep -q 'HEALTH_KEYS' "$source"
-          grep -q "'database_ready'" "$source"
-          grep -q "'schema_version'" "$source"
-          grep -q "'cached_for_request'" "$source"
-          grep -q 'current_schema_version' "$source"
-          grep -q 'valid_authority_inputs' "$source"
-          grep -q 'valid_gate_projection' "$source"
-          grep -q 'integration_input_invalid' "$source"
-          grep -q 'repository_not_evaluated' "$source"
-          grep -q 'gate_state_invalid' "$source"
-          grep -q 'require_collection_write_ready' "$source"
-          grep -q 'require_knowledge_write_ready' "$source"
-          ! grep -Eq 'function (snapshot|require_collection_write_ready|require_knowledge_write_ready)\( bool ' "$source"
-          ! grep -q 'class-spdb-collections-service-readiness-integration.php' includes/class-spdb-plugin.php
-          ! grep -q 'SPDB_Collections_Service_Readiness_Integration' includes/class-spdb-collections-service.php
-          ! grep -Eq 'register_rest_route\s*\(|WP_REST_Server::(CREATABLE|EDITABLE|DELETABLE)|\b(?:POST|PUT|PATCH|DELETE)\b' "$source"
-          ! grep -Eq '\b(?:wp_insert_post|wp_update_post|wp_delete_post|add_option|update_option|delete_option|add_user_meta|update_user_meta|delete_user_meta|add_post_meta|update_post_meta|delete_post_meta|set_transient|delete_transient|file_put_contents|fopen|fwrite)\s*\(' "$source"
-          ! grep -Eq '(->|::)(insert|update|delete|query|resolve_reference)\s*\(' "$source"
-          grep -q 'weakly coercible' tests/phase23k-collections-service-readiness-integration-tests.php
-          grep -q 'Unknown repository-health fields' tests/phase23k-collections-service-readiness-integration-tests.php
-          grep -q 'stale schema version' tests/phase23k-collections-service-readiness-integration-tests.php
-          grep -q 'zero native-resolution' docs/AUDIT-PHASE-23K-COLLECTIONS-SERVICE-READINESS-INTEGRATION-2026-07-31.md || \
-            grep -q 'never call native reference resolution' docs/AUDIT-PHASE-23K-COLLECTIONS-SERVICE-READINESS-INTEGRATION-2026-07-31.md
-          grep -qi 'DO NOT MERGE' docs/AUDIT-PHASE-23K-COLLECTIONS-SERVICE-READINESS-INTEGRATION-2026-07-31.md
+          php <<'PHP'
+          <?php
+          $source_path = 'includes/class-spdb-collections-service-readiness-integration.php';
+          $service_path = 'includes/class-spdb-collections-service.php';
+          $plugin_path = 'includes/class-spdb-plugin.php';
+          $tests_path = 'tests/phase23k-collections-service-readiness-integration-tests.php';
+          $audit_path = 'docs/AUDIT-PHASE-23K-COLLECTIONS-SERVICE-READINESS-INTEGRATION-2026-07-31.md';
+          $source = file_get_contents( $source_path );
+          $service = file_get_contents( $service_path );
+          $plugin = file_get_contents( $plugin_path );
+          $tests = file_get_contents( $tests_path );
+          $audit = file_get_contents( $audit_path );
+          $fail = static function ( string $message ): void {
+              fwrite( STDERR, "STATIC GUARD FAIL: {$message}\n" );
+              exit( 1 );
+          };
+          foreach ( array(
+              'final class SPDB_Collections_Service_Readiness_Integration',
+              'HEALTH_KEYS',
+              "'database_ready'",
+              "'schema_version'",
+              "'cached_for_request'",
+              'current_schema_version',
+              'valid_authority_inputs',
+              'valid_gate_projection',
+              'integration_input_invalid',
+              'repository_not_evaluated',
+              'gate_state_invalid',
+              'require_collection_write_ready',
+              'require_knowledge_write_ready',
+          ) as $needle ) {
+              if ( false === strpos( $source, $needle ) ) { $fail( "Missing source control: {$needle}" ); }
+          }
+          if ( preg_match( '/function\s+(?:snapshot|require_collection_write_ready|require_knowledge_write_ready)\s*\(\s*bool\s/', $source ) ) {
+              $fail( 'Weak boolean authority signatures returned.' );
+          }
+          if ( false !== strpos( $plugin, 'class-spdb-collections-service-readiness-integration.php' ) ) {
+              $fail( 'Plugin wiring is not authorized.' );
+          }
+          if ( false !== strpos( $service, 'SPDB_Collections_Service_Readiness_Integration' ) ) {
+              $fail( 'Collections service integration is not authorized in this slice.' );
+          }
+          foreach ( array(
+              'register_rest_route(',
+              'WP_REST_Server::CREATABLE',
+              'WP_REST_Server::EDITABLE',
+              'WP_REST_Server::DELETABLE',
+              'wp_insert_post(', 'wp_update_post(', 'wp_delete_post(',
+              'add_option(', 'update_option(', 'delete_option(',
+              'add_user_meta(', 'update_user_meta(', 'delete_user_meta(',
+              'add_post_meta(', 'update_post_meta(', 'delete_post_meta(',
+              'set_transient(', 'delete_transient(',
+              'file_put_contents(', 'fopen(', 'fwrite(',
+              '->insert(', '->update(', '->delete(', '->query(',
+              '->resolve_reference(', '::resolve_reference(',
+          ) as $forbidden ) {
+              if ( false !== strpos( $source, $forbidden ) ) { $fail( "Forbidden operation: {$forbidden}" ); }
+          }
+          foreach ( array(
+              'weakly coercible',
+              'Unknown repository-health fields',
+              'stale schema version',
+              'never resolve a native object',
+          ) as $needle ) {
+              if ( false === strpos( $tests, $needle ) ) { $fail( "Missing executable evidence marker: {$needle}" ); }
+          }
+          if ( false === stripos( $audit, 'DO NOT MERGE' ) ) { $fail( 'Audit merge gate is missing.' ); }
+          if ( false === strpos( $audit, 'never call native reference resolution' ) ) { $fail( 'Audit native-resolution boundary is missing.' ); }
+          echo "Phase 23K static boundaries passed.\n";
+          PHP
 
       - name: Record exact-source checksums
         if: always()
