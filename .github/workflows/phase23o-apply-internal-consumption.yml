@@ -1,0 +1,201 @@
+name: Phase 23O Apply Internal Consumption
+
+on:
+  push:
+    branches: ['phase/23o-collections-service-internal-consumption']
+    paths: ['.github/workflows/phase23o-apply-internal-consumption.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  apply-reviewed-patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v5
+        with:
+          ref: phase/23o-collections-service-internal-consumption
+          fetch-depth: 0
+      - name: Apply deterministic reviewed transformations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python <<'PY'
+          from pathlib import Path
+          import re
+
+          service_path = Path('includes/class-spdb-collections-service.php')
+          source = service_path.read_text()
+
+          marker = "defined( 'ABSPATH' ) || exit;\n\n"
+          dependencies = """defined( 'ABSPATH' ) || exit;
+
+          require_once __DIR__ . '/interface-spdb-collections-repository.php';
+          require_once __DIR__ . '/interface-spdb-native-reference-resolver.php';
+          require_once __DIR__ . '/interface-spdb-native-reference-readiness.php';
+          require_once __DIR__ . '/class-spdb-collections-service-readiness-gate.php';
+          require_once __DIR__ . '/class-spdb-collections-service-readiness-integration.php';
+          require_once __DIR__ . '/class-spdb-collections-repository-readiness-probe.php';
+          require_once __DIR__ . '/class-spdb-collections-service-readiness-consumer.php';
+
+          """
+          if source.count(marker) != 1:
+              raise SystemExit('Unexpected ABSPATH marker count')
+          source = source.replace(marker, dependencies, 1)
+
+          property_marker = "\tprivate ?SPDB_Native_Reference_Resolver $resolver;\n"
+          if source.count(property_marker) != 1:
+              raise SystemExit('Unexpected resolver property count')
+          source = source.replace(
+              property_marker,
+              property_marker + "\tprivate SPDB_Collections_Service_Readiness_Consumer $readiness;\n",
+              1,
+          )
+
+          constructor_marker = "\t\t$this->resolver   = $resolver;\n"
+          if source.count(constructor_marker) != 1:
+              raise SystemExit('Unexpected constructor marker count')
+          source = source.replace(
+              constructor_marker,
+              constructor_marker + "\t\t$this->readiness  = SPDB_Collections_Service_Readiness_Consumer::create( $repository, $resolver );\n",
+              1,
+          )
+
+          health_pattern = re.compile(
+              r"\t/\*\* @return array<string,mixed> \*/\n\tpublic function health\(\): array \{.*?\n\t\}\n\n(?=\t/\*\* @return array<string,mixed>\|WP_Error \*/\n\tpublic function list_collections)",
+              re.S,
+          )
+          source, count = health_pattern.subn(
+              "\t/** @return array<string,mixed> */\n"
+              "\tpublic function health(): array {\n"
+              "\t\treturn $this->readiness->health( $this->writes_configured() );\n"
+              "\t}\n\n",
+              source,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit('Health method replacement failed')
+
+          source = source.replace(
+              "$source = $this->resolve_reference( $record['source_provider_key'], $record['source_object_type'], $record['source_object_id'], $record['scope'] );",
+              "$source = $this->resolve_reference_after_gate( $record['source_provider_key'], $record['source_object_type'], $record['source_object_id'], $record['scope'] );",
+              1,
+          )
+          source = source.replace(
+              "$target = $this->resolve_reference( $record['target_provider_key'], $record['target_object_type'], $record['target_object_id'], $record['scope'] );",
+              "$target = $this->resolve_reference_after_gate( $record['target_provider_key'], $record['target_object_type'], $record['target_object_id'], $record['scope'] );",
+              1,
+          )
+
+          resolve_pattern = re.compile(
+              r"\t/\*\* @return array<string,mixed>\|WP_Error \*/\n\tpublic function resolve_reference\(.*?\n\t\}\n\n(?=\t/\*\* @return true\|WP_Error \*/\n\tprivate function read_permission)",
+              re.S,
+          )
+          resolve_block = r'''\t/** @return array<string,mixed>|WP_Error */
+          \tpublic function resolve_reference( string $provider_key, string $object_type, string $object_id, string $scope = 'own' ) {
+          \t\t$authority = $this->reference_authority( $scope );
+          \t\tif ( is_wp_error( $authority ) ) { return $authority; }
+          \t\tif ( ! SPDB_Adapter_Registry::is_canonical_key( $provider_key ) || ! SPDB_Adapter_Registry::is_canonical_key( $object_type ) || ! SPDB_Projection_Validator::valid_object_id( $object_id ) ) { return $this->error( 'spdb_native_reference_invalid', 'The canonical native reference is invalid.' ); }
+          \t\t$gate = $this->write_gate( true );
+          \t\tif ( is_wp_error( $gate ) ) { return $gate; }
+          \t\treturn $this->resolve_reference_after_gate( $provider_key, $object_type, $object_id, $scope );
+          \t}
+
+          \t/** @return array<string,mixed>|WP_Error */
+          \tprivate function resolve_reference_after_gate( string $provider_key, string $object_type, string $object_id, string $scope ) {
+          \t\t$authority = $this->reference_authority( $scope );
+          \t\tif ( is_wp_error( $authority ) ) { return $authority; }
+          \t\tif ( ! SPDB_Adapter_Registry::is_canonical_key( $provider_key ) || ! SPDB_Adapter_Registry::is_canonical_key( $object_type ) || ! SPDB_Projection_Validator::valid_object_id( $object_id ) ) { return $this->error( 'spdb_native_reference_invalid', 'The canonical native reference is invalid.' ); }
+          \t\tif ( null === $this->resolver ) { return $this->unavailable( 'spdb_native_reference_resolver_unavailable', 'The native-reference resolver is unavailable.' ); }
+          \t\ttry { $result = $this->resolver->resolve_reference( $provider_key, $object_type, $object_id, $this->context( $scope ) ); }
+          \t\tcatch ( Throwable $throwable ) { return $this->unavailable( 'spdb_native_reference_resolver_failed', 'The native provider could not resolve the reference.' ); }
+          \t\tif ( is_wp_error( $result ) ) { return $result; }
+          \t\tif ( ! is_array( $result ) ) { return $this->unavailable( 'spdb_native_reference_response_invalid', 'The native provider returned an invalid reference response.' ); }
+          \t\t$exact = is_string( $result['provider_key'] ?? null ) && $result['provider_key'] === $provider_key
+          \t\t\t&& is_string( $result['object_type'] ?? null ) && $result['object_type'] === $object_type
+          \t\t\t&& is_string( $result['object_id'] ?? null ) && $result['object_id'] === $object_id;
+          \t\tif ( ! $exact || true !== ( $result['exists'] ?? null ) || true !== ( $result['visible'] ?? null ) || true !== ( $result['reference_allowed'] ?? null ) ) { return $this->error( 'spdb_native_reference_unavailable', 'The native object is missing, hidden, or not currently authorized for this reference.', 404 ); }
+          \t\t$native_version = $this->native_version( $result['native_version'] ?? null );
+          \t\tif ( is_wp_error( $native_version ) ) { return $native_version; }
+          \t\t$owner = $this->nonnegative_integer( $result['owner_user_id'] ?? null );
+          \t\tif ( null === $owner ) { return $this->error( 'spdb_native_reference_owner_invalid', 'The native object owner identifier is invalid.' ); }
+          \t\t$destination = '';
+          \t\tif ( array_key_exists( 'destination', $result ) && '' !== $result['destination'] ) {
+          \t\t\tif ( ! is_string( $result['destination'] ) ) { return $this->error( 'spdb_native_reference_destination_invalid', 'The native destination is invalid.' ); }
+          \t\t\t$destination = SPDB_Safe_Destination::normalize( $result['destination'] );
+          \t\t\tif ( is_wp_error( $destination ) ) { return $destination; }
+          \t\t}
+          \t\treturn array( 'provider_key' => $provider_key, 'object_type' => $object_type, 'object_id' => $object_id, 'owner_user_id' => $owner, 'native_version' => $native_version, 'current_destination' => $destination );
+          \t}
+
+          '''.replace('          ', '')
+          source, count = resolve_pattern.subn(resolve_block, source, count=1)
+          if count != 1:
+              raise SystemExit('Reference method replacement failed')
+
+          gate_pattern = re.compile(
+              r"\t/\*\* @return true\|WP_Error \*/\n\tprivate function read_repository\(\) \{.*?\n\t\}\n\t/\*\* @return true\|WP_Error \*/\n\tprivate function write_gate\( bool \$requires_resolver \) \{.*?\n\t\}\n",
+              re.S,
+          )
+          gate_block = """\t/** @return true|WP_Error */
+          \tprivate function read_repository() {
+          \t\treturn $this->readiness->require_read_ready();
+          \t}
+          \t/** @return true|WP_Error */
+          \tprivate function write_gate( bool $requires_resolver ) {
+          \t\treturn $this->readiness->require_write_ready( $requires_resolver, $this->writes_configured() );
+          \t}
+          """.replace('          ', '')
+          source, count = gate_pattern.subn(gate_block, source, count=1)
+          if count != 1:
+              raise SystemExit('Read/write gate replacement failed')
+
+          if '->health_check()' in source:
+              raise SystemExit('Manual repository health remains in service')
+          if source.count('SPDB_Collections_Service_Readiness_Consumer::create') != 1:
+              raise SystemExit('Unexpected readiness-consumer construction count')
+          if source.count('resolve_reference_after_gate(') != 4:
+              raise SystemExit('Unexpected gated reference call count')
+          service_path.write_text(source)
+
+          runtime_path = Path('tests/phase23f-runtime-tests.php')
+          runtime = runtime_path.read_text()
+          old_health = "public function health_check(): array { return array( 'healthy' => $this->healthy, 'schema_ready' => $this->healthy, 'code' => $this->healthy ? 'ready' : 'failed' ); }"
+          new_health = "public function health_check(): array { return array( 'healthy' => $this->healthy, 'database_ready' => $this->healthy, 'schema_ready' => $this->healthy, 'schema_version' => SPDB_Collections_Schema::VERSION, 'code' => $this->healthy ? 'ready' : 'database_unavailable', 'cached_for_request' => true ); }"
+          if runtime.count(old_health) != 1:
+              raise SystemExit('Legacy runtime health fixture marker missing')
+          runtime = runtime.replace(old_health, new_health, 1)
+          old_resolver = "final class SPDB_Test_Native_Resolver implements SPDB_Native_Reference_Resolver {\n\tpublic $owner = 7; public string $version = 'v1'; public array $last_context = array();\n\tpublic function resolve_reference"
+          new_resolver = "final class SPDB_Test_Native_Resolver implements SPDB_Native_Reference_Resolver, SPDB_Native_Reference_Readiness {\n\tpublic $owner = 7; public string $version = 'v1'; public array $last_context = array();\n\tpublic function is_ready(): bool { return true; }\n\tpublic function readiness_snapshot(): array { return array( 'available' => true, 'ready' => true, 'code' => 'ready' ); }\n\tpublic function resolve_reference"
+          if runtime.count(old_resolver) != 1:
+              raise SystemExit('Legacy runtime resolver fixture marker missing')
+          runtime = runtime.replace(old_resolver, new_resolver, 1)
+          runtime_path.write_text(runtime)
+          PY
+
+      - name: Verify syntax and exact boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l includes/class-spdb-collections-service.php
+          php -l tests/phase23f-runtime-tests.php
+          grep -q 'private SPDB_Collections_Service_Readiness_Consumer $readiness' includes/class-spdb-collections-service.php
+          grep -q 'return $this->readiness->health' includes/class-spdb-collections-service.php
+          grep -q 'return $this->readiness->require_read_ready' includes/class-spdb-collections-service.php
+          grep -q 'return $this->readiness->require_write_ready' includes/class-spdb-collections-service.php
+          test "$(grep -c 'health_check()' includes/class-spdb-collections-service.php || true)" -eq 0
+          git diff --check
+
+      - name: Remove temporary workflows and commit patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/phase23o-source-export.yml
+          git rm .github/workflows/phase23o-apply-internal-consumption.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add includes/class-spdb-collections-service.php tests/phase23f-runtime-tests.php
+          git commit -m 'Integrate reviewed readiness consumer into Collections service internals'
+          git push origin HEAD:phase/23o-collections-service-internal-consumption
