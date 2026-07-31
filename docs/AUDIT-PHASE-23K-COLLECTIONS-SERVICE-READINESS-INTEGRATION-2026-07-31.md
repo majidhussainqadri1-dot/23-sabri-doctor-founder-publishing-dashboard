@@ -49,10 +49,16 @@ The Phase 23K branch was force-reset to the exact accepted Phase 23J head, and t
 - Added exact ready-code semantics and bounded canonical code validation.
 - Reduced valid degraded repository detail to `repository_not_ready`.
 - Added writes-disabled-first decision precedence matching executable requirements.
-- Added exact Phase 23J gate-projection shape and semantic validation.
+- Added exact Phase 23J gate-projection shape, code allowlists, and semantic consistency validation.
 - Added bounded `gate_state_invalid` and `resolver_state_invalid` fallback states.
 - Preserved independent collection readiness and resolver-dependent knowledge readiness.
 - Added executable tests for invalid authority scalars, missing/unknown fields, malformed types, stale/noncanonical schema versions, health/code contradictions, key-order variation, unavailable/degraded/ready repository states, ready and unready resolver states, decision precedence, and zero native-resolution calls.
+
+## Corrective QA Finding
+
+The first rebuilt exact-head run proved that all Phase 23K executable tests, Phase 23J/23I/23H regressions, syntax checks, exact-base ancestry, and architecture guard passed. The run nevertheless failed its static evidence step because GNU `grep -E` was given PCRE-only non-capturing groups such as `(?:...)`. The resulting regex warnings and ambiguous exit behavior made the evidence gate unreliable.
+
+That failed run is not final evidence. The fragile shell-regex block was replaced by deterministic PHP static assertions covering required controls, weak authority signatures, service/plugin isolation, forbidden REST/persistence/native-resolution calls, executable evidence markers, and the audit merge gate. A complete new exact-head matrix is mandatory.
 
 ## Authorized Coding Slice
 
