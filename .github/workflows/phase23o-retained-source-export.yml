@@ -1,0 +1,38 @@
+name: Phase 23O Retained Source Export
+
+on:
+  pull_request:
+    paths: ['.github/workflows/phase23o-retained-source-export.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  export-retained-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Build exact retained-source bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p retained-source/.github/workflows retained-source/tests
+          git rev-parse HEAD > retained-source/HEAD.txt
+          cp tests/phase23f-policy-tests.php retained-source/tests/
+          cp tests/phase23f-collections-ui-tests.php retained-source/tests/
+          cp tests/architecture-guard.php retained-source/tests/
+          cp .github/workflows/phase23n-collections-service-readiness-consumer.yml retained-source/.github/workflows/
+          cp .github/workflows/phase23n-corrective-snapshot-boundaries.yml retained-source/.github/workflows/
+          sha256sum retained-source/tests/* retained-source/.github/workflows/* > retained-source/SHA256SUMS.txt
+      - name: Upload retained-source bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase23o-retained-source-${{ github.run_id }}
+          path: retained-source/
+          if-no-files-found: error
+          retention-days: 7
