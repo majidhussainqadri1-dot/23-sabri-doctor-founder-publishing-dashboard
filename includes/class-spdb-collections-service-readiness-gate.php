@@ -7,6 +7,7 @@ final class SPDB_Collections_Service_Readiness_Gate {
 
 	private ?SPDB_Native_Reference_Resolver $resolver;
 	private ?SPDB_Native_Reference_Readiness $readiness;
+	private bool $evaluating = false;
 
 	public function __construct( ?SPDB_Native_Reference_Resolver $resolver = null ) {
 		$this->resolver  = $resolver;
@@ -25,7 +26,7 @@ final class SPDB_Collections_Service_Readiness_Gate {
 	 * }
 	 */
 	public function snapshot( bool $writes_configured, bool $repository_ready ): array {
-		$resolver = $this->resolver_snapshot();
+		$resolver               = $this->resolver_snapshot();
 		$collection_write_ready = $writes_configured && $repository_ready;
 		$knowledge_write_ready  = $collection_write_ready && $resolver['ready'];
 
@@ -41,22 +42,44 @@ final class SPDB_Collections_Service_Readiness_Gate {
 	}
 
 	/** @return true|WP_Error */
-	public function require_knowledge_write_ready( bool $writes_configured, bool $repository_ready ) {
+	public function require_collection_write_ready( bool $writes_configured, bool $repository_ready ) {
 		if ( ! $writes_configured ) {
-			return $this->error( 'spdb_phase23f_writes_disabled', 'Metadata writes remain disabled until reviewed staging acceptance.' );
+			return $this->error( 'spdb_collections_writes_disabled', 'Collection metadata writes remain disabled until reviewed staging acceptance.' );
 		}
 		if ( ! $repository_ready ) {
 			return $this->error( 'spdb_collections_repository_not_ready', 'The collection metadata repository is not ready.' );
 		}
+		return true;
+	}
+
+	/** @return true|WP_Error */
+	public function require_knowledge_write_ready( bool $writes_configured, bool $repository_ready ) {
+		$collection = $this->require_collection_write_ready( $writes_configured, $repository_ready );
+		if ( is_wp_error( $collection ) ) {
+			return $collection;
+		}
 
 		$resolver = $this->resolver_snapshot();
-		if ( ! $resolver['available'] ) {
-			return $this->error( 'spdb_native_reference_resolver_unavailable', 'The native-reference resolver is unavailable.' );
+		switch ( $resolver['code'] ) {
+			case 'ready':
+				return true;
+			case 'resolver_absent':
+				return $this->error( 'spdb_native_reference_resolver_unavailable', 'The native-reference resolver is unavailable.' );
+			case 'resolver_readiness_missing':
+				return $this->error( 'spdb_native_reference_readiness_missing', 'The native-reference resolver does not provide the required readiness contract.' );
+			case 'resolver_unavailable':
+				return $this->error( 'spdb_native_reference_resolver_unavailable', 'The native-reference resolver is unavailable.' );
+			case 'resolver_not_ready':
+				return $this->error( 'spdb_native_reference_resolver_not_ready', 'The native-reference resolver is not operationally ready.' );
+			case 'resolver_readiness_invalid':
+				return $this->error( 'spdb_native_reference_readiness_invalid', 'The native-reference readiness response is invalid.' );
+			case 'resolver_readiness_exception':
+				return $this->error( 'spdb_native_reference_readiness_failed', 'The native-reference readiness check failed and was isolated.' );
+			case 'resolver_readiness_reentrant':
+				return $this->error( 'spdb_native_reference_readiness_reentrant', 'The native-reference readiness check was re-entered and was denied.' );
+			default:
+				return $this->error( 'spdb_native_reference_resolver_not_ready', 'The native-reference resolver is not operationally ready.' );
 		}
-		if ( ! $resolver['readiness_available'] || ! $resolver['ready'] ) {
-			return $this->error( 'spdb_native_reference_resolver_not_ready', 'The native-reference resolver is not operationally ready.' );
-		}
-		return true;
 	}
 
 	/** @return array{available:bool,readiness_available:bool,ready:bool,code:string} */
@@ -67,24 +90,28 @@ final class SPDB_Collections_Service_Readiness_Gate {
 		if ( null === $this->readiness ) {
 			return $this->resolver_state( true, false, false, 'resolver_readiness_missing' );
 		}
+		if ( $this->evaluating ) {
+			return $this->resolver_state( true, true, false, 'resolver_readiness_reentrant' );
+		}
 
+		$this->evaluating = true;
 		try {
 			$declared_ready = $this->readiness->is_ready();
-			$source = $this->readiness->readiness_snapshot();
+			$source         = $this->readiness->readiness_snapshot();
 		} catch ( Throwable $throwable ) {
-			return $this->resolver_state( true, true, false, 'resolver_readiness_exception' );
+			return $this->finish_evaluation( true, true, false, 'resolver_readiness_exception' );
 		}
 
 		if ( ! $this->valid_readiness_snapshot( $source ) ) {
-			return $this->resolver_state( true, true, false, 'resolver_readiness_invalid' );
+			return $this->finish_evaluation( true, true, false, 'resolver_readiness_invalid' );
 		}
 		if ( ! $source['available'] ) {
-			return $this->resolver_state( true, true, false, 'resolver_unavailable' );
+			return $this->finish_evaluation( true, true, false, 'resolver_unavailable' );
 		}
 		if ( true !== $declared_ready || ! $source['ready'] ) {
-			return $this->resolver_state( true, true, false, 'resolver_not_ready' );
+			return $this->finish_evaluation( true, true, false, 'resolver_not_ready' );
 		}
-		return $this->resolver_state( true, true, true, 'ready' );
+		return $this->finish_evaluation( true, true, true, 'ready' );
 	}
 
 	private function valid_readiness_snapshot( $source ): bool {
@@ -101,7 +128,22 @@ final class SPDB_Collections_Service_Readiness_Gate {
 		) {
 			return false;
 		}
-		return $source['available'] || ! $source['ready'];
+		if ( ! $source['available'] && $source['ready'] ) {
+			return false;
+		}
+		if ( $source['ready'] && 'ready' !== $source['code'] ) {
+			return false;
+		}
+		if ( ! $source['ready'] && 'ready' === $source['code'] ) {
+			return false;
+		}
+		return true;
+	}
+
+	/** @return array{available:bool,readiness_available:bool,ready:bool,code:string} */
+	private function finish_evaluation( bool $available, bool $readiness_available, bool $ready, string $code ): array {
+		$this->evaluating = false;
+		return $this->resolver_state( $available, $readiness_available, $ready, $code );
 	}
 
 	/** @return array{available:bool,readiness_available:bool,ready:bool,code:string} */
