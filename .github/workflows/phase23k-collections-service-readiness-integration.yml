@@ -22,21 +22,29 @@ jobs:
         php: ['8.0', '8.1', '8.2', '8.3']
     env:
       EXPECTED_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      EXPECTED_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
     steps:
       - name: Checkout exact source head
         uses: actions/checkout@v5
         with:
           ref: ${{ env.EXPECTED_SHA }}
+          fetch-depth: 0
           persist-credentials: false
 
-      - name: Verify exact checked head
+      - name: Verify exact head and stacked ancestry
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p qa-evidence
           actual_sha="$(git rev-parse HEAD)"
           test "$actual_sha" = "$EXPECTED_SHA"
-          printf 'expected_sha=%s\nactual_sha=%s\nrun_id=%s\nphp=%s\n' "$EXPECTED_SHA" "$actual_sha" "$GITHUB_RUN_ID" "${{ matrix.php }}" > "qa-evidence/phase23k-context-php-${{ matrix.php }}.txt"
+          if [ -n "$EXPECTED_BASE_SHA" ]; then
+            git cat-file -e "${EXPECTED_BASE_SHA}^{commit}"
+            git merge-base --is-ancestor "$EXPECTED_BASE_SHA" "$EXPECTED_SHA"
+          fi
+          printf 'expected_sha=%s\nactual_sha=%s\nexpected_base_sha=%s\nrun_id=%s\nphp=%s\n' \
+            "$EXPECTED_SHA" "$actual_sha" "$EXPECTED_BASE_SHA" "$GITHUB_RUN_ID" "${{ matrix.php }}" \
+            > "qa-evidence/phase23k-context-php-${{ matrix.php }}.txt"
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -52,97 +60,133 @@ jobs:
             .github/workflows/phase23k-collections-service-readiness-integration.yml
             docs/AUDIT-PHASE-23K-COLLECTIONS-SERVICE-READINESS-INTEGRATION-2026-07-31.md
             includes/class-spdb-adapter-registry.php
+            includes/interface-spdb-native-reference-resolver.php
             includes/interface-spdb-native-reference-readiness.php
+            includes/interface-spdb-collections-repository.php
+            includes/class-spdb-collections-schema.php
+            includes/class-spdb-wp-collections-repository.php
             includes/class-spdb-collections-service-readiness-gate.php
             includes/class-spdb-collections-service-readiness-integration.php
             includes/class-spdb-collections-service.php
             includes/class-spdb-plugin.php
+            tests/phase23h-readiness-bridge-tests.php
+            tests/phase23i-registry-readiness-tests.php
             tests/phase23j-collections-service-readiness-tests.php
             tests/phase23k-collections-service-readiness-integration-tests.php
-            tests/phase23k-readiness-snapshot-short-circuit-tests.php
-            tests/phase23k-readiness-input-validation-tests.php
+            tests/architecture-guard.php
           )
-          for file in "${required[@]}"; do test -s "$file" || { echo "Missing or empty: $file"; exit 1; }; done
+          for file in "${required[@]}"; do
+            test -s "$file" || { echo "Missing or empty: $file"; exit 1; }
+          done
 
       - name: PHP syntax check
         shell: bash
         run: |
           set -euo pipefail
-          php -l includes/class-spdb-adapter-registry.php
+          php -l includes/interface-spdb-native-reference-resolver.php
           php -l includes/interface-spdb-native-reference-readiness.php
+          php -l includes/interface-spdb-collections-repository.php
+          php -l includes/class-spdb-collections-schema.php
+          php -l includes/class-spdb-wp-collections-repository.php
           php -l includes/class-spdb-collections-service-readiness-gate.php
           php -l includes/class-spdb-collections-service-readiness-integration.php
           php -l includes/class-spdb-collections-service.php
           php -l includes/class-spdb-plugin.php
+          php -l tests/phase23h-readiness-bridge-tests.php
+          php -l tests/phase23i-registry-readiness-tests.php
           php -l tests/phase23j-collections-service-readiness-tests.php
           php -l tests/phase23k-collections-service-readiness-integration-tests.php
-          php -l tests/phase23k-readiness-snapshot-short-circuit-tests.php
-          php -l tests/phase23k-readiness-input-validation-tests.php
+          php -l tests/architecture-guard.php
 
-      - name: Run Phase 23K corrective integration tests
+      - name: Run corrected Phase 23K integration tests
         shell: bash
-        run: php -d display_errors=1 -d error_reporting=E_ALL tests/phase23k-collections-service-readiness-integration-tests.php | tee "qa-evidence/phase23k-tests-php-${{ matrix.php }}.log"
-
-      - name: Run Phase 23K snapshot short-circuit regression
-        shell: bash
-        run: php -d display_errors=1 -d error_reporting=E_ALL tests/phase23k-readiness-snapshot-short-circuit-tests.php | tee -a "qa-evidence/phase23k-tests-php-${{ matrix.php }}.log"
-
-      - name: Run Phase 23K authority input validation regression
-        shell: bash
-        run: php -d display_errors=1 -d error_reporting=E_ALL tests/phase23k-readiness-input-validation-tests.php | tee -a "qa-evidence/phase23k-tests-php-${{ matrix.php }}.log"
+        run: |
+          set -o pipefail
+          php -d display_errors=1 -d error_reporting=E_ALL tests/phase23k-collections-service-readiness-integration-tests.php \
+            | tee "qa-evidence/phase23k-tests-php-${{ matrix.php }}.log"
 
       - name: Run Phase 23J gate regression
         shell: bash
-        run: php -d display_errors=1 -d error_reporting=E_ALL tests/phase23j-collections-service-readiness-tests.php | tee -a "qa-evidence/phase23k-tests-php-${{ matrix.php }}.log"
+        run: |
+          set -o pipefail
+          php -d display_errors=1 -d error_reporting=E_ALL tests/phase23j-collections-service-readiness-tests.php \
+            | tee -a "qa-evidence/phase23k-tests-php-${{ matrix.php }}.log"
+
+      - name: Run Phase 23I conformance regression
+        shell: bash
+        run: |
+          set -o pipefail
+          php -d display_errors=1 -d error_reporting=E_ALL tests/phase23i-registry-readiness-tests.php \
+            | tee -a "qa-evidence/phase23k-tests-php-${{ matrix.php }}.log"
+
+      - name: Run Phase 23H bridge regression
+        shell: bash
+        run: |
+          set -o pipefail
+          php -d display_errors=1 -d error_reporting=E_ALL tests/phase23h-readiness-bridge-tests.php \
+            | tee -a "qa-evidence/phase23k-tests-php-${{ matrix.php }}.log"
 
       - name: Run architecture guard
         shell: bash
-        run: php -d display_errors=1 -d error_reporting=E_ALL tests/architecture-guard.php | tee -a "qa-evidence/phase23k-tests-php-${{ matrix.php }}.log"
+        run: |
+          set -o pipefail
+          php -d display_errors=1 -d error_reporting=E_ALL tests/architecture-guard.php \
+            | tee -a "qa-evidence/phase23k-tests-php-${{ matrix.php }}.log"
 
       - name: Verify bounded integration and no runtime wiring
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'final class SPDB_Collections_Service_Readiness_Integration' includes/class-spdb-collections-service-readiness-integration.php
-          grep -q 'require_collection_write_ready' includes/class-spdb-collections-service-readiness-integration.php
-          grep -q 'require_knowledge_write_ready' includes/class-spdb-collections-service-readiness-integration.php
-          grep -q 'require_writes_configured' includes/class-spdb-collections-service-readiness-integration.php
-          grep -q 'valid_authority_inputs' includes/class-spdb-collections-service-readiness-integration.php
-          grep -q 'integration_input_invalid' includes/class-spdb-collections-service-readiness-integration.php
-          grep -q "database_ready" includes/class-spdb-collections-service-readiness-integration.php
-          grep -q 'repository_health_invalid' includes/class-spdb-collections-service-readiness-integration.php
-          grep -q 'repository_not_ready' includes/class-spdb-collections-service-readiness-integration.php
-          grep -q 'resolver_not_evaluated_state' includes/class-spdb-collections-service-readiness-gate.php
-          ! grep -Eq 'function (snapshot|require_collection_write_ready|require_knowledge_write_ready)\( bool ' includes/class-spdb-collections-service-readiness-integration.php
+          source=includes/class-spdb-collections-service-readiness-integration.php
+          grep -q 'final class SPDB_Collections_Service_Readiness_Integration' "$source"
+          grep -q 'HEALTH_KEYS' "$source"
+          grep -q "'database_ready'" "$source"
+          grep -q "'schema_version'" "$source"
+          grep -q "'cached_for_request'" "$source"
+          grep -q 'current_schema_version' "$source"
+          grep -q 'valid_authority_inputs' "$source"
+          grep -q 'valid_gate_projection' "$source"
+          grep -q 'integration_input_invalid' "$source"
+          grep -q 'repository_not_evaluated' "$source"
+          grep -q 'gate_state_invalid' "$source"
+          grep -q 'require_collection_write_ready' "$source"
+          grep -q 'require_knowledge_write_ready' "$source"
+          ! grep -Eq 'function (snapshot|require_collection_write_ready|require_knowledge_write_ready)\( bool ' "$source"
           ! grep -q 'class-spdb-collections-service-readiness-integration.php' includes/class-spdb-plugin.php
           ! grep -q 'SPDB_Collections_Service_Readiness_Integration' includes/class-spdb-collections-service.php
-          ! grep -Eq 'register_rest_route\s*\(|WP_REST_Server::(CREATABLE|EDITABLE|DELETABLE)|\b(?:POST|PUT|PATCH|DELETE)\b' includes/class-spdb-collections-service-readiness-integration.php
-          ! grep -Eq '\b(?:wp_insert_post|wp_update_post|wp_delete_post|add_option|update_option|delete_option|add_user_meta|update_user_meta|delete_user_meta|add_post_meta|update_post_meta|delete_post_meta|set_transient|delete_transient|file_put_contents|fopen|fwrite)\s*\(' includes/class-spdb-collections-service-readiness-integration.php
-          ! grep -Eq '(->|::)(insert|update|delete|query)\s*\(' includes/class-spdb-collections-service-readiness-integration.php
-          grep -q "missing database readiness" tests/phase23k-collections-service-readiness-integration-tests.php
-          grep -q "write-disable gate must precede" tests/phase23k-collections-service-readiness-integration-tests.php
-          grep -q "must not evaluate resolver readiness" tests/phase23k-readiness-snapshot-short-circuit-tests.php
-          grep -q "weakly coercible" tests/phase23k-readiness-input-validation-tests.php
+          ! grep -Eq 'register_rest_route\s*\(|WP_REST_Server::(CREATABLE|EDITABLE|DELETABLE)|\b(?:POST|PUT|PATCH|DELETE)\b' "$source"
+          ! grep -Eq '\b(?:wp_insert_post|wp_update_post|wp_delete_post|add_option|update_option|delete_option|add_user_meta|update_user_meta|delete_user_meta|add_post_meta|update_post_meta|delete_post_meta|set_transient|delete_transient|file_put_contents|fopen|fwrite)\s*\(' "$source"
+          ! grep -Eq '(->|::)(insert|update|delete|query|resolve_reference)\s*\(' "$source"
+          grep -q 'weakly coercible' tests/phase23k-collections-service-readiness-integration-tests.php
+          grep -q 'Unknown repository-health fields' tests/phase23k-collections-service-readiness-integration-tests.php
+          grep -q 'stale schema version' tests/phase23k-collections-service-readiness-integration-tests.php
+          grep -q 'zero native-resolution' docs/AUDIT-PHASE-23K-COLLECTIONS-SERVICE-READINESS-INTEGRATION-2026-07-31.md || \
+            grep -q 'never call native reference resolution' docs/AUDIT-PHASE-23K-COLLECTIONS-SERVICE-READINESS-INTEGRATION-2026-07-31.md
           grep -qi 'DO NOT MERGE' docs/AUDIT-PHASE-23K-COLLECTIONS-SERVICE-READINESS-INTEGRATION-2026-07-31.md
 
-      - name: Record source checksums
+      - name: Record exact-source checksums
         if: always()
         shell: bash
         run: |
           set -euo pipefail
           sha256sum \
             .github/workflows/phase23k-collections-service-readiness-integration.yml \
+            docs/AUDIT-PHASE-23K-COLLECTIONS-SERVICE-READINESS-INTEGRATION-2026-07-31.md \
             includes/class-spdb-adapter-registry.php \
+            includes/interface-spdb-native-reference-resolver.php \
             includes/interface-spdb-native-reference-readiness.php \
+            includes/interface-spdb-collections-repository.php \
+            includes/class-spdb-collections-schema.php \
+            includes/class-spdb-wp-collections-repository.php \
             includes/class-spdb-collections-service-readiness-gate.php \
             includes/class-spdb-collections-service-readiness-integration.php \
             includes/class-spdb-collections-service.php \
             includes/class-spdb-plugin.php \
+            tests/phase23h-readiness-bridge-tests.php \
+            tests/phase23i-registry-readiness-tests.php \
             tests/phase23j-collections-service-readiness-tests.php \
             tests/phase23k-collections-service-readiness-integration-tests.php \
-            tests/phase23k-readiness-snapshot-short-circuit-tests.php \
-            tests/phase23k-readiness-input-validation-tests.php \
-            docs/AUDIT-PHASE-23K-COLLECTIONS-SERVICE-READINESS-INTEGRATION-2026-07-31.md \
+            tests/architecture-guard.php \
             > "qa-evidence/phase23k-checksums-php-${{ matrix.php }}.sha256"
 
       - name: Upload Phase 23K QA evidence
