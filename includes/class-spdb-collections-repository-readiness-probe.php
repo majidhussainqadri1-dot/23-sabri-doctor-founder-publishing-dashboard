@@ -33,10 +33,25 @@ final class SPDB_Collections_Repository_Readiness_Probe {
 			return $this->read_integration->snapshot( $writes_configured, false, array() );
 		}
 
-		$probe       = $this->probe_repository();
-		$integration = $writes_configured ? $this->integration : $this->read_integration;
-		return $integration->snapshot(
-			$writes_configured,
+		$probe = $this->probe_repository();
+		$read  = $this->read_integration->snapshot(
+			false,
+			$probe['available'],
+			$probe['health']
+		);
+
+		if ( ! $writes_configured ) {
+			return $read;
+		}
+		if ( true !== ( $read['read_ready'] ?? false ) ) {
+			return $this->read_integration->snapshot(
+				true,
+				$probe['available'],
+				$probe['health']
+			);
+		}
+		return $this->integration->snapshot(
+			true,
 			$probe['available'],
 			$probe['health']
 		);
