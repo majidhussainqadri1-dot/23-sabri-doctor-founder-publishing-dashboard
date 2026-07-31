@@ -45,6 +45,8 @@ Phase 23N therefore begins with an isolated `SPDB_Collections_Service_Readiness_
 33. Multiple consumers must remain dependency- and call-isolated.
 34. Existing Phase 23M/L/K/J/I/H and architecture regressions must remain green.
 35. Exact-head CI must prove that the current Phase 23M PR base SHA is an ancestor of the tested Phase 23N head.
+36. The first exact-head run passed every source, primary, adversarial, inherited, and architecture test but failed the deterministic audit marker because the audit used `aggregate reviewed repository readiness` while the guard required the exact phrase `aggregate repository readiness`.
+37. A failed evidence gate cannot be accepted even when executable source tests pass; its head, run, and artifacts are not final evidence.
 
 ## Corrections Applied During Initial Coding Review
 
@@ -54,7 +56,7 @@ Phase 23N therefore begins with an isolated `SPDB_Collections_Service_Readiness_
 - Preserved truthful resolver availability in invalid-input and writes-disabled health without readiness probing.
 - Added exact stable top-level service-health keys.
 - Added exact bounded six-field repository-health projection.
-- Intentionally collapsed database/schema readiness to aggregate reviewed repository readiness because the Phase 23K public projection does not expose private subsystem detail.
+- Intentionally collapsed database/schema readiness to aggregate repository readiness—the reviewed aggregate—because the Phase 23K public projection does not expose private subsystem detail.
 - Added canonical code length/key validation.
 - Added current-or-empty schema-version validation.
 - Added ready-code/current-schema invariants.
@@ -65,6 +67,7 @@ Phase 23N therefore begins with an isolated `SPDB_Collections_Service_Readiness_
 - Added tests for resolver presence without readiness evaluation.
 - Added stale-schema, malformed scalar, contradictory aggregate, noncanonical code, overlong code, write-without-read, and knowledge-without-resolver adversarial tests.
 - Added repository exception recovery, private-detail suppression, degraded-detail reduction, cross-consumer isolation, and zero-native-resolution tests.
+- Corrected the deterministic audit terminology and invalidated the first failed Phase 23N evidence run.
 
 ## Authorized Initial Coding Slice
 
