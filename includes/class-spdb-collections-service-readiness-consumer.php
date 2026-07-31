@@ -1,10 +1,11 @@
 <?php
 /**
- * Map the reviewed Collections readiness probe into the stable service contract.
+ * Map reviewed Collections readiness into the stable service health/gate contract.
  *
- * This consumer is an internal decision adapter. It does not expose the probe,
- * repository, resolver, or service; execute metadata operations; resolve native
- * objects; persist data; register REST routes; or wire the plugin container.
+ * This consumer builds its own gate, integration, and probe from one exact
+ * repository/resolver pair. It stores only resolver presence, exposes no raw
+ * dependency, performs no metadata operation or native resolution, persists no
+ * data, registers no route, and does not wire the plugin container.
  */
 defined( 'ABSPATH' ) || exit;
 
@@ -31,9 +32,14 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 	);
 
 	private SPDB_Collections_Repository_Readiness_Probe $probe;
+	private bool $resolver_available;
 
-	private function __construct( SPDB_Collections_Repository_Readiness_Probe $probe ) {
-		$this->probe = $probe;
+	private function __construct(
+		SPDB_Collections_Repository_Readiness_Probe $probe,
+		bool $resolver_available
+	) {
+		$this->probe              = $probe;
+		$this->resolver_available = $resolver_available;
 	}
 
 	private function __clone() {}
@@ -48,8 +54,15 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 		throw new LogicException( 'Collections service readiness consumers cannot be unserialized.' );
 	}
 
-	public static function create( SPDB_Collections_Repository_Readiness_Probe $probe ): self {
-		return new self( $probe );
+	public static function create(
+		?SPDB_Collections_Repository $repository,
+		?SPDB_Native_Reference_Resolver $resolver
+	): self {
+		$gate        = new SPDB_Collections_Service_Readiness_Gate( $resolver );
+		$integration = new SPDB_Collections_Service_Readiness_Integration( $gate );
+		$probe       = new SPDB_Collections_Repository_Readiness_Probe( $repository, $integration );
+
+		return new self( $probe, null !== $resolver );
 	}
 
 	/** @param mixed $writes_configured @return array<string,mixed> */
@@ -59,7 +72,7 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 		$repository_ready = true === ( $snapshot['repository_ready'] ?? false );
 		$health = array(
 			'repository_available'   => true === ( $snapshot['repository_available'] ?? false ),
-			'resolver_available'     => true === ( $snapshot['resolver_available'] ?? false ),
+			'resolver_available'     => $this->resolver_available,
 			'read_ready'             => true === ( $snapshot['read_ready'] ?? false ),
 			'write_configured'       => true === ( $snapshot['write_configured'] ?? false ),
 			'collection_write_ready' => true === ( $snapshot['collection_write_ready'] ?? false ),
@@ -146,6 +159,7 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 			&& $health['any_write_ready'] === ( $health['collection_write_ready'] || $health['knowledge_write_ready'] )
 			&& $health['write_enabled'] === $health['any_write_ready']
 			&& ( ! $health['knowledge_write_ready'] || $health['collection_write_ready'] )
+			&& ( ! $health['knowledge_write_ready'] || $health['resolver_available'] )
 			&& ( $health['write_configured'] || ! $health['any_write_ready'] );
 	}
 
@@ -153,7 +167,7 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 	private function invalid_health(): array {
 		return array(
 			'repository_available'   => false,
-			'resolver_available'     => false,
+			'resolver_available'     => $this->resolver_available,
 			'read_ready'             => false,
 			'write_configured'       => false,
 			'collection_write_ready' => false,
