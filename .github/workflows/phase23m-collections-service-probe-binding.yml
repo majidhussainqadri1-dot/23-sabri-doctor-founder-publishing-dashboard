@@ -101,7 +101,7 @@ jobs:
           php -l tests/phase23m-collections-service-probe-binding-tests.php
           php -l tests/architecture-guard.php
 
-      - name: Run initial Phase 23M binding tests
+      - name: Run corrected Phase 23M binding tests
         shell: bash
         run: |
           set -o pipefail
@@ -150,7 +150,7 @@ jobs:
           php -d display_errors=1 -d error_reporting=E_ALL tests/architecture-guard.php \
             | tee -a "qa-evidence/phase23m-tests-php-${{ matrix.php }}.log"
 
-      - name: Verify private binding and no runtime wiring
+      - name: Verify closed binding and no runtime wiring
         shell: bash
         run: |
           set -euo pipefail
@@ -168,6 +168,9 @@ jobs:
           foreach ( array(
               'final class SPDB_Collections_Service_Probe_Binding',
               'private function __construct',
+              'private function __clone',
+              'public function __serialize',
+              'public function __unserialize',
               'public static function create',
               'new SPDB_Collections_Service',
               'new SPDB_Collections_Service_Readiness_Gate',
@@ -183,11 +186,14 @@ jobs:
           foreach ( array( 'set_repository', 'set_resolver', 'set_probe', 'set_integration' ) as $forbidden ) {
               if ( false !== strpos( $source, $forbidden ) ) { $fail( "Dependency replacement method present: {$forbidden}" ); }
           }
+          if ( preg_match( '/public\s+function\s+service\s*\(/', $source ) || false !== strpos( $source, 'return $this->service;' ) ) {
+              $fail( 'Raw legacy Collections service exposure is forbidden before service-side probe consumption.' );
+          }
           if ( false !== strpos( $plugin, 'class-spdb-collections-service-probe-binding.php' ) ) {
               $fail( 'Plugin binding wiring is not authorized.' );
           }
           if ( false !== strpos( $service, 'SPDB_Collections_Service_Probe_Binding' ) ) {
-              $fail( 'Collections service consumption is not authorized in the initial binding slice.' );
+              $fail( 'Collections service consumption is not authorized in the binding slice.' );
           }
           foreach ( array(
               'register_rest_route(',
@@ -206,16 +212,29 @@ jobs:
               if ( false !== strpos( $source, $forbidden ) ) { $fail( "Forbidden binding operation: {$forbidden}" ); }
           }
           foreach ( array(
-              'constructor must remain private',
-              'must not expose dependency replacement methods',
-              'each readiness source once and never resolve a native object',
-              'recover after repository failure',
+              'must not expose the raw legacy Collections service',
+              'private service must retain the exact repository object',
+              'private readiness gate must retain the same exact resolver object',
+              'binding must reject cloning',
+              'binding must reject serialization',
+              'formal readiness contract must fail closed',
+              'second binding must not touch the first binding dependency pair',
+              'never resolve a native object',
           ) as $needle ) {
               if ( false === stripos( $tests, $needle ) ) { $fail( "Missing executable evidence marker: {$needle}" ); }
           }
-          if ( false === stripos( $audit, 'DO NOT MERGE' ) ) { $fail( 'Audit merge gate is missing.' ); }
-          if ( false === stripos( $audit, 'must not resolve native references' ) ) { $fail( 'Audit native-resolution boundary is missing.' ); }
-          echo "Phase 23M static boundaries passed.\n";
+          foreach ( array(
+              'DO NOT MERGE',
+              'raw service',
+              'non-clonable',
+              'non-serializable',
+              'exact object identity',
+              'missing readiness contract',
+              'cross-binding isolation',
+          ) as $needle ) {
+              if ( false === stripos( $audit, $needle ) ) { $fail( "Missing audit marker: {$needle}" ); }
+          }
+          echo "Phase 23M corrected static boundaries passed.\n";
           PHP
 
       - name: Record exact-source checksums
