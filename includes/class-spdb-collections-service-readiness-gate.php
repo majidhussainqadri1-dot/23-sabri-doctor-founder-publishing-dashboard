@@ -15,7 +15,14 @@ final class SPDB_Collections_Service_Readiness_Gate {
 	}
 
 	/**
+	 * Scalar authority inputs are intentionally validated at runtime instead of
+	 * relying on weak PHP scalar coercion.
+	 *
+	 * @param mixed $writes_configured
+	 * @param mixed $repository_ready
 	 * @return array{
+	 *   inputs_valid:bool,
+	 *   gate_code:string,
 	 *   resolver_available:bool,
 	 *   resolver_readiness_available:bool,
 	 *   resolver_ready:bool,
@@ -25,12 +32,33 @@ final class SPDB_Collections_Service_Readiness_Gate {
 	 *   any_write_ready:bool
 	 * }
 	 */
-	public function snapshot( bool $writes_configured, bool $repository_ready ): array {
+	public function snapshot( $writes_configured, $repository_ready ): array {
+		if ( ! $this->valid_gate_inputs( $writes_configured, $repository_ready ) ) {
+			return array(
+				'inputs_valid'                 => false,
+				'gate_code'                    => 'gate_input_invalid',
+				'resolver_available'           => null !== $this->resolver,
+				'resolver_readiness_available' => null !== $this->readiness,
+				'resolver_ready'               => false,
+				'resolver_code'                => 'resolver_not_evaluated',
+				'collection_write_ready'       => false,
+				'knowledge_write_ready'        => false,
+				'any_write_ready'              => false,
+			);
+		}
+
 		$resolver               = $this->resolver_snapshot();
 		$collection_write_ready = $writes_configured && $repository_ready;
 		$knowledge_write_ready  = $collection_write_ready && $resolver['ready'];
+		$gate_code              = ! $writes_configured
+			? 'writes_disabled'
+			: ( ! $repository_ready
+				? 'repository_not_ready'
+				: ( $knowledge_write_ready ? 'knowledge_ready' : 'collection_ready' ) );
 
 		return array(
+			'inputs_valid'                 => true,
+			'gate_code'                    => $gate_code,
 			'resolver_available'           => $resolver['available'],
 			'resolver_readiness_available' => $resolver['readiness_available'],
 			'resolver_ready'               => $resolver['ready'],
@@ -41,8 +69,15 @@ final class SPDB_Collections_Service_Readiness_Gate {
 		);
 	}
 
-	/** @return true|WP_Error */
-	public function require_collection_write_ready( bool $writes_configured, bool $repository_ready ) {
+	/**
+	 * @param mixed $writes_configured
+	 * @param mixed $repository_ready
+	 * @return true|WP_Error
+	 */
+	public function require_collection_write_ready( $writes_configured, $repository_ready ) {
+		if ( ! $this->valid_gate_inputs( $writes_configured, $repository_ready ) ) {
+			return $this->error( 'spdb_collections_readiness_input_invalid', 'The collection readiness authority inputs are invalid.' );
+		}
 		if ( ! $writes_configured ) {
 			return $this->error( 'spdb_collections_writes_disabled', 'Collection metadata writes remain disabled until reviewed staging acceptance.' );
 		}
@@ -52,8 +87,12 @@ final class SPDB_Collections_Service_Readiness_Gate {
 		return true;
 	}
 
-	/** @return true|WP_Error */
-	public function require_knowledge_write_ready( bool $writes_configured, bool $repository_ready ) {
+	/**
+	 * @param mixed $writes_configured
+	 * @param mixed $repository_ready
+	 * @return true|WP_Error
+	 */
+	public function require_knowledge_write_ready( $writes_configured, $repository_ready ) {
 		$collection = $this->require_collection_write_ready( $writes_configured, $repository_ready );
 		if ( is_wp_error( $collection ) ) {
 			return $collection;
@@ -98,20 +137,22 @@ final class SPDB_Collections_Service_Readiness_Gate {
 		try {
 			$declared_ready = $this->readiness->is_ready();
 			$source         = $this->readiness->readiness_snapshot();
-		} catch ( Throwable $throwable ) {
-			return $this->finish_evaluation( true, true, false, 'resolver_readiness_exception' );
-		}
 
-		if ( ! $this->valid_readiness_snapshot( $source ) ) {
-			return $this->finish_evaluation( true, true, false, 'resolver_readiness_invalid' );
+			if ( ! $this->valid_readiness_snapshot( $source ) ) {
+				return $this->resolver_state( true, true, false, 'resolver_readiness_invalid' );
+			}
+			if ( ! $source['available'] ) {
+				return $this->resolver_state( true, true, false, 'resolver_unavailable' );
+			}
+			if ( true !== $declared_ready || ! $source['ready'] ) {
+				return $this->resolver_state( true, true, false, 'resolver_not_ready' );
+			}
+			return $this->resolver_state( true, true, true, 'ready' );
+		} catch ( Throwable $throwable ) {
+			return $this->resolver_state( true, true, false, 'resolver_readiness_exception' );
+		} finally {
+			$this->evaluating = false;
 		}
-		if ( ! $source['available'] ) {
-			return $this->finish_evaluation( true, true, false, 'resolver_unavailable' );
-		}
-		if ( true !== $declared_ready || ! $source['ready'] ) {
-			return $this->finish_evaluation( true, true, false, 'resolver_not_ready' );
-		}
-		return $this->finish_evaluation( true, true, true, 'ready' );
 	}
 
 	private function valid_readiness_snapshot( $source ): bool {
@@ -140,10 +181,8 @@ final class SPDB_Collections_Service_Readiness_Gate {
 		return true;
 	}
 
-	/** @return array{available:bool,readiness_available:bool,ready:bool,code:string} */
-	private function finish_evaluation( bool $available, bool $readiness_available, bool $ready, string $code ): array {
-		$this->evaluating = false;
-		return $this->resolver_state( $available, $readiness_available, $ready, $code );
+	private function valid_gate_inputs( $writes_configured, $repository_ready ): bool {
+		return is_bool( $writes_configured ) && is_bool( $repository_ready );
 	}
 
 	/** @return array{available:bool,readiness_available:bool,ready:bool,code:string} */
