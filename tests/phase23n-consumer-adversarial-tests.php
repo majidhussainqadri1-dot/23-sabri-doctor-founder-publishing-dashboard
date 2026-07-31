@@ -192,14 +192,27 @@ spdb_23n_adv_assert( true === $raw_validator->invoke( $consumer, $collection_onl
 
 $unknown_repository = spdb_23n_adv_snapshot( array( 'repository_code' => 'database_table_missing' ) );
 spdb_23n_adv_assert( false === $raw_validator->invoke( $consumer, $unknown_repository ), 'Unknown canonical repository code must be rejected.' );
+$noncanonical_repository = spdb_23n_adv_snapshot( array( 'repository_code' => 'READY' ) );
+spdb_23n_adv_assert( false === $raw_validator->invoke( $consumer, $noncanonical_repository ), 'A noncanonical repository code must be rejected.' );
+$overlong_repository = spdb_23n_adv_snapshot( array( 'repository_code' => str_repeat( 'a', 65 ) ) );
+spdb_23n_adv_assert( false === $raw_validator->invoke( $consumer, $overlong_repository ), 'An overlong repository code must be rejected.' );
 $unknown_resolver = spdb_23n_adv_snapshot( array( 'resolver_code' => 'provider_custom_ready' ) );
 spdb_23n_adv_assert( false === $raw_validator->invoke( $consumer, $unknown_resolver ), 'Unknown canonical resolver code must be rejected.' );
 $unknown_integration = spdb_23n_adv_snapshot( array( 'integration_code' => 'custom_ready' ) );
 spdb_23n_adv_assert( false === $raw_validator->invoke( $consumer, $unknown_integration ), 'Unknown canonical integration code must be rejected.' );
 $wrong_code_state = spdb_23n_adv_snapshot( array( 'repository_code' => 'repository_not_ready' ) );
 spdb_23n_adv_assert( false === $raw_validator->invoke( $consumer, $wrong_code_state ), 'Repository code and readiness state must remain inseparable.' );
+$write_without_read = spdb_23n_adv_snapshot( array( 'repository_ready' => false, 'read_ready' => false ) );
+spdb_23n_adv_assert( false === $raw_validator->invoke( $consumer, $write_without_read ), 'A write-ready state without repository read readiness must fail closed.' );
 $forged_knowledge = spdb_23n_adv_snapshot( array( 'resolver_readiness_available' => false ) );
 spdb_23n_adv_assert( false === $raw_validator->invoke( $consumer, $forged_knowledge ), 'Knowledge readiness without formal readiness capability must fail closed.' );
+$knowledge_without_resolver_availability = spdb_23n_adv_snapshot( array(
+	'resolver_available' => false,
+	'resolver_readiness_available' => false,
+	'resolver_ready' => false,
+	'resolver_code' => 'resolver_absent',
+) );
+spdb_23n_adv_assert( false === $raw_validator->invoke( $consumer, $knowledge_without_resolver_availability ), 'Knowledge readiness without resolver availability must fail closed.' );
 
 $valid_public = spdb_23n_adv_service_health();
 spdb_23n_adv_assert( true === $public_validator->invoke( $consumer, $valid_public ), 'Exact canonical ready public health must validate.' );
