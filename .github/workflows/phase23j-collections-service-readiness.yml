@@ -75,7 +75,7 @@ jobs:
           php -l tests/phase23i-registry-readiness-tests.php
           php -l tests/phase23j-collections-service-readiness-tests.php
 
-      - name: Run Phase 23J service readiness tests
+      - name: Run third-corrective Phase 23J service readiness tests
         shell: bash
         run: set -o pipefail; php tests/phase23j-collections-service-readiness-tests.php | tee "qa-evidence/phase23j-tests-php-${{ matrix.php }}.log"
 
@@ -98,12 +98,18 @@ jobs:
           grep -q 'final class SPDB_Collections_Service_Readiness_Gate' includes/class-spdb-collections-service-readiness-gate.php
           grep -q 'require_collection_write_ready' includes/class-spdb-collections-service-readiness-gate.php
           grep -q 'require_knowledge_write_ready' includes/class-spdb-collections-service-readiness-gate.php
+          grep -q 'valid_gate_inputs' includes/class-spdb-collections-service-readiness-gate.php
+          grep -q "'inputs_valid'" includes/class-spdb-collections-service-readiness-gate.php
+          grep -q 'gate_input_invalid' includes/class-spdb-collections-service-readiness-gate.php
+          grep -q 'resolver_not_evaluated' includes/class-spdb-collections-service-readiness-gate.php
           grep -q 'resolver_readiness_available' includes/class-spdb-collections-service-readiness-gate.php
           grep -q 'resolver_readiness_invalid' includes/class-spdb-collections-service-readiness-gate.php
           grep -q 'resolver_readiness_exception' includes/class-spdb-collections-service-readiness-gate.php
           grep -q 'resolver_readiness_reentrant' includes/class-spdb-collections-service-readiness-gate.php
           grep -q "'ready' !== \$source\['code'\]" includes/class-spdb-collections-service-readiness-gate.php
           grep -q "'ready' === \$source\['code'\]" includes/class-spdb-collections-service-readiness-gate.php
+          grep -q 'finally' includes/class-spdb-collections-service-readiness-gate.php
+          ! grep -Eq 'function (snapshot|require_collection_write_ready|require_knowledge_write_ready)\( bool ' includes/class-spdb-collections-service-readiness-gate.php
           ! grep -q 'class-spdb-collections-service-readiness-gate.php' includes/class-spdb-plugin.php
           ! grep -q 'SPDB_Collections_Service_Readiness_Gate' includes/class-spdb-collections-service.php
           ! grep -Eq 'register_rest_route\s*\(|WP_REST_Server::(CREATABLE|EDITABLE|DELETABLE)|\b(?:POST|PUT|PATCH|DELETE)\b' includes/class-spdb-collections-service-readiness-gate.php
