@@ -12,7 +12,6 @@ defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Collections_Service_Readiness_Consumer {
 	private const MAX_CODE_LENGTH = 64;
-
 	private const HEALTH_KEYS = array(
 		'repository_available', 'resolver_available', 'read_ready', 'write_configured',
 		'collection_write_ready', 'knowledge_write_ready', 'any_write_ready',
@@ -92,7 +91,6 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 	public function health( $writes_configured ): array {
 		$snapshot = $this->validated_snapshot( $writes_configured, false );
 		if ( null === $snapshot ) { return $this->invalid_health(); }
-
 		$repository_ready = $snapshot['repository_ready'];
 		$health = array(
 			'repository_available'   => $snapshot['repository_available'],
@@ -104,8 +102,7 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 			'any_write_ready'        => $snapshot['any_write_ready'],
 			'write_enabled'          => $snapshot['write_enabled'],
 			'repository_health'      => array(
-				'healthy' => $repository_ready,
-				'database_ready' => $repository_ready,
+				'healthy' => $repository_ready, 'database_ready' => $repository_ready,
 				'schema_ready' => $repository_ready,
 				'schema_version' => $snapshot['repository_schema_version'],
 				'code' => $snapshot['repository_code'],
@@ -129,15 +126,11 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 		if ( ! $writes_configured ) {
 			return $this->error( 'spdb_collections_writes_disabled', 'Collection metadata writes remain disabled until reviewed staging acceptance.' );
 		}
-
 		$snapshot = $this->validated_snapshot( true, ! $requires_resolver );
 		if ( null === $snapshot ) { return $this->projection_error(); }
 		$repository = $this->require_repository_ready( $snapshot );
 		if ( is_wp_error( $repository ) ) { return $repository; }
-
-		if ( ! $requires_resolver ) {
-			return $snapshot['collection_write_ready'] ? true : $this->projection_error();
-		}
+		if ( ! $requires_resolver ) { return $snapshot['collection_write_ready'] ? true : $this->projection_error(); }
 		if ( $snapshot['knowledge_write_ready'] ) { return true; }
 		return $this->resolver_error( $snapshot['resolver_code'] );
 	}
@@ -152,20 +145,16 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 
 	/** @param mixed $snapshot */
 	private function valid_snapshot( $snapshot, bool $collection_only = false ): bool {
-		if ( ! is_array( $snapshot )
-			|| array_diff( array_keys( $snapshot ), self::SNAPSHOT_KEYS )
+		if ( ! is_array( $snapshot ) || array_diff( array_keys( $snapshot ), self::SNAPSHOT_KEYS )
 			|| array_diff( self::SNAPSHOT_KEYS, array_keys( $snapshot ) ) ) { return false; }
-
 		foreach ( array(
-			'inputs_valid', 'repository_available', 'repository_ready',
-			'repository_cached_for_request', 'read_ready', 'write_configured',
-			'resolver_available', 'resolver_readiness_available', 'resolver_ready',
-			'collection_write_ready', 'knowledge_write_ready', 'any_write_ready', 'write_enabled',
+			'inputs_valid', 'repository_available', 'repository_ready', 'repository_cached_for_request',
+			'read_ready', 'write_configured', 'resolver_available', 'resolver_readiness_available',
+			'resolver_ready', 'collection_write_ready', 'knowledge_write_ready', 'any_write_ready', 'write_enabled',
 		) as $key ) { if ( ! is_bool( $snapshot[ $key ] ) ) { return false; } }
 		foreach ( array( 'integration_code', 'repository_code', 'repository_schema_version', 'resolver_code' ) as $key ) {
 			if ( ! is_string( $snapshot[ $key ] ) ) { return false; }
 		}
-
 		if ( ! in_array( $snapshot['integration_code'], self::INTEGRATION_CODES, true )
 			|| ! in_array( $snapshot['repository_code'], self::REPOSITORY_CODES, true )
 			|| ! in_array( $snapshot['resolver_code'], self::RESOLVER_CODES, true )
@@ -209,10 +198,8 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 					&& 'ready' === $snapshot['repository_code']
 					&& $snapshot['collection_write_ready'] && ! $snapshot['knowledge_write_ready']
 					&& $snapshot['any_write_ready'];
-				return $collection_only
-					? $base && $this->resolver_suppressed( $snapshot )
-					: $base
-						&& $snapshot['resolver_available'] === $this->resolver_available
+				return $collection_only ? $base && $this->resolver_suppressed( $snapshot )
+					: $base && $snapshot['resolver_available'] === $this->resolver_available
 						&& $snapshot['resolver_readiness_available'] === $this->resolver_readiness_available;
 			case 'knowledge_ready':
 				return ! $collection_only && $snapshot['inputs_valid'] && $snapshot['write_configured']
@@ -222,13 +209,13 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 					&& $snapshot['resolver_available'] === $this->resolver_available
 					&& $snapshot['resolver_readiness_available'] === $this->resolver_readiness_available
 					&& $this->resolver_available && $this->resolver_readiness_available;
-			default:
-				return false;
+			default: return false;
 		}
 	}
 
 	/** @param array<string,mixed> $snapshot */
 	private function valid_repository_snapshot_state( array $snapshot ): bool {
+		if ( ! $this->valid_schema_version( $snapshot['repository_schema_version'] ) ) { return false; }
 		switch ( $snapshot['repository_code'] ) {
 			case 'repository_not_evaluated':
 			case 'repository_unavailable':
@@ -262,8 +249,7 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 			case 'resolver_readiness_exception':
 			case 'resolver_readiness_reentrant':
 				return $snapshot['resolver_available'] && $snapshot['resolver_readiness_available'] && ! $snapshot['resolver_ready'];
-			case 'ready':
-				return $snapshot['resolver_available'] && $snapshot['resolver_readiness_available'] && $snapshot['resolver_ready'];
+			case 'ready': return $snapshot['resolver_available'] && $snapshot['resolver_readiness_available'] && $snapshot['resolver_ready'];
 			default: return false;
 		}
 	}
@@ -293,28 +279,20 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 			'collection_write_ready', 'knowledge_write_ready', 'any_write_ready', 'write_enabled' ) as $key ) {
 			if ( ! is_bool( $health[ $key ] ) ) { return false; }
 		}
-
 		$repository = $health['repository_health'];
 		if ( array_diff( array_keys( $repository ), self::REPOSITORY_HEALTH_KEYS )
 			|| array_diff( self::REPOSITORY_HEALTH_KEYS, array_keys( $repository ) )
-			|| ! is_bool( $repository['healthy'] ?? null )
-			|| ! is_bool( $repository['database_ready'] ?? null )
-			|| ! is_bool( $repository['schema_ready'] ?? null )
-			|| ! is_string( $repository['schema_version'] ?? null )
-			|| ! is_string( $repository['code'] ?? null )
-			|| ! in_array( $repository['code'], self::REPOSITORY_CODES, true )
+			|| ! is_bool( $repository['healthy'] ?? null ) || ! is_bool( $repository['database_ready'] ?? null )
+			|| ! is_bool( $repository['schema_ready'] ?? null ) || ! is_string( $repository['schema_version'] ?? null )
+			|| ! is_string( $repository['code'] ?? null ) || ! in_array( $repository['code'], self::REPOSITORY_CODES, true )
 			|| ! is_bool( $repository['cached_for_request'] ?? null )
 			|| $health['resolver_available'] !== $this->resolver_available ) { return false; }
-
 		$state = array(
-			'repository_available' => $health['repository_available'],
-			'repository_ready' => $repository['healthy'],
-			'repository_code' => $repository['code'],
-			'repository_schema_version' => $repository['schema_version'],
+			'repository_available' => $health['repository_available'], 'repository_ready' => $repository['healthy'],
+			'repository_code' => $repository['code'], 'repository_schema_version' => $repository['schema_version'],
 			'repository_cached_for_request' => $repository['cached_for_request'],
 		);
 		if ( ! $this->valid_repository_snapshot_state( $state ) ) { return false; }
-
 		return $health['read_ready'] === $repository['healthy']
 			&& $repository['healthy'] === $repository['database_ready']
 			&& $repository['healthy'] === $repository['schema_ready']
@@ -353,6 +331,9 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 		}
 	}
 
+	private function valid_schema_version( string $version ): bool {
+		return '' === $version || $this->current_schema_version( $version );
+	}
 	private function current_schema_version( string $version ): bool {
 		return class_exists( 'SPDB_Collections_Schema', false )
 			&& 1 === preg_match( '/^(?:0|[1-9][0-9]*)$/', $version )
@@ -368,8 +349,7 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 			'any_write_ready' => false, 'write_enabled' => false,
 			'repository_health' => array(
 				'healthy' => false, 'database_ready' => false, 'schema_ready' => false,
-				'schema_version' => '', 'code' => 'service_readiness_projection_invalid',
-				'cached_for_request' => false,
+				'schema_version' => '', 'code' => 'service_readiness_projection_invalid', 'cached_for_request' => false,
 			),
 		);
 	}
