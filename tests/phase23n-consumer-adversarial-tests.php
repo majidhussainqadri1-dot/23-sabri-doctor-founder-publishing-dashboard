@@ -1,5 +1,5 @@
 <?php
-/** Adversarial invariant tests for the Phase 23N service readiness consumer. */
+/** Adversarial invariant tests for corrected Phase 23N readiness consumer. */
 require_once __DIR__ . '/bootstrap.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-collections-repository.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-native-reference-readiness.php';
@@ -12,7 +12,7 @@ final class SPDB_23N_Adversarial_Repository implements SPDB_Collections_Reposito
 	/** @var array<string,mixed> */
 	public array $health;
 	public int $health_calls = 0;
-	public function __construct() { $this->health = spdb_23n_adversarial_repository_health(); }
+	public function __construct() { $this->health = spdb_23n_adv_repository_health(); }
 	public function health_check(): array { ++$this->health_calls; return $this->health; }
 	public function list_collections( array $query ) { return array(); }
 	public function get_collection( string $collection_id ) { return array(); }
@@ -43,13 +43,13 @@ final class SPDB_23N_Adversarial_Resolver implements SPDB_Native_Reference_Resol
 
 $tests = 0;
 $failed = 0;
-function spdb_23n_adversarial_assert( bool $condition, string $message ): void {
+function spdb_23n_adv_assert( bool $condition, string $message ): void {
 	global $tests, $failed;
 	++$tests;
 	if ( ! $condition ) { ++$failed; fwrite( STDERR, "FAIL: {$message}\n" ); }
 }
 /** @return array<string,mixed> */
-function spdb_23n_adversarial_repository_health( array $changes = array() ): array {
+function spdb_23n_adv_repository_health( array $changes = array() ): array {
 	return array_merge(
 		array(
 			'healthy' => true,
@@ -63,7 +63,32 @@ function spdb_23n_adversarial_repository_health( array $changes = array() ): arr
 	);
 }
 /** @return array<string,mixed> */
-function spdb_23n_adversarial_service_health( array $changes = array() ): array {
+function spdb_23n_adv_snapshot( array $changes = array() ): array {
+	return array_merge(
+		array(
+			'inputs_valid' => true,
+			'integration_code' => 'knowledge_ready',
+			'repository_available' => true,
+			'repository_ready' => true,
+			'repository_code' => 'ready',
+			'repository_schema_version' => SPDB_Collections_Schema::VERSION,
+			'repository_cached_for_request' => true,
+			'read_ready' => true,
+			'write_configured' => true,
+			'resolver_available' => true,
+			'resolver_readiness_available' => true,
+			'resolver_ready' => true,
+			'resolver_code' => 'ready',
+			'collection_write_ready' => true,
+			'knowledge_write_ready' => true,
+			'any_write_ready' => true,
+			'write_enabled' => true,
+		),
+		$changes
+	);
+}
+/** @return array<string,mixed> */
+function spdb_23n_adv_service_health( array $changes = array() ): array {
 	$base = array(
 		'repository_available' => true,
 		'resolver_available' => true,
@@ -89,66 +114,119 @@ function spdb_23n_adversarial_service_health( array $changes = array() ): array 
 $repository = new SPDB_23N_Adversarial_Repository();
 $resolver = new SPDB_23N_Adversarial_Resolver();
 $consumer = SPDB_Collections_Service_Readiness_Consumer::create( $repository, $resolver );
+$raw_validator = new ReflectionMethod( SPDB_Collections_Service_Readiness_Consumer::class, 'valid_snapshot' );
+$raw_validator->setAccessible( true );
+$public_validator = new ReflectionMethod( SPDB_Collections_Service_Readiness_Consumer::class, 'valid_health_projection' );
+$public_validator->setAccessible( true );
 
-$repository->health = spdb_23n_adversarial_repository_health( array( 'schema_version' => '2' ) );
-$resolver->reset();
+spdb_23n_adv_assert( true === $raw_validator->invoke( $consumer, spdb_23n_adv_snapshot() ), 'Canonical knowledge-ready snapshot must validate.' );
+
+$input_invalid = spdb_23n_adv_snapshot( array(
+	'inputs_valid' => false,
+	'integration_code' => 'integration_input_invalid',
+	'repository_available' => false,
+	'repository_ready' => false,
+	'repository_code' => 'repository_not_evaluated',
+	'repository_schema_version' => '',
+	'repository_cached_for_request' => false,
+	'read_ready' => false,
+	'write_configured' => false,
+	'resolver_available' => false,
+	'resolver_readiness_available' => false,
+	'resolver_ready' => false,
+	'resolver_code' => 'resolver_not_evaluated',
+	'collection_write_ready' => false,
+	'knowledge_write_ready' => false,
+	'any_write_ready' => false,
+	'write_enabled' => false,
+) );
+spdb_23n_adv_assert( true === $raw_validator->invoke( $consumer, $input_invalid ), 'Exact input-not-evaluated snapshot must validate without probing dependencies.' );
+
+$writes_disabled = spdb_23n_adv_snapshot( array(
+	'integration_code' => 'writes_disabled',
+	'write_configured' => false,
+	'resolver_available' => false,
+	'resolver_readiness_available' => false,
+	'resolver_ready' => false,
+	'resolver_code' => 'resolver_absent',
+	'collection_write_ready' => false,
+	'knowledge_write_ready' => false,
+	'any_write_ready' => false,
+	'write_enabled' => false,
+) );
+spdb_23n_adv_assert( true === $raw_validator->invoke( $consumer, $writes_disabled ), 'Writes-disabled read integration must validate its suppressed resolver state.' );
+
+foreach ( array(
+	array( 'repository_unavailable', false, false, 'repository_unavailable', '' ),
+	array( 'repository_health_invalid', true, false, 'repository_health_invalid', '' ),
+	array( 'repository_not_ready', true, false, 'repository_not_ready', SPDB_Collections_Schema::VERSION ),
+) as $case ) {
+	list( $integration_code, $available, $ready, $repository_code, $schema_version ) = $case;
+	$snapshot = spdb_23n_adv_snapshot( array(
+		'integration_code' => $integration_code,
+		'repository_available' => $available,
+		'repository_ready' => $ready,
+		'repository_code' => $repository_code,
+		'repository_schema_version' => $schema_version,
+		'repository_cached_for_request' => false,
+		'read_ready' => false,
+		'resolver_available' => false,
+		'resolver_readiness_available' => false,
+		'resolver_ready' => false,
+		'resolver_code' => 'resolver_absent',
+		'collection_write_ready' => false,
+		'knowledge_write_ready' => false,
+		'any_write_ready' => false,
+		'write_enabled' => false,
+	) );
+	spdb_23n_adv_assert( true === $raw_validator->invoke( $consumer, $snapshot ), "{$integration_code} must validate only with a suppressed resolver state." );
+}
+
+$collection_only = spdb_23n_adv_snapshot( array(
+	'integration_code' => 'collection_ready',
+	'resolver_ready' => false,
+	'resolver_code' => 'resolver_not_ready',
+	'knowledge_write_ready' => false,
+) );
+spdb_23n_adv_assert( true === $raw_validator->invoke( $consumer, $collection_only ), 'Collection-only readiness with a formally unready resolver must validate.' );
+
+$unknown_repository = spdb_23n_adv_snapshot( array( 'repository_code' => 'database_table_missing' ) );
+spdb_23n_adv_assert( false === $raw_validator->invoke( $consumer, $unknown_repository ), 'Unknown canonical repository code must be rejected.' );
+$unknown_resolver = spdb_23n_adv_snapshot( array( 'resolver_code' => 'provider_custom_ready' ) );
+spdb_23n_adv_assert( false === $raw_validator->invoke( $consumer, $unknown_resolver ), 'Unknown canonical resolver code must be rejected.' );
+$unknown_integration = spdb_23n_adv_snapshot( array( 'integration_code' => 'custom_ready' ) );
+spdb_23n_adv_assert( false === $raw_validator->invoke( $consumer, $unknown_integration ), 'Unknown canonical integration code must be rejected.' );
+$wrong_code_state = spdb_23n_adv_snapshot( array( 'repository_code' => 'repository_not_ready' ) );
+spdb_23n_adv_assert( false === $raw_validator->invoke( $consumer, $wrong_code_state ), 'Repository code and readiness state must remain inseparable.' );
+$forged_knowledge = spdb_23n_adv_snapshot( array( 'resolver_readiness_available' => false ) );
+spdb_23n_adv_assert( false === $raw_validator->invoke( $consumer, $forged_knowledge ), 'Knowledge readiness without formal readiness capability must fail closed.' );
+
+$valid_public = spdb_23n_adv_service_health();
+spdb_23n_adv_assert( true === $public_validator->invoke( $consumer, $valid_public ), 'Exact canonical ready public health must validate.' );
+$unknown_public_code = $valid_public; $unknown_public_code['repository_health']['code'] = 'database_table_missing';
+spdb_23n_adv_assert( false === $public_validator->invoke( $consumer, $unknown_public_code ), 'Public health must reject unknown canonical repository codes.' );
+$stale_public = $valid_public; $stale_public['repository_health']['schema_version'] = '2';
+spdb_23n_adv_assert( false === $public_validator->invoke( $consumer, $stale_public ), 'Public health must reject stale schema versions.' );
+$knowledge_without_readiness = SPDB_Collections_Service_Readiness_Consumer::create( $repository, new class implements SPDB_Native_Reference_Resolver {
+	public function resolve_reference( string $provider_key, string $object_type, string $object_id, array $context ) { return array(); }
+} );
+spdb_23n_adv_assert( false === $public_validator->invoke( $knowledge_without_readiness, $valid_public ), 'Public knowledge readiness must require formal readiness capability, not presence alone.' );
+
+$repository->health = spdb_23n_adv_repository_health( array( 'schema_version' => '2' ) ); $resolver->reset();
 $stale = $consumer->health( true );
-spdb_23n_adversarial_assert( 'repository_health_invalid' === $stale['repository_health']['code'] && '' === $stale['repository_health']['schema_version'], 'A stale schema version must fail closed into a bounded invalid repository state.' );
-spdb_23n_adversarial_assert( 0 === $resolver->ready_calls && 0 === $resolver->snapshot_calls, 'Stale schema health must short-circuit resolver readiness.' );
+spdb_23n_adv_assert( 'repository_health_invalid' === $stale['repository_health']['code'] && '' === $stale['repository_health']['schema_version'], 'Stale repository schema must fail closed into bounded invalid health.' );
+spdb_23n_adv_assert( 0 === $resolver->ready_calls, 'Stale repository health must short-circuit resolver readiness.' );
 
-$repository->health = spdb_23n_adversarial_repository_health( array( 'database_ready' => 'yes' ) );
-$resolver->reset();
+$repository->health = spdb_23n_adv_repository_health( array( 'database_ready' => 'yes' ) ); $resolver->reset();
 $malformed = $consumer->health( true );
-spdb_23n_adversarial_assert( 'repository_health_invalid' === $malformed['repository_health']['code'], 'Malformed scalar repository health must fail closed.' );
-spdb_23n_adversarial_assert( 0 === $resolver->ready_calls, 'Malformed scalar repository health must not reach resolver readiness.' );
+spdb_23n_adv_assert( 'repository_health_invalid' === $malformed['repository_health']['code'], 'Malformed scalar repository health must fail closed.' );
+spdb_23n_adv_assert( 0 === $resolver->ready_calls, 'Malformed repository health must not reach resolver readiness.' );
 
-$repository->health = spdb_23n_adversarial_repository_health( array( 'healthy' => false ) );
-$resolver->reset();
+$repository->health = spdb_23n_adv_repository_health( array( 'healthy' => false ) ); $resolver->reset();
 $contradictory = $consumer->health( true );
-spdb_23n_adversarial_assert( 'repository_health_invalid' === $contradictory['repository_health']['code'], 'Contradictory aggregate repository health must fail closed.' );
-spdb_23n_adversarial_assert( 0 === $resolver->ready_calls, 'Contradictory repository health must short-circuit resolver readiness.' );
+spdb_23n_adv_assert( 'repository_health_invalid' === $contradictory['repository_health']['code'], 'Contradictory aggregate repository health must fail closed.' );
+spdb_23n_adv_assert( 0 === $resolver->ready_calls, 'Contradictory repository health must short-circuit resolver readiness.' );
+spdb_23n_adv_assert( 0 === $resolver->resolve_calls, 'No adversarial consumer path may resolve a native object.' );
 
-$validator = new ReflectionMethod( SPDB_Collections_Service_Readiness_Consumer::class, 'valid_health_projection' );
-$validator->setAccessible( true );
-$valid = spdb_23n_adversarial_service_health();
-spdb_23n_adversarial_assert( true === $validator->invoke( $consumer, $valid ), 'The exact canonical ready service-health projection must validate.' );
-
-$noncanonical_code = $valid;
-$noncanonical_code['repository_health']['code'] = 'READY';
-spdb_23n_adversarial_assert( false === $validator->invoke( $consumer, $noncanonical_code ), 'A noncanonical repository code must be rejected by the consumer validator.' );
-
-$long_code = $valid;
-$long_code['repository_health']['code'] = str_repeat( 'a', 65 );
-spdb_23n_adversarial_assert( false === $validator->invoke( $consumer, $long_code ), 'An overlong repository code must be rejected.' );
-
-$stale_projection = $valid;
-$stale_projection['repository_health']['schema_version'] = '2';
-spdb_23n_adversarial_assert( false === $validator->invoke( $consumer, $stale_projection ), 'A stale service-health schema version must be rejected.' );
-
-$ready_code_conflict = $valid;
-$ready_code_conflict['repository_health']['healthy'] = false;
-$ready_code_conflict['repository_health']['database_ready'] = false;
-$ready_code_conflict['repository_health']['schema_ready'] = false;
-$ready_code_conflict['read_ready'] = false;
-$ready_code_conflict['collection_write_ready'] = false;
-$ready_code_conflict['knowledge_write_ready'] = false;
-$ready_code_conflict['any_write_ready'] = false;
-$ready_code_conflict['write_enabled'] = false;
-spdb_23n_adversarial_assert( false === $validator->invoke( $consumer, $ready_code_conflict ), 'An unhealthy repository may not retain code=ready.' );
-
-$write_without_read = $valid;
-$write_without_read['read_ready'] = false;
-$write_without_read['repository_health']['healthy'] = false;
-$write_without_read['repository_health']['database_ready'] = false;
-$write_without_read['repository_health']['schema_ready'] = false;
-$write_without_read['repository_health']['code'] = 'repository_not_ready';
-spdb_23n_adversarial_assert( false === $validator->invoke( $consumer, $write_without_read ), 'A write-ready state without repository read readiness must be rejected.' );
-
-$knowledge_without_resolver = $valid;
-$knowledge_without_resolver['resolver_available'] = false;
-spdb_23n_adversarial_assert( false === $validator->invoke( $consumer, $knowledge_without_resolver ), 'Knowledge readiness without resolver availability must be rejected.' );
-
-spdb_23n_adversarial_assert( 0 === $resolver->resolve_calls, 'No adversarial consumer path may resolve a native object.' );
-
-if ( $failed > 0 ) { fwrite( STDERR, "{$failed} of {$tests} Phase 23N adversarial consumer tests failed.\n" ); exit( 1 ); }
-echo "All {$tests} Phase 23N adversarial consumer tests passed.\n";
+if ( $failed > 0 ) { fwrite( STDERR, "{$failed} of {$tests} corrected Phase 23N adversarial tests failed.\n" ); exit( 1 ); }
+echo "All {$tests} corrected Phase 23N adversarial consumer tests passed.\n";
