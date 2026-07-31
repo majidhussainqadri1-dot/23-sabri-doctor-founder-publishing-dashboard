@@ -6,7 +6,7 @@ The accepted Phase 23M binding proves exact repository/resolver composition, but
 
 Phase 23N therefore provides an isolated `SPDB_Collections_Service_Readiness_Consumer`. It converts reviewed probe decisions into the exact existing service-health field names and owns the bounded read, collection-write, and knowledge-write readiness decisions without performing a service operation.
 
-The preliminary head `bbe4071dc84c65f8b2c6a68695d70d67a57b0057` passed automated tests but was not final source acceptance. Corrective review found seven additional source and evidence defects. Every preliminary Phase 23N run and artifact is invalidated after the corrective source changes.
+The preliminary head `bbe4071dc84c65f8b2c6a68695d70d67a57b0057` passed automated tests but was not final source acceptance. Corrective review found additional source and evidence defects. Every preliminary or failed Phase 23N run and artifact is invalidated after the corrective source changes.
 
 **DO NOT MERGE.** Phase 23N does not modify `SPDB_Collections_Service`, `SPDB_Plugin`, `SPDB_System_State`, REST controllers, provider acceptance, production writes, or staging configuration. It is a reviewed internal contract foundation for a later service-internal consumption slice.
 
@@ -62,6 +62,11 @@ The preliminary head `bbe4071dc84c65f8b2c6a68695d70d67a57b0057` passed automated
 45. Phase 23L uses a no-resolver integration for writes-disabled and repository-denied paths; these states legitimately carry the bounded suppression marker `resolver_absent`, while invalid authority carries `resolver_not_evaluated`.
 46. Conflating the suppression marker with the input-not-evaluated marker would reject valid upstream snapshots.
 47. Preliminary head, runs, and artifacts cannot remain authoritative after source changes.
+48. The first corrected consumer-owned collection-write requirement still acquired the full resolver-aware snapshot and therefore evaluated resolver readiness unnecessarily.
+49. Collection-only authorization requires a separate private no-resolver probe built from the exact same repository.
+50. The retained Phase 23N static workflow required the former helper name `valid_schema_version` after the implementation had inlined stricter state validation.
+51. Retained and supplemental evidence gates must both pass; a green supplemental matrix does not excuse a stale retained gate.
+52. The failed primary-test run and the later failed retained-static-gate run are invalid evidence.
 
 ## Corrections Applied
 
@@ -75,20 +80,23 @@ The preliminary head `bbe4071dc84c65f8b2c6a68695d70d67a57b0057` passed automated
 - Stored resolver presence and formal readiness capability as separate private booleans.
 - Required formal readiness capability for every knowledge-ready public projection.
 - Replaced direct probe requirement delegation with consumer-owned validated snapshot decisions.
+- Added a separate private collection-only probe using the exact same repository and a no-resolver gate.
+- Preserved resolver-independent read and collection decisions while knowledge decisions use the exact bound resolver.
 - Preserved stable repository and resolver denial codes without a second readiness acquisition.
 - Added exact runtime boolean validation for both requirement inputs.
 - Added consumer-level exception isolation and a bounded projection-invalid error.
 - Added `__wakeup()` denial in addition to clone, serialize, and unserialize denial.
+- Restored `valid_schema_version()` as a real schema pre-validation step before exact code/state validation.
 - Expanded primary tests for exact raw shape, code allowlists, lifecycle closure, formal readiness, stable errors, one-call bounds, privacy, and isolation.
 - Expanded adversarial tests for every suppressed/denied state, unknown canonical codes, forged readiness, stale schema, malformed health, and contradictory health.
-- Strengthened CI static guards and exact-source checksums.
+- Added a dedicated corrective PHP 8.0–8.3 matrix and strengthened exact-source checksums.
 
 ## Authorized Phase 23N Slice
 
 - `SPDB_Collections_Service_Readiness_Consumer`;
 - corrected primary and adversarial executable tests;
 - this audit;
-- dedicated exact-head/exact-base PHP 8.0–8.3 workflow;
+- original and corrective exact-head/exact-base PHP 8.0–8.3 workflows;
 - separate stacked Draft PR.
 
 ## Explicitly Deferred
@@ -104,6 +112,6 @@ The preliminary head `bbe4071dc84c65f8b2c6a68695d70d67a57b0057` passed automated
 
 ## Acceptance Rule
 
-The documentation-inclusive exact head must descend from the current Phase 23M base head and pass PHP 8.0, 8.1, 8.2, and 8.3 across the dedicated Phase 23N workflow and all inherited regressions. Any later source change invalidates that evidence.
+The documentation-inclusive exact head must descend from the current Phase 23M base head and pass PHP 8.0, 8.1, 8.2, and 8.3 across both Phase 23N workflows and all inherited regressions. Any later source or documentation change invalidates that evidence.
 
 A later separately reviewed phase may make `SPDB_Collections_Service` consume this consumer internally. Plugin injection remains a separate phase. Hostinger staging, real File 00 accounts and native providers, privacy, IDOR, cache, backup/restore, rollback evidence, Founder acceptance, and explicit merge authorization remain mandatory. All PRs remain Draft and unmerged.
