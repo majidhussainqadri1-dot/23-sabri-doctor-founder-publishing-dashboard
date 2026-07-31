@@ -10,6 +10,8 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Collections_Service_Readiness_Consumer {
+	private const MAX_CODE_LENGTH = 64;
+
 	private const HEALTH_KEYS = array(
 		'repository_available',
 		'resolver_available',
@@ -148,19 +150,44 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 			|| ! is_string( $repository['schema_version'] ?? null )
 			|| ! is_string( $repository['code'] ?? null )
 			|| '' === $repository['code']
+			|| strlen( $repository['code'] ) > self::MAX_CODE_LENGTH
+			|| ! SPDB_Adapter_Registry::is_canonical_key( $repository['code'] )
 			|| ! is_bool( $repository['cached_for_request'] ?? null )
+			|| ! $this->valid_schema_version( $repository['schema_version'] )
 		) {
 			return false;
 		}
 
+		if ( $repository['healthy'] ) {
+			if ( ! $health['repository_available']
+				|| 'ready' !== $repository['code']
+				|| ! $this->current_schema_version( $repository['schema_version'] )
+			) {
+				return false;
+			}
+		} elseif ( 'ready' === $repository['code'] ) {
+			return false;
+		}
+
 		return $health['read_ready'] === $repository['healthy']
+			&& ( $health['repository_available'] || ! $repository['healthy'] )
 			&& $repository['healthy'] === $repository['database_ready']
 			&& $repository['healthy'] === $repository['schema_ready']
 			&& $health['any_write_ready'] === ( $health['collection_write_ready'] || $health['knowledge_write_ready'] )
 			&& $health['write_enabled'] === $health['any_write_ready']
-			&& ( ! $health['knowledge_write_ready'] || $health['collection_write_ready'] )
-			&& ( ! $health['knowledge_write_ready'] || $health['resolver_available'] )
+			&& ( ! $health['collection_write_ready'] || ( $health['write_configured'] && $health['read_ready'] ) )
+			&& ( ! $health['knowledge_write_ready'] || ( $health['collection_write_ready'] && $health['resolver_available'] ) )
 			&& ( $health['write_configured'] || ! $health['any_write_ready'] );
+	}
+
+	private function valid_schema_version( string $version ): bool {
+		return '' === $version || $this->current_schema_version( $version );
+	}
+
+	private function current_schema_version( string $version ): bool {
+		return class_exists( 'SPDB_Collections_Schema', false )
+			&& 1 === preg_match( '/^(?:0|[1-9][0-9]*)$/', $version )
+			&& SPDB_Collections_Schema::VERSION === $version;
 	}
 
 	/** @return array<string,mixed> */
