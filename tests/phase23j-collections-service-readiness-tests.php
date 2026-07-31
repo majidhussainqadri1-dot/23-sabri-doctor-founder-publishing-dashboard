@@ -1,5 +1,5 @@
 <?php
-/** Executable tests for the isolated Phase 23J Collections service readiness gate. */
+/** Executable tests for the corrected Phase 23J Collections service readiness gate. */
 require_once __DIR__ . '/bootstrap.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-native-reference-readiness.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-collections-service-readiness-gate.php';
@@ -40,6 +40,29 @@ final class SPDB_23J_Readiness_Resolver implements SPDB_Native_Reference_Resolve
 	}
 }
 
+final class SPDB_23J_Reentrant_Resolver implements SPDB_Native_Reference_Resolver, SPDB_Native_Reference_Readiness {
+	public ?SPDB_Collections_Service_Readiness_Gate $gate = null;
+	public string $nested_code = '';
+	public int $resolve_calls = 0;
+
+	public function is_ready(): bool {
+		if ( null !== $this->gate ) {
+			$nested = $this->gate->snapshot( true, true );
+			$this->nested_code = $nested['resolver_code'];
+		}
+		return false;
+	}
+
+	public function readiness_snapshot(): array {
+		return array( 'available' => true, 'ready' => false, 'code' => 'not_ready' );
+	}
+
+	public function resolve_reference( string $provider_key, string $object_type, string $object_id, array $context ) {
+		++$this->resolve_calls;
+		return array();
+	}
+}
+
 $tests = 0;
 $failed = 0;
 function spdb_23j_assert( bool $condition, string $message ): void {
@@ -65,13 +88,14 @@ spdb_23j_assert( array(
 	'knowledge_write_ready' => false,
 	'any_write_ready' => true,
 ) === $absent_snapshot, 'Resolver absence must block knowledge writes without blocking reviewed collection writes.' );
+spdb_23j_assert( true === $absent->require_collection_write_ready( true, true ), 'Collection writes must remain independent of native-reference readiness.' );
 spdb_23j_assert( 'spdb_native_reference_resolver_unavailable' === spdb_23j_code( $absent->require_knowledge_write_ready( true, true ) ), 'Resolver absence must have a distinct bounded error.' );
 
 $plain_resolver = new SPDB_23J_Plain_Resolver();
 $plain = new SPDB_Collections_Service_Readiness_Gate( $plain_resolver );
 $plain_snapshot = $plain->snapshot( true, true );
 spdb_23j_assert( true === $plain_snapshot['resolver_available'] && false === $plain_snapshot['resolver_readiness_available'] && false === $plain_snapshot['knowledge_write_ready'], 'A resolver without the formal readiness contract must fail closed.' );
-spdb_23j_assert( 'spdb_native_reference_resolver_not_ready' === spdb_23j_code( $plain->require_knowledge_write_ready( true, true ) ), 'Missing readiness conformance must not be mistaken for resolver absence.' );
+spdb_23j_assert( 'spdb_native_reference_readiness_missing' === spdb_23j_code( $plain->require_knowledge_write_ready( true, true ) ), 'Missing readiness conformance requires a distinct error.' );
 spdb_23j_assert( 0 === $plain_resolver->resolve_calls, 'The readiness gate must never execute native resolution.' );
 
 $ready_resolver = new SPDB_23J_Readiness_Resolver();
@@ -85,11 +109,13 @@ spdb_23j_assert( 0 === $ready_resolver->resolve_calls, 'Readiness evaluation mus
 
 $write_disabled = $ready->snapshot( false, true );
 spdb_23j_assert( false === $write_disabled['collection_write_ready'] && false === $write_disabled['knowledge_write_ready'] && false === $write_disabled['any_write_ready'], 'Disabled writes must override repository and resolver readiness.' );
-spdb_23j_assert( 'spdb_phase23f_writes_disabled' === spdb_23j_code( $ready->require_knowledge_write_ready( false, true ) ), 'Write configuration denial must be evaluated first.' );
+spdb_23j_assert( 'spdb_collections_writes_disabled' === spdb_23j_code( $ready->require_collection_write_ready( false, true ) ), 'Collection write configuration denial must be explicit.' );
+spdb_23j_assert( 'spdb_collections_writes_disabled' === spdb_23j_code( $ready->require_knowledge_write_ready( false, true ) ), 'Knowledge writes must inherit collection write configuration denial first.' );
 
 $repository_unready = $ready->snapshot( true, false );
 spdb_23j_assert( false === $repository_unready['collection_write_ready'] && false === $repository_unready['knowledge_write_ready'], 'Repository unavailability must block every metadata write.' );
-spdb_23j_assert( 'spdb_collections_repository_not_ready' === spdb_23j_code( $ready->require_knowledge_write_ready( true, false ) ), 'Repository readiness denial must remain distinct.' );
+spdb_23j_assert( 'spdb_collections_repository_not_ready' === spdb_23j_code( $ready->require_collection_write_ready( true, false ) ), 'Collection repository readiness denial must remain distinct.' );
+spdb_23j_assert( 'spdb_collections_repository_not_ready' === spdb_23j_code( $ready->require_knowledge_write_ready( true, false ) ), 'Knowledge writes must inherit repository readiness denial first.' );
 
 $unready_resolver = new SPDB_23J_Readiness_Resolver();
 $unready_resolver->declared_ready = false;
@@ -97,12 +123,14 @@ $unready_resolver->snapshot = array( 'available' => true, 'ready' => false, 'cod
 $unready = new SPDB_Collections_Service_Readiness_Gate( $unready_resolver );
 $unready_snapshot = $unready->snapshot( true, true );
 spdb_23j_assert( 'resolver_not_ready' === $unready_snapshot['resolver_code'] && false === strpos( implode( '|', $unready_snapshot ), 'private_provider_reason' ), 'Provider readiness detail must be reduced to a bounded service state.' );
+spdb_23j_assert( 'spdb_native_reference_resolver_not_ready' === spdb_23j_code( $unready->require_knowledge_write_ready( true, true ) ), 'Operational not-ready state requires a bounded distinct error.' );
 
 $unavailable_resolver = new SPDB_23J_Readiness_Resolver();
 $unavailable_resolver->declared_ready = false;
 $unavailable_resolver->snapshot = array( 'available' => false, 'ready' => false, 'code' => 'private_outage' );
 $unavailable = new SPDB_Collections_Service_Readiness_Gate( $unavailable_resolver );
 spdb_23j_assert( 'resolver_unavailable' === $unavailable->snapshot( true, true )['resolver_code'], 'A readiness-aware but unavailable resolver requires a bounded unavailable state.' );
+spdb_23j_assert( 'spdb_native_reference_resolver_unavailable' === spdb_23j_code( $unavailable->require_knowledge_write_ready( true, true ) ), 'Resolver unavailability must remain distinct from operational not-ready.' );
 
 $disagreement = new SPDB_23J_Readiness_Resolver();
 $disagreement->declared_ready = false;
@@ -115,12 +143,35 @@ $malformed->declared_ready = true;
 $malformed->snapshot = array( 'available' => true, 'ready' => true, 'code' => 'ready', 'secret' => 'hidden' );
 $malformed_gate = new SPDB_Collections_Service_Readiness_Gate( $malformed );
 spdb_23j_assert( 'resolver_readiness_invalid' === $malformed_gate->snapshot( true, true )['resolver_code'], 'Unknown readiness fields must fail closed.' );
+spdb_23j_assert( 'spdb_native_reference_readiness_invalid' === spdb_23j_code( $malformed_gate->require_knowledge_write_ready( true, true ) ), 'Malformed readiness requires a distinct bounded error.' );
+
+$reordered = new SPDB_23J_Readiness_Resolver();
+$reordered->declared_ready = true;
+$reordered->snapshot = array( 'code' => 'ready', 'ready' => true, 'available' => true );
+$reordered_gate = new SPDB_Collections_Service_Readiness_Gate( $reordered );
+spdb_23j_assert( true === $reordered_gate->snapshot( true, true )['resolver_ready'], 'Valid readiness must not depend on associative key order.' );
 
 $unsafe_code = new SPDB_23J_Readiness_Resolver();
-$unsafe_code->declared_ready = false;
 $unsafe_code->snapshot = array( 'available' => true, 'ready' => false, 'code' => 'Private health text!' );
 $unsafe_gate = new SPDB_Collections_Service_Readiness_Gate( $unsafe_code );
 spdb_23j_assert( 'resolver_readiness_invalid' === $unsafe_gate->snapshot( true, true )['resolver_code'], 'Noncanonical readiness codes must fail closed.' );
+
+$empty_code = new SPDB_23J_Readiness_Resolver();
+$empty_code->snapshot = array( 'available' => true, 'ready' => false, 'code' => '' );
+spdb_23j_assert( 'resolver_readiness_invalid' === ( new SPDB_Collections_Service_Readiness_Gate( $empty_code ) )->snapshot( true, true )['resolver_code'], 'Empty readiness codes must fail closed.' );
+
+$long_code = new SPDB_23J_Readiness_Resolver();
+$long_code->snapshot = array( 'available' => true, 'ready' => false, 'code' => str_repeat( 'a', 65 ) );
+spdb_23j_assert( 'resolver_readiness_invalid' === ( new SPDB_Collections_Service_Readiness_Gate( $long_code ) )->snapshot( true, true )['resolver_code'], 'Overlong readiness codes must fail closed.' );
+
+$ready_code_mismatch = new SPDB_23J_Readiness_Resolver();
+$ready_code_mismatch->declared_ready = true;
+$ready_code_mismatch->snapshot = array( 'available' => true, 'ready' => true, 'code' => 'not_ready' );
+spdb_23j_assert( 'resolver_readiness_invalid' === ( new SPDB_Collections_Service_Readiness_Gate( $ready_code_mismatch ) )->snapshot( true, true )['resolver_code'], 'A ready snapshot must use the canonical ready code.' );
+
+$not_ready_code_mismatch = new SPDB_23J_Readiness_Resolver();
+$not_ready_code_mismatch->snapshot = array( 'available' => true, 'ready' => false, 'code' => 'ready' );
+spdb_23j_assert( 'resolver_readiness_invalid' === ( new SPDB_Collections_Service_Readiness_Gate( $not_ready_code_mismatch ) )->snapshot( true, true )['resolver_code'], 'A non-ready snapshot must not use the canonical ready code.' );
 
 $impossible = new SPDB_23J_Readiness_Resolver();
 $impossible->declared_ready = true;
@@ -128,12 +179,26 @@ $impossible->snapshot = array( 'available' => false, 'ready' => true, 'code' => 
 $impossible_gate = new SPDB_Collections_Service_Readiness_Gate( $impossible );
 spdb_23j_assert( 'resolver_readiness_invalid' === $impossible_gate->snapshot( true, true )['resolver_code'], 'An unavailable readiness source cannot claim ready.' );
 
-$exception = new SPDB_23J_Readiness_Resolver();
-$exception->throw_on_ready = true;
-$exception_gate = new SPDB_Collections_Service_Readiness_Gate( $exception );
-$exception_snapshot = $exception_gate->snapshot( true, true );
-spdb_23j_assert( 'resolver_readiness_exception' === $exception_snapshot['resolver_code'] && false === strpos( implode( '|', $exception_snapshot ), 'Private' ), 'Readiness exceptions must be isolated without relaying text.' );
-spdb_23j_assert( 0 === $exception->resolve_calls, 'Readiness exceptions must not fall through to native resolution.' );
+$ready_exception = new SPDB_23J_Readiness_Resolver();
+$ready_exception->throw_on_ready = true;
+$ready_exception_gate = new SPDB_Collections_Service_Readiness_Gate( $ready_exception );
+$ready_exception_snapshot = $ready_exception_gate->snapshot( true, true );
+spdb_23j_assert( 'resolver_readiness_exception' === $ready_exception_snapshot['resolver_code'] && false === strpos( implode( '|', $ready_exception_snapshot ), 'Private' ), 'Readiness declaration exceptions must be isolated without relaying text.' );
+spdb_23j_assert( 'spdb_native_reference_readiness_failed' === spdb_23j_code( $ready_exception_gate->require_knowledge_write_ready( true, true ) ), 'Readiness declaration exceptions require a bounded error.' );
+
+$snapshot_exception = new SPDB_23J_Readiness_Resolver();
+$snapshot_exception->declared_ready = true;
+$snapshot_exception->throw_on_snapshot = true;
+$snapshot_exception_gate = new SPDB_Collections_Service_Readiness_Gate( $snapshot_exception );
+spdb_23j_assert( 'resolver_readiness_exception' === $snapshot_exception_gate->snapshot( true, true )['resolver_code'], 'Readiness snapshot exceptions must be isolated.' );
+spdb_23j_assert( 0 === $snapshot_exception->resolve_calls, 'Readiness exceptions must never fall through to native resolution.' );
+
+$reentrant_resolver = new SPDB_23J_Reentrant_Resolver();
+$reentrant_gate = new SPDB_Collections_Service_Readiness_Gate( $reentrant_resolver );
+$reentrant_resolver->gate = $reentrant_gate;
+$reentrant_gate->snapshot( true, true );
+spdb_23j_assert( 'resolver_readiness_reentrant' === $reentrant_resolver->nested_code, 'Recursive readiness evaluation must fail closed instead of recursing indefinitely.' );
+spdb_23j_assert( 0 === $reentrant_resolver->resolve_calls, 'Reentrant readiness denial must not execute native resolution.' );
 
 if ( $failed > 0 ) {
 	fwrite( STDERR, "{$failed} of {$tests} Phase 23J Collections service readiness tests failed.\n" );
