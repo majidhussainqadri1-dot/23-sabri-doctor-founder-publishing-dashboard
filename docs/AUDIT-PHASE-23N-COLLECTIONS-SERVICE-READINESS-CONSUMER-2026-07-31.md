@@ -69,6 +69,12 @@ The preliminary head `bbe4071dc84c65f8b2c6a68695d70d67a57b0057` passed automated
 52. The failed primary-test run and the later failed retained-static-gate run are invalid evidence.
 53. The corrective audit guard used an exact singular invalidation phrase, while the audit used a combined plural phrase; the evidence contract therefore remained ambiguous.
 54. Preliminary and failed evidence must be invalidated with separate explicit statements.
+55. The retained workflow required an explicit noncanonical repository-code adversarial assertion; an unknown allowlisted-code test did not prove case/format rejection by itself.
+56. The retained workflow required an explicit overlong repository-code adversarial assertion.
+57. The retained workflow required an explicit write-ready state without repository read readiness assertion.
+58. The retained workflow required an explicit knowledge-ready state without resolver availability assertion.
+59. Semantically related tests are not substitutes for exact high-risk boundary assertions.
+60. The retained workflow failure and its artifacts are invalid evidence.
 
 ## Corrections Applied
 
@@ -91,6 +97,8 @@ The preliminary head `bbe4071dc84c65f8b2c6a68695d70d67a57b0057` passed automated
 - Restored `valid_schema_version()` as a real schema pre-validation step before exact code/state validation.
 - Expanded primary tests for exact raw shape, code allowlists, lifecycle closure, formal readiness, stable errors, one-call bounds, privacy, and isolation.
 - Expanded adversarial tests for every suppressed/denied state, unknown canonical codes, forged readiness, stale schema, malformed health, and contradictory health.
+- Added explicit noncanonical and overlong repository-code assertions.
+- Added explicit write-ready-without-read and knowledge-ready-without-resolver-availability assertions.
 - Added a dedicated corrective PHP 8.0–8.3 matrix and strengthened exact-source checksums.
 - Added separate explicit invalidation statements for preliminary and failed Phase 23N evidence.
 
@@ -115,6 +123,6 @@ The preliminary head `bbe4071dc84c65f8b2c6a68695d70d67a57b0057` passed automated
 
 ## Acceptance Rule
 
-The documentation-inclusive exact head must descend from the current Phase 23M base head and pass PHP 8.0, 8.1, 8.2, and 8.3 across both Phase 23N workflows and all inherited regressions. Any later source or documentation change invalidates that evidence.
+The documentation-inclusive exact head must descend from the current Phase 23M base head and pass PHP 8.0, 8.1, 8.2, and 8.3 across both Phase 23N workflows and all inherited regressions. Any later source, test, workflow, or documentation change invalidates that evidence.
 
 A later separately reviewed phase may make `SPDB_Collections_Service` consume this consumer internally. Plugin injection remains a separate phase. Hostinger staging, real File 00 accounts and native providers, privacy, IDOR, cache, backup/restore, rollback evidence, Founder acceptance, and explicit merge authorization remain mandatory. All PRs remain Draft and unmerged.
