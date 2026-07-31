@@ -155,11 +155,15 @@ final class SPDB_Collections_Repository_Readiness_Probe {
 
 	/** @return array{healthy:false,database_ready:false,schema_ready:false,schema_version:string,code:string,cached_for_request:false} */
 	private function not_ready_health( string $code ): array {
+		$schema_version = class_exists( 'SPDB_Collections_Schema', false )
+			? SPDB_Collections_Schema::VERSION
+			: '';
+
 		return array(
 			'healthy'            => false,
 			'database_ready'     => false,
 			'schema_ready'       => false,
-			'schema_version'     => SPDB_Collections_Schema::VERSION,
+			'schema_version'     => $schema_version,
 			'code'               => $code,
 			'cached_for_request' => false,
 		);
