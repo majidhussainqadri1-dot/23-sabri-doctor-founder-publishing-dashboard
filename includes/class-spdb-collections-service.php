@@ -2,41 +2,28 @@
 /** Runtime authority boundary for File 23 collections and knowledge metadata. */
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/interface-spdb-collections-repository.php';
+require_once __DIR__ . '/interface-spdb-native-reference-resolver.php';
+require_once __DIR__ . '/interface-spdb-native-reference-readiness.php';
+require_once __DIR__ . '/class-spdb-collections-service-readiness-gate.php';
+require_once __DIR__ . '/class-spdb-collections-service-readiness-integration.php';
+require_once __DIR__ . '/class-spdb-collections-repository-readiness-probe.php';
+require_once __DIR__ . '/class-spdb-collections-service-readiness-consumer.php';
+
 final class SPDB_Collections_Service {
 	private ?SPDB_Collections_Repository $repository;
 	private ?SPDB_Native_Reference_Resolver $resolver;
+	private SPDB_Collections_Service_Readiness_Consumer $readiness;
 
 	public function __construct( ?SPDB_Collections_Repository $repository = null, ?SPDB_Native_Reference_Resolver $resolver = null ) {
 		$this->repository = $repository;
 		$this->resolver   = $resolver;
+		$this->readiness  = SPDB_Collections_Service_Readiness_Consumer::create( $repository, $resolver );
 	}
 
 	/** @return array<string,mixed> */
 	public function health(): array {
-		$repository_health = array( 'healthy' => false, 'schema_ready' => false, 'code' => 'repository_unavailable' );
-		if ( null !== $this->repository ) {
-			try {
-				$value = $this->repository->health_check();
-				if ( is_array( $value ) ) { $repository_health = $value; }
-			} catch ( Throwable $throwable ) {
-				$repository_health = array( 'healthy' => false, 'schema_ready' => false, 'code' => 'repository_exception' );
-			}
-		}
-		$repository_ready = true === ( $repository_health['healthy'] ?? false ) && true === ( $repository_health['schema_ready'] ?? false );
-		$configured = $this->writes_configured();
-		$collection_write_ready = $configured && $repository_ready;
-		$knowledge_write_ready  = $configured && $repository_ready && null !== $this->resolver;
-		return array(
-			'repository_available'   => null !== $this->repository,
-			'resolver_available'     => null !== $this->resolver,
-			'read_ready'             => $repository_ready,
-			'write_configured'       => $configured,
-			'collection_write_ready' => $collection_write_ready,
-			'knowledge_write_ready'  => $knowledge_write_ready,
-			'any_write_ready'        => $collection_write_ready || $knowledge_write_ready,
-			'write_enabled'          => $collection_write_ready || $knowledge_write_ready,
-			'repository_health'      => $repository_health,
-		);
+		return $this->readiness->health( $this->writes_configured() );
 	}
 
 	/** @return array<string,mixed>|WP_Error */
@@ -165,9 +152,9 @@ final class SPDB_Collections_Service {
 		$record = SPDB_Collections_Policy::validate_knowledge_link( $input );
 		if ( is_wp_error( $record ) ) { return $record; }
 		$request_hash = $this->request_hash( $record, array( 'idempotency_key' ) );
-		$source = $this->resolve_reference( $record['source_provider_key'], $record['source_object_type'], $record['source_object_id'], $record['scope'] );
+		$source = $this->resolve_reference_after_gate( $record['source_provider_key'], $record['source_object_type'], $record['source_object_id'], $record['scope'] );
 		if ( is_wp_error( $source ) ) { return $source; }
-		$target = $this->resolve_reference( $record['target_provider_key'], $record['target_object_type'], $record['target_object_id'], $record['scope'] );
+		$target = $this->resolve_reference_after_gate( $record['target_provider_key'], $record['target_object_type'], $record['target_object_id'], $record['scope'] );
 		if ( is_wp_error( $target ) ) { return $target; }
 		$actor = get_current_user_id();
 		$record['owner_user_id'] = $actor;
@@ -184,6 +171,16 @@ final class SPDB_Collections_Service {
 
 	/** @return array<string,mixed>|WP_Error */
 	public function resolve_reference( string $provider_key, string $object_type, string $object_id, string $scope = 'own' ) {
+		$authority = $this->reference_authority( $scope );
+		if ( is_wp_error( $authority ) ) { return $authority; }
+		if ( ! SPDB_Adapter_Registry::is_canonical_key( $provider_key ) || ! SPDB_Adapter_Registry::is_canonical_key( $object_type ) || ! SPDB_Projection_Validator::valid_object_id( $object_id ) ) { return $this->error( 'spdb_native_reference_invalid', 'The canonical native reference is invalid.' ); }
+		$gate = $this->write_gate( true );
+		if ( is_wp_error( $gate ) ) { return $gate; }
+		return $this->resolve_reference_after_gate( $provider_key, $object_type, $object_id, $scope );
+	}
+
+	/** @return array<string,mixed>|WP_Error */
+	private function resolve_reference_after_gate( string $provider_key, string $object_type, string $object_id, string $scope ) {
 		$authority = $this->reference_authority( $scope );
 		if ( is_wp_error( $authority ) ) { return $authority; }
 		if ( ! SPDB_Adapter_Registry::is_canonical_key( $provider_key ) || ! SPDB_Adapter_Registry::is_canonical_key( $object_type ) || ! SPDB_Projection_Validator::valid_object_id( $object_id ) ) { return $this->error( 'spdb_native_reference_invalid', 'The canonical native reference is invalid.' ); }
@@ -216,18 +213,11 @@ final class SPDB_Collections_Service {
 	}
 	/** @return true|WP_Error */
 	private function read_repository() {
-		if ( null === $this->repository ) { return $this->unavailable( 'spdb_collections_repository_unavailable', 'The collection metadata repository is not available.' ); }
-		try { $health = $this->repository->health_check(); }
-		catch ( Throwable $throwable ) { return $this->unavailable( 'spdb_collections_repository_failed', 'The collection metadata repository health check failed.' ); }
-		return is_array( $health ) && true === ( $health['healthy'] ?? false ) && true === ( $health['schema_ready'] ?? false ) ? true : $this->unavailable( 'spdb_collections_repository_not_ready', 'The collection metadata repository is not ready.' );
+		return $this->readiness->require_read_ready();
 	}
 	/** @return true|WP_Error */
 	private function write_gate( bool $requires_resolver ) {
-		if ( ! $this->writes_configured() ) { return $this->error( 'spdb_phase23f_writes_disabled', 'Phase 23F metadata writes remain disabled until reviewed staging acceptance.', 503 ); }
-		$repository = $this->read_repository();
-		if ( is_wp_error( $repository ) ) { return $repository; }
-		if ( $requires_resolver && null === $this->resolver ) { return $this->unavailable( 'spdb_native_reference_resolver_unavailable', 'The native-reference resolver is unavailable.' ); }
-		return true;
+		return $this->readiness->require_write_ready( $requires_resolver, $this->writes_configured() );
 	}
 	private function writes_configured(): bool {
 		$environment = function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production';
