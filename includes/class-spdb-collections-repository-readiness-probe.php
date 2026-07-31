@@ -12,6 +12,7 @@ defined( 'ABSPATH' ) || exit;
 final class SPDB_Collections_Repository_Readiness_Probe {
 	private ?SPDB_Collections_Repository $repository;
 	private SPDB_Collections_Service_Readiness_Integration $integration;
+	private SPDB_Collections_Service_Readiness_Integration $read_integration;
 	private bool $evaluating = false;
 	private bool $reentrant_detected = false;
 
@@ -19,18 +20,22 @@ final class SPDB_Collections_Repository_Readiness_Probe {
 		?SPDB_Collections_Repository $repository,
 		SPDB_Collections_Service_Readiness_Integration $integration
 	) {
-		$this->repository  = $repository;
-		$this->integration = $integration;
+		$this->repository       = $repository;
+		$this->integration      = $integration;
+		$this->read_integration = new SPDB_Collections_Service_Readiness_Integration(
+			new SPDB_Collections_Service_Readiness_Gate()
+		);
 	}
 
 	/** @param mixed $writes_configured @return array<string,mixed> */
 	public function snapshot( $writes_configured ): array {
 		if ( ! is_bool( $writes_configured ) ) {
-			return $this->integration->snapshot( $writes_configured, false, array() );
+			return $this->read_integration->snapshot( $writes_configured, false, array() );
 		}
 
-		$probe = $this->probe_repository();
-		return $this->integration->snapshot(
+		$probe       = $this->probe_repository();
+		$integration = $writes_configured ? $this->integration : $this->read_integration;
+		return $integration->snapshot(
 			$writes_configured,
 			$probe['available'],
 			$probe['health']
@@ -40,7 +45,7 @@ final class SPDB_Collections_Repository_Readiness_Probe {
 	/** @return true|WP_Error */
 	public function require_read_ready() {
 		$probe    = $this->probe_repository();
-		$snapshot = $this->integration->snapshot( false, $probe['available'], $probe['health'] );
+		$snapshot = $this->read_integration->snapshot( false, $probe['available'], $probe['health'] );
 
 		if ( ! $snapshot['repository_available'] ) {
 			return $this->error(
@@ -66,7 +71,7 @@ final class SPDB_Collections_Repository_Readiness_Probe {
 	/** @param mixed $writes_configured @return true|WP_Error */
 	public function require_collection_write_ready( $writes_configured ) {
 		if ( ! is_bool( $writes_configured ) || false === $writes_configured ) {
-			return $this->integration->require_collection_write_ready(
+			return $this->read_integration->require_collection_write_ready(
 				$writes_configured,
 				false,
 				array()
@@ -74,7 +79,7 @@ final class SPDB_Collections_Repository_Readiness_Probe {
 		}
 
 		$probe = $this->probe_repository();
-		return $this->integration->require_collection_write_ready(
+		return $this->read_integration->require_collection_write_ready(
 			true,
 			$probe['available'],
 			$probe['health']
@@ -84,7 +89,7 @@ final class SPDB_Collections_Repository_Readiness_Probe {
 	/** @param mixed $writes_configured @return true|WP_Error */
 	public function require_knowledge_write_ready( $writes_configured ) {
 		if ( ! is_bool( $writes_configured ) || false === $writes_configured ) {
-			return $this->integration->require_knowledge_write_ready(
+			return $this->read_integration->require_knowledge_write_ready(
 				$writes_configured,
 				false,
 				array()
@@ -136,11 +141,11 @@ final class SPDB_Collections_Repository_Readiness_Probe {
 	/** @return array{healthy:false,database_ready:false,schema_ready:false,schema_version:string,code:string,cached_for_request:false} */
 	private function not_ready_health( string $code ): array {
 		return array(
-			'healthy'           => false,
-			'database_ready'    => false,
-			'schema_ready'      => false,
-			'schema_version'    => SPDB_Collections_Schema::VERSION,
-			'code'              => $code,
+			'healthy'            => false,
+			'database_ready'     => false,
+			'schema_ready'       => false,
+			'schema_version'     => SPDB_Collections_Schema::VERSION,
+			'code'               => $code,
 			'cached_for_request' => false,
 		);
 	}
