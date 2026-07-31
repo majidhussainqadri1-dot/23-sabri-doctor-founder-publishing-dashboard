@@ -1,5 +1,5 @@
 <?php
-/** Executable tests for initial Phase 23M service-probe composition. */
+/** Executable tests for corrected Phase 23M service-probe composition. */
 require_once __DIR__ . '/bootstrap.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-collections-repository.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-native-reference-readiness.php';
@@ -64,6 +64,14 @@ final class SPDB_23M_Resolver implements SPDB_Native_Reference_Resolver, SPDB_Na
 	}
 }
 
+final class SPDB_23M_Resolver_Without_Readiness implements SPDB_Native_Reference_Resolver {
+	public int $resolve_calls = 0;
+	public function resolve_reference( string $provider_key, string $object_type, string $object_id, array $context ) {
+		++$this->resolve_calls;
+		return array();
+	}
+}
+
 $tests = 0;
 $failed = 0;
 function spdb_23m_assert( bool $condition, string $message ): void {
@@ -91,16 +99,60 @@ function spdb_23m_health( array $changes = array() ): array {
 		$changes
 	);
 }
+function spdb_23m_private( object $object, string $property ) {
+	$reflection = new ReflectionProperty( get_class( $object ), $property );
+	$reflection->setAccessible( true );
+	return $reflection->getValue( $object );
+}
 
 $constructor = new ReflectionMethod( SPDB_Collections_Service_Probe_Binding::class, '__construct' );
+$cloner = new ReflectionMethod( SPDB_Collections_Service_Probe_Binding::class, '__clone' );
 spdb_23m_assert( $constructor->isPrivate(), 'The binding constructor must remain private so callers cannot inject mismatched components.' );
-spdb_23m_assert( ! method_exists( SPDB_Collections_Service_Probe_Binding::class, 'set_repository' ) && ! method_exists( SPDB_Collections_Service_Probe_Binding::class, 'set_resolver' ) && ! method_exists( SPDB_Collections_Service_Probe_Binding::class, 'set_probe' ), 'The binding must not expose dependency replacement methods.' );
+spdb_23m_assert( $cloner->isPrivate(), 'The binding must remain non-clonable so its dependency lifecycle cannot split.' );
+spdb_23m_assert( ! method_exists( SPDB_Collections_Service_Probe_Binding::class, 'service' ), 'The binding must not expose the raw legacy Collections service before service-side probe consumption.' );
+spdb_23m_assert(
+	! method_exists( SPDB_Collections_Service_Probe_Binding::class, 'set_repository' )
+	&& ! method_exists( SPDB_Collections_Service_Probe_Binding::class, 'set_resolver' )
+	&& ! method_exists( SPDB_Collections_Service_Probe_Binding::class, 'set_probe' )
+	&& ! method_exists( SPDB_Collections_Service_Probe_Binding::class, 'set_integration' ),
+	'The binding must not expose dependency replacement methods.'
+);
 
 $repository = new SPDB_23M_Repository();
 $resolver = new SPDB_23M_Resolver();
 $binding = SPDB_Collections_Service_Probe_Binding::create( $repository, $resolver );
-spdb_23m_assert( $binding->service() instanceof SPDB_Collections_Service, 'The binding must expose the paired Collections service.' );
-spdb_23m_assert( $binding->service() === $binding->service(), 'The binding must retain one service instance.' );
+$bound_service = spdb_23m_private( $binding, 'service' );
+$bound_probe = spdb_23m_private( $binding, 'probe' );
+$bound_integration = spdb_23m_private( $bound_probe, 'integration' );
+$bound_gate = spdb_23m_private( $bound_integration, 'gate' );
+spdb_23m_assert( $bound_service instanceof SPDB_Collections_Service, 'The binding must retain exactly one private Collections service.' );
+spdb_23m_assert( $bound_probe instanceof SPDB_Collections_Repository_Readiness_Probe, 'The binding must retain exactly one private repository-readiness probe.' );
+spdb_23m_assert( spdb_23m_private( $bound_service, 'repository' ) === $repository, 'The private service must retain the exact repository object supplied to the factory.' );
+spdb_23m_assert( spdb_23m_private( $bound_service, 'resolver' ) === $resolver, 'The private service must retain the exact resolver object supplied to the factory.' );
+spdb_23m_assert( spdb_23m_private( $bound_probe, 'repository' ) === $repository, 'The private probe must retain the same exact repository object as the service.' );
+spdb_23m_assert( spdb_23m_private( $bound_gate, 'resolver' ) === $resolver, 'The private readiness gate must retain the same exact resolver object as the service.' );
+
+$clone_blocked = false;
+try {
+	$forbidden_clone = clone $binding;
+} catch ( Throwable $throwable ) {
+	$clone_blocked = true;
+}
+spdb_23m_assert( $clone_blocked, 'The binding must reject cloning.' );
+$serialize_blocked = false;
+try {
+	serialize( $binding );
+} catch ( LogicException $exception ) {
+	$serialize_blocked = true;
+}
+spdb_23m_assert( $serialize_blocked, 'The binding must reject serialization.' );
+$unserialize_blocked = false;
+try {
+	$binding->__unserialize( array() );
+} catch ( LogicException $exception ) {
+	$unserialize_blocked = true;
+}
+spdb_23m_assert( $unserialize_blocked, 'The binding must reject unserialization.' );
 
 $invalid = $binding->readiness_snapshot( 'false' );
 spdb_23m_assert( false === $invalid['inputs_valid'] && 'integration_input_invalid' === $invalid['integration_code'], 'Weakly coercible authority must fail closed through the bound probe.' );
@@ -160,10 +212,27 @@ spdb_23m_assert( 'spdb_collections_repository_unavailable' === spdb_23m_code( $a
 $no_resolver = SPDB_Collections_Service_Probe_Binding::create( $repository, null );
 spdb_23m_assert( true === $no_resolver->require_collection_write_ready( true ), 'A binding without a resolver may still satisfy collection readiness.' );
 spdb_23m_assert( 'spdb_native_reference_resolver_unavailable' === spdb_23m_code( $no_resolver->require_knowledge_write_ready( true ) ), 'A binding without a resolver must deny knowledge readiness.' );
-spdb_23m_assert( 0 === $resolver->resolve_calls, 'The Phase 23M binding must never resolve a native object.' );
+
+$missing_readiness_resolver = new SPDB_23M_Resolver_Without_Readiness();
+$missing_readiness = SPDB_Collections_Service_Probe_Binding::create( $repository, $missing_readiness_resolver );
+spdb_23m_assert( true === $missing_readiness->require_collection_write_ready( true ), 'A resolver without readiness metadata must not block collection-only readiness.' );
+spdb_23m_assert( 'spdb_native_reference_readiness_missing' === spdb_23m_code( $missing_readiness->require_knowledge_write_ready( true ) ), 'A resolver without the formal readiness contract must fail closed for knowledge readiness.' );
+spdb_23m_assert( 0 === $missing_readiness_resolver->resolve_calls, 'A missing readiness contract must never fall through to native resolution.' );
+
+$repository_two = new SPDB_23M_Repository();
+$resolver_two = new SPDB_23M_Resolver();
+$binding_two = SPDB_Collections_Service_Probe_Binding::create( $repository_two, $resolver_two );
+$repository->health_calls = 0;
+$resolver->reset();
+$repository_two->health_calls = 0;
+$resolver_two->reset();
+spdb_23m_assert( true === $binding_two->require_knowledge_write_ready( true ), 'A second binding must operate with its own dependency pair.' );
+spdb_23m_assert( 0 === $repository->health_calls && 0 === $resolver->ready_calls, 'A second binding must not touch the first binding dependency pair.' );
+spdb_23m_assert( 1 === $repository_two->health_calls && 1 === $resolver_two->ready_calls && 0 === $resolver_two->resolve_calls, 'The second binding must use only its own repository and resolver once.' );
+spdb_23m_assert( 0 === $resolver->resolve_calls, 'The corrected Phase 23M binding must never resolve a native object.' );
 
 if ( $failed > 0 ) {
 	fwrite( STDERR, "{$failed} of {$tests} Phase 23M service-probe binding tests failed.\n" );
 	exit( 1 );
 }
-echo "All {$tests} Phase 23M service-probe binding tests passed.\n";
+echo "All {$tests} corrected Phase 23M service-probe binding tests passed.\n";
