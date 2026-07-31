@@ -47,8 +47,10 @@ final class SPDB_Collections_Service_Readiness_Gate {
 			);
 		}
 
-		$resolver               = $this->resolver_snapshot();
 		$collection_write_ready = $writes_configured && $repository_ready;
+		$resolver               = $collection_write_ready
+			? $this->resolver_snapshot()
+			: $this->resolver_not_evaluated_state();
 		$knowledge_write_ready  = $collection_write_ready && $resolver['ready'];
 		$gate_code              = ! $writes_configured
 			? 'writes_disabled'
@@ -69,11 +71,7 @@ final class SPDB_Collections_Service_Readiness_Gate {
 		);
 	}
 
-	/**
-	 * @param mixed $writes_configured
-	 * @param mixed $repository_ready
-	 * @return true|WP_Error
-	 */
+	/** @param mixed $writes_configured @param mixed $repository_ready @return true|WP_Error */
 	public function require_collection_write_ready( $writes_configured, $repository_ready ) {
 		if ( ! $this->valid_gate_inputs( $writes_configured, $repository_ready ) ) {
 			return $this->error( 'spdb_collections_readiness_input_invalid', 'The collection readiness authority inputs are invalid.' );
@@ -87,11 +85,7 @@ final class SPDB_Collections_Service_Readiness_Gate {
 		return true;
 	}
 
-	/**
-	 * @param mixed $writes_configured
-	 * @param mixed $repository_ready
-	 * @return true|WP_Error
-	 */
+	/** @param mixed $writes_configured @param mixed $repository_ready @return true|WP_Error */
 	public function require_knowledge_write_ready( $writes_configured, $repository_ready ) {
 		$collection = $this->require_collection_write_ready( $writes_configured, $repository_ready );
 		if ( is_wp_error( $collection ) ) {
@@ -153,6 +147,16 @@ final class SPDB_Collections_Service_Readiness_Gate {
 		} finally {
 			$this->evaluating = false;
 		}
+	}
+
+	/** @return array{available:bool,readiness_available:bool,ready:bool,code:string} */
+	private function resolver_not_evaluated_state(): array {
+		return $this->resolver_state(
+			null !== $this->resolver,
+			null !== $this->readiness,
+			false,
+			'resolver_not_evaluated'
+		);
 	}
 
 	private function valid_readiness_snapshot( $source ): bool {
