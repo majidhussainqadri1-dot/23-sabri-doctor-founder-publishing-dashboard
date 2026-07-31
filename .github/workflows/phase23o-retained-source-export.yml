@@ -35,4 +35,5 @@ jobs:
           name: phase23o-retained-source-${{ github.run_id }}
           path: retained-source/
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 7
