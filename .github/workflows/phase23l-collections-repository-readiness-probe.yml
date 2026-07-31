@@ -1,0 +1,244 @@
+name: Phase 23L Collections Repository Readiness Probe
+
+on:
+  push:
+    branches: [main, 'phase/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase23l-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-readiness-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.0', '8.1', '8.2', '8.3']
+    env:
+      EXPECTED_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      EXPECTED_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.EXPECTED_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact head and stacked ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa-evidence
+          actual_sha="$(git rev-parse HEAD)"
+          test "$actual_sha" = "$EXPECTED_SHA"
+          if [ -n "$EXPECTED_BASE_SHA" ]; then
+            git cat-file -e "${EXPECTED_BASE_SHA}^{commit}"
+            git merge-base --is-ancestor "$EXPECTED_BASE_SHA" "$EXPECTED_SHA"
+          fi
+          printf 'expected_sha=%s\nactual_sha=%s\nexpected_base_sha=%s\nrun_id=%s\nphp=%s\n' \
+            "$EXPECTED_SHA" "$actual_sha" "$EXPECTED_BASE_SHA" "$GITHUB_RUN_ID" "${{ matrix.php }}" \
+            > "qa-evidence/phase23l-context-php-${{ matrix.php }}.txt"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: Verify Phase 23L files
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            .github/workflows/phase23l-collections-repository-readiness-probe.yml
+            docs/AUDIT-PHASE-23L-COLLECTIONS-REPOSITORY-READINESS-PROBE-2026-07-31.md
+            includes/interface-spdb-collections-repository.php
+            includes/interface-spdb-native-reference-readiness.php
+            includes/class-spdb-collections-schema.php
+            includes/class-spdb-collections-service-readiness-gate.php
+            includes/class-spdb-collections-service-readiness-integration.php
+            includes/class-spdb-collections-repository-readiness-probe.php
+            includes/class-spdb-collections-service.php
+            includes/class-spdb-plugin.php
+            tests/phase23h-readiness-bridge-tests.php
+            tests/phase23i-registry-readiness-tests.php
+            tests/phase23j-collections-service-readiness-tests.php
+            tests/phase23k-collections-service-readiness-integration-tests.php
+            tests/phase23l-collections-repository-readiness-probe-tests.php
+            tests/architecture-guard.php
+          )
+          for file in "${required[@]}"; do
+            test -s "$file" || { echo "Missing or empty: $file"; exit 1; }
+          done
+
+      - name: PHP syntax check
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l includes/interface-spdb-collections-repository.php
+          php -l includes/interface-spdb-native-reference-readiness.php
+          php -l includes/class-spdb-collections-schema.php
+          php -l includes/class-spdb-collections-service-readiness-gate.php
+          php -l includes/class-spdb-collections-service-readiness-integration.php
+          php -l includes/class-spdb-collections-repository-readiness-probe.php
+          php -l includes/class-spdb-collections-service.php
+          php -l includes/class-spdb-plugin.php
+          php -l tests/phase23h-readiness-bridge-tests.php
+          php -l tests/phase23i-registry-readiness-tests.php
+          php -l tests/phase23j-collections-service-readiness-tests.php
+          php -l tests/phase23k-collections-service-readiness-integration-tests.php
+          php -l tests/phase23l-collections-repository-readiness-probe-tests.php
+          php -l tests/architecture-guard.php
+
+      - name: Run corrected Phase 23L probe tests
+        shell: bash
+        run: |
+          set -o pipefail
+          php -d display_errors=1 -d error_reporting=E_ALL tests/phase23l-collections-repository-readiness-probe-tests.php \
+            | tee "qa-evidence/phase23l-tests-php-${{ matrix.php }}.log"
+
+      - name: Run Phase 23K integration regression
+        shell: bash
+        run: |
+          set -o pipefail
+          php -d display_errors=1 -d error_reporting=E_ALL tests/phase23k-collections-service-readiness-integration-tests.php \
+            | tee -a "qa-evidence/phase23l-tests-php-${{ matrix.php }}.log"
+
+      - name: Run Phase 23J gate regression
+        shell: bash
+        run: |
+          set -o pipefail
+          php -d display_errors=1 -d error_reporting=E_ALL tests/phase23j-collections-service-readiness-tests.php \
+            | tee -a "qa-evidence/phase23l-tests-php-${{ matrix.php }}.log"
+
+      - name: Run Phase 23I conformance regression
+        shell: bash
+        run: |
+          set -o pipefail
+          php -d display_errors=1 -d error_reporting=E_ALL tests/phase23i-registry-readiness-tests.php \
+            | tee -a "qa-evidence/phase23l-tests-php-${{ matrix.php }}.log"
+
+      - name: Run Phase 23H bridge regression
+        shell: bash
+        run: |
+          set -o pipefail
+          php -d display_errors=1 -d error_reporting=E_ALL tests/phase23h-readiness-bridge-tests.php \
+            | tee -a "qa-evidence/phase23l-tests-php-${{ matrix.php }}.log"
+
+      - name: Run architecture guard
+        shell: bash
+        run: |
+          set -o pipefail
+          php -d display_errors=1 -d error_reporting=E_ALL tests/architecture-guard.php \
+            | tee -a "qa-evidence/phase23l-tests-php-${{ matrix.php }}.log"
+
+      - name: Verify bounded probe and no runtime wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          php <<'PHP'
+          <?php
+          $source = file_get_contents( 'includes/class-spdb-collections-repository-readiness-probe.php' );
+          $service = file_get_contents( 'includes/class-spdb-collections-service.php' );
+          $plugin = file_get_contents( 'includes/class-spdb-plugin.php' );
+          $tests = file_get_contents( 'tests/phase23l-collections-repository-readiness-probe-tests.php' );
+          $audit = file_get_contents( 'docs/AUDIT-PHASE-23L-COLLECTIONS-REPOSITORY-READINESS-PROBE-2026-07-31.md' );
+          $fail = static function ( string $message ): void {
+              file_put_contents( 'php://stderr', "STATIC GUARD FAIL: {$message}\n" );
+              exit( 1 );
+          };
+          foreach ( array(
+              'final class SPDB_Collections_Repository_Readiness_Probe',
+              'read_integration',
+              'probe_repository',
+              'not_ready_health',
+              "'schema_version'",
+              "'cached_for_request'",
+              'repository_probe_failed',
+              'repository_probe_reentrant',
+              'finally',
+              'require_read_ready',
+              'require_collection_write_ready',
+              'require_knowledge_write_ready',
+          ) as $needle ) {
+              if ( false === strpos( $source, $needle ) ) { $fail( "Missing source control: {$needle}" ); }
+          }
+          if ( preg_match( '/function\s+(?:snapshot|require_collection_write_ready|require_knowledge_write_ready)\s*\(\s*bool\s/', $source ) ) {
+              $fail( 'Weak boolean authority signatures returned.' );
+          }
+          if ( false !== strpos( $plugin, 'class-spdb-collections-repository-readiness-probe.php' ) ) {
+              $fail( 'Plugin wiring is not authorized.' );
+          }
+          if ( false !== strpos( $service, 'SPDB_Collections_Repository_Readiness_Probe' ) ) {
+              $fail( 'Collections service probe consumption is not authorized.' );
+          }
+          foreach ( array(
+              'register_rest_route(',
+              'WP_REST_Server::CREATABLE',
+              'WP_REST_Server::EDITABLE',
+              'WP_REST_Server::DELETABLE',
+              'wp_insert_post(', 'wp_update_post(', 'wp_delete_post(',
+              'add_option(', 'update_option(', 'delete_option(',
+              'add_user_meta(', 'update_user_meta(', 'delete_user_meta(',
+              'add_post_meta(', 'update_post_meta(', 'delete_post_meta(',
+              'set_transient(', 'delete_transient(',
+              'file_put_contents(', 'fopen(', 'fwrite(',
+              '->insert(', '->update(', '->delete(', '->query(',
+              '->resolve_reference(', '::resolve_reference(',
+          ) as $forbidden ) {
+              if ( false !== strpos( $source, $forbidden ) ) { $fail( "Forbidden operation: {$forbidden}" ); }
+          }
+          foreach ( array(
+              'Weakly coercible authority input',
+              'Read-only snapshot must acquire repository health once and skip resolver readiness',
+              'complete bounded six-field not-ready state',
+              'recover after an exception',
+              'recover after re-entrant denial',
+              'never resolve a native object',
+          ) as $needle ) {
+              if ( false === stripos( $tests, $needle ) ) { $fail( "Missing executable evidence marker: {$needle}" ); }
+          }
+          if ( false === stripos( $audit, 'DO NOT MERGE' ) ) { $fail( 'Audit merge gate is missing.' ); }
+          if ( false === stripos( $audit, 'No probe path may resolve a native object' ) ) { $fail( 'Audit native-resolution boundary is missing.' ); }
+          echo "Phase 23L static boundaries passed.\n";
+          PHP
+
+      - name: Record exact-source checksums
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum \
+            .github/workflows/phase23l-collections-repository-readiness-probe.yml \
+            docs/AUDIT-PHASE-23L-COLLECTIONS-REPOSITORY-READINESS-PROBE-2026-07-31.md \
+            includes/interface-spdb-collections-repository.php \
+            includes/interface-spdb-native-reference-readiness.php \
+            includes/class-spdb-collections-schema.php \
+            includes/class-spdb-collections-service-readiness-gate.php \
+            includes/class-spdb-collections-service-readiness-integration.php \
+            includes/class-spdb-collections-repository-readiness-probe.php \
+            includes/class-spdb-collections-service.php \
+            includes/class-spdb-plugin.php \
+            tests/phase23h-readiness-bridge-tests.php \
+            tests/phase23i-registry-readiness-tests.php \
+            tests/phase23j-collections-service-readiness-tests.php \
+            tests/phase23k-collections-service-readiness-integration-tests.php \
+            tests/phase23l-collections-repository-readiness-probe-tests.php \
+            tests/architecture-guard.php \
+            > "qa-evidence/phase23l-checksums-php-${{ matrix.php }}.sha256"
+
+      - name: Upload Phase 23L QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-23l-repository-readiness-probe-qa-php-${{ matrix.php }}-${{ github.run_id }}
+          path: qa-evidence/
+          if-no-files-found: error
+          retention-days: 30
