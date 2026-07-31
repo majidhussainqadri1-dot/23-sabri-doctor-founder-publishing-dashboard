@@ -4,7 +4,7 @@
 
 The accepted Phase 23M binding proves exact repository/resolver composition, but `SPDB_Collections_Service` still uses legacy manual health and gate logic. Directly replacing those internals without first defining a stable mapping from the reviewed Phase 23L probe would risk health-field drift, private repository-detail relay, resolver availability/readiness confusion, and denial-code regressions.
 
-Phase 23N therefore provides an isolated `SPDB_Collections_Service_Readiness_Consumer`. It converts reviewed probe decisions into the exact existing service-health field names and owns the bounded read, collection-write, and knowledge-write readiness decisions without performing a service operation.
+Phase 23N therefore provides an isolated `SPDB_Collections_Service_Readiness_Consumer`. It converts reviewed probe decisions into the exact existing service-health field names and owns the bounded read, collection-write, and knowledge-write readiness decisions without performing a service operation. Aggregate repository readiness is accepted only through the reviewed exact snapshot contract and is reduced to a bounded six-field public repository-health projection; raw database or provider detail is never authoritative or relayed.
 
 The preliminary head `bbe4071dc84c65f8b2c6a68695d70d67a57b0057` passed automated tests but was not final source acceptance. Corrective review found additional source and evidence defects. Every preliminary Phase 23N run and artifact is invalidated. Every failed Phase 23N run and artifact is invalidated. Only a later documentation-inclusive exact head that passes both Phase 23N matrices and all inherited regressions may be cited.
 
@@ -75,6 +75,8 @@ The preliminary head `bbe4071dc84c65f8b2c6a68695d70d67a57b0057` passed automated
 58. The retained workflow required an explicit knowledge-ready state without resolver availability assertion.
 59. Semantically related tests are not substitutes for exact high-risk boundary assertions.
 60. The retained workflow failure and its artifacts are invalid evidence.
+61. The retained audit gate required an explicit aggregate repository readiness statement; the audit described individual bounded fields but did not state the aggregate authority boundary directly.
+62. Aggregate repository readiness must never expose or trust raw provider/database details outside the reviewed snapshot contract.
 
 ## Corrections Applied
 
@@ -101,6 +103,7 @@ The preliminary head `bbe4071dc84c65f8b2c6a68695d70d67a57b0057` passed automated
 - Added explicit write-ready-without-read and knowledge-ready-without-resolver-availability assertions.
 - Added a dedicated corrective PHP 8.0–8.3 matrix and strengthened exact-source checksums.
 - Added separate explicit invalidation statements for preliminary and failed Phase 23N evidence.
+- Added an explicit aggregate repository readiness authority and privacy statement.
 
 ## Authorized Phase 23N Slice
 
