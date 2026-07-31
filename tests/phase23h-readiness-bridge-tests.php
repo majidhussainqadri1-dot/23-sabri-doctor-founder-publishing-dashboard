@@ -9,6 +9,7 @@ final class SPDB_Test_23H_Readiness implements SPDB_Native_Reference_Readiness {
 	public bool $available = true;
 	public bool $throw = false;
 	public bool $invalid_shape = false;
+	public bool $reordered_shape = false;
 	public string $source_code = 'provider-secret-code';
 	public int $ready_calls = 0;
 	public int $snapshot_calls = 0;
@@ -22,7 +23,9 @@ final class SPDB_Test_23H_Readiness implements SPDB_Native_Reference_Readiness {
 	public function readiness_snapshot(): array {
 		++$this->snapshot_calls;
 		if ( $this->throw ) { throw new RuntimeException( 'Private readiness snapshot exception.' ); }
-		$snapshot = array( 'available' => $this->available, 'ready' => $this->ready, 'code' => $this->source_code );
+		$snapshot = $this->reordered_shape
+			? array( 'code' => $this->source_code, 'ready' => $this->ready, 'available' => $this->available )
+			: array( 'available' => $this->available, 'ready' => $this->ready, 'code' => $this->source_code );
 		if ( $this->invalid_shape ) { $snapshot['private_detail'] = 'must-not-project'; }
 		return $snapshot;
 	}
@@ -31,9 +34,13 @@ final class SPDB_Test_23H_Readiness implements SPDB_Native_Reference_Readiness {
 final class SPDB_Test_23H_Resolver implements SPDB_Native_Reference_Resolver {
 	public int $calls = 0;
 	public bool $throw = false;
+	public bool $return_error = false;
+	public bool $invalid_response = false;
 	public function resolve_reference( string $provider_key, string $object_type, string $object_id, array $context ) {
 		++$this->calls;
 		if ( $this->throw ) { throw new RuntimeException( 'Private native resolver exception.' ); }
+		if ( $this->return_error ) { return new WP_Error( 'provider_private_error', 'Patient and provider secret must not escape.', array( 'secret' => 'hidden' ) ); }
+		if ( $this->invalid_response ) { return 'invalid-provider-response'; }
 		return array(
 			'provider_key' => $provider_key,
 			'object_type' => $object_type,
@@ -68,6 +75,11 @@ $resolved = $bridge->resolve_reference( 'provider_one', 'publication', 'post-101
 spdb_23h_assert( is_array( $resolved ) && 'post-101' === $resolved['object_id'] && 1 === $resolver->calls, 'A ready bridge must delegate the exact reference once.' );
 spdb_23h_assert( array_keys( $ready_snapshot ) === array( 'available', 'ready', 'code' ) && ! in_array( $readiness->source_code, $ready_snapshot, true ), 'The bridge must reconstruct a fixed non-sensitive readiness projection.' );
 
+$readiness->reordered_shape = true;
+$reordered = $bridge->readiness_snapshot();
+spdb_23h_assert( array( 'available' => true, 'ready' => true, 'code' => 'ready' ) === $reordered, 'A valid readiness projection must not depend on associative key order.' );
+$readiness->reordered_shape = false;
+
 $readiness->available = false;
 $unavailable = $bridge->readiness_snapshot();
 spdb_23h_assert( array( 'available' => false, 'ready' => false, 'code' => 'resolver_unavailable' ) === $unavailable, 'Unavailable readiness must remain distinct from a present but unready resolver.' );
@@ -93,9 +105,19 @@ $resolver_failure = $bridge->resolve_reference( 'provider_one', 'publication', '
 spdb_23h_assert( 'spdb_native_reference_resolver_failed' === spdb_23h_code( $resolver_failure ) && false === strpos( $resolver_failure->get_error_message(), 'Private' ), 'Resolver exceptions must be replaced with a bounded non-sensitive error.' );
 $resolver->throw = false;
 
+$resolver->return_error = true;
+$provider_error = $bridge->resolve_reference( 'provider_one', 'publication', 'post-105', array( 'scope' => 'own' ) );
+spdb_23h_assert( 'spdb_native_reference_resolver_error' === spdb_23h_code( $provider_error ) && false === strpos( $provider_error->get_error_message(), 'Patient' ) && array( 'status' => 503 ) === $provider_error->get_error_data(), 'Resolver WP_Error text and data must be replaced with a bounded bridge error.' );
+$resolver->return_error = false;
+
+$resolver->invalid_response = true;
+$invalid_provider_response = $bridge->resolve_reference( 'provider_one', 'publication', 'post-106', array( 'scope' => 'own' ) );
+spdb_23h_assert( 'spdb_native_reference_resolver_response_invalid' === spdb_23h_code( $invalid_provider_response ), 'A malformed resolver response must fail closed at the bridge.' );
+$resolver->invalid_response = false;
+
 $readiness->ready = false;
-$transition_result = $bridge->resolve_reference( 'provider_one', 'publication', 'post-105', array( 'scope' => 'own' ) );
-spdb_23h_assert( 'spdb_native_reference_resolver_not_ready' === spdb_23h_code( $transition_result ) && 2 === $resolver->calls, 'Readiness loss after a successful call must be enforced immediately.' );
+$transition_result = $bridge->resolve_reference( 'provider_one', 'publication', 'post-107', array( 'scope' => 'own' ) );
+spdb_23h_assert( 'spdb_native_reference_resolver_not_ready' === spdb_23h_code( $transition_result ) && 4 === $resolver->calls, 'Readiness loss after successful or failed resolver calls must be enforced immediately.' );
 spdb_23h_assert( 2 === $readiness->ready_calls - $readiness->snapshot_calls, 'Readiness declaration exceptions must short-circuit before snapshot evaluation without weakening denial.' );
 
 if ( $failed > 0 ) {
