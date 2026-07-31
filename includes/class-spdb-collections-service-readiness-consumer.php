@@ -284,25 +284,25 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 					&& ! $snapshot['write_configured']
 					&& 'repository_not_evaluated' !== $snapshot['repository_code']
 					&& $this->no_write_state( $snapshot )
-					&& $this->resolver_not_evaluated( $snapshot );
+					&& $this->resolver_suppressed( $snapshot );
 			case 'repository_unavailable':
 				return $snapshot['inputs_valid']
 					&& $snapshot['write_configured']
 					&& 'repository_unavailable' === $snapshot['repository_code']
 					&& $this->no_write_state( $snapshot )
-					&& $this->resolver_not_evaluated( $snapshot );
+					&& $this->resolver_suppressed( $snapshot );
 			case 'repository_health_invalid':
 				return $snapshot['inputs_valid']
 					&& $snapshot['write_configured']
 					&& 'repository_health_invalid' === $snapshot['repository_code']
 					&& $this->no_write_state( $snapshot )
-					&& $this->resolver_not_evaluated( $snapshot );
+					&& $this->resolver_suppressed( $snapshot );
 			case 'repository_not_ready':
 				return $snapshot['inputs_valid']
 					&& $snapshot['write_configured']
 					&& 'repository_not_ready' === $snapshot['repository_code']
 					&& $this->no_write_state( $snapshot )
-					&& $this->resolver_not_evaluated( $snapshot );
+					&& $this->resolver_suppressed( $snapshot );
 			case 'gate_state_invalid':
 				return $snapshot['inputs_valid']
 					&& $snapshot['write_configured']
@@ -402,6 +402,14 @@ final class SPDB_Collections_Service_Readiness_Consumer {
 	/** @param array<string,mixed> $snapshot */
 	private function resolver_not_evaluated( array $snapshot ): bool {
 		return 'resolver_not_evaluated' === $snapshot['resolver_code']
+			&& ! $snapshot['resolver_available']
+			&& ! $snapshot['resolver_readiness_available']
+			&& ! $snapshot['resolver_ready'];
+	}
+
+	/** @param array<string,mixed> $snapshot */
+	private function resolver_suppressed( array $snapshot ): bool {
+		return 'resolver_absent' === $snapshot['resolver_code']
 			&& ! $snapshot['resolver_available']
 			&& ! $snapshot['resolver_readiness_available']
 			&& ! $snapshot['resolver_ready'];
