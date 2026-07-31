@@ -150,7 +150,7 @@ jobs:
           $tests = file_get_contents( $tests_path );
           $audit = file_get_contents( $audit_path );
           $fail = static function ( string $message ): void {
-              fwrite( STDERR, "STATIC GUARD FAIL: {$message}\n" );
+              file_put_contents( 'php://stderr', "STATIC GUARD FAIL: {$message}\n" );
               exit( 1 );
           };
           foreach ( array(
@@ -201,10 +201,10 @@ jobs:
               'stale schema version',
               'never resolve a native object',
           ) as $needle ) {
-              if ( false === strpos( $tests, $needle ) ) { $fail( "Missing executable evidence marker: {$needle}" ); }
+              if ( false === stripos( $tests, $needle ) ) { $fail( "Missing executable evidence marker: {$needle}" ); }
           }
           if ( false === stripos( $audit, 'DO NOT MERGE' ) ) { $fail( 'Audit merge gate is missing.' ); }
-          if ( false === strpos( $audit, 'never call native reference resolution' ) ) { $fail( 'Audit native-resolution boundary is missing.' ); }
+          if ( false === stripos( $audit, 'never call native reference resolution' ) ) { $fail( 'Audit native-resolution boundary is missing.' ); }
           echo "Phase 23K static boundaries passed.\n";
           PHP
 
