@@ -1,14 +1,14 @@
-# Phase 23L Collections Repository Readiness Probe — Independent Review — 2026-07-31
+# Phase 23L Collections Repository Readiness Probe — Independent Review and Corrective Re-review — 2026-07-31
 
 ## Verdict
 
 The original Phase 23L branch did not descend from the final accepted Phase 23K head. Comparison against `53b67cff3c830002cad0d4a8a76932872b28d110` showed the old branch was nine commits ahead and nine commits behind, with merge base `09ef2d9497bcc83649d5b54aa9e1ac30e5ad8155`. Every earlier Phase 23L run, artifact, head, and acceptance claim is invalid.
 
-The branch was force-reset to the exact accepted Phase 23K head and the repository-readiness probe was rebuilt from the corrected integration contract.
+The branch was force-reset to the exact accepted Phase 23K head and the repository-readiness probe was rebuilt from the corrected integration contract. A subsequent corrective source review found and corrected resolver short-circuit and fallback-load-order gaps.
 
 **DO NOT MERGE.** Phase 23L authorizes only an isolated repository-health acquisition boundary, executable tests, and exact-head CI. It does not authorize modification of `SPDB_Collections_Service`, plugin wiring, provider acceptance, mutation REST/UI, production writes, staging acceptance, or merge.
 
-## Findings
+## Initial Findings
 
 1. The original Phase 23L branch had stale and divergent ancestry.
 2. Its old base branch was not the accepted Phase 23K branch.
@@ -37,6 +37,15 @@ The branch was force-reset to the exact accepted Phase 23K head and the reposito
 25. Exact-head CI must prove that the current PR base SHA is an ancestor of the tested head.
 26. Phase 23K, Phase 23J, Phase 23I, Phase 23H, and architecture regressions must remain green.
 
+## Corrective Re-review Findings
+
+1. A write-enabled full snapshot could still evaluate resolver readiness after repository exception, malformed health, stale schema, or a valid degraded state because the Phase 23K integration also projects resolver state.
+2. Repository readiness must be established through the no-resolver integration before a resolver-aware full snapshot is permitted.
+3. The read-only and repository-denied branches require explicit resolver zero-call regression evidence.
+4. Exception and re-entrancy fallback directly accessed `SPDB_Collections_Schema::VERSION`; an incorrect future load order could make the fallback itself fatal.
+5. Missing schema dependency must fail closed rather than throwing from an exception handler.
+6. Malformed, unknown-field, stale-schema, and valid-degraded health each require an explicit test proving that resolver readiness is not called.
+
 ## Corrections Applied
 
 - Reset the Phase 23L branch to accepted Phase 23K head `53b67cff3c830002cad0d4a8a76932872b28d110`.
@@ -45,13 +54,14 @@ The branch was force-reset to the exact accepted Phase 23K head and the reposito
 - Added exact runtime boolean validation for write configuration.
 - Added invalid/disabled write short-circuiting before repository or resolver probes.
 - Added a dedicated no-resolver read integration so read-only decisions never probe resolver readiness.
+- Added a two-stage full-snapshot decision: repository readiness is validated without a resolver first; only a read-ready repository reaches resolver-aware integration.
 - Preserved resolver-independent collection-write readiness.
-- Restricted resolver readiness to write-enabled full snapshots and knowledge-write requirements.
+- Restricted resolver readiness to write-enabled full snapshots with a read-ready repository and to knowledge-write requirements after repository validation.
 - Added complete six-field exception and re-entrancy fallback health.
-- Added current schema-version fallback.
+- Added guarded schema-version fallback; a missing schema dependency cannot crash the failure path.
 - Added `try/catch/finally` recovery for every repository acquisition.
 - Added re-entrancy detection that marks the outer decision not ready without making a second repository call.
-- Added executable tests for exact call counts, invalid and disabled authority, read/collection/knowledge separation, repository absence, exception isolation and recovery, malformed/unknown/stale/degraded health, re-entrancy and recovery, and zero native resolution.
+- Added executable tests for exact call counts, invalid and disabled authority, read/collection/knowledge separation, repository absence, exception isolation and recovery, malformed/unknown/stale/degraded health, resolver zero-call denial paths, re-entrancy and recovery, and zero native resolution.
 
 ## Authorized Coding Slice
 
