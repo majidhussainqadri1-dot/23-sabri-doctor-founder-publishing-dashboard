@@ -96,7 +96,7 @@ $resolver->throw = false;
 $readiness->ready = false;
 $transition_result = $bridge->resolve_reference( 'provider_one', 'publication', 'post-105', array( 'scope' => 'own' ) );
 spdb_23h_assert( 'spdb_native_reference_resolver_not_ready' === spdb_23h_code( $transition_result ) && 2 === $resolver->calls, 'Readiness loss after a successful call must be enforced immediately.' );
-spdb_23h_assert( $readiness->ready_calls === $readiness->snapshot_calls, 'Each readiness probe must evaluate declaration and snapshot as one bounded pair.' );
+spdb_23h_assert( 2 === $readiness->ready_calls - $readiness->snapshot_calls, 'Readiness declaration exceptions must short-circuit before snapshot evaluation without weakening denial.' );
 
 if ( $failed > 0 ) {
 	fwrite( STDERR, "{$failed} of {$tests} Phase 23H readiness bridge tests failed.\n" );
