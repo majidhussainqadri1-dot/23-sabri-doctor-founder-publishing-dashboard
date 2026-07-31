@@ -184,22 +184,33 @@ spdb_23l_assert(
 	&& false === strpos( implode( '|', $exception_snapshot ), 'private repository exception' ),
 	'Repository exceptions must become a complete bounded six-field not-ready state without private detail.'
 );
-spdb_23l_assert( 1 === $repository->health_calls && 0 === $resolver->ready_calls, 'Repository failure must stop before resolver readiness.' );
+spdb_23l_assert( 1 === $repository->health_calls && 0 === $resolver->ready_calls && 0 === $resolver->snapshot_calls, 'Repository failure must stop before resolver readiness.' );
 $repository->throw = false;
 $repository->health_calls = 0;
 spdb_23l_assert( true === $probe->require_read_ready(), 'The repository probe must recover after an exception.' );
 spdb_23l_assert( 1 === $repository->health_calls, 'Exception recovery must perform one fresh repository health call.' );
 
 $repository->health = spdb_23l_health( array( 'database_ready' => 'yes' ) );
+$resolver->reset();
 $invalid_health = $probe->snapshot( true );
 spdb_23l_assert( 'repository_health_invalid' === $invalid_health['repository_code'], 'Malformed repository health must fail closed.' );
+spdb_23l_assert( 0 === $resolver->ready_calls && 0 === $resolver->snapshot_calls, 'Malformed repository health must short-circuit resolver readiness.' );
+
 $repository->health = spdb_23l_health( array( 'private_detail' => 'forbidden' ) );
+$resolver->reset();
 spdb_23l_assert( 'repository_health_invalid' === $probe->snapshot( true )['repository_code'], 'Unknown repository health fields must fail closed.' );
+spdb_23l_assert( 0 === $resolver->ready_calls && 0 === $resolver->snapshot_calls, 'Unknown-field repository health must short-circuit resolver readiness.' );
+
 $repository->health = spdb_23l_health( array( 'schema_version' => '2' ) );
+$resolver->reset();
 spdb_23l_assert( 'repository_health_invalid' === $probe->snapshot( true )['repository_code'], 'A stale schema version must fail closed.' );
+spdb_23l_assert( 0 === $resolver->ready_calls && 0 === $resolver->snapshot_calls, 'Stale-schema repository health must short-circuit resolver readiness.' );
+
 $repository->health = spdb_23l_health( array( 'healthy' => false, 'database_ready' => false, 'code' => 'database_unavailable', 'cached_for_request' => false ) );
+$resolver->reset();
 $degraded = $probe->snapshot( true );
 spdb_23l_assert( 'repository_not_ready' === $degraded['repository_code'] && false === strpos( implode( '|', $degraded ), 'database_unavailable' ), 'Valid degraded health must be reduced without relaying repository detail.' );
+spdb_23l_assert( 0 === $resolver->ready_calls && 0 === $resolver->snapshot_calls, 'Degraded repository health must short-circuit resolver readiness.' );
 
 $repository->health = spdb_23l_health();
 $repository->reenter = true;
