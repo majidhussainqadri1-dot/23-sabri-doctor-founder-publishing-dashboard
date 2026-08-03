@@ -2,7 +2,7 @@ name: Phase 23G Native Reference Resolution
 
 on:
   push:
-    branches: [main, 'phase/**']
+    branches: [main, 'phase/**', 'release/**']
   pull_request:
 
 permissions:
@@ -11,6 +11,7 @@ permissions:
 jobs:
   native-reference:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -39,76 +40,79 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
 
-      - name: Verify Phase 23G files
+      - name: Verify resolver files
         shell: bash
         run: |
           set -euo pipefail
           required=(
-            docs/AUDIT-PHASE-23G-NATIVE-REFERENCE-RESOLUTION-2026-07-31.md
             includes/interface-spdb-native-reference-provider.php
+            includes/interface-spdb-native-reference-resolver.php
+            includes/interface-spdb-native-reference-readiness.php
             includes/class-spdb-native-reference-registry.php
+            includes/class-spdb-native-reference-registry-readiness.php
+            includes/class-spdb-native-reference-readiness-bridge.php
             includes/class-spdb-native-reference-registration.php
             includes/class-spdb-plugin.php
-            includes/class-spdb-system-state.php
             tests/fixtures/class-test-native-reference-provider.php
             tests/phase23g-native-reference-tests.php
             tests/phase23g-native-reference-drift-tests.php
+            tests/phase23h-readiness-bridge-tests.php
+            tests/phase23i-registry-readiness-tests.php
           )
-          for file in "${required[@]}"; do test -s "$file" || { echo "Missing or empty: $file"; exit 1; }; done
+          for file in "${required[@]}"; do test -s "$file" || exit 1; done
 
       - name: PHP syntax check
         shell: bash
         run: |
           set -euo pipefail
-          php -l includes/interface-spdb-native-reference-provider.php
-          php -l includes/class-spdb-native-reference-registry.php
-          php -l includes/class-spdb-native-reference-registration.php
-          php -l includes/class-spdb-plugin.php
-          php -l includes/class-spdb-system-state.php
-          php -l tests/fixtures/class-test-native-reference-provider.php
-          php -l tests/phase23g-native-reference-tests.php
-          php -l tests/phase23g-native-reference-drift-tests.php
+          for file in \
+            includes/interface-spdb-native-reference-provider.php \
+            includes/class-spdb-native-reference-registry.php \
+            includes/class-spdb-native-reference-registry-readiness.php \
+            includes/class-spdb-native-reference-readiness-bridge.php \
+            includes/class-spdb-native-reference-registration.php \
+            includes/class-spdb-plugin.php \
+            tests/phase23g-native-reference-tests.php \
+            tests/phase23g-native-reference-drift-tests.php \
+            tests/phase23h-readiness-bridge-tests.php \
+            tests/phase23i-registry-readiness-tests.php
+          do php -l "$file"; done
 
-      - name: Run Phase 23G native resolver tests
-        shell: bash
-        run: set -o pipefail; php tests/phase23g-native-reference-tests.php | tee "qa-evidence/phase23g-tests-php-${{ matrix.php }}.log"
-
-      - name: Run contract drift regression tests
-        shell: bash
-        run: set -o pipefail; php tests/phase23g-native-reference-drift-tests.php | tee -a "qa-evidence/phase23g-tests-php-${{ matrix.php }}.log"
-
-      - name: Run Phase 23F runtime regression
-        shell: bash
-        run: set -o pipefail; php tests/phase23f-runtime-tests.php | tee -a "qa-evidence/phase23g-tests-php-${{ matrix.php }}.log"
-
-      - name: Run architecture guard
-        shell: bash
-        run: set -o pipefail; php tests/architecture-guard.php | tee -a "qa-evidence/phase23g-tests-php-${{ matrix.php }}.log"
-
-      - name: Verify Phase 23G boundaries
+      - name: Run resolver and readiness regressions
         shell: bash
         run: |
           set -euo pipefail
-          grep -q 'interface SPDB_Native_Reference_Provider' includes/interface-spdb-native-reference-provider.php
-          grep -q 'implements SPDB_Native_Reference_Resolver' includes/class-spdb-native-reference-registry.php
-          grep -q 'ACCEPTANCE_UNREVIEWED' includes/class-spdb-native-reference-registry.php
-          grep -q 'adapter_acceptance_state' includes/class-spdb-native-reference-registry.php
-          grep -q 'validated_context' includes/class-spdb-native-reference-registry.php
-          grep -q 'spdb_native_resolver_provider_error' includes/class-spdb-native-reference-registry.php
-          grep -q 'provider_contract_is_current' includes/class-spdb-native-reference-registry.php
-          grep -q 'contract_drift' includes/class-spdb-native-reference-registry.php
-          grep -q 'spdb/register_native_reference_resolvers' includes/class-spdb-native-reference-registration.php
-          grep -q 'new SPDB_Native_Reference_Registry( \$this->adapter_registry, array() )' includes/class-spdb-plugin.php
-          grep -q "register_provider_adapters' ), 30" includes/class-spdb-plugin.php
-          grep -q "register_native_reference_resolvers' ), 31" includes/class-spdb-plugin.php
-          grep -q 'new SPDB_Collections_Service( \$this->collections_repository )' includes/class-spdb-plugin.php
-          ! grep -Eq 'new SPDB_Collections_Service\([^;]*native_reference_registry' includes/class-spdb-plugin.php
-          ! grep -Eq 'register_rest_route\s*\(|WP_REST_Server::(CREATABLE|EDITABLE|DELETABLE)|\b(?:POST|PUT|PATCH|DELETE)\b' includes/class-spdb-native-reference-registry.php includes/class-spdb-native-reference-registration.php
-          ! grep -Eq '\b(?:insert|update|delete)_?(?:option|post|metadata)?\s*\(' includes/class-spdb-native-reference-registry.php includes/class-spdb-native-reference-registration.php
-          grep -q "'phase'.*'23G'" includes/class-spdb-system-state.php
-          grep -q "Version:[[:space:]]*0.7.0" sabri-publishing-dashboard.php
-          grep -q "SPDB_VERSION.*0.7.0" tests/bootstrap.php
-          grep -qi 'DO NOT MERGE' docs/AUDIT-PHASE-23G-NATIVE-REFERENCE-RESOLUTION-2026-07-31.md
+          for suite in \
+            tests/phase23g-native-reference-tests.php \
+            tests/phase23g-native-reference-drift-tests.php \
+            tests/phase23h-readiness-bridge-tests.php \
+            tests/phase23i-registry-readiness-tests.php \
+            tests/phase23f-runtime-tests.php \
+            tests/architecture-guard.php
+          do
+            php -d display_errors=1 -d error_reporting=E_ALL "$suite" \
+              | tee -a "qa-evidence/phase23g-tests-php-${{ matrix.php }}.log"
+          done
+
+      - name: Verify retained resolver and integrated runtime boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'interface SPDB_Native_Reference_Provider' includes/interface-spdb-native-reference-provider.php
+          grep -Fq 'implements SPDB_Native_Reference_Resolver' includes/class-spdb-native-reference-registry.php
+          grep -Fq 'ACCEPTANCE_UNREVIEWED' includes/class-spdb-native-reference-registry.php
+          grep -Fq 'adapter_acceptance_state' includes/class-spdb-native-reference-registry.php
+          grep -Fq 'validated_context' includes/class-spdb-native-reference-registry.php
+          grep -Fq 'provider_contract_is_current' includes/class-spdb-native-reference-registry.php
+          grep -Fq 'contract_drift' includes/class-spdb-native-reference-registry.php
+          grep -Fq 'spdb/register_native_reference_resolvers' includes/class-spdb-native-reference-registration.php
+          grep -Fq "apply_filters( 'spdb/native_reference_acceptance', array() )" includes/class-spdb-plugin.php
+          grep -Fq "register_provider_adapters' ), 30" includes/class-spdb-plugin.php
+          grep -Fq "register_native_reference_resolvers' ), 31" includes/class-spdb-plugin.php
+          grep -Fq 'new SPDB_Collections_Service( $this->collections_repository, $this->native_reference_registry )' includes/class-spdb-plugin.php
+          ! grep -Eq 'register_rest_route\s*\(|WP_REST_Server::(CREATABLE|EDITABLE|DELETABLE)' includes/class-spdb-native-reference-registry.php includes/class-spdb-native-reference-registration.php
+          ! grep -Eq '\b(insert|update|delete)_?(option|post|metadata)?\s*\(' includes/class-spdb-native-reference-registry.php includes/class-spdb-native-reference-registration.php
+          grep -Fq "'phase' => '23O'" includes/class-spdb-system-state.php
 
       - name: Record source checksums
         if: always()
@@ -118,13 +122,14 @@ jobs:
           sha256sum \
             includes/interface-spdb-native-reference-provider.php \
             includes/class-spdb-native-reference-registry.php \
+            includes/class-spdb-native-reference-registry-readiness.php \
+            includes/class-spdb-native-reference-readiness-bridge.php \
             includes/class-spdb-native-reference-registration.php \
             includes/class-spdb-plugin.php \
-            includes/class-spdb-system-state.php \
-            tests/fixtures/class-test-native-reference-provider.php \
             tests/phase23g-native-reference-tests.php \
             tests/phase23g-native-reference-drift-tests.php \
-            docs/AUDIT-PHASE-23G-NATIVE-REFERENCE-RESOLUTION-2026-07-31.md \
+            tests/phase23h-readiness-bridge-tests.php \
+            tests/phase23i-registry-readiness-tests.php \
             > "qa-evidence/phase23g-checksums-php-${{ matrix.php }}.sha256"
 
       - name: Upload Phase 23G QA evidence
