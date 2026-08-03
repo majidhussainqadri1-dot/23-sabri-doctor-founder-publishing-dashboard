@@ -56,13 +56,35 @@ jobs:
           php -l file23/includes/class-spdb-membership-guard.php
           grep -Fq 'SMC_Contracts::assertions( $user_id )' file23/includes/class-spdb-membership-guard.php
           grep -Fq "MINIMUM_CONTRACT_VERSION  = '1.1.2'" file23/includes/class-spdb-membership-guard.php
+      - name: Prepare current File 22 autoload boundary
+        shell: bash
+        run: |
+          cat > file22-autoload.php <<'PHP'
+          <?php
+          $root = getenv( 'FILE22_ROOT' );
+          spl_autoload_register(
+              static function ( string $class ) use ( $root ): void {
+                  $prefix = 'Sabri\\UniversalComposer\\';
+                  if ( ! str_starts_with( $class, $prefix ) ) { return; }
+                  $relative = substr( $class, strlen( $prefix ) );
+                  $parts = explode( '\\', $relative );
+                  $area = strtolower( array_shift( $parts ) ?? '' );
+                  $name = array_pop( $parts );
+                  if ( ! in_array( $area, array( 'core', 'contracts' ), true ) || ! is_string( $name ) ) { return; }
+                  $slug = strtolower( preg_replace( '/(?<!^)[A-Z]/', '-$0', str_replace( '_', '-', $name ) ) );
+                  $kind = 'contracts' === $area && str_starts_with( $name, 'Workflow_' ) ? 'interface-' : 'class-';
+                  $file = rtrim( (string) $root, '/\\' ) . '/includes/' . $area . '/' . $kind . $slug . '.php';
+                  if ( is_file( $file ) ) { require_once $file; }
+              }
+          );
+          PHP
       - name: Run real File 21 and File 22 adapter contract
         shell: bash
         env:
           FILE22_ROOT: ${{ github.workspace }}/file22
         run: |
           set -euo pipefail
-          php file21/tests/run-file21-file22-real-contract-tests.php
+          php -d auto_prepend_file="${{ github.workspace }}/file22-autoload.php" file21/tests/run-file21-file22-real-contract-tests.php
           php file21/tests/run-file21-file22-workflow-adapter-tests.php
           php file21/tests/run-file21-file22-maintenance-tests.php
           php file21/tests/run-file21-file22-lock-maintenance-tests.php
