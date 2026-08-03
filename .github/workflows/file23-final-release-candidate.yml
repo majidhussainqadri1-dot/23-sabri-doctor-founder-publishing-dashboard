@@ -71,7 +71,7 @@ jobs:
                   $area = strtolower( array_shift( $parts ) ?? '' );
                   $name = array_pop( $parts );
                   if ( ! in_array( $area, array( 'core', 'contracts' ), true ) || ! is_string( $name ) ) { return; }
-                  $slug = strtolower( preg_replace( '/(?<!^)[A-Z]/', '-$0', str_replace( '_', '-', $name ) ) );
+                  $slug = strtolower( str_replace( '_', '-', $name ) );
                   $kind = 'contracts' === $area && str_starts_with( $name, 'Workflow_' ) ? 'interface-' : 'class-';
                   $file = rtrim( (string) $root, '/\\' ) . '/includes/' . $area . '/' . $kind . $slug . '.php';
                   if ( is_file( $file ) ) { require_once $file; }
