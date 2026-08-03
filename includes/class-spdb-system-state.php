@@ -28,7 +28,7 @@ final class SPDB_System_State {
 			'plugin_version' => SPDB_VERSION, 'contract_version' => SPDB_CONTRACT_VERSION,
 			'workspace' => array( 'key' => (string) $workspace['key'], 'label' => (string) $workspace['label'], 'read_only' => (bool) $workspace['read_only'], 'account_status' => (string) $workspace['account_status'] ),
 			'membership' => $membership, 'provider_count' => count( $providers ), 'provider_errors' => $errors, 'providers' => $providers,
-			'collections' => $collections, 'native_references' => $native_references, 'degraded' => $degraded, 'generated_at_gmt' => gmdate( 'c' ), 'production_writes' => false, 'phase' => '23G',
+			'collections' => $collections, 'native_references' => $native_references, 'degraded' => $degraded, 'generated_at_gmt' => gmdate( 'c' ), 'production_writes' => false, 'phase' => '23O',
 		);
 	}
 }
