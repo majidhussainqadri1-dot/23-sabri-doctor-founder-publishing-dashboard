@@ -1,0 +1,68 @@
+name: File 23 One Shot Architecture Patch
+
+on:
+  push:
+    branches:
+      - feature/file23-full-plan-completion
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: contains(github.event.head_commit.message, '[patch-operations-schema-guard]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: feature/file23-full-plan-completion
+          fetch-depth: 0
+      - name: Reconcile authorized File 23-owned operational schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tests/architecture-guard.php')
+          text = path.read_text()
+          old = "$is_metadata_schema = 'includes' . DIRECTORY_SEPARATOR . 'class-spdb-collections-schema.php' === $relative;"
+          new = "$is_collections_schema = 'includes' . DIRECTORY_SEPARATOR . 'class-spdb-collections-schema.php' === $relative;\n\t$is_operations_schema  = 'includes' . DIRECTORY_SEPARATOR . 'class-spdb-operations-schema.php' === $relative;\n\t$is_metadata_schema    = $is_collections_schema || $is_operations_schema;"
+          if old not in text:
+              raise SystemExit('metadata-schema marker not found')
+          text = text.replace(old, new, 1)
+          marker = "$policy_path = $root . '/includes/class-spdb-collections-policy.php';"
+          guard = r'''
+$operations_schema_path = $root . '/includes/class-spdb-operations-schema.php';
+if ( ! is_file( $operations_schema_path ) ) {
+	$violations[] = 'includes/class-spdb-operations-schema.php: full-plan operational schema missing';
+} else {
+	$operations_schema = file_get_contents( $operations_schema_path );
+	if ( false === $operations_schema ) { $violations[] = 'Unable to read File 23 operational schema'; }
+	else {
+		foreach ( array( 'spdb_preferences', 'spdb_saved_views', 'spdb_tasks', 'spdb_delegations', 'spdb_automation_rules', 'spdb_metric_snapshots', 'spdb_export_jobs', 'spdb_adapter_health', 'spdb_background_jobs', 'spdb_dashboard_audit' ) as $marker ) {
+			if ( ! str_contains( $operations_schema, $marker ) ) { $violations[] = "File 23 operational schema missing {$marker}"; }
+		}
+		if ( 10 !== substr_count( $operations_schema, 'CREATE TABLE' ) ) { $violations[] = 'File 23 operational schema must own exactly ten bounded metadata tables'; }
+		if ( preg_match( '/\b(?:publication_body|post_content|patient_id|prescription|diagnosis|message_body|notification_delivery|source_body|media_binary|raw_analytics_event|identity_document|payment_secret)\b/i', $operations_schema ) ) {
+			$violations[] = 'File 23 operational schema contains a native-domain or sensitive data column';
+		}
+	}
+}
+
+'''
+          if marker not in text:
+              raise SystemExit('policy insertion marker not found')
+          text = text.replace(marker, guard + marker, 1)
+          path.write_text(text)
+          PY
+          php -l tests/architecture-guard.php
+          php tests/architecture-guard.php
+      - name: Commit architecture correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/architecture-guard.php
+          git commit -m 'Authorize and constrain File 23 operational metadata schema'
+          git push origin HEAD:feature/file23-full-plan-completion
