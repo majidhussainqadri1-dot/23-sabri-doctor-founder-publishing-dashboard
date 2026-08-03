@@ -66,3 +66,4 @@ if ( ! is_file( $operations_schema_path ) ) {
           git add tests/architecture-guard.php
           git commit -m 'Authorize and constrain File 23 operational metadata schema'
           git push origin HEAD:feature/file23-full-plan-completion
+# Triggered only for the reviewed one-shot architecture correction.
