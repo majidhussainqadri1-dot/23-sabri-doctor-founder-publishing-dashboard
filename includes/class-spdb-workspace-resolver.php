@@ -55,67 +55,71 @@ final class SPDB_Workspace_Resolver {
 	 */
 	public function navigation( array $workspace ): array {
 		$items = array(
-			'overview' => array(
-				'label' => __( 'Overview', 'sabri-publishing-dashboard' ),
-				'url'   => SPDB_Dashboard_Router::route_url( 'overview' ),
-			),
+			'overview' => $this->item( 'overview', __( 'Overview', 'sabri-publishing-dashboard' ) ),
 		);
-
 		$key = (string) ( $workspace['key'] ?? 'denied' );
-		if ( ! in_array( $key, array( 'denied', 'dependency_unavailable' ), true ) ) {
-			$workspace_label = __( 'Publishing Workspace', 'sabri-publishing-dashboard' );
-			if ( 'founder' === $key ) {
-				$workspace_label = __( 'Founder Workspace', 'sabri-publishing-dashboard' );
-			} elseif ( in_array( $key, array( 'doctor', 'trusted_doctor' ), true ) ) {
-				$workspace_label = __( 'Doctor Workspace', 'sabri-publishing-dashboard' );
-			} elseif ( 'restricted' === $key ) {
-				$workspace_label = __( 'Publishing Status', 'sabri-publishing-dashboard' );
-			}
-			$items['workspace'] = array(
-				'label' => $workspace_label,
-				'url'   => SPDB_Dashboard_Router::route_url( 'workspace' ),
-			);
+		if ( in_array( $key, array( 'denied', 'dependency_unavailable' ), true ) ) {
+			return $items;
 		}
 
+		$workspace_label = __( 'Publishing Workspace', 'sabri-publishing-dashboard' );
+		if ( 'founder' === $key ) {
+			$workspace_label = __( 'Founder Workspace', 'sabri-publishing-dashboard' );
+		} elseif ( in_array( $key, array( 'doctor', 'trusted_doctor' ), true ) ) {
+			$workspace_label = __( 'Doctor Workspace', 'sabri-publishing-dashboard' );
+		} elseif ( 'restricted' === $key ) {
+			$workspace_label = __( 'Publishing Status', 'sabri-publishing-dashboard' );
+		}
+		$items['workspace'] = $this->item( 'workspace', $workspace_label );
+
+		if ( SPDB_Capabilities::current_user_can( 'spdb_manage_own_content' ) ) {
+			$items['create'] = $this->item( 'create', __( 'Create', 'sabri-publishing-dashboard' ) );
+		}
 		if ( SPDB_Capabilities::current_user_can( 'spdb_view_own_content' ) ) {
-			$items['inventory'] = array(
-				'label' => __( 'Content Inventory', 'sabri-publishing-dashboard' ),
-				'url'   => SPDB_Dashboard_Router::route_url( 'inventory' ),
-			);
-			if ( SPDB_Membership_Guard::current_user_is_approved() ) {
-				$items['collections'] = array(
-					'label' => __( 'Collections & Knowledge', 'sabri-publishing-dashboard' ),
-					'url'   => SPDB_Dashboard_Router::route_url( 'collections' ),
-				);
-			}
-			$items['calendar'] = array(
-				'label' => __( 'Publishing Calendar', 'sabri-publishing-dashboard' ),
-				'url'   => SPDB_Dashboard_Router::route_url( 'calendar' ),
-			);
+			$items['inventory'] = $this->item( 'inventory', __( 'My Content', 'sabri-publishing-dashboard' ) );
 		}
-
 		if ( SPDB_Capabilities::current_user_can( 'spdb_view_review_queue' ) ) {
-			$items['review'] = array(
-				'label' => __( 'Review Inbox', 'sabri-publishing-dashboard' ),
-				'url'   => SPDB_Dashboard_Router::route_url( 'review' ),
-			);
+			$items['review'] = $this->item( 'review', __( 'Review', 'sabri-publishing-dashboard' ) );
 		}
-
-		if ( ! in_array( $key, array( 'denied', 'dependency_unavailable' ), true ) ) {
-			$items['saved-views'] = array(
-				'label' => __( 'Saved Views', 'sabri-publishing-dashboard' ),
-				'url'   => SPDB_Dashboard_Router::route_url( 'saved-views' ),
-			);
+		if ( SPDB_Capabilities::current_user_can( 'spdb_view_own_content' ) ) {
+			$items['calendar'] = $this->item( 'calendar', __( 'Calendar', 'sabri-publishing-dashboard' ) );
+			if ( SPDB_Membership_Guard::current_user_is_approved() ) {
+				$items['collections'] = $this->item( 'collections', __( 'Series & Collections', 'sabri-publishing-dashboard' ) );
+				$items['knowledge']   = $this->item( 'knowledge', __( 'Knowledge', 'sabri-publishing-dashboard' ) );
+				$items['sources']     = $this->item( 'sources', __( 'Sources & Evidence', 'sabri-publishing-dashboard' ) );
+				$items['media']       = $this->item( 'media', __( 'Media Usage', 'sabri-publishing-dashboard' ) );
+				$items['revisions']   = $this->item( 'revisions', __( 'Corrections & Retractions', 'sabri-publishing-dashboard' ) );
+			}
 		}
+		if ( SPDB_Capabilities::current_user_can( 'spdb_manage_interactions' ) || SPDB_Capabilities::current_user_can( 'spdb_view_own_content' ) ) {
+			$items['interactions'] = $this->item( 'interactions', __( 'Interactions', 'sabri-publishing-dashboard' ) );
+		}
+		if ( SPDB_Capabilities::current_user_can( 'spdb_view_own_analytics' ) || SPDB_Capabilities::current_user_can( 'spdb_view_global_analytics' ) ) {
+			$items['analytics'] = $this->item( 'analytics', __( 'Analytics', 'sabri-publishing-dashboard' ) );
+		}
+		if ( SPDB_Capabilities::current_user_can( 'spdb_view_own_content' ) ) {
+			$items['notifications'] = $this->item( 'notifications', __( 'Notifications', 'sabri-publishing-dashboard' ) );
+		}
+		if ( SPDB_Capabilities::current_user_can( 'spdb_manage_tasks' ) || SPDB_Capabilities::current_user_can( 'spdb_manage_delegations' ) ) {
+			$items['tasks'] = $this->item( 'tasks', __( 'Team & Tasks', 'sabri-publishing-dashboard' ) );
+		}
+		if ( SPDB_Capabilities::current_user_can( 'spdb_export_reports' ) ) {
+			$items['reports'] = $this->item( 'reports', __( 'Reports', 'sabri-publishing-dashboard' ) );
+		}
+		$items['saved-views'] = $this->item( 'saved-views', __( 'Saved Views', 'sabri-publishing-dashboard' ) );
 
+		if ( SPDB_Capabilities::current_user_can( 'spdb_manage_dashboard_settings' ) ) {
+			$items['settings'] = $this->item( 'settings', __( 'Settings', 'sabri-publishing-dashboard' ) );
+		}
 		if ( SPDB_Capabilities::current_user_can( 'spdb_run_system_check' ) ) {
-			$items['system-status'] = array(
-				'label' => __( 'System Status', 'sabri-publishing-dashboard' ),
-				'url'   => SPDB_Dashboard_Router::route_url( 'system-status' ),
-			);
+			$items['system-status'] = $this->item( 'system-status', __( 'System Status', 'sabri-publishing-dashboard' ) );
 		}
-
 		return $items;
+	}
+
+	/** @return array<string,string> */
+	private function item( string $view, string $label ): array {
+		return array( 'label' => $label, 'url' => SPDB_Dashboard_Router::route_url( $view ) );
 	}
 
 	/** @return array<string,mixed> */

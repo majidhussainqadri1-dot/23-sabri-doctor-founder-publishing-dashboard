@@ -10,6 +10,11 @@ defined( 'ABSPATH' ) || exit;
 final class SPDB_Saved_Views {
 	private const META_KEY  = 'spdb_saved_views_v1';
 	private const MAX_VIEWS = 25;
+	private ?SPDB_Operations_Repository $repository;
+
+	public function __construct( ?SPDB_Operations_Repository $repository = null ) {
+		$this->repository = $repository;
+	}
 
 	public function register(): void {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
@@ -111,65 +116,44 @@ final class SPDB_Saved_Views {
 		if ( is_wp_error( $definition ) ) {
 			return $definition;
 		}
+		if ( null !== $this->repository ) {
+			$result = $this->repository->create_saved_view( get_current_user_id(), $definition['label'], $definition['filters'] );
+			return is_wp_error( $result ) ? $result : new WP_REST_Response( $result, 201 );
+		}
 
 		$user_id = get_current_user_id();
 		$raw     = get_user_meta( $user_id, self::META_KEY, true );
 		$views   = $this->normalize_stored_views( $raw );
 		if ( count( $views ) >= self::MAX_VIEWS ) {
-			return new WP_Error(
-				'spdb_saved_view_limit',
-				__( 'The saved-view limit has been reached.', 'sabri-publishing-dashboard' ),
-				array( 'status' => 409 )
-			);
+			return new WP_Error( 'spdb_saved_view_limit', __( 'The saved-view limit has been reached.', 'sabri-publishing-dashboard' ), array( 'status' => 409 ) );
 		}
-
-		$view = array(
-			'id'         => 'view_' . str_replace( '-', '', wp_generate_uuid4() ),
-			'label'      => $definition['label'],
-			'filters'    => $definition['filters'],
-			'created_at' => current_time( 'mysql', true ),
-			'version'    => 1,
-		);
+		$view = array( 'id' => 'view_' . str_replace( '-', '', wp_generate_uuid4() ), 'label' => $definition['label'], 'filters' => $definition['filters'], 'created_at' => current_time( 'mysql', true ), 'version' => 1 );
 		$views[] = $view;
-
 		$write = $this->compare_and_store( $user_id, $raw, $views );
-		if ( is_wp_error( $write ) ) {
-			return $write;
-		}
-
-		return new WP_REST_Response( $view, 201 );
+		return is_wp_error( $write ) ? $write : new WP_REST_Response( $view, 201 );
 	}
 
 	public function rest_delete( WP_REST_Request $request ) {
 		$user_id = get_current_user_id();
 		$id      = (string) $request['id'];
+		if ( null !== $this->repository ) {
+			$result = $this->repository->delete_saved_view( $user_id, $id );
+			return is_wp_error( $result ) ? $result : rest_ensure_response( array( 'deleted' => true, 'id' => $id ) );
+		}
+
 		$raw     = get_user_meta( $user_id, self::META_KEY, true );
 		$views   = $this->normalize_stored_views( $raw );
 		$kept    = array();
 		$deleted = false;
-
 		foreach ( $views as $view ) {
-			if ( hash_equals( (string) $view['id'], $id ) ) {
-				$deleted = true;
-				continue;
-			}
+			if ( hash_equals( (string) $view['id'], $id ) ) { $deleted = true; continue; }
 			$kept[] = $view;
 		}
-
 		if ( ! $deleted ) {
-			return new WP_Error(
-				'spdb_saved_view_not_found',
-				__( 'The saved view was not found.', 'sabri-publishing-dashboard' ),
-				array( 'status' => 404 )
-			);
+			return new WP_Error( 'spdb_saved_view_not_found', __( 'The saved view was not found.', 'sabri-publishing-dashboard' ), array( 'status' => 404 ) );
 		}
-
 		$write = $this->compare_and_store( $user_id, $raw, $kept );
-		if ( is_wp_error( $write ) ) {
-			return $write;
-		}
-
-		return rest_ensure_response( array( 'deleted' => true, 'id' => $id ) );
+		return is_wp_error( $write ) ? $write : rest_ensure_response( array( 'deleted' => true, 'id' => $id ) );
 	}
 
 	/**
@@ -179,8 +163,28 @@ final class SPDB_Saved_Views {
 		if ( $user_id < 1 || $user_id !== get_current_user_id() ) {
 			return array();
 		}
+		if ( null === $this->repository ) {
+			return $this->normalize_stored_views( get_user_meta( $user_id, self::META_KEY, true ) );
+		}
 
-		return $this->normalize_stored_views( get_user_meta( $user_id, self::META_KEY, true ) );
+		$rows = $this->repository->list_saved_views( $user_id );
+		if ( ! empty( $rows ) ) {
+			return $rows;
+		}
+
+		$legacy = $this->normalize_stored_views( get_user_meta( $user_id, self::META_KEY, true ) );
+		if ( empty( $legacy ) ) {
+			return array();
+		}
+		$migrated = array();
+		foreach ( $legacy as $view ) {
+			$result = $this->repository->create_saved_view( $user_id, $view['label'], $view['filters'] );
+			if ( is_array( $result ) ) { $migrated[] = $result; }
+		}
+		if ( count( $migrated ) === count( $legacy ) ) {
+			delete_user_meta( $user_id, self::META_KEY );
+		}
+		return $migrated;
 	}
 
 	/**

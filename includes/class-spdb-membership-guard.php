@@ -78,6 +78,7 @@ final class SPDB_Membership_Guard {
 				'session_two_factor'    => true === $assertions['session_two_factor'],
 				'can_publish'           => true === $assertions['can_publish'],
 				'institutional_account' => ! empty( $assertions['institutional_account'] ),
+				'founder'               => function_exists( 'smc_is_founder' ) && smc_is_founder( $user_id ),
 				'account_class'         => sanitize_key( (string) ( $assertions['account_class'] ?? '' ) ),
 				'membership_type'       => sanitize_key( (string) ( $assertions['membership_type'] ?? '' ) ),
 			);
@@ -94,6 +95,7 @@ final class SPDB_Membership_Guard {
 			'session_two_factor'    => $approved,
 			'can_publish'           => $approved && ( smc_is_founder( $user_id ) || smc_is_trusted_publisher( $user_id ) ),
 			'institutional_account' => smc_is_founder( $user_id ),
+			'founder'               => smc_is_founder( $user_id ),
 			'account_class'         => '',
 			'membership_type'       => '',
 		);
@@ -115,6 +117,14 @@ final class SPDB_Membership_Guard {
 		}
 		$status = sanitize_key( (string) $assertions['status'] );
 		return in_array( $status, self::restricted_view_statuses(), true ) ? $status : 'unknown';
+	}
+
+	public static function is_user_founder( int $user_id ): bool {
+		$assertions = self::assertions( $user_id );
+		return is_array( $assertions )
+			&& true === ( $assertions['founder'] ?? false )
+			&& true === $assertions['approved']
+			&& false === $assertions['suspended'];
 	}
 
 	public static function is_user_approved( int $user_id ): bool {

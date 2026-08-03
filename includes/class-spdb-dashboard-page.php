@@ -16,7 +16,13 @@ final class SPDB_Dashboard_Page {
 	private SPDB_Role_Workspace_Service $role_workspace_service;
 	private SPDB_Review_Calendar_Service $review_calendar_service;
 	private ?SPDB_Collections_View $collections_view;
-	private bool $assets_localized = false;
+	private ?SPDB_Operations_Service $operations_service;
+	private ?SPDB_Governance_Service $governance_service;
+	private ?SPDB_Export_Service $export_service;
+	private ?SPDB_Local_Repair $local_repair;
+	private ?SPDB_Activation_Wizard $activation_wizard;
+	private bool $saved_assets_localized = false;
+	private bool $operations_assets_localized = false;
 	private bool $shortcode_page_protected = false;
 	private int $render_count = 0;
 
@@ -28,7 +34,12 @@ final class SPDB_Dashboard_Page {
 		SPDB_Federated_Inventory $inventory,
 		SPDB_Role_Workspace_Service $role_workspace_service,
 		SPDB_Review_Calendar_Service $review_calendar_service,
-		?SPDB_Collections_Service $collections_service = null
+		?SPDB_Collections_Service $collections_service = null,
+		?SPDB_Operations_Service $operations_service = null,
+		?SPDB_Governance_Service $governance_service = null,
+		?SPDB_Export_Service $export_service = null,
+		?SPDB_Local_Repair $local_repair = null,
+		?SPDB_Activation_Wizard $activation_wizard = null
 	) {
 		$this->workspace_resolver      = $workspace_resolver;
 		$this->overview_service        = $overview_service;
@@ -38,6 +49,11 @@ final class SPDB_Dashboard_Page {
 		$this->role_workspace_service  = $role_workspace_service;
 		$this->review_calendar_service = $review_calendar_service;
 		$this->collections_view        = null === $collections_service ? null : new SPDB_Collections_View( $collections_service );
+		$this->operations_service      = $operations_service;
+		$this->governance_service      = $governance_service;
+		$this->export_service          = $export_service;
+		$this->local_repair            = $local_repair;
+		$this->activation_wizard       = $activation_wizard;
 	}
 
 	public function register(): void {
@@ -64,26 +80,25 @@ final class SPDB_Dashboard_Page {
 	}
 
 	public function register_assets(): void {
-		if ( ! wp_style_is( 'spdb-dashboard', 'registered' ) ) {
-			wp_register_style( 'spdb-dashboard', SPDB_PLUGIN_URL . 'assets/css/dashboard.css', array(), SPDB_VERSION );
-		}
-		if ( ! wp_style_is( 'spdb-dashboard-corrections', 'registered' ) ) {
-			wp_register_style( 'spdb-dashboard-corrections', SPDB_PLUGIN_URL . 'assets/css/dashboard-corrections.css', array( 'spdb-dashboard' ), SPDB_VERSION );
-		}
-		if ( ! wp_style_is( 'spdb-inventory', 'registered' ) ) {
-			wp_register_style( 'spdb-inventory', SPDB_PLUGIN_URL . 'assets/css/inventory.css', array( 'spdb-dashboard-corrections' ), SPDB_VERSION );
-		}
-		if ( ! wp_style_is( 'spdb-workspace', 'registered' ) ) {
-			wp_register_style( 'spdb-workspace', SPDB_PLUGIN_URL . 'assets/css/workspace.css', array( 'spdb-dashboard-corrections' ), SPDB_VERSION );
-		}
-		if ( ! wp_style_is( 'spdb-review-calendar', 'registered' ) ) {
-			wp_register_style( 'spdb-review-calendar', SPDB_PLUGIN_URL . 'assets/css/review-calendar.css', array( 'spdb-dashboard-corrections' ), SPDB_VERSION );
-		}
-		if ( ! wp_style_is( 'spdb-collections', 'registered' ) ) {
-			wp_register_style( 'spdb-collections', SPDB_PLUGIN_URL . 'assets/css/collections.css', array( 'spdb-dashboard-corrections' ), SPDB_VERSION );
+		$styles = array(
+			'spdb-dashboard'             => array( 'assets/css/dashboard.css', array() ),
+			'spdb-dashboard-corrections' => array( 'assets/css/dashboard-corrections.css', array( 'spdb-dashboard' ) ),
+			'spdb-inventory'             => array( 'assets/css/inventory.css', array( 'spdb-dashboard-corrections' ) ),
+			'spdb-workspace'             => array( 'assets/css/workspace.css', array( 'spdb-dashboard-corrections' ) ),
+			'spdb-review-calendar'       => array( 'assets/css/review-calendar.css', array( 'spdb-dashboard-corrections' ) ),
+			'spdb-collections'           => array( 'assets/css/collections.css', array( 'spdb-dashboard-corrections' ) ),
+			'spdb-operations'            => array( 'assets/css/operations.css', array( 'spdb-dashboard-corrections' ) ),
+		);
+		foreach ( $styles as $handle => $definition ) {
+			if ( ! wp_style_is( $handle, 'registered' ) ) {
+				wp_register_style( $handle, SPDB_PLUGIN_URL . $definition[0], $definition[1], SPDB_VERSION );
+			}
 		}
 		if ( ! wp_script_is( 'spdb-dashboard', 'registered' ) ) {
 			wp_register_script( 'spdb-dashboard', SPDB_PLUGIN_URL . 'assets/js/dashboard.js', array( 'wp-api-fetch', 'wp-i18n' ), SPDB_VERSION, true );
+		}
+		if ( ! wp_script_is( 'spdb-operations', 'registered' ) ) {
+			wp_register_script( 'spdb-operations', SPDB_PLUGIN_URL . 'assets/js/operations.js', array( 'wp-api-fetch', 'wp-i18n' ), SPDB_VERSION, true );
 		}
 	}
 
@@ -97,17 +112,28 @@ final class SPDB_Dashboard_Page {
 		if ( 'workspace' === $current ) {
 			wp_enqueue_style( 'spdb-workspace' );
 		}
-		if ( 'collections' === $current ) {
+		if ( in_array( $current, array( 'collections', 'knowledge' ), true ) ) {
 			wp_enqueue_style( 'spdb-collections' );
 		}
 		if ( in_array( $current, array( 'review', 'calendar' ), true ) ) {
 			wp_enqueue_style( 'spdb-review-calendar' );
 		}
-		if ( 'saved-views' !== $current ) {
-			return;
+
+		$operations_views = array( 'create', 'knowledge', 'sources', 'media', 'interactions', 'revisions', 'analytics', 'notifications', 'tasks', 'reports', 'settings', 'system-status' );
+		if ( in_array( $current, $operations_views, true ) ) {
+			wp_enqueue_style( 'spdb-operations' );
+			wp_enqueue_script( 'spdb-operations' );
+			$this->localize_operations_assets();
 		}
-		wp_enqueue_script( 'spdb-dashboard' );
-		if ( $this->assets_localized ) {
+
+		if ( 'saved-views' === $current ) {
+			wp_enqueue_script( 'spdb-dashboard' );
+			$this->localize_saved_assets();
+		}
+	}
+
+	private function localize_saved_assets(): void {
+		if ( $this->saved_assets_localized ) {
 			return;
 		}
 		wp_localize_script(
@@ -128,7 +154,30 @@ final class SPDB_Dashboard_Page {
 				),
 			)
 		);
-		$this->assets_localized = true;
+		$this->saved_assets_localized = true;
+	}
+
+	private function localize_operations_assets(): void {
+		if ( $this->operations_assets_localized ) {
+			return;
+		}
+		wp_localize_script(
+			'spdb-operations',
+			'SPDBOperations',
+			array(
+				'restRoot' => esc_url_raw( rest_url( 'spdb/v1/' ) ),
+				'nonce'    => wp_create_nonce( 'wp_rest' ),
+				'currentView' => SPDB_Dashboard_Router::current_view(),
+				'strings'  => array(
+					'working' => __( 'Working…', 'sabri-publishing-dashboard' ),
+					'saved'   => __( 'Saved successfully.', 'sabri-publishing-dashboard' ),
+					'queued'  => __( 'The request was queued successfully.', 'sabri-publishing-dashboard' ),
+					'failed'  => __( 'The request could not be completed.', 'sabri-publishing-dashboard' ),
+					'confirm' => __( 'Confirm this audited operation?', 'sabri-publishing-dashboard' ),
+				),
+			)
+		);
+		$this->operations_assets_localized = true;
 	}
 
 	public function render(): void {
@@ -161,17 +210,27 @@ final class SPDB_Dashboard_Page {
 		if ( ! isset( $navigation[ $current ] ) ) {
 			$current = 'overview';
 		}
-		$overview       = $this->overview_service->build( $workspace );
-		$system_state   = $this->system_state->snapshot( $workspace );
-		$saved_views    = $this->saved_views->get_for_user( get_current_user_id() );
-		$instance_id    = 'spdb-' . (string) ++$this->render_count;
-		$role_workspace = null;
-		$review_result  = null;
-		$calendar_result = null;
-		$inventory_result    = null;
-		$inventory_item      = null;
-		$inventory_providers = array();
-		$collections_projection = null;
+
+		$overview                = $this->overview_service->build( $workspace );
+		$system_state            = $this->system_state->snapshot( $workspace );
+		$saved_views             = $this->saved_views->get_for_user( get_current_user_id() );
+		$instance_id             = 'spdb-' . (string) ++$this->render_count;
+		$role_workspace          = null;
+		$review_result           = null;
+		$calendar_result         = null;
+		$inventory_result        = null;
+		$inventory_item          = null;
+		$inventory_providers     = array();
+		$collections_projection  = null;
+		$operational_result      = null;
+		$operational_domain      = '';
+		$analytics_result        = null;
+		$governance_result       = null;
+		$exports_result          = null;
+		$settings_result         = null;
+		$system_check            = null;
+		$activation_state        = null;
+		$composer_url            = '';
 
 		if ( 'inventory' === $current ) {
 			$inventory_result    = $this->inventory->list_items( $this->inventory_request_input() );
@@ -186,7 +245,7 @@ final class SPDB_Dashboard_Page {
 		}
 		if ( 'collections' === $current ) {
 			$collections_projection = null === $this->collections_view
-				? new WP_Error( 'spdb_collections_view_unavailable', __( 'The Collections view service is unavailable.', 'sabri-publishing-dashboard' ), array( 'status' => 503 ) )
+				? $this->unavailable( 'spdb_collections_view_unavailable', __( 'The Collections view service is unavailable.', 'sabri-publishing-dashboard' ) )
 				: $this->collections_view->resolve( $this->collections_request_input() );
 		}
 		if ( 'review' === $current ) {
@@ -195,6 +254,48 @@ final class SPDB_Dashboard_Page {
 		if ( 'calendar' === $current ) {
 			$calendar_result = $this->review_calendar_service->calendar( $this->calendar_request_input() );
 		}
+		if ( 'create' === $current ) {
+			$composer_url = null === $this->operations_service ? '' : $this->operations_service->composer_url();
+		}
+
+		$domain_map = array(
+			'knowledge'     => 'gaps',
+			'sources'       => 'sources',
+			'media'         => 'media',
+			'interactions'  => 'interactions',
+			'revisions'     => 'revisions',
+			'notifications' => 'notifications',
+		);
+		if ( isset( $domain_map[ $current ] ) ) {
+			$operational_domain = $domain_map[ $current ];
+			$operational_result = null === $this->operations_service
+				? $this->unavailable( 'spdb_operations_unavailable', __( 'The operational projection service is unavailable.', 'sabri-publishing-dashboard' ) )
+				: $this->operations_service->projections( $operational_domain, $this->operations_request_input() );
+		}
+		if ( 'analytics' === $current ) {
+			$analytics_result = null === $this->operations_service
+				? $this->unavailable( 'spdb_analytics_unavailable', __( 'The analytics projection service is unavailable.', 'sabri-publishing-dashboard' ) )
+				: $this->operations_service->analytics( $this->analytics_request_input() );
+		}
+		if ( 'tasks' === $current ) {
+			$governance_result = null === $this->governance_service
+				? array( 'tasks' => array(), 'delegations' => array(), 'automation_rules' => array(), 'institutional' => false, 'settings' => SPDB_Admin_Settings::get() )
+				: $this->governance_service->snapshot();
+		}
+		if ( 'reports' === $current ) {
+			$exports_result = null === $this->export_service
+				? $this->unavailable( 'spdb_exports_unavailable', __( 'The export service is unavailable.', 'sabri-publishing-dashboard' ) )
+				: $this->export_service->list_exports();
+		}
+		if ( 'settings' === $current ) {
+			$settings_result  = SPDB_Admin_Settings::get();
+			$activation_state = null === $this->activation_wizard ? array() : $this->activation_wizard->state();
+		}
+		if ( 'system-status' === $current ) {
+			$system_check     = null === $this->local_repair ? array() : $this->local_repair->system_check();
+			$activation_state = null === $this->activation_wizard ? array() : $this->activation_wizard->state();
+		}
+
 		ob_start();
 		include SPDB_PLUGIN_DIR . 'templates/dashboard.php';
 		return (string) ob_get_clean();
@@ -202,6 +303,14 @@ final class SPDB_Dashboard_Page {
 
 	private function inventory_request_input(): array {
 		return $this->read_query( array( 'page', 'per_page', 'search', 'provider', 'object_type', 'lifecycle_state', 'review_state', 'visibility_state', 'operational_state', 'language', 'topic', 'date_from', 'date_to', 'sort', 'direction', 'scope' ) );
+	}
+
+	private function operations_request_input(): array {
+		return $this->read_query( array( 'page', 'per_page', 'search', 'provider', 'object_type', 'status', 'language', 'topic', 'date_from', 'date_to', 'scope', 'cursor', 'sort', 'direction' ) );
+	}
+
+	private function analytics_request_input(): array {
+		return $this->read_query( array( 'scope', 'provider', 'metric', 'date_from', 'date_to', 'interval', 'timezone' ) );
 	}
 
 	private function collections_request_input(): array {
@@ -254,5 +363,9 @@ final class SPDB_Dashboard_Page {
 			$values[ $key ] = (string) wp_unslash( $_GET[ $key ] );
 		}
 		return array( 'provider' => $values['inspect_provider'], 'object_type' => $values['inspect_type'], 'object_id' => $values['inspect_id'] );
+	}
+
+	private function unavailable( string $code, string $message ): WP_Error {
+		return new WP_Error( $code, $message, array( 'status' => 503 ) );
 	}
 }

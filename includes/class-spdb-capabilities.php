@@ -25,14 +25,20 @@ final class SPDB_Capabilities {
 			'spdb_review_assigned_content',
 			'spdb_manage_schedule',
 			'spdb_manage_campaigns',
+			'spdb_manage_tasks',
+			'spdb_manage_automation_rules',
+			'spdb_manage_interactions',
+			'spdb_manage_delegations',
 			'spdb_view_own_analytics',
 			'spdb_view_global_analytics',
-			'spdb_manage_interactions',
+			'spdb_view_assurance_status',
 			'spdb_export_reports',
-			'spdb_manage_delegations',
+			'spdb_request_ai_assistance',
+			'spdb_reconcile_projections',
 			'spdb_manage_dashboard_settings',
 			'spdb_run_system_check',
 			'spdb_repair_owned_data',
+			// Retained only as a backward-compatible key. Global Safe Mode remains File 20-owned.
 			'spdb_manage_safe_mode',
 		);
 	}

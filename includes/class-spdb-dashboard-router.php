@@ -10,7 +10,7 @@ defined( 'ABSPATH' ) || exit;
 final class SPDB_Dashboard_Router {
 	public const QUERY_VAR       = 'spdb_dashboard';
 	public const ROUTE           = 'publishing-dashboard';
-	public const REWRITE_VERSION = '1';
+	public const REWRITE_VERSION = '2';
 
 	/** @var callable */
 	private $renderer;
@@ -95,7 +95,11 @@ final class SPDB_Dashboard_Router {
 	}
 
 	public static function normalize_view( string $view ): string {
-		$allowed = array( 'overview', 'workspace', 'inventory', 'collections', 'review', 'calendar', 'saved-views', 'system-status' );
+		$allowed = array(
+			'overview', 'create', 'workspace', 'inventory', 'review', 'calendar', 'collections',
+			'knowledge', 'sources', 'media', 'interactions', 'revisions', 'analytics',
+			'notifications', 'tasks', 'reports', 'settings', 'saved-views', 'system-status',
+		);
 		return in_array( $view, $allowed, true ) ? $view : 'overview';
 	}
 

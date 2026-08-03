@@ -12,7 +12,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Capability_Installer {
-	private const SCHEMA_VERSION     = '1';
+	private const SCHEMA_VERSION     = '2';
 	private const VERSION_OPTION     = 'spdb_capability_schema_version';
 	private const FINGERPRINT_OPTION = 'spdb_capability_role_fingerprint';
 
@@ -32,6 +32,11 @@ final class SPDB_Capability_Installer {
 				array(
 					'spdb_manage_own_content',
 					'spdb_view_own_analytics',
+					'spdb_manage_schedule',
+					'spdb_manage_interactions',
+					'spdb_manage_tasks',
+					'spdb_export_reports',
+					'spdb_request_ai_assistance',
 				)
 			),
 			'sabri_verified_doctor'  => array_merge(
@@ -39,6 +44,11 @@ final class SPDB_Capability_Installer {
 				array(
 					'spdb_manage_own_content',
 					'spdb_view_own_analytics',
+					'spdb_manage_schedule',
+					'spdb_manage_interactions',
+					'spdb_manage_tasks',
+					'spdb_export_reports',
+					'spdb_request_ai_assistance',
 				)
 			),
 			'sabri_medical_reviewer' => array(
@@ -46,10 +56,12 @@ final class SPDB_Capability_Installer {
 				'spdb_view_own_content',
 				'spdb_view_review_queue',
 				'spdb_review_assigned_content',
+				'spdb_manage_tasks',
 			),
 			'sabri_moderator'        => array(
 				'spdb_view_dashboard',
 				'spdb_manage_interactions',
+				'spdb_manage_tasks',
 			),
 		);
 	}
