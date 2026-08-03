@@ -158,7 +158,7 @@ if ( ! is_file( $collections_service ) ) {
 	$content = file_get_contents( $collections_service );
 	if ( false === $content ) { $violations[] = 'Unable to read Phase 23F runtime service'; }
 	else {
-		foreach ( array( 'SPDB_PHASE23F_WRITES_ENABLED', 'resolve_reference', 'validate_contributors', 'idempotency_hash', 'relation_hash', 'repository_available', 'resolver_available' ) as $marker ) {
+		foreach ( array( 'SPDB_PHASE23F_WRITES_ENABLED', 'resolve_reference', 'validate_contributors', 'idempotency_hash', 'relation_hash', 'SPDB_Collections_Service_Readiness_Consumer', 'require_read_ready', 'require_write_ready' ) as $marker ) {
 			if ( ! str_contains( $content, $marker ) ) { $violations[] = "Phase 23F runtime service missing {$marker}"; }
 		}
 		if ( preg_match( '/register_rest_route\s*\(/i', $content ) ) { $violations[] = 'Phase 23F runtime service must not expose mutation REST routes'; }
