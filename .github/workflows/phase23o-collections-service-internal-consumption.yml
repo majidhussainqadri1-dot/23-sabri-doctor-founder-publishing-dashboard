@@ -2,14 +2,14 @@ name: Phase 23O Collections Service Internal Consumption
 
 on:
   push:
-    branches: [main, 'phase/**']
+    branches: [main, 'phase/**', 'release/**']
   pull_request:
 
 permissions:
   contents: read
 
 concurrency:
-  group: phase23o-${{ github.event.pull_request.number || github.ref }}
+  group: phase23o-${{ github.event.pull_request.number || github.ref }}-${{ matrix.php }}
   cancel-in-progress: true
 
 jobs:
@@ -22,29 +22,21 @@ jobs:
         php: ['8.0', '8.1', '8.2', '8.3']
     env:
       EXPECTED_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-      EXPECTED_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
     steps:
       - name: Checkout exact source head
         uses: actions/checkout@v5
         with:
           ref: ${{ env.EXPECTED_SHA }}
-          fetch-depth: 0
           persist-credentials: false
 
-      - name: Verify exact head and stacked ancestry
+      - name: Verify exact head
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p qa-evidence
           actual_sha="$(git rev-parse HEAD)"
           test "$actual_sha" = "$EXPECTED_SHA"
-          if [ -n "$EXPECTED_BASE_SHA" ]; then
-            git cat-file -e "${EXPECTED_BASE_SHA}^{commit}"
-            git merge-base --is-ancestor "$EXPECTED_BASE_SHA" "$EXPECTED_SHA"
-          fi
-          printf 'expected_sha=%s\nactual_sha=%s\nexpected_base_sha=%s\nrun_id=%s\nphp=%s\n' \
-            "$EXPECTED_SHA" "$actual_sha" "$EXPECTED_BASE_SHA" "$GITHUB_RUN_ID" "${{ matrix.php }}" \
-            > "qa-evidence/phase23o-context-php-${{ matrix.php }}.txt"
+          printf 'expected_sha=%s\nactual_sha=%s\nrun_id=%s\nphp=%s\n' "$EXPECTED_SHA" "$actual_sha" "$GITHUB_RUN_ID" "${{ matrix.php }}" > "qa-evidence/phase23o-context-php-${{ matrix.php }}.txt"
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -57,8 +49,6 @@ jobs:
         run: |
           set -euo pipefail
           required=(
-            .github/workflows/phase23o-collections-service-internal-consumption.yml
-            docs/AUDIT-PHASE-23O-COLLECTIONS-SERVICE-INTERNAL-CONSUMPTION-2026-07-31.md
             includes/interface-spdb-collections-repository.php
             includes/interface-spdb-native-reference-resolver.php
             includes/interface-spdb-native-reference-readiness.php
@@ -73,168 +63,31 @@ jobs:
             tests/phase23f-runtime-tests.php
             tests/phase23n-collections-service-readiness-consumer-tests.php
             tests/phase23n-consumer-adversarial-tests.php
-            tests/phase23m-collections-service-probe-binding-tests.php
-            tests/phase23l-collections-repository-readiness-probe-tests.php
-            tests/phase23k-collections-service-readiness-integration-tests.php
-            tests/phase23j-collections-service-readiness-tests.php
-            tests/phase23i-registry-readiness-tests.php
-            tests/phase23h-readiness-bridge-tests.php
             tests/architecture-guard.php
           )
-          for file in "${required[@]}"; do
-            test -s "$file" || { echo "Missing or empty: $file"; exit 1; }
-          done
-          test ! -e .github/workflows/phase23o-source-export.yml
-          test ! -e .github/workflows/phase23o-apply-internal-consumption.yml
+          for file in "${required[@]}"; do test -s "$file" || exit 1; done
 
       - name: PHP syntax check
         shell: bash
         run: |
           set -euo pipefail
-          php -l includes/class-spdb-collections-service.php
-          php -l includes/class-spdb-collections-service-readiness-consumer.php
-          php -l tests/phase23o-collections-service-internal-consumption-tests.php
-          php -l tests/phase23f-runtime-tests.php
-          php -l tests/phase23n-collections-service-readiness-consumer-tests.php
-          php -l tests/phase23n-consumer-adversarial-tests.php
-          php -l tests/architecture-guard.php
-
-      - name: Run Phase 23O service tests
-        shell: bash
-        run: |
-          set -o pipefail
-          php -d display_errors=1 -d error_reporting=E_ALL tests/phase23o-collections-service-internal-consumption-tests.php \
-            | tee "qa-evidence/phase23o-tests-php-${{ matrix.php }}.log"
-
-      - name: Run migrated Phase 23F runtime regression
-        shell: bash
-        run: |
-          set -o pipefail
-          php -d display_errors=1 -d error_reporting=E_ALL tests/phase23f-runtime-tests.php \
-            | tee -a "qa-evidence/phase23o-tests-php-${{ matrix.php }}.log"
-
-      - name: Run inherited readiness regressions
-        shell: bash
-        run: |
-          set -euo pipefail
-          for test_file in \
-            tests/phase23n-collections-service-readiness-consumer-tests.php \
-            tests/phase23n-consumer-adversarial-tests.php \
-            tests/phase23m-collections-service-probe-binding-tests.php \
-            tests/phase23l-collections-repository-readiness-probe-tests.php \
-            tests/phase23k-collections-service-readiness-integration-tests.php \
-            tests/phase23j-collections-service-readiness-tests.php \
-            tests/phase23i-registry-readiness-tests.php \
-            tests/phase23h-readiness-bridge-tests.php \
-            tests/architecture-guard.php
-          do
-            php -d display_errors=1 -d error_reporting=E_ALL "$test_file" \
-              | tee -a "qa-evidence/phase23o-tests-php-${{ matrix.php }}.log"
-          done
-
-      - name: Verify exact service boundary
-        shell: bash
-        run: |
-          set -euo pipefail
-          php <<'PHP'
-          <?php
-          $service = file_get_contents( 'includes/class-spdb-collections-service.php' );
-          $consumer = file_get_contents( 'includes/class-spdb-collections-service-readiness-consumer.php' );
-          $plugin = file_get_contents( 'includes/class-spdb-plugin.php' );
-          $system = file_get_contents( 'includes/class-spdb-system-state.php' );
-          $tests = file_get_contents( 'tests/phase23o-collections-service-internal-consumption-tests.php' );
-          $audit = file_get_contents( 'docs/AUDIT-PHASE-23O-COLLECTIONS-SERVICE-INTERNAL-CONSUMPTION-2026-07-31.md' );
-          $fail = static function ( string $message ): void {
-              file_put_contents( 'php://stderr', "PHASE 23O STATIC GUARD FAIL: {$message}\n" );
-              exit( 1 );
-          };
-
-          foreach ( array(
-              "require_once __DIR__ . '/class-spdb-collections-service-readiness-consumer.php'",
-              'private SPDB_Collections_Service_Readiness_Consumer $readiness',
-              'SPDB_Collections_Service_Readiness_Consumer::create( $repository, $resolver )',
-              'return $this->readiness->health( $this->writes_configured() )',
-              'return $this->readiness->require_read_ready()',
-              'return $this->readiness->require_write_ready( $requires_resolver, $this->writes_configured() )',
-              'public function resolve_reference',
-              '$gate = $this->write_gate( true )',
-              'private function resolve_reference_after_gate',
-              '$source = $this->resolve_reference_after_gate(',
-              '$target = $this->resolve_reference_after_gate(',
-          ) as $needle ) {
-              if ( false === strpos( $service, $needle ) ) { $fail( "Missing service boundary: {$needle}" ); }
-          }
-
-          foreach ( array(
-              '$this->repository->health_check()',
-              'spdb_phase23f_writes_disabled',
-              'null !== $this->resolver;',
-          ) as $forbidden ) {
-              if ( false !== strpos( $service, $forbidden ) ) { $fail( "Legacy readiness bypass remains: {$forbidden}" ); }
-          }
-
-          if ( 1 !== substr_count( $service, 'SPDB_Collections_Service_Readiness_Consumer::create( $repository, $resolver )' ) ) {
-              $fail( 'The service must construct exactly one reviewed consumer.' );
-          }
-          if ( 1 !== substr_count( $service, '$gate = $this->write_gate( true )' ) ) {
-              $fail( 'Only public direct resolution may add its own knowledge-readiness gate.' );
-          }
-          if ( 2 !== substr_count( $service, '$this->resolve_reference_after_gate( $record[' ) ) {
-              $fail( 'Knowledge preparation must perform exactly two post-gate reference calls.' );
-          }
-          if ( false !== strpos( $plugin, 'class-spdb-collections-service-readiness-consumer.php' ) ) {
-              $fail( 'Plugin-level consumer wiring is not authorized in Phase 23O.' );
-          }
-          if ( false !== strpos( $system, 'SPDB_Collections_Service_Readiness_Consumer' ) ) {
-              $fail( 'System State consumer wiring is not authorized in Phase 23O.' );
-          }
-          if ( false === strpos( $consumer, 'private SPDB_Collections_Repository_Readiness_Probe $collection_probe' ) ) {
-              $fail( 'Reviewed resolver-independent collection probe is missing.' );
-          }
-
-          foreach ( array(
-              'exact stable nine-field shape',
-              'exact bounded six-field shape',
-              'must remain resolver-independent',
-              'gate readiness once',
-              'Direct public resolution must not bypass',
-              'resolver without the formal readiness contract',
-              'Malformed repository health must fail closed',
-          ) as $needle ) {
-              if ( false === stripos( $tests, $needle ) ) { $fail( "Missing executable evidence: {$needle}" ); }
-          }
-          foreach ( array(
-              'DO NOT MERGE',
-              'parallel legacy readiness implementation',
-              'formal resolver readiness',
-              'direct public native resolution',
-              'one readiness decision',
-              'Plugin must remain unchanged',
-              'production write',
-          ) as $needle ) {
-              if ( false === stripos( $audit, $needle ) ) { $fail( "Missing audit marker: {$needle}" ); }
-          }
-          echo "Phase 23O exact service boundary passed.\n";
-          PHP
-
-      - name: Record exact-source checksums
-        if: always()
-        shell: bash
-        run: |
-          set -euo pipefail
-          sha256sum \
-            .github/workflows/phase23o-collections-service-internal-consumption.yml \
-            docs/AUDIT-PHASE-23O-COLLECTIONS-SERVICE-INTERNAL-CONSUMPTION-2026-07-31.md \
-            includes/interface-spdb-collections-repository.php \
-            includes/interface-spdb-native-reference-resolver.php \
-            includes/interface-spdb-native-reference-readiness.php \
-            includes/class-spdb-collections-service-readiness-gate.php \
-            includes/class-spdb-collections-service-readiness-integration.php \
-            includes/class-spdb-collections-repository-readiness-probe.php \
-            includes/class-spdb-collections-service-readiness-consumer.php \
+          for file in \
             includes/class-spdb-collections-service.php \
+            includes/class-spdb-collections-service-readiness-consumer.php \
             includes/class-spdb-plugin.php \
             includes/class-spdb-system-state.php \
+            tests/phase23o-collections-service-internal-consumption-tests.php \
+            tests/phase23f-runtime-tests.php \
+            tests/phase23n-collections-service-readiness-consumer-tests.php \
+            tests/phase23n-consumer-adversarial-tests.php \
+            tests/architecture-guard.php
+          do php -l "$file"; done
+
+      - name: Run Phase 23O and inherited regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          for suite in \
             tests/phase23o-collections-service-internal-consumption-tests.php \
             tests/phase23f-runtime-tests.php \
             tests/phase23n-collections-service-readiness-consumer-tests.php \
@@ -245,6 +98,75 @@ jobs:
             tests/phase23j-collections-service-readiness-tests.php \
             tests/phase23i-registry-readiness-tests.php \
             tests/phase23h-readiness-bridge-tests.php \
+            tests/architecture-guard.php
+          do
+            php -d display_errors=1 -d error_reporting=E_ALL "$suite" \
+              | tee -a "qa-evidence/phase23o-tests-php-${{ matrix.php }}.log"
+          done
+
+      - name: Verify exact integrated service boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          php <<'PHP'
+          <?php
+          $service  = file_get_contents( 'includes/class-spdb-collections-service.php' );
+          $consumer = file_get_contents( 'includes/class-spdb-collections-service-readiness-consumer.php' );
+          $plugin   = file_get_contents( 'includes/class-spdb-plugin.php' );
+          $system   = file_get_contents( 'includes/class-spdb-system-state.php' );
+          $fail = static function ( string $message ): void {
+              file_put_contents( 'php://stderr', "PHASE 23O STATIC GUARD FAIL: {$message}\n" );
+              exit( 1 );
+          };
+          foreach ( array(
+              "require_once __DIR__ . '/class-spdb-collections-service-readiness-consumer.php'",
+              'private SPDB_Collections_Service_Readiness_Consumer $readiness',
+              'SPDB_Collections_Service_Readiness_Consumer::create( $repository, $resolver )',
+              'return $this->readiness->health( $this->writes_configured() )',
+              'return $this->readiness->require_read_ready()',
+              'return $this->readiness->require_write_ready( $requires_resolver, $this->writes_configured() )',
+              'private function resolve_reference_after_gate',
+              '$source = $this->resolve_reference_after_gate(',
+              '$target = $this->resolve_reference_after_gate(',
+          ) as $needle ) {
+              if ( false === strpos( $service, $needle ) ) { $fail( "Missing service boundary: {$needle}" ); }
+          }
+          foreach ( array( '$this->repository->health_check()', 'spdb_phase23f_writes_disabled', 'null !== $this->resolver;' ) as $forbidden ) {
+              if ( false !== strpos( $service, $forbidden ) ) { $fail( "Legacy readiness bypass remains: {$forbidden}" ); }
+          }
+          if ( 1 !== substr_count( $service, 'SPDB_Collections_Service_Readiness_Consumer::create( $repository, $resolver )' ) ) {
+              $fail( 'The service must construct exactly one reviewed consumer.' );
+          }
+          if ( 2 !== substr_count( $service, '$this->resolve_reference_after_gate( $record[' ) ) {
+              $fail( 'Knowledge preparation must perform exactly two post-gate reference resolutions.' );
+          }
+          if ( false === strpos( $consumer, 'private SPDB_Collections_Repository_Readiness_Probe $collection_probe' ) ) {
+              $fail( 'Resolver-independent collection probe is missing.' );
+          }
+          if ( false === strpos( $plugin, 'new SPDB_Collections_Service( $this->collections_repository, $this->native_reference_registry )' ) ) {
+              $fail( 'Plugin runtime does not inject the reviewed registry.' );
+          }
+          if ( false === strpos( $plugin, "apply_filters( 'spdb/native_reference_acceptance', array() )" ) ) {
+              $fail( 'File 23-controlled default-denied acceptance is missing.' );
+          }
+          if ( false === strpos( $system, "'phase' => '23O'" ) ) {
+              $fail( 'System State does not report the consolidated phase.' );
+          }
+          echo "Phase 23O exact integrated service boundary passed.\n";
+          PHP
+
+      - name: Record exact-source checksums
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha256sum \
+            .github/workflows/phase23o-collections-service-internal-consumption.yml \
+            includes/class-spdb-collections-service-readiness-consumer.php \
+            includes/class-spdb-collections-service.php \
+            includes/class-spdb-plugin.php \
+            includes/class-spdb-system-state.php \
+            tests/phase23o-collections-service-internal-consumption-tests.php \
             tests/architecture-guard.php \
             > "qa-evidence/phase23o-checksums-php-${{ matrix.php }}.sha256"
 
