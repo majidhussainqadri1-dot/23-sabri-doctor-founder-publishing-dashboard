@@ -1,0 +1,129 @@
+name: File 23 Final Release Candidate
+
+on:
+  push:
+    branches: [main, 'release/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  FILE00_SHA: 1831c7ed767ce8590a97dc8e2f2d38ad81661494
+  FILE21_SHA: 498122bd88136fd74a8386bddc67f915126f35d1
+  FILE22_SHA: 1274e380268c2ab235c66fd21906cf4b1bcadf9a
+
+jobs:
+  real-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: file23
+          persist-credentials: false
+      - uses: actions/checkout@v5
+        with:
+          repository: majidhussainqadri1-dot/00-sabri-membership-core
+          ref: ${{ env.FILE00_SHA }}
+          path: file00
+          persist-credentials: false
+      - uses: actions/checkout@v5
+        with:
+          repository: majidhussainqadri1-dot/sabri-complete-home-news-feed
+          ref: ${{ env.FILE21_SHA }}
+          path: file21
+          persist-credentials: false
+      - uses: actions/checkout@v5
+        with:
+          repository: majidhussainqadri1-dot/sabri-universal-post-composer
+          ref: ${{ env.FILE22_SHA }}
+          path: file22
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: Verify exact pins and File 00 contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C file00 rev-parse HEAD)" = "$FILE00_SHA"
+          test "$(git -C file21 rev-parse HEAD)" = "$FILE21_SHA"
+          test "$(git -C file22 rev-parse HEAD)" = "$FILE22_SHA"
+          php -l file00/source/sabri-membership-core/includes/class-smc-contracts.php
+          php -l file23/includes/class-spdb-membership-guard.php
+          grep -Fq 'SMC_Contracts::assertions( $user_id )' file23/includes/class-spdb-membership-guard.php
+          grep -Fq "MINIMUM_CONTRACT_VERSION  = '1.1.2'" file23/includes/class-spdb-membership-guard.php
+      - name: Run real File 21 and File 22 adapter contract
+        shell: bash
+        env:
+          FILE22_ROOT: ${{ github.workspace }}/file22
+        run: |
+          set -euo pipefail
+          php file21/tests/run-file21-file22-real-contract-tests.php
+          php file21/tests/run-file21-file22-workflow-adapter-tests.php
+          php file21/tests/run-file21-file22-maintenance-tests.php
+          php file21/tests/run-file21-file22-lock-maintenance-tests.php
+      - name: Run File 23 critical matrices
+        shell: bash
+        working-directory: file23
+        run: |
+          set -euo pipefail
+          for suite in tests/contract-tests.php tests/rest-privacy-tests.php tests/inventory-tests.php tests/workspace-tests.php tests/review-calendar-tests.php tests/phase23f-read-rest-tests.php tests/phase23g-native-reference-tests.php tests/phase23o-collections-service-internal-consumption-tests.php tests/file23-consolidation-tests.php tests/architecture-guard.php; do
+            php -d display_errors=1 -d error_reporting=E_ALL "$suite"
+          done
+      - name: Verify accessibility and cache boundaries
+        shell: bash
+        working-directory: file23
+        run: |
+          set -euo pipefail
+          grep -R -Fq 'DONOTCACHEPAGE' includes tests
+          grep -R -Fq 'no-store' includes tests
+          grep -R -Fq ':focus-visible' assets/css
+          grep -R -Eq '\[dir="rtl"\]|:dir\(rtl\)|direction:[[:space:]]*rtl' assets/css
+          grep -R -Fq 'prefers-reduced-motion' assets/css
+          grep -R -Fq 'forced-colors' assets/css
+          grep -R -Fq '@media' assets/css
+
+  canonical-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: Run migration and rollback-safe regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          php tests/capability-installer-tests.php
+          php tests/phase23f-repository-tests.php
+          php tests/phase23f-runtime-tests.php
+          php tests/phase23l-collections-repository-readiness-probe-tests.php
+          php tests/architecture-guard.php
+          test -s docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md
+      - name: Build deterministic canonical ZIP
+        shell: bash
+        run: bash tools/build-final-release.sh
+      - name: Record exact release evidence
+        shell: bash
+        run: |
+          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\n' "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.0.0-RELEASE-EVIDENCE.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: file23-1.0.0-canonical-installable
+          path: |
+            23-sabri-doctor-founder-publishing-dashboard-1.0.0.zip
+            23-sabri-doctor-founder-publishing-dashboard-1.0.0.zip.sha256
+            FILE23-1.0.0-MANIFEST.sha256
+            FILE23-1.0.0-RELEASE-EVIDENCE.txt
+            docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md
+          if-no-files-found: error
+          retention-days: 90
