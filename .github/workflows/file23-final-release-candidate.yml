@@ -4,6 +4,7 @@ on:
   push:
     branches: [main, 'release/**']
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,7 +17,7 @@ env:
 jobs:
   real-contracts:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
         with:
@@ -53,7 +54,6 @@ jobs:
           test "$(git -C file21 rev-parse HEAD)" = "$FILE21_SHA"
           test "$(git -C file22 rev-parse HEAD)" = "$FILE22_SHA"
           php -l file00/source/sabri-membership-core/includes/class-smc-contracts.php
-          php -l file23/includes/class-spdb-membership-guard.php
           grep -Fq 'SMC_Contracts::assertions( $user_id )' file23/includes/class-spdb-membership-guard.php
           grep -Fq "MINIMUM_CONTRACT_VERSION  = '1.1.2'" file23/includes/class-spdb-membership-guard.php
       - name: Prepare current File 22 autoload boundary
@@ -78,7 +78,7 @@ jobs:
               }
           );
           PHP
-      - name: Run real File 21 and File 22 adapter contract
+      - name: Run real File 21 and File 22 contracts
         shell: bash
         env:
           FILE22_ROOT: ${{ github.workspace }}/file22
@@ -88,30 +88,32 @@ jobs:
           php file21/tests/run-file21-file22-workflow-adapter-tests.php
           php file21/tests/run-file21-file22-maintenance-tests.php
           php file21/tests/run-file21-file22-lock-maintenance-tests.php
-      - name: Run File 23 critical matrices
+      - name: Run all File 23 source regressions
         shell: bash
         working-directory: file23
         run: |
           set -euo pipefail
-          for suite in tests/contract-tests.php tests/rest-privacy-tests.php tests/inventory-tests.php tests/workspace-tests.php tests/review-calendar-tests.php tests/phase23f-read-rest-tests.php tests/phase23g-native-reference-tests.php tests/phase23o-collections-service-internal-consumption-tests.php tests/file23-consolidation-tests.php tests/architecture-guard.php; do
-            php -d display_errors=1 -d error_reporting=E_ALL "$suite"
-          done
-      - name: Verify accessibility and cache boundaries
+          find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+          node --check assets/js/dashboard.js
+          node --check assets/js/operations.js
+          for suite in tests/*-tests.php; do php -d display_errors=1 -d error_reporting=E_ALL "$suite"; done
+          php tests/architecture-guard.php
+      - name: Verify accessibility and private-cache boundaries
         shell: bash
         working-directory: file23
         run: |
           set -euo pipefail
           grep -R -Fq 'DONOTCACHEPAGE' includes tests
-          grep -R -Fq 'no-store' includes tests
+          grep -R -Fq 'private, no-store' includes tests
           grep -R -Fq ':focus-visible' assets/css
           grep -R -Eq '\[dir="rtl"\]|:dir\(rtl\)|direction:[[:space:]]*rtl' assets/css
           grep -R -Fq 'prefers-reduced-motion' assets/css
           grep -R -Fq 'forced-colors' assets/css
-          grep -R -Fq '@media' assets/css
 
   canonical-package:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    needs: real-contracts
     steps:
       - uses: actions/checkout@v5
         with:
@@ -121,31 +123,32 @@ jobs:
         with:
           php-version: '8.3'
           coverage: none
-      - name: Run migration and rollback-safe regressions
+      - name: Run release-critical regressions
         shell: bash
         run: |
           set -euo pipefail
-          php tests/capability-installer-tests.php
-          php tests/phase23f-repository-tests.php
-          php tests/phase23f-runtime-tests.php
-          php tests/phase23l-collections-repository-readiness-probe-tests.php
+          php tests/full-plan-completion-tests.php
+          php tests/full-plan-security-adversarial-tests.php
+          php tests/operational-validator-tests.php
+          php tests/legacy-migration-diagnostics-tests.php
           php tests/architecture-guard.php
           test -s docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md
-      - name: Build deterministic canonical ZIP
-        shell: bash
+      - name: Build deterministic 1.1.0 package
         run: bash tools/build-final-release.sh
       - name: Record exact release evidence
         shell: bash
         run: |
-          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\n' "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.0.0-RELEASE-EVIDENCE.txt
+          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.1.0\n' \
+            "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" \
+            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.1.0-RELEASE-EVIDENCE.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: file23-1.0.0-canonical-installable
+          name: file23-1.1.0-canonical-installable
           path: |
-            23-sabri-doctor-founder-publishing-dashboard-1.0.0.zip
-            23-sabri-doctor-founder-publishing-dashboard-1.0.0.zip.sha256
-            FILE23-1.0.0-MANIFEST.sha256
-            FILE23-1.0.0-RELEASE-EVIDENCE.txt
+            23-sabri-doctor-founder-publishing-dashboard-1.1.0.zip
+            23-sabri-doctor-founder-publishing-dashboard-1.1.0.zip.sha256
+            FILE23-1.1.0-MANIFEST.sha256
+            FILE23-1.1.0-RELEASE-EVIDENCE.txt
             docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md
           if-no-files-found: error
           retention-days: 90
