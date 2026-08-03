@@ -32,6 +32,7 @@ $native_reference_health = is_array( $system_state['native_references'] ?? null 
 		<div class="spdb-phase" aria-label="<?php esc_attr_e( 'Implementation phase', 'sabri-publishing-dashboard' ); ?>">
 			<span><?php esc_html_e( 'Full Plan Candidate', 'sabri-publishing-dashboard' ); ?></span>
 			<strong><?php esc_html_e( 'Federated Publishing Operations', 'sabri-publishing-dashboard' ); ?></strong>
+			<small><?php esc_html_e( 'Phase 23G Native Reference Governance retained', 'sabri-publishing-dashboard' ); ?></small>
 		</div>
 	</header>
 
