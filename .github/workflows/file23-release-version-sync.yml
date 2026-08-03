@@ -1,20 +1,20 @@
 name: File 23 Release Version Sync
 
 on:
-  push:
-    branches: [release/file23-consolidation]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
   sync:
-    if: ${{ !contains(github.event.head_commit.message, '[release-sync]') }}
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: release/file23-consolidation
+          ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Reconcile current release identity
@@ -46,4 +46,4 @@ jobs:
           git add tests/bootstrap.php templates/dashboard.php README.md STATUS.md CHANGELOG.md .github/workflows
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "release: reconcile File 23 1.0.0 identity [release-sync]"
-          git push origin HEAD:release/file23-consolidation
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
