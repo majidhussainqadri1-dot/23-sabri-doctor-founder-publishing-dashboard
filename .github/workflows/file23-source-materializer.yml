@@ -1,0 +1,67 @@
+name: File 23 Source Materializer
+
+on:
+  push:
+    branches:
+      - feature/file23-full-plan-completion
+
+permissions:
+  contents: write
+  issues: read
+
+jobs:
+  materialize:
+    if: contains(github.event.head_commit.message, '[materialize]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout protected feature branch
+        uses: actions/checkout@v5
+        with:
+          ref: feature/file23-full-plan-completion
+          fetch-depth: 0
+
+      - name: Reconstruct and verify reviewed source delta
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/${GITHUB_REPOSITORY}/issues/19/comments" --paginate \
+            --jq '.[] | select(.body | startswith("CHUNK ")) | .body' \
+            | sed '/^CHUNK [0-9][0-9]\/07$/d' \
+            | tr -d '\r\n' > /tmp/file23-delta.b64
+          base64 -d /tmp/file23-delta.b64 > /tmp/file23-delta.tar.xz
+          echo '453b63d8c7aca2cdc27fcbd51a2f34c4187667faa29ac034164d7743f430dd61  /tmp/file23-delta.tar.xz' | sha256sum -c -
+          tar -xJf /tmp/file23-delta.tar.xz
+          rm -f .github/workflows/file23-source-materializer.yml
+
+      - name: Verify materialized source before commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq "Version:     1.1.0" sabri-publishing-dashboard.php
+          grep -Fq "SPDB_VERSION', '1.1.0'" sabri-publishing-dashboard.php
+          grep -Fq 'Stable tag: 1.1.0' readme.txt
+          test -s includes/class-spdb-operations-service.php
+          test -s includes/class-spdb-background-jobs.php
+          test -s includes/class-spdb-export-service.php
+          test -s includes/class-spdb-automation-engine.php
+          test -s tests/full-plan-completion-tests.php
+          while IFS= read -r -d '' file; do php -l "$file" >/dev/null; done < <(find . -type f -name '*.php' -not -path './vendor/*' -print0)
+          node --check assets/js/dashboard.js
+          node --check assets/js/operations.js
+          php tests/full-plan-completion-tests.php
+          php tests/full-plan-security-adversarial-tests.php
+          php tests/operational-validator-tests.php
+          php tests/legacy-migration-diagnostics-tests.php
+
+      - name: Commit reviewed source candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Implement File 23 full-plan source candidate 1.1.0'
+          git push origin HEAD:feature/file23-full-plan-completion
