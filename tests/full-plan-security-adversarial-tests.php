@@ -25,6 +25,11 @@ $assert( str_contains( $governance, 'session_two_factor' ) && str_contains( $gov
 $assert( str_contains( $automation, 'human_confirmation' ) && str_contains( $automation, 'idempotent' ) && str_contains( $automation, 'spdb/automation_action_result' ), 'Automation execution must be human-governed, idempotent, and native-provider mediated.' );
 $assert( preg_match( '/patient\|message\|email\|phone\|address\|token\|secret\|password\|consent\|document\|ip/', $automation ) === 1, 'Automation event payload must suppress sensitive fields.' );
 $assert( str_contains( $activation, 'is_user_founder' ) && str_contains( $activation, 'session_two_factor' ) && str_contains( $activation, "'production' === \$environment" ), 'Staging acceptance must require Founder identity, MFA, and a non-production environment.' );
+$assert( str_contains( $activation, "preg_match( '/\\A[a-f0-9]{40}\\z/'" ) && str_contains( $activation, "preg_match( '/\\A[a-f0-9]{64}\\z/'" ), 'Staging acceptance must bind evidence to an exact source commit and package SHA-256.' );
+foreach ( array( 'role_matrix_evidence', 'provider_contract_evidence', 'cache_privacy_evidence', 'accessibility_evidence', 'backup_restore_evidence', 'rollback_evidence' ) as $evidence_key ) {
+	$assert( str_contains( $activation, "'{$evidence_key}'" ), "Staging acceptance must require {$evidence_key}." );
+}
+$assert( str_contains( $activation, 'acceptance_version_valid' ) && str_contains( $activation, 'hash_equals( SPDB_VERSION' ), 'Acceptance must expire when the installed plugin version changes.' );
 $assert( str_contains( $router, 'DONOTCACHEPAGE' ) && str_contains( $router, 'private, no-store' ) && str_contains( $router, 'noindex, nofollow, noarchive' ), 'Private dashboard route must be cache-excluded and non-indexable.' );
 $assert( str_contains( $export, 'hash_equals' ) && str_contains( $export, 'hash_hmac' ) && str_contains( $export, 'get_current_user_id' ), 'Export downloads must verify owner-bound HMAC signatures.' );
 $assert( str_contains( $export, 'spreadsheet_safe' ) && str_contains( $export, "'/^[=+\\-@]/'" ), 'CSV export must contain spreadsheet-formula neutralization.' );
