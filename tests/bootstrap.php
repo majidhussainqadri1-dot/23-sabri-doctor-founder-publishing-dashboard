@@ -1,7 +1,7 @@
 <?php
 /** Minimal WordPress-compatible test bootstrap for File 23 executable tests. */
 define( 'ABSPATH', __DIR__ . '/' );
-define( 'SPDB_VERSION', '1.0.0' );
+define( 'SPDB_VERSION', '1.1.0' );
 define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
 if ( ! defined( 'ARRAY_A' ) ) { define( 'ARRAY_A', 'ARRAY_A' ); }
 $GLOBALS['spdb_test_environment'] = 'production';
@@ -56,10 +56,10 @@ if ( ! class_exists( 'WP_REST_Request' ) ) {
 		public function get_query_params(): array { return $this->query; }
 		public function get_header( string $key ): string { return $this->headers[ strtolower( $key ) ] ?? ''; }
 		public function set_header( string $key, string $value ): void { $this->headers[ strtolower( $key ) ] = $value; }
-		public function offsetExists( $offset ): bool { return isset( $this->params[ $offset ] ); }
-		public function offsetGet( $offset ) { return $this->params[ $offset ] ?? null; }
-		public function offsetSet( $offset, $value ): void { $this->params[ $offset ] = $value; }
-		public function offsetUnset( $offset ): void { unset( $this->params[ $offset ] ); }
+		public function offsetExists( mixed $offset ): bool { return isset( $this->params[ $offset ] ); }
+		public function offsetGet( mixed $offset ): mixed { return $this->params[ $offset ] ?? null; }
+		public function offsetSet( mixed $offset, mixed $value ): void { $this->params[ $offset ] = $value; }
+		public function offsetUnset( mixed $offset ): void { unset( $this->params[ $offset ] ); }
 	}
 }
 if ( ! class_exists( 'SPDB_Test_Role' ) ) { class SPDB_Test_Role { public array $capabilities = array(); public function add_cap( string $capability, bool $grant = true ): void { $this->capabilities[ $capability ] = $grant; } } }
@@ -98,6 +98,9 @@ if ( ! function_exists( 'register_rest_route' ) ) { function register_rest_route
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-provider-adapter.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-workspace-provider-adapter.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-review-calendar-provider-adapter.php';
+require_once dirname( __DIR__ ) . '/includes/interface-spdb-operational-projection-provider.php';
+require_once dirname( __DIR__ ) . '/includes/interface-spdb-analytics-provider.php';
+require_once dirname( __DIR__ ) . '/includes/interface-spdb-ai-assistance-provider.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-collections-repository.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-native-reference-resolver.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-native-reference-provider.php';
@@ -124,6 +127,21 @@ require_once dirname( __DIR__ ) . '/includes/class-spdb-wp-collections-repositor
 require_once dirname( __DIR__ ) . '/includes/class-spdb-collections-service.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-collections-view.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-collections-rest-controller.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-operations-schema.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-operational-projection-validator.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-operations-repository.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-governance-service.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-export-service.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-automation-engine.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-background-jobs.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-privacy-integration.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-local-repair.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-activation-wizard.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-operations-service.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-operations-rest-controller.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-module-manifest.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-legacy-migration-diagnostics.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-admin-settings.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-dashboard-router.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-workspace-resolver.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-saved-views.php';
