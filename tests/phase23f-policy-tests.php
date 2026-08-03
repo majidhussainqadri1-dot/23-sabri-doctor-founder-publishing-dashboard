@@ -144,7 +144,7 @@ $service = new SPDB_Collections_Service();
 $health = $service->health();
 spdb_23f_assert( false === $health['repository_available'] && false === $health['resolver_available'] && false === $health['write_enabled'], 'The default Phase 23F runtime must report unavailable dependencies and disabled writes truthfully.' );
 $disabled = $service->prepare_collection_create( spdb_23f_collection() );
-spdb_23f_assert( 'spdb_phase23f_writes_disabled' === spdb_23f_code( $disabled ), 'Phase 23F writes must fail closed without an explicit staging-only enablement.' );
+spdb_23f_assert( 'spdb_collections_writes_disabled' === spdb_23f_code( $disabled ), 'Phase 23F writes must fail closed without an explicit staging-only enablement.' );
 $read_unavailable = $service->list_collections( array( 'scope' => 'own', 'page' => 1, 'per_page' => 20 ) );
 spdb_23f_assert( 'spdb_collections_repository_unavailable' === spdb_23f_code( $read_unavailable ), 'Runtime reads must report a missing repository instead of fabricating records.' );
 
