@@ -93,6 +93,21 @@ function update_option( string $key, $value, $autoload = null ): bool { $GLOBALS
 function remove_all_actions( string $hook ): void { unset( $GLOBALS['wp_filter'][ $hook ] ); }
 if ( ! function_exists( 'add_action' ) ) { function add_action( string $hook, $callback, int $priority = 10, int $accepted_args = 1 ): void { $GLOBALS['wp_filter'][ $hook ][] = $callback; } }
 if ( ! function_exists( 'add_filter' ) ) { function add_filter( string $hook, $callback, int $priority = 10, int $accepted_args = 1 ): void { $GLOBALS['wp_filter'][ $hook ][] = $callback; } }
+if ( ! function_exists( 'apply_filters' ) ) {
+	function apply_filters( string $hook, $value, ...$args ) {
+		foreach ( $GLOBALS['wp_filter'][ $hook ] ?? array() as $callback ) {
+			$value = call_user_func( $callback, $value, ...$args );
+		}
+		return $value;
+	}
+}
+if ( ! function_exists( 'do_action' ) ) {
+	function do_action( string $hook, ...$args ): void {
+		foreach ( $GLOBALS['wp_filter'][ $hook ] ?? array() as $callback ) {
+			call_user_func_array( $callback, $args );
+		}
+	}
+}
 if ( ! function_exists( 'register_rest_route' ) ) { function register_rest_route( string $namespace, string $route, array $args ): bool { $GLOBALS['spdb_test_rest_routes'][ $namespace . $route ] = $args; return true; } }
 
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-provider-adapter.php';
