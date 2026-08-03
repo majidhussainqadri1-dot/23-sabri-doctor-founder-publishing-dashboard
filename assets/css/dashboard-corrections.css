@@ -1,0 +1,8 @@
+.spdb-main:focus {
+	outline: 3px solid var(--spdb-focus);
+	outline-offset: 3px;
+}
+
+.spdb-empty-state[hidden] {
+	display: none;
+}

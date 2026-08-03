@@ -1,0 +1,86 @@
+.spdb-review-calendar {
+	display: grid;
+	gap: 1rem;
+}
+
+.spdb-review-calendar-summary {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+	gap: 0.75rem;
+}
+
+.spdb-review-calendar-summary article {
+	display: grid;
+	gap: 0.35rem;
+	border: 1px solid rgba(17, 24, 39, 0.14);
+	border-radius: 0.8rem;
+	background: #fff;
+	padding: 0.9rem;
+}
+
+.spdb-review-calendar-summary strong {
+	font-size: 1.5rem;
+}
+
+.spdb-review-calendar-table td,
+.spdb-review-calendar-table th {
+	vertical-align: top;
+}
+
+.spdb-review-calendar-table td strong,
+.spdb-review-calendar-table td small {
+	display: block;
+}
+
+.spdb-review-calendar-table td small {
+	margin-top: 0.35rem;
+	overflow-wrap: anywhere;
+}
+
+.spdb-review-calendar-table .spdb-button {
+	display: inline-flex;
+	min-height: 2.75rem;
+	align-items: center;
+	justify-content: center;
+}
+
+.spdb-review-calendar .spdb-table-wrap {
+	scrollbar-gutter: stable;
+}
+
+.spdb-review-calendar .spdb-table-wrap:focus-visible,
+.spdb-review-calendar .spdb-pagination a:focus-visible {
+	outline: 3px solid currentColor;
+	outline-offset: 3px;
+}
+
+.spdb-pagination {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 0.75rem;
+}
+
+.spdb-pagination span {
+	font-weight: 600;
+}
+
+@media (max-width: 760px) {
+	.spdb-review-calendar-table {
+		min-width: 58rem;
+	}
+
+	.spdb-pagination {
+		justify-content: flex-start;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.spdb-review-calendar *,
+	.spdb-review-calendar *::before,
+	.spdb-review-calendar *::after {
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
+	}
+}

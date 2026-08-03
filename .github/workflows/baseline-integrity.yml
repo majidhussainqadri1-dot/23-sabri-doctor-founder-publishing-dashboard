@@ -1,0 +1,146 @@
+name: Baseline Integrity
+
+on:
+  push:
+    branches: [main, 'phase/**', 'release/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: baseline-${{ github.event.pull_request.number || github.ref }}-${{ matrix.php }}
+  cancel-in-progress: true
+
+jobs:
+  integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.0', '8.1', '8.2', '8.3']
+    env:
+      EXPECTED_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.EXPECTED_SHA }}
+          persist-credentials: false
+
+      - name: Verify exact checked head
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa-evidence
+          actual_sha="$(git rev-parse HEAD)"
+          test "$actual_sha" = "$EXPECTED_SHA"
+          printf 'expected_sha=%s\nactual_sha=%s\nevent_name=%s\nrun_id=%s\nrun_attempt=%s\nphp=%s\n' \
+            "$EXPECTED_SHA" "$actual_sha" "$GITHUB_EVENT_NAME" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "${{ matrix.php }}" \
+            > "qa-evidence/context-php-${{ matrix.php }}.txt"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: Verify consolidated required files
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            README.md STATUS.md SECURITY.md SOURCE-PROVENANCE.md DECISION-LOG.md CHANGELOG.md readme.txt
+            sabri-publishing-dashboard.php uninstall.php
+            docs/FILE23-CONSOLIDATION-RELEASE-2026-08-04.md
+            includes/interface-spdb-provider-adapter.php
+            includes/interface-spdb-workspace-provider-adapter.php
+            includes/interface-spdb-review-calendar-provider-adapter.php
+            includes/interface-spdb-collections-repository.php
+            includes/interface-spdb-native-reference-resolver.php
+            includes/interface-spdb-native-reference-provider.php
+            includes/interface-spdb-native-reference-readiness.php
+            includes/class-spdb-adapter-registry.php
+            includes/class-spdb-membership-guard.php
+            includes/class-spdb-operation-broker.php
+            includes/class-spdb-federated-inventory.php
+            includes/class-spdb-role-workspace-service.php
+            includes/class-spdb-review-calendar-service.php
+            includes/class-spdb-collections-schema.php
+            includes/class-spdb-wp-collections-repository.php
+            includes/class-spdb-native-reference-registry.php
+            includes/class-spdb-collections-service-readiness-consumer.php
+            includes/class-spdb-collections-service.php
+            includes/class-spdb-plugin.php
+            includes/class-spdb-system-state.php
+            tests/file23-consolidation-tests.php
+            tests/architecture-guard.php
+          )
+          for file in "${required[@]}"; do test -s "$file" || { echo "Missing or empty: $file"; exit 1; }; done
+
+      - name: PHP syntax check
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r -d '' file; do php -l "$file"; done < <(find . -type f -name '*.php' -not -path './vendor/*' -print0)
+
+      - name: JavaScript syntax check
+        run: node --check assets/js/dashboard.js
+
+      - name: Run all executable source regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t suites < <(find tests -maxdepth 1 -type f -name '*tests.php' | sort)
+          test "${#suites[@]}" -ge 20
+          for suite in "${suites[@]}"; do
+            echo "=== ${suite} ===" | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+            php -d display_errors=1 -d error_reporting=E_ALL "$suite" \
+              | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+          done
+          php -d display_errors=1 -d error_reporting=E_ALL tests/architecture-guard.php \
+            | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+
+      - name: Verify consolidated runtime boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq "VERSION = '3'" includes/class-spdb-collections-schema.php
+          grep -Fq 'SPDB_Collections_Service_Readiness_Consumer::create( $repository, $resolver )' includes/class-spdb-collections-service.php
+          grep -Fq 'return $this->readiness->require_read_ready()' includes/class-spdb-collections-service.php
+          grep -Fq 'return $this->readiness->require_write_ready( $requires_resolver, $this->writes_configured() )' includes/class-spdb-collections-service.php
+          grep -Fq "apply_filters( 'spdb/native_reference_acceptance', array() )" includes/class-spdb-plugin.php
+          grep -Fq 'new SPDB_Collections_Service( $this->collections_repository, $this->native_reference_registry )' includes/class-spdb-plugin.php
+          grep -Fq "'phase' => '23O'" includes/class-spdb-system-state.php
+          grep -Fq 'WP_REST_Server::READABLE' includes/class-spdb-collections-rest-controller.php
+          ! grep -Eq 'WP_REST_Server::(CREATABLE|EDITABLE|DELETABLE)|\b(POST|PUT|PATCH|DELETE)\b' includes/class-spdb-collections-rest-controller.php
+          ! grep -Eq 'register_post_type\s*\(|wp_insert_post\s*\(|wp_update_post\s*\(|wp_delete_post\s*\(' includes/class-spdb-collections-service.php includes/class-spdb-federated-inventory.php
+
+      - name: Verify version and contract alignment
+        shell: bash
+        run: |
+          set -euo pipefail
+          header_version="$(sed -nE 's/^ \* Version:[[:space:]]*([^[:space:]]+).*/\1/p' sabri-publishing-dashboard.php | head -n1)"
+          constant_version="$(sed -nE "s/.*define\( 'SPDB_VERSION', '([^']+)' \).*/\1/p" sabri-publishing-dashboard.php | head -n1)"
+          stable_version="$(sed -nE 's/^Stable tag:[[:space:]]*([^[:space:]]+).*/\1/p' readme.txt | head -n1)"
+          test -n "$header_version"
+          test "$header_version" = "$constant_version"
+          test "$header_version" = "$stable_version"
+          grep -Fq "SPDB_CONTRACT_VERSION', '2.0.0'" sabri-publishing-dashboard.php
+
+      - name: Record source checksums
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          find includes templates assets tests docs -type f -print0 | sort -z | xargs -0 sha256sum > "qa-evidence/source-checksums-php-${{ matrix.php }}.sha256"
+
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: file23-baseline-qa-php-${{ matrix.php }}-${{ github.run_id }}
+          path: qa-evidence/
+          if-no-files-found: error
+          retention-days: 30

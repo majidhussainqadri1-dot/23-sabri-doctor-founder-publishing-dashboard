@@ -1,0 +1,22 @@
+.spdb-role-workspace { display: grid; gap: 1.5rem; }
+.spdb-workspace-policy, .spdb-workspace-actions, .spdb-projection-panel { border: 1px solid rgba(17,24,39,.14); border-radius: .85rem; background: #fff; padding: 1rem; }
+.spdb-policy-tags { display: flex; flex-wrap: wrap; gap: .5rem; list-style: none; margin: 1rem 0 0; padding: 0; }
+.spdb-policy-tags li { border: 1px solid rgba(17,24,39,.15); border-radius: 999px; padding: .35rem .65rem; font-size: .875rem; }
+.spdb-workspace-card-grid, .spdb-action-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 1rem; }
+.spdb-workspace-card, .spdb-action-card { display: grid; gap: .45rem; border: 1px solid rgba(17,24,39,.14); border-radius: .85rem; background: #fff; padding: 1rem; }
+.spdb-workspace-card--critical, .spdb-workspace-card--warning { border-inline-start: .35rem solid currentColor; }
+.spdb-workspace-card strong { font-size: clamp(1.35rem,3vw,2rem); }
+.spdb-action-card { color: inherit; text-decoration: none; }
+.spdb-action-card:hover, .spdb-action-card:focus-visible { text-decoration: none; box-shadow: 0 0 0 3px currentColor; outline: 2px solid transparent; }
+.spdb-action-badge { display: inline-flex; width: fit-content; border: 1px solid currentColor; border-radius: 999px; padding: .2rem .5rem; font-size: .75rem; font-weight: 600; }
+.spdb-workspace-columns { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; }
+.spdb-projection-panel + .spdb-projection-panel { margin-top: 1rem; }
+.spdb-projection-panel dl { display: grid; gap: .5rem; margin: 0; }
+.spdb-projection-panel dl > div { display: grid; grid-template-columns: minmax(8rem,1fr) minmax(0,2fr); gap: .75rem; }
+.spdb-projection-panel dt { font-weight: 600; }
+.spdb-projection-panel dd { margin: 0; overflow-wrap: anywhere; }
+.spdb-activity-list { display: grid; gap: .75rem; list-style: none; margin: 0; padding: 0; }
+.spdb-activity-list__item { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .25rem 1rem; border-inline-start: .3rem solid currentColor; padding: .65rem .75rem; background: rgba(17,24,39,.035); }
+.spdb-activity-list__item small { grid-column: 1 / -1; }
+@media (max-width:760px) { .spdb-workspace-columns { grid-template-columns: 1fr; } .spdb-projection-panel dl > div, .spdb-activity-list__item { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion:reduce) { .spdb-action-card { scroll-behavior: auto; } }
