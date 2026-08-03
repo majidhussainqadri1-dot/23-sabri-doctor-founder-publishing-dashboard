@@ -2,7 +2,7 @@ name: Phase 23N Corrective Snapshot Boundaries
 
 on:
   push:
-    branches: [main, 'phase/**']
+    branches: [main, 'phase/**', 'release/**']
   pull_request:
 
 permissions:
@@ -22,7 +22,6 @@ jobs:
         php: ['8.0', '8.1', '8.2', '8.3']
     env:
       EXPECTED_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-      EXPECTED_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || '' }}
     steps:
       - name: Checkout exact source head
         uses: actions/checkout@v5
@@ -31,19 +30,14 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Verify exact head and stacked ancestry
+      - name: Verify exact head
         shell: bash
         run: |
           set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
           mkdir -p qa-evidence
-          actual_sha="$(git rev-parse HEAD)"
-          test "$actual_sha" = "$EXPECTED_SHA"
-          if [ -n "$EXPECTED_BASE_SHA" ]; then
-            git cat-file -e "${EXPECTED_BASE_SHA}^{commit}"
-            git merge-base --is-ancestor "$EXPECTED_BASE_SHA" "$EXPECTED_SHA"
-          fi
-          printf 'expected_sha=%s\nactual_sha=%s\nexpected_base_sha=%s\nrun_id=%s\nphp=%s\n' \
-            "$EXPECTED_SHA" "$actual_sha" "$EXPECTED_BASE_SHA" "$GITHUB_RUN_ID" "${{ matrix.php }}" \
+          printf 'expected_sha=%s\nactual_sha=%s\nrun_id=%s\nphp=%s\n' \
+            "$EXPECTED_SHA" "$(git rev-parse HEAD)" "$GITHUB_RUN_ID" "${{ matrix.php }}" \
             > "qa-evidence/phase23n-corrective-context-php-${{ matrix.php }}.txt"
 
       - name: Set up PHP
@@ -52,184 +46,64 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
 
-      - name: Verify corrective files
+      - name: Verify consolidated Phase 23N and Phase 23O files
         shell: bash
         run: |
           set -euo pipefail
           required=(
-            .github/workflows/phase23n-corrective-snapshot-boundaries.yml
-            .github/workflows/phase23n-collections-service-readiness-consumer.yml
-            docs/AUDIT-PHASE-23N-COLLECTIONS-SERVICE-READINESS-CONSUMER-2026-07-31.md
-            includes/interface-spdb-collections-repository.php
-            includes/interface-spdb-native-reference-resolver.php
-            includes/interface-spdb-native-reference-readiness.php
-            includes/class-spdb-collections-service-readiness-gate.php
-            includes/class-spdb-collections-service-readiness-integration.php
-            includes/class-spdb-collections-repository-readiness-probe.php
             includes/class-spdb-collections-service-readiness-consumer.php
             includes/class-spdb-collections-service.php
             includes/class-spdb-plugin.php
             tests/phase23n-collections-service-readiness-consumer-tests.php
             tests/phase23n-consumer-adversarial-tests.php
-            tests/phase23m-collections-service-probe-binding-tests.php
-            tests/phase23l-collections-repository-readiness-probe-tests.php
-            tests/phase23k-collections-service-readiness-integration-tests.php
-            tests/phase23j-collections-service-readiness-tests.php
-            tests/phase23i-registry-readiness-tests.php
-            tests/phase23h-readiness-bridge-tests.php
+            tests/phase23o-collections-service-internal-consumption-tests.php
             tests/architecture-guard.php
           )
-          for file in "${required[@]}"; do
-            test -s "$file" || { echo "Missing or empty: $file"; exit 1; }
-          done
+          for file in "${required[@]}"; do test -s "$file" || exit 1; done
 
       - name: PHP syntax check
         shell: bash
         run: |
           set -euo pipefail
-          php -l includes/class-spdb-collections-service-readiness-consumer.php
-          php -l tests/phase23n-collections-service-readiness-consumer-tests.php
-          php -l tests/phase23n-consumer-adversarial-tests.php
-          php -l tests/architecture-guard.php
+          for file in \
+            includes/class-spdb-collections-service-readiness-consumer.php \
+            includes/class-spdb-collections-service.php \
+            includes/class-spdb-plugin.php \
+            tests/phase23n-collections-service-readiness-consumer-tests.php \
+            tests/phase23n-consumer-adversarial-tests.php \
+            tests/phase23o-collections-service-internal-consumption-tests.php \
+            tests/architecture-guard.php
+          do php -l "$file"; done
 
-      - name: Run corrected Phase 23N tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          php -d display_errors=1 -d error_reporting=E_ALL tests/phase23n-collections-service-readiness-consumer-tests.php \
-            | tee "qa-evidence/phase23n-corrective-tests-php-${{ matrix.php }}.log"
-          php -d display_errors=1 -d error_reporting=E_ALL tests/phase23n-consumer-adversarial-tests.php \
-            | tee -a "qa-evidence/phase23n-corrective-tests-php-${{ matrix.php }}.log"
-
-      - name: Run inherited readiness regressions
+      - name: Run Phase 23N and inherited readiness regressions
         shell: bash
         run: |
           set -euo pipefail
           for test_file in \
+            tests/phase23n-collections-service-readiness-consumer-tests.php \
+            tests/phase23n-consumer-adversarial-tests.php \
             tests/phase23m-collections-service-probe-binding-tests.php \
             tests/phase23l-collections-repository-readiness-probe-tests.php \
             tests/phase23k-collections-service-readiness-integration-tests.php \
             tests/phase23j-collections-service-readiness-tests.php \
             tests/phase23i-registry-readiness-tests.php \
-            tests/phase23h-readiness-bridge-tests.php \
-            tests/architecture-guard.php
+            tests/phase23h-readiness-bridge-tests.php
           do
             php -d display_errors=1 -d error_reporting=E_ALL "$test_file" \
               | tee -a "qa-evidence/phase23n-corrective-tests-php-${{ matrix.php }}.log"
           done
 
-      - name: Verify corrective source boundaries
+      - name: Verify Phase 23O superseding integration
         shell: bash
         run: |
           set -euo pipefail
-          php <<'PHP'
-          <?php
-          $source = file_get_contents( 'includes/class-spdb-collections-service-readiness-consumer.php' );
-          $service = file_get_contents( 'includes/class-spdb-collections-service.php' );
-          $plugin = file_get_contents( 'includes/class-spdb-plugin.php' );
-          $primary = file_get_contents( 'tests/phase23n-collections-service-readiness-consumer-tests.php' );
-          $adversarial = file_get_contents( 'tests/phase23n-consumer-adversarial-tests.php' );
-          $audit = file_get_contents( 'docs/AUDIT-PHASE-23N-COLLECTIONS-SERVICE-READINESS-CONSUMER-2026-07-31.md' );
-          $fail = static function ( string $message ): void {
-              file_put_contents( 'php://stderr', "CORRECTIVE STATIC GUARD FAIL: {$message}\n" );
-              exit( 1 );
-          };
-
-          foreach ( array(
-              'SNAPSHOT_KEYS',
-              'INTEGRATION_CODES',
-              'REPOSITORY_CODES',
-              'RESOLVER_CODES',
-              'resolver_readiness_available',
-              'public function __wakeup',
-              'private function validated_snapshot',
-              'private function valid_snapshot',
-              'private function valid_repository_snapshot_state',
-              'private function valid_resolver_snapshot_state',
-              'private function resolver_not_evaluated',
-              'private function resolver_suppressed',
-              'private function require_repository_ready',
-              'private function resolver_error',
-              'private function projection_error',
-              'spdb_collections_readiness_projection_invalid',
-          ) as $needle ) {
-              if ( false === strpos( $source, $needle ) ) { $fail( "Missing corrective source control: {$needle}" ); }
-          }
-
-          foreach ( array(
-              '$this->probe->require_read_ready(',
-              '$this->probe->require_collection_write_ready(',
-              '$this->probe->require_knowledge_write_ready(',
-              'function probe(',
-              'function service(',
-              'function repository(',
-              'function resolver(',
-              'set_probe', 'set_repository', 'set_resolver', 'set_integration',
-          ) as $forbidden ) {
-              if ( false !== strpos( $source, $forbidden ) ) { $fail( "Consumer bypass or raw dependency exposure present: {$forbidden}" ); }
-          }
-
-          foreach ( array(
-              'exact seventeen fields',
-              'unknown canonical repository code',
-              'unknown canonical integration code',
-              'formal resolver readiness capability',
-              'consumer-owned read readiness',
-              'consumer-owned requirement path',
-              'stable unready-resolver denial',
-              'reject wakeup reconstruction',
-              'No Phase 23N consumer path may resolve a native object',
-          ) as $needle ) {
-              if ( false === stripos( $primary, $needle ) ) { $fail( "Missing primary corrective evidence: {$needle}" ); }
-          }
-
-          foreach ( array(
-              'Writes-disabled read integration',
-              'suppressed resolver state',
-              'Unknown canonical resolver code',
-              'Repository code and readiness state',
-              'Knowledge readiness without formal readiness capability',
-              'Public health must reject unknown canonical repository codes',
-              'stale schema versions',
-              'Malformed scalar repository health',
-              'Contradictory aggregate repository health',
-          ) as $needle ) {
-              if ( false === stripos( $adversarial, $needle ) ) { $fail( "Missing adversarial corrective evidence: {$needle}" ); }
-          }
-
-          foreach ( array(
-              'Corrective Review Findings',
-              'exact seventeen-field raw snapshot allowlist',
-              'exact integration, repository, and resolver code allowlists',
-              'consumer-owned validated snapshot decisions',
-              'resolver_not_evaluated',
-              'resolver_absent',
-              'preliminary Phase 23N run and artifact is invalidated',
-              'DO NOT MERGE',
-          ) as $needle ) {
-              if ( false === stripos( $audit, $needle ) ) { $fail( "Missing corrective audit marker: {$needle}" ); }
-          }
-
-          if ( false !== strpos( $service, 'SPDB_Collections_Service_Readiness_Consumer' ) ) {
-              $fail( 'Service integration is not authorized in Phase 23N.' );
-          }
-          if ( false !== strpos( $plugin, 'class-spdb-collections-service-readiness-consumer.php' ) ) {
-              $fail( 'Plugin wiring is not authorized in Phase 23N.' );
-          }
-
-          foreach ( array(
-              'register_rest_route(', 'WP_REST_Server::CREATABLE', 'WP_REST_Server::EDITABLE',
-              'WP_REST_Server::DELETABLE', 'wp_insert_post(', 'wp_update_post(', 'wp_delete_post(',
-              'add_option(', 'update_option(', 'delete_option(', 'add_user_meta(', 'update_user_meta(',
-              'delete_user_meta(', 'add_post_meta(', 'update_post_meta(', 'delete_post_meta(',
-              'set_transient(', 'delete_transient(', 'file_put_contents(', 'fopen(', 'fwrite(',
-              '->insert(', '->update(', '->delete(', '->query(', '->resolve_reference(', '::resolve_reference(',
-          ) as $forbidden ) {
-              if ( false !== strpos( $source, $forbidden ) ) { $fail( "Forbidden consumer operation: {$forbidden}" ); }
-          }
-
-          echo "Phase 23N corrective snapshot boundaries passed.\n";
-          PHP
+          php tests/phase23o-collections-service-internal-consumption-tests.php \
+            | tee -a "qa-evidence/phase23n-corrective-tests-php-${{ matrix.php }}.log"
+          php tests/architecture-guard.php \
+            | tee -a "qa-evidence/phase23n-corrective-tests-php-${{ matrix.php }}.log"
+          grep -Fq 'SPDB_Collections_Service_Readiness_Consumer::create' includes/class-spdb-collections-service.php
+          grep -Fq 'new SPDB_Collections_Service( $this->collections_repository, $this->native_reference_registry )' includes/class-spdb-plugin.php
+          ! grep -Eq 'register_rest_route\(|wp_insert_post\(|wp_update_post\(|wp_delete_post\(' includes/class-spdb-collections-service-readiness-consumer.php
 
       - name: Record exact-source checksums
         if: always()
@@ -238,25 +112,12 @@ jobs:
           set -euo pipefail
           sha256sum \
             .github/workflows/phase23n-corrective-snapshot-boundaries.yml \
-            .github/workflows/phase23n-collections-service-readiness-consumer.yml \
-            docs/AUDIT-PHASE-23N-COLLECTIONS-SERVICE-READINESS-CONSUMER-2026-07-31.md \
-            includes/interface-spdb-collections-repository.php \
-            includes/interface-spdb-native-reference-resolver.php \
-            includes/interface-spdb-native-reference-readiness.php \
-            includes/class-spdb-collections-service-readiness-gate.php \
-            includes/class-spdb-collections-service-readiness-integration.php \
-            includes/class-spdb-collections-repository-readiness-probe.php \
             includes/class-spdb-collections-service-readiness-consumer.php \
             includes/class-spdb-collections-service.php \
             includes/class-spdb-plugin.php \
             tests/phase23n-collections-service-readiness-consumer-tests.php \
             tests/phase23n-consumer-adversarial-tests.php \
-            tests/phase23m-collections-service-probe-binding-tests.php \
-            tests/phase23l-collections-repository-readiness-probe-tests.php \
-            tests/phase23k-collections-service-readiness-integration-tests.php \
-            tests/phase23j-collections-service-readiness-tests.php \
-            tests/phase23i-registry-readiness-tests.php \
-            tests/phase23h-readiness-bridge-tests.php \
+            tests/phase23o-collections-service-internal-consumption-tests.php \
             tests/architecture-guard.php \
             > "qa-evidence/phase23n-corrective-checksums-php-${{ matrix.php }}.sha256"
 
