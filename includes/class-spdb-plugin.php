@@ -64,9 +64,11 @@ final class SPDB_Plugin {
 
 	private function __construct() {
 		$this->adapter_registry = new SPDB_Adapter_Registry();
-		// Resolver acceptance is deliberately empty. Provider callbacks can register
-		// technical implementations, but they cannot self-accept them.
-		$this->native_reference_registry = new SPDB_Native_Reference_Registry( $this->adapter_registry, array() );
+		// Provider callbacks may register technical implementations, but acceptance
+		// is File 23-governed, default-denied and supplied only by reviewed policy.
+		$acceptance = apply_filters( 'spdb/native_reference_acceptance', array() );
+		if ( ! is_array( $acceptance ) ) { $acceptance = array(); }
+		$this->native_reference_registry = new SPDB_Native_Reference_Registry( $this->adapter_registry, $acceptance );
 		$this->operation_broker = new SPDB_Operation_Broker( $this->adapter_registry );
 		$this->inventory = new SPDB_Federated_Inventory( $this->adapter_registry );
 		$this->inventory_rest = new SPDB_Inventory_REST_Controller( $this->inventory );
@@ -75,10 +77,10 @@ final class SPDB_Plugin {
 		$this->review_calendar_service = new SPDB_Review_Calendar_Service( $this->adapter_registry );
 		$this->review_calendar_rest = new SPDB_Review_Calendar_REST_Controller( $this->review_calendar_service, $this->operation_broker );
 		$this->collections_repository = new SPDB_WP_Collections_Repository();
-		// The new registry is not injected into Collections yet. This preserves
-		// truthful knowledge-write readiness until accepted provider wiring has its
-		// own correction, re-review, and staging gate.
-		$this->collections_service = new SPDB_Collections_Service( $this->collections_repository );
+		// The reviewed resolver registry now participates in Collections readiness.
+		// Resolver-backed writes still fail closed unless File 23 acceptance, provider
+		// health, contract conformance, environment and native authorization all pass.
+		$this->collections_service = new SPDB_Collections_Service( $this->collections_repository, $this->native_reference_registry );
 		$this->collections_rest = new SPDB_Collections_REST_Controller( $this->collections_service );
 		$this->saved_views = new SPDB_Saved_Views();
 		$this->rest_privacy = new SPDB_REST_Privacy();
