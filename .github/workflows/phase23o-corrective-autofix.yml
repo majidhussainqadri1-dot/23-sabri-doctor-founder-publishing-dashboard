@@ -1,0 +1,51 @@
+name: Phase 23O Corrective Autofix
+
+on:
+  push:
+    branches: ['phase/23o-collections-service-internal-consumption']
+
+permissions:
+  contents: write
+
+jobs:
+  corrective-autofix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: phase/23o-collections-service-internal-consumption
+          fetch-depth: 0
+      - name: Reconcile obsolete architecture markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tests/architecture-guard.php')
+          text = path.read_text()
+          old = "'SPDB_PHASE23F_WRITES_ENABLED', 'resolve_reference', 'validate_contributors', 'idempotency_hash', 'relation_hash', 'repository_available', 'resolver_available'"
+          new = "'SPDB_PHASE23F_WRITES_ENABLED', 'resolve_reference', 'validate_contributors', 'idempotency_hash', 'relation_hash', 'SPDB_Collections_Service_Readiness_Consumer', 'require_read_ready', 'require_write_ready'"
+          if old not in text:
+              raise SystemExit('Expected obsolete marker list was not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          rm -f .github/workflows/phase23o-retained-source-export.yml
+          rm -f .github/workflows/phase23o-corrective-autofix.yml
+      - name: Run decisive regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          php -l tests/architecture-guard.php
+          php tests/architecture-guard.php
+          php tests/phase23o-collections-service-internal-consumption-tests.php
+          php tests/phase23f-runtime-tests.php
+      - name: Commit corrected source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/architecture-guard.php .github/workflows/phase23o-retained-source-export.yml .github/workflows/phase23o-corrective-autofix.yml
+          git commit -m 'fix: align architecture guard with Phase 23O readiness consumer'
+          git push origin HEAD:phase/23o-collections-service-internal-consumption
