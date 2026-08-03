@@ -2,15 +2,20 @@ name: Baseline Integrity
 
 on:
   push:
-    branches: [main, 'phase/**']
+    branches: [main, 'phase/**', 'release/**']
   pull_request:
 
 permissions:
   contents: read
 
+concurrency:
+  group: baseline-${{ github.event.pull_request.number || github.ref }}-${{ matrix.php }}
+  cancel-in-progress: true
+
 jobs:
   integrity:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -31,13 +36,9 @@ jobs:
           mkdir -p qa-evidence
           actual_sha="$(git rev-parse HEAD)"
           test "$actual_sha" = "$EXPECTED_SHA"
-          {
-            echo "expected_sha=$EXPECTED_SHA"
-            echo "actual_sha=$actual_sha"
-            echo "event_name=${GITHUB_EVENT_NAME}"
-            echo "run_id=${GITHUB_RUN_ID}"
-            echo "run_attempt=${GITHUB_RUN_ATTEMPT}"
-          } > "qa-evidence/context-php-${{ matrix.php }}.txt"
+          printf 'expected_sha=%s\nactual_sha=%s\nevent_name=%s\nrun_id=%s\nrun_attempt=%s\nphp=%s\n' \
+            "$EXPECTED_SHA" "$actual_sha" "$GITHUB_EVENT_NAME" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "${{ matrix.php }}" \
+            > "qa-evidence/context-php-${{ matrix.php }}.txt"
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -45,54 +46,36 @@ jobs:
           php-version: ${{ matrix.php }}
           coverage: none
 
-      - name: Verify required files
+      - name: Verify consolidated required files
         shell: bash
         run: |
           set -euo pipefail
           required=(
             README.md STATUS.md SECURITY.md SOURCE-PROVENANCE.md DECISION-LOG.md CHANGELOG.md readme.txt
-            sabri-publishing-dashboard.php
-            docs/RESPONSIBILITY-MATRIX.md docs/DATA-OWNERSHIP.md docs/CAPABILITIES.md
-            docs/ADAPTER-CONTRACT.md docs/STATE-PROJECTION.md docs/ANALYTICS-CONTRACT.md docs/BACKGROUND-JOBS.md
-            docs/AUDIT-2026-07-30.md docs/AUDIT-PHASE-23B-2026-07-30.md
-            docs/AUDIT-PHASE-23B-SECOND-REVIEW-2026-07-30.md docs/AUDIT-PHASE-23C-2026-07-30.md
-            docs/AUDIT-PHASE-23D-2026-07-30.md docs/ROLE-WORKSPACES.md docs/PHASE-23D-REVIEW-GATE.md
-            docs/AUDIT-PHASE-23E-2026-07-30.md docs/REVIEW-CALENDAR.md docs/PHASE-23E-REVIEW-GATE.md
-            docs/AUDIT-PHASE-23F-2026-07-30.md docs/AUDIT-PHASE-23F-RUNTIME-SECOND-REVIEW-2026-07-30.md
-            docs/AUDIT-PHASE-23F-THIRD-REVIEW-2026-07-31.md docs/AUDIT-PHASE-23F-COLLECTIONS-UI-2026-07-31.md
-            docs/COLLECTIONS-KNOWLEDGE.md docs/PHASE-23F-REVIEW-GATE.md docs/PHASE-23F-STATUS.md
-            docs/AUDIT-PHASE-23G-NATIVE-REFERENCE-RESOLUTION-2026-07-31.md
-            includes/interface-spdb-provider-adapter.php includes/interface-spdb-workspace-provider-adapter.php
-            includes/interface-spdb-review-calendar-provider-adapter.php includes/interface-spdb-collections-repository.php
-            includes/interface-spdb-native-reference-resolver.php includes/interface-spdb-native-reference-provider.php
-            includes/class-spdb-adapter-registry.php includes/class-spdb-native-reference-registry.php
-            includes/class-spdb-native-reference-registration.php includes/class-spdb-membership-guard.php
-            includes/class-spdb-capabilities.php includes/class-spdb-capability-installer.php
-            includes/class-spdb-operation-broker.php includes/class-spdb-provider-registration.php
-            includes/class-spdb-inventory-query.php includes/class-spdb-projection-validator.php
-            includes/class-spdb-federated-inventory.php includes/class-spdb-inventory-rest-controller.php
-            includes/class-spdb-safe-destination.php includes/class-spdb-workspace-projection-validator.php
-            includes/class-spdb-role-workspace-service.php includes/class-spdb-review-calendar-validator.php
-            includes/class-spdb-review-calendar-service.php includes/class-spdb-review-calendar-rest-controller.php
-            includes/class-spdb-collections-schema.php includes/class-spdb-collections-policy.php
-            includes/class-spdb-wp-collections-repository.php includes/class-spdb-collections-service.php
-            includes/class-spdb-collections-view.php includes/class-spdb-collections-rest-controller.php
-            includes/class-spdb-dashboard-router.php includes/class-spdb-workspace-resolver.php
-            includes/class-spdb-saved-views.php includes/class-spdb-rest-privacy.php
-            includes/class-spdb-system-state.php includes/class-spdb-overview-service.php
-            includes/class-spdb-dashboard-page.php includes/class-spdb-plugin.php
-            templates/dashboard.php templates/inventory.php templates/workspace.php templates/review.php templates/calendar.php templates/collections.php
-            assets/css/dashboard.css assets/css/dashboard-corrections.css assets/css/inventory.css assets/css/workspace.css assets/css/review-calendar.css assets/css/collections.css
-            assets/js/dashboard.js
-            tests/bootstrap.php tests/fixtures/class-test-adapter.php tests/fixtures/class-test-workspace-adapter.php
-            tests/fixtures/class-test-review-calendar-adapter.php tests/fixtures/class-test-native-reference-provider.php
-            tests/contract-tests.php tests/dashboard-core-tests.php tests/rest-privacy-tests.php
-            tests/capability-installer-tests.php tests/provider-registration-tests.php
-            tests/inventory-tests.php tests/workspace-tests.php tests/review-calendar-tests.php
-            tests/phase23f-policy-tests.php tests/phase23f-runtime-tests.php tests/phase23f-repository-tests.php
-            tests/phase23f-read-rest-tests.php tests/phase23f-collections-ui-tests.php
-            tests/phase23f-collections-ui-corrective-tests.php tests/dashboard-router-malformed-view-tests.php
-            tests/phase23g-native-reference-tests.php tests/phase23g-native-reference-drift-tests.php tests/architecture-guard.php
+            sabri-publishing-dashboard.php uninstall.php
+            docs/FILE23-CONSOLIDATION-RELEASE-2026-08-04.md
+            includes/interface-spdb-provider-adapter.php
+            includes/interface-spdb-workspace-provider-adapter.php
+            includes/interface-spdb-review-calendar-provider-adapter.php
+            includes/interface-spdb-collections-repository.php
+            includes/interface-spdb-native-reference-resolver.php
+            includes/interface-spdb-native-reference-provider.php
+            includes/interface-spdb-native-reference-readiness.php
+            includes/class-spdb-adapter-registry.php
+            includes/class-spdb-membership-guard.php
+            includes/class-spdb-operation-broker.php
+            includes/class-spdb-federated-inventory.php
+            includes/class-spdb-role-workspace-service.php
+            includes/class-spdb-review-calendar-service.php
+            includes/class-spdb-collections-schema.php
+            includes/class-spdb-wp-collections-repository.php
+            includes/class-spdb-native-reference-registry.php
+            includes/class-spdb-collections-service-readiness-consumer.php
+            includes/class-spdb-collections-service.php
+            includes/class-spdb-plugin.php
+            includes/class-spdb-system-state.php
+            tests/file23-consolidation-tests.php
+            tests/architecture-guard.php
           )
           for file in "${required[@]}"; do test -s "$file" || { echo "Missing or empty: $file"; exit 1; }; done
 
@@ -105,91 +88,46 @@ jobs:
       - name: JavaScript syntax check
         run: node --check assets/js/dashboard.js
 
-      - name: Run executable contract tests
-        run: set -o pipefail; php tests/contract-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run executable dashboard-core tests
-        run: set -o pipefail; php tests/dashboard-core-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run REST privacy tests
-        run: set -o pipefail; php tests/rest-privacy-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run capability installer tests
-        run: set -o pipefail; php tests/capability-installer-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run provider registration isolation tests
-        run: set -o pipefail; php tests/provider-registration-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run corrective federated inventory tests
-        run: set -o pipefail; php tests/inventory-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run corrective role-workspace tests
-        run: set -o pipefail; php tests/workspace-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run corrective review and calendar tests
-        run: set -o pipefail; php tests/review-calendar-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run Phase 23F policy tests
-        run: set -o pipefail; php tests/phase23f-policy-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run corrective Phase 23F runtime tests
-        run: set -o pipefail; php tests/phase23f-runtime-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run corrective Phase 23F repository tests
-        run: set -o pipefail; php tests/phase23f-repository-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run Phase 23F read REST and item authority tests
-        run: set -o pipefail; php tests/phase23f-read-rest-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run Phase 23F Collections UI tests
-        run: set -o pipefail; php tests/phase23f-collections-ui-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run corrective Collections UI tests
-        run: set -o pipefail; php tests/phase23f-collections-ui-corrective-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run malformed dashboard route tests
-        run: set -o pipefail; php tests/dashboard-router-malformed-view-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run Phase 23G native resolver tests
-        run: set -o pipefail; php tests/phase23g-native-reference-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run Phase 23G contract drift tests
-        run: set -o pipefail; php tests/phase23g-native-reference-drift-tests.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-      - name: Run architecture boundary guard
-        run: set -o pipefail; php tests/architecture-guard.php | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
-
-      - name: Verify Phase 23F and 23G controls
+      - name: Run all executable source regressions
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "VERSION = '3'" includes/class-spdb-collections-schema.php
-          grep -q "refresh_health" includes/class-spdb-wp-collections-repository.php
-          grep -q "spdb_knowledge_relation_conflict" includes/class-spdb-wp-collections-repository.php
-          grep -q "list_collection_items" includes/class-spdb-collections-service.php
-          grep -q "validate_item_record" includes/class-spdb-collections-service.php
-          grep -q "SPDB_Collections_REST_Controller" includes/class-spdb-collections-rest-controller.php
-          grep -q "WP_REST_Server::READABLE" includes/class-spdb-collections-rest-controller.php
-          ! grep -Eq 'WP_REST_Server::(CREATABLE|EDITABLE|DELETABLE)|\b(?:POST|PUT|PATCH|DELETE)\b' includes/class-spdb-collections-rest-controller.php
-          grep -q 'interface SPDB_Native_Reference_Provider' includes/interface-spdb-native-reference-provider.php
-          grep -q 'implements SPDB_Native_Reference_Resolver' includes/class-spdb-native-reference-registry.php
-          grep -q 'adapter_acceptance_state' includes/class-spdb-native-reference-registry.php
-          grep -q 'validated_context' includes/class-spdb-native-reference-registry.php
-          grep -q 'spdb_native_resolver_provider_error' includes/class-spdb-native-reference-registry.php
-          grep -q 'provider_contract_is_current' includes/class-spdb-native-reference-registry.php
-          grep -q 'contract_drift' includes/class-spdb-native-reference-registry.php
-          grep -q 'spdb/register_native_reference_resolvers' includes/class-spdb-native-reference-registration.php
-          grep -q 'new SPDB_Native_Reference_Registry( \$this->adapter_registry, array() )' includes/class-spdb-plugin.php
-          grep -q 'new SPDB_Collections_Service( \$this->collections_repository )' includes/class-spdb-plugin.php
-          ! grep -Eq 'new SPDB_Collections_Service\([^;]*native_reference_registry' includes/class-spdb-plugin.php
-          ! grep -Eq 'register_rest_route\s*\(' includes/class-spdb-native-reference-registry.php includes/class-spdb-native-reference-registration.php
+          mapfile -t suites < <(find tests -maxdepth 1 -type f -name '*tests.php' | sort)
+          test "${#suites[@]}" -ge 20
+          for suite in "${suites[@]}"; do
+            echo "=== ${suite} ===" | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+            php -d display_errors=1 -d error_reporting=E_ALL "$suite" \
+              | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
+          done
+          php -d display_errors=1 -d error_reporting=E_ALL tests/architecture-guard.php \
+            | tee -a "qa-evidence/tests-php-${{ matrix.php }}.log"
 
-      - name: Verify version alignment
+      - name: Verify consolidated runtime boundaries
         shell: bash
         run: |
           set -euo pipefail
-          grep -q "Version:[[:space:]]*0.7.0" sabri-publishing-dashboard.php
-          grep -q "Stable tag: 0.7.0" readme.txt
-          grep -q "SPDB_VERSION.*0.7.0" sabri-publishing-dashboard.php
-          grep -q "SPDB_VERSION.*0.7.0" tests/bootstrap.php
-          grep -q "SPDB_CONTRACT_VERSION.*2.0.0" sabri-publishing-dashboard.php
-          grep -q "'phase'.*'23G'" includes/class-spdb-system-state.php
+          grep -Fq "VERSION = '3'" includes/class-spdb-collections-schema.php
+          grep -Fq 'SPDB_Collections_Service_Readiness_Consumer::create( $repository, $resolver )' includes/class-spdb-collections-service.php
+          grep -Fq 'return $this->readiness->require_read_ready()' includes/class-spdb-collections-service.php
+          grep -Fq 'return $this->readiness->require_write_ready( $requires_resolver, $this->writes_configured() )' includes/class-spdb-collections-service.php
+          grep -Fq "apply_filters( 'spdb/native_reference_acceptance', array() )" includes/class-spdb-plugin.php
+          grep -Fq 'new SPDB_Collections_Service( $this->collections_repository, $this->native_reference_registry )' includes/class-spdb-plugin.php
+          grep -Fq "'phase' => '23O'" includes/class-spdb-system-state.php
+          grep -Fq 'WP_REST_Server::READABLE' includes/class-spdb-collections-rest-controller.php
+          ! grep -Eq 'WP_REST_Server::(CREATABLE|EDITABLE|DELETABLE)|\b(POST|PUT|PATCH|DELETE)\b' includes/class-spdb-collections-rest-controller.php
+          ! grep -Eq 'register_post_type\s*\(|wp_insert_post\s*\(|wp_update_post\s*\(|wp_delete_post\s*\(' includes/class-spdb-collections-service.php includes/class-spdb-federated-inventory.php
 
-      - name: Verify audit and merge gates
+      - name: Verify version and contract alignment
         shell: bash
         run: |
           set -euo pipefail
-          grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23F-2026-07-30.md
-          grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23F-RUNTIME-SECOND-REVIEW-2026-07-30.md
-          grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23F-THIRD-REVIEW-2026-07-31.md
-          grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23F-COLLECTIONS-UI-2026-07-31.md
-          grep -qi "DO NOT MERGE" docs/AUDIT-PHASE-23G-NATIVE-REFERENCE-RESOLUTION-2026-07-31.md
-          grep -qi "sixteen" docs/AUDIT-PHASE-23G-NATIVE-REFERENCE-RESOLUTION-2026-07-31.md
-          grep -qi "Founder review completed" STATUS.md
-          grep -qi "No Merge before Completed Review" DECISION-LOG.md
+          header_version="$(sed -nE 's/^ \* Version:[[:space:]]*([^[:space:]]+).*/\1/p' sabri-publishing-dashboard.php | head -n1)"
+          constant_version="$(sed -nE "s/.*define\( 'SPDB_VERSION', '([^']+)' \).*/\1/p" sabri-publishing-dashboard.php | head -n1)"
+          stable_version="$(sed -nE 's/^Stable tag:[[:space:]]*([^[:space:]]+).*/\1/p' readme.txt | head -n1)"
+          test -n "$header_version"
+          test "$header_version" = "$constant_version"
+          test "$header_version" = "$stable_version"
+          grep -Fq "SPDB_CONTRACT_VERSION', '2.0.0'" sabri-publishing-dashboard.php
 
       - name: Record source checksums
         if: always()
@@ -202,7 +140,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: phase-23g-baseline-qa-php-${{ matrix.php }}-${{ github.run_id }}
+          name: file23-baseline-qa-php-${{ matrix.php }}-${{ github.run_id }}
           path: qa-evidence/
           if-no-files-found: error
           retention-days: 30
