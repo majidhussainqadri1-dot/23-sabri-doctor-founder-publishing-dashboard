@@ -74,7 +74,7 @@ final class SPDB_Overview_Service {
 				array(
 					'label' => __( 'Production Writes', 'sabri-publishing-dashboard' ),
 					'value' => __( 'Disabled', 'sabri-publishing-dashboard' ),
-					'note'  => __( 'Phase 23C safety boundary', 'sabri-publishing-dashboard' ),
+					'note'  => __( 'Full-plan candidate safety boundary', 'sabri-publishing-dashboard' ),
 				),
 			),
 			'alerts'       => $alerts,
