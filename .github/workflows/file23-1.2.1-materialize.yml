@@ -36,6 +36,8 @@ jobs:
           bunzip2 -c /tmp/file23-1.2.1.patch.bz2 > /tmp/file23-1.2.1.patch
           git apply --check /tmp/file23-1.2.1.patch
           git apply /tmp/file23-1.2.1.patch
+          rm -rf .file23-transfer
+          rm -f .github/workflows/file23-1.2.1-materialize.yml
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -64,10 +66,10 @@ jobs:
         run: |
           set -euo pipefail
           git checkout HEAD -- \
+            .github/workflows/file23-1.2.1-materialize.yml \
             .github/workflows/baseline-integrity.yml \
             .github/workflows/file23-final-release-candidate.yml \
             .github/workflows/file23-full-plan-completion.yml
-          rm -rf .file23-transfer
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
