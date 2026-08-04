@@ -16,6 +16,8 @@ $router     = $read( 'includes/class-spdb-dashboard-router.php' );
 $export     = $read( 'includes/class-spdb-export-service.php' );
 $validator  = $read( 'includes/class-spdb-operational-projection-validator.php' );
 $repository = $read( 'includes/class-spdb-operations-repository.php' );
+$guard      = $read( 'includes/class-spdb-operational-mutation-guard.php' );
+$client     = $read( 'assets/js/operations.js' );
 
 foreach ( array( 'patient', 'diagnos', 'prescription', 'potency', 'dosage', 'auto[_-]?publish', 'delete', 'impersonat', 'mass[_-]?publish', 'cure[_-]?claim', 'change[_-]?author', 'export[_-]?patient' ) as $pattern ) {
 	$assert( str_contains( $governance, $pattern ), "Automation guard must reject {$pattern}." );
@@ -37,6 +39,16 @@ $assert( str_contains( $export, 'spreadsheet_safe' ) && str_contains( $export, "
 $assert( str_contains( $validator, 'sensitive_key' ) && str_contains( $validator, 'same-origin' ) === false && str_contains( $validator, 'home_url' ), 'Operational projections must filter sensitive metadata and validate destinations against the site origin.' );
 $assert( str_contains( $repository, 'previous_hash' ) && str_contains( $repository, 'event_hash' ) && str_contains( $repository, 'hash_equals' ), 'Dashboard audit must use an append-only integrity chain.' );
 $assert( str_contains( $repository, 'idempotency_key' ) && str_contains( $repository, 'lock_token' ) && str_contains( $repository, 'dead_letter' ), 'Background jobs must use idempotency, locking, and dead-letter state.' );
+
+$assert( str_contains( $guard, 'X-WP-Nonce' ) && str_contains( $guard, "wp_verify_nonce( \$nonce, 'wp_rest' )" ), 'Operational mutation endpoints must not rely on UI visibility or cookie authentication without an explicit REST nonce.' );
+$assert( str_contains( $guard, "get_header( 'Origin' )" ) && str_contains( $guard, "get_header( 'Referer' )" ) && str_contains( $guard, 'same_origin_value' ), 'Operational mutations must reject cross-origin browser submissions.' );
+$assert( str_contains( $guard, 'Idempotency-Key' ) && str_contains( $guard, 'spdb_mutation_idempotency_conflict' ) && str_contains( $guard, 'payload_hash' ), 'Reused idempotency keys with altered payloads must fail closed.' );
+$assert( str_contains( $guard, 'START TRANSACTION' ) && str_contains( $guard, 'COMMIT' ) && str_contains( $guard, 'ROLLBACK' ), 'Local mutation, receipt, and canonical audit evidence must commit or roll back together.' );
+$assert( str_contains( $guard, 'SPDB_Operations_Repository' ) && str_contains( $guard, 'mutation_requested' ) && str_contains( $guard, "'mutation_' . \$outcome" ), 'Request and outcome evidence must use the canonical hash-chained audit repository.' );
+$assert( str_contains( $guard, 'sanitize_response_data' ) && preg_match( '/password\|secret\|token\|nonce\|cookie\|authorization\|otp\|cvv\|card\|patient\|clinical\|message_body/', $guard ) === 1, 'Replay receipts must remove secret, clinical, patient, and credential-shaped fields.' );
+$assert( str_contains( $guard, "private, no-store, max-age=0" ) && str_contains( $guard, 'X-SPDB-Idempotent' ), 'Recorded and replayed mutation responses must remain private and explicitly marked.' );
+$assert( ! str_contains( $guard, 'CREATE TABLE' ), 'The mutation guard must not create a shadow backend or alternate audit table.' );
+$assert( str_contains( $client, "headers: { 'Idempotency-Key': requestKey }" ) && str_contains( $client, 'data-spdb-idempotency-key' ), 'The browser must retain a stable idempotency key for one logical submission.' );
 
 if ( $failed ) { fwrite( STDERR, "{$failed} of {$tests} adversarial tests failed.\n" ); exit( 1 ); }
 echo "All {$tests} full-plan adversarial tests passed.\n";
