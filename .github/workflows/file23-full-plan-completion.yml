@@ -113,6 +113,12 @@ jobs:
         run: |
           cat > file22-autoload.php <<'PHP'
           <?php
+          if ( ! function_exists( 'apply_filters' ) ) {
+              function apply_filters( string $hook, mixed $value, mixed ...$args ): mixed {
+                  unset( $hook, $args );
+                  return $value;
+              }
+          }
           $root = getenv( 'FILE22_ROOT' );
           spl_autoload_register(
               static function ( string $class ) use ( $root ): void {
