@@ -8,7 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Collections_Schema {
-	public const VERSION = '3';
+	public const VERSION = '4';
 	private const OPTION_KEY = 'spdb_collections_schema_version';
 
 	/** @return true|WP_Error */
@@ -72,7 +72,7 @@ final class SPDB_Collections_Schema {
 			KEY owner_scope (owner_user_id,scope),
 			KEY type_status (record_type,status),
 			KEY updated_at_gmt (updated_at_gmt)
-		) {$charset};";
+		) ENGINE=InnoDB {$charset};";
 
 		$sql[] = "CREATE TABLE {$items} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -102,7 +102,7 @@ final class SPDB_Collections_Schema {
 			UNIQUE KEY collection_reference (collection_id,reference_hash),
 			KEY collection_position (collection_id,position),
 			KEY native_reference (provider_key,object_type,object_id)
-		) {$charset};";
+		) ENGINE=InnoDB {$charset};";
 
 		$sql[] = "CREATE TABLE {$links} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -139,9 +139,11 @@ final class SPDB_Collections_Schema {
 			KEY relation_status (relation_type,status),
 			KEY source_reference (source_provider_key,source_object_type,source_object_id),
 			KEY target_reference (target_provider_key,target_object_type,target_object_id)
-		) {$charset};";
+		) ENGINE=InnoDB {$charset};";
 
 		dbDelta( $sql );
+		$converted = self::ensure_transactional_tables();
+		if ( is_wp_error( $converted ) ) { return $converted; }
 		$verified = self::verify();
 		if ( is_wp_error( $verified ) ) {
 			return $verified;
@@ -161,6 +163,9 @@ final class SPDB_Collections_Schema {
 		foreach ( self::requirements() as $table => $requirement ) {
 			if ( ! self::table_exists( $table ) ) {
 				return self::error( 'spdb_collections_schema_table_missing', 'A required File 23 metadata table is missing.' );
+			}
+			if ( 'innodb' !== strtolower( self::table_engine( $table ) ) ) {
+				return self::error( 'spdb_collections_schema_not_transactional', 'A required File 23 metadata table is not using InnoDB.' );
 			}
 			$columns = self::column_names( $table );
 			if ( is_wp_error( $columns ) || array_diff( $requirement['columns'], $columns ) ) {
@@ -200,8 +205,28 @@ final class SPDB_Collections_Schema {
 	public static function items_table(): string { global $wpdb; return (string) $wpdb->prefix . 'spdb_collection_items'; }
 	public static function links_table(): string { global $wpdb; return (string) $wpdb->prefix . 'spdb_knowledge_links'; }
 
+	/** @return true|WP_Error */
+	private static function ensure_transactional_tables() {
+		global $wpdb;
+		if ( ! method_exists( $wpdb, 'query' ) ) { return self::error( 'spdb_collections_database_unavailable', 'The WordPress database service is unavailable.' ); }
+		foreach ( self::tables() as $table ) {
+			if ( ! self::safe_identifier( $table ) ) { return self::error( 'spdb_collections_schema_identifier_invalid', 'A metadata table identifier is invalid.' ); }
+			$engine = self::table_engine( $table );
+			if ( '' !== $engine && 'innodb' !== strtolower( $engine ) ) {
+				$result = $wpdb->query( "ALTER TABLE `{$table}` ENGINE=InnoDB" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Identifier is strictly allowlisted.
+				if ( false === $result ) { return self::error( 'spdb_collections_engine_upgrade_failed', 'A File 23 metadata table could not be upgraded to InnoDB.' ); }
+			}
+		}
+		return true;
+	}
+	private static function table_engine( string $table ): string {
+		global $wpdb;
+		if ( ! self::safe_identifier( $table ) || ! method_exists( $wpdb, 'get_row' ) ) { return ''; }
+		$row = $wpdb->get_row( $wpdb->prepare( 'SHOW TABLE STATUS LIKE %s', $table ), self::array_output() ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Identifier is strictly allowlisted.
+		return is_array( $row ) ? (string) ( $row['Engine'] ?? '' ) : '';
+	}
 	private static function database_available( $wpdb ): bool {
-		return is_object( $wpdb ) && isset( $wpdb->prefix ) && method_exists( $wpdb, 'get_var' ) && method_exists( $wpdb, 'get_results' ) && method_exists( $wpdb, 'prepare' ) && method_exists( $wpdb, 'esc_like' );
+		return is_object( $wpdb ) && isset( $wpdb->prefix ) && method_exists( $wpdb, 'get_var' ) && method_exists( $wpdb, 'get_results' ) && method_exists( $wpdb, 'get_row' ) && method_exists( $wpdb, 'prepare' ) && method_exists( $wpdb, 'esc_like' );
 	}
 	private static function table_exists( string $table ): bool {
 		global $wpdb;

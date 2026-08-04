@@ -1,0 +1,182 @@
+name: File 23 Full Plan Completion
+
+on:
+  push:
+    branches: [main, 'feature/**', 'release/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: file23-full-plan-${{ github.event.pull_request.number || github.ref }}-${{ github.job }}-${{ matrix.php || 'single' }}
+  cancel-in-progress: true
+
+env:
+  FILE00_SHA: 1831c7ed767ce8590a97dc8e2f2d38ad81661494
+  FILE21_SHA: e1bbfb514b859a51b9731a43d6a15fb824124507
+  FILE22_SHA: 1274e380268c2ab235c66fd21906cf4b1bcadf9a
+
+jobs:
+  php-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.0', '8.1', '8.2', '8.3']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Lint complete source
+        shell: bash
+        run: |
+          set -euo pipefail
+          find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+          node --check assets/js/dashboard.js
+          node --check assets/js/operations.js
+      - name: Run all standalone repository tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for suite in tests/*-tests.php; do
+            echo "Running $suite"
+            php -d display_errors=1 -d error_reporting=E_ALL "$suite"
+          done
+          php tests/forty-round-review-gate-tests.php
+          php tests/architecture-guard.php
+      - name: Verify final-plan boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq "Version:     1.2.0" sabri-publishing-dashboard.php
+          grep -Fq "Stable tag: 1.2.0" readme.txt
+          grep -Fq 'spdb/file24_assurance_evidence' includes/class-spdb-plugin.php
+          grep -Fq "global_safe_mode_owner' => 'file20" includes/class-spdb-local-repair.php
+          grep -Fq "mutation_supported'         => false" includes/class-spdb-legacy-migration-diagnostics.php
+          grep -R -Fq 'DONOTCACHEPAGE' includes tests
+          grep -R -Fq 'private, no-store' includes tests
+          grep -R -Fq ':focus-visible' assets/css
+          grep -R -Eq '\[dir="rtl"\]|:dir\(rtl\)|direction:[[:space:]]*rtl' assets/css
+          grep -R -Fq 'prefers-reduced-motion' assets/css
+          grep -R -Fq 'forced-colors' assets/css
+
+  real-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          path: file23
+          persist-credentials: false
+      - uses: actions/checkout@v5
+        with:
+          repository: majidhussainqadri1-dot/00-sabri-membership-core
+          ref: ${{ env.FILE00_SHA }}
+          path: file00
+          persist-credentials: false
+      - uses: actions/checkout@v5
+        with:
+          repository: majidhussainqadri1-dot/sabri-complete-home-news-feed
+          ref: ${{ env.FILE21_SHA }}
+          path: file21
+          persist-credentials: false
+      - uses: actions/checkout@v5
+        with:
+          repository: majidhussainqadri1-dot/sabri-universal-post-composer
+          ref: ${{ env.FILE22_SHA }}
+          path: file22
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: Verify exact companion heads and File 00 authority contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C file00 rev-parse HEAD)" = "$FILE00_SHA"
+          test "$(git -C file21 rev-parse HEAD)" = "$FILE21_SHA"
+          test "$(git -C file22 rev-parse HEAD)" = "$FILE22_SHA"
+          php -l file00/source/sabri-membership-core/includes/class-smc-contracts.php
+          grep -Fq 'SMC_Contracts::assertions( $user_id )' file23/includes/class-spdb-membership-guard.php
+          grep -Fq "MINIMUM_CONTRACT_VERSION  = '1.1.2'" file23/includes/class-spdb-membership-guard.php
+      - name: Prepare current File 22 autoload boundary
+        shell: bash
+        run: |
+          cat > file22-autoload.php <<'PHP'
+          <?php
+          $root = getenv( 'FILE22_ROOT' );
+          spl_autoload_register(
+              static function ( string $class ) use ( $root ): void {
+                  $prefix = 'Sabri\\UniversalComposer\\';
+                  if ( ! str_starts_with( $class, $prefix ) ) { return; }
+                  $relative = substr( $class, strlen( $prefix ) );
+                  $parts = explode( '\\', $relative );
+                  $area = strtolower( array_shift( $parts ) ?? '' );
+                  $name = array_pop( $parts );
+                  if ( ! in_array( $area, array( 'core', 'contracts' ), true ) || ! is_string( $name ) ) { return; }
+                  $slug = strtolower( str_replace( '_', '-', $name ) );
+                  $kind = 'contracts' === $area && str_starts_with( $name, 'Workflow_' ) ? 'interface-' : 'class-';
+                  $file = rtrim( (string) $root, '/\\' ) . '/includes/' . $area . '/' . $kind . $slug . '.php';
+                  if ( is_file( $file ) ) { require_once $file; }
+              }
+          );
+          PHP
+      - name: Run real File 21 and File 22 contracts
+        shell: bash
+        env:
+          FILE22_ROOT: ${{ github.workspace }}/file22
+        run: |
+          set -euo pipefail
+          php -d auto_prepend_file="${{ github.workspace }}/file22-autoload.php" file21/tests/run-file21-file22-real-contract-tests.php
+          php file21/tests/run-file21-file22-workflow-adapter-tests.php
+          php file21/tests/run-file21-file22-maintenance-tests.php
+          php file21/tests/run-file21-file22-lock-maintenance-tests.php
+
+  canonical-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: [php-matrix, real-contracts]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: Verify forty-round review evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          php tests/forty-round-review-gate-tests.php
+          test -s docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md
+      - name: Build deterministic 1.2.0 package
+        run: bash tools/build-final-release.sh
+      - name: Record exact source evidence
+        shell: bash
+        run: |
+          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.0\n' \
+            "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" \
+            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.0-RELEASE-EVIDENCE.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: file23-1.2.0-full-plan-candidate
+          path: |
+            23-sabri-doctor-founder-publishing-dashboard-1.2.0.zip
+            23-sabri-doctor-founder-publishing-dashboard-1.2.0.zip.sha256
+            FILE23-1.2.0-MANIFEST.sha256
+            FILE23-1.2.0-RELEASE-EVIDENCE.txt
+            docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md
+            docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md
+          if-no-files-found: error
+          retention-days: 90

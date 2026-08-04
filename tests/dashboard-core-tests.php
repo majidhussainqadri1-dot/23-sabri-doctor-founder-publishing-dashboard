@@ -1,6 +1,9 @@
 <?php
 /** Executable File 23 dashboard-core regression tests. */
 require_once __DIR__ . '/bootstrap.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-operations-schema.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-module-manifest.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-legacy-migration-diagnostics.php';
 
 $tests  = 0;
 $failed = 0;
@@ -14,7 +17,13 @@ eval( 'function smc_is_trusted_publisher( $user_id ) { return (bool) $GLOBALS["s
 
 $GLOBALS['spdb_test_capabilities']['spdb_view_dashboard'] = true;
 $GLOBALS['spdb_test_capabilities']['spdb_view_own_content'] = true;
+$GLOBALS['spdb_test_capabilities']['spdb_manage_own_content'] = true;
 $GLOBALS['spdb_test_capabilities']['spdb_view_review_queue'] = true;
+$GLOBALS['spdb_test_capabilities']['spdb_view_own_analytics'] = true;
+$GLOBALS['spdb_test_capabilities']['spdb_manage_interactions'] = true;
+$GLOBALS['spdb_test_capabilities']['spdb_manage_tasks'] = true;
+$GLOBALS['spdb_test_capabilities']['spdb_export_reports'] = true;
+$GLOBALS['spdb_test_capabilities']['spdb_manage_dashboard_settings'] = true;
 $GLOBALS['spdb_test_capabilities']['spdb_run_system_check'] = true;
 $GLOBALS['spdb_test_member_status'] = 'approved';
 $resolver = new SPDB_Workspace_Resolver();
@@ -44,12 +53,14 @@ $GLOBALS['spdb_test_capabilities']['spdb_view_dashboard'] = true;
 $GLOBALS['spdb_test_member_status'] = 'approved';
 
 spdb_core_assert( 'overview' === SPDB_Dashboard_Router::normalize_view( 'unknown' ), 'Unknown dashboard views must fall back to overview.' );
-spdb_core_assert( 'workspace' === SPDB_Dashboard_Router::normalize_view( 'workspace' ), 'Implemented role-workspace route must be accepted.' );
-spdb_core_assert( 'inventory' === SPDB_Dashboard_Router::normalize_view( 'inventory' ), 'Implemented inventory route must be accepted.' );
-spdb_core_assert( 'collections' === SPDB_Dashboard_Router::normalize_view( 'collections' ), 'Implemented Collections route must be accepted.' );
-spdb_core_assert( 'review' === SPDB_Dashboard_Router::normalize_view( 'review' ), 'Implemented Review Inbox route must be accepted.' );
-spdb_core_assert( 'calendar' === SPDB_Dashboard_Router::normalize_view( 'calendar' ), 'Implemented Publishing Calendar route must be accepted.' );
-spdb_core_assert( 'saved-views' === SPDB_Dashboard_Router::normalize_view( 'saved-views' ), 'Implemented saved-views route must be accepted.' );
+$implemented_views = array(
+	'overview', 'create', 'workspace', 'inventory', 'review', 'calendar', 'collections', 'knowledge',
+	'sources', 'media', 'interactions', 'revisions', 'analytics', 'notifications', 'tasks', 'reports',
+	'settings', 'saved-views', 'system-status',
+);
+foreach ( $implemented_views as $implemented_view ) {
+	spdb_core_assert( $implemented_view === SPDB_Dashboard_Router::normalize_view( $implemented_view ), "Implemented {$implemented_view} route must be accepted." );
+}
 spdb_core_assert( 'https://example.test/publishing-dashboard/' === SPDB_Dashboard_Router::route_url(), 'Canonical dashboard URL must be stable.' );
 spdb_core_assert( false !== strpos( SPDB_Dashboard_Router::route_url( 'system-status' ), 'view=system-status' ), 'Implemented subview URL must use an allowlisted query value.' );
 $GLOBALS['wp']->query_vars[ SPDB_Dashboard_Router::QUERY_VAR ] = '1';
@@ -112,15 +123,20 @@ $state_service = new SPDB_System_State( $registry, $collections );
 $workspace = $resolver->resolve( 7 );
 $state = $state_service->snapshot( $workspace );
 spdb_core_assert( 0 === $state['provider_count'], 'An empty registry must report zero providers without fabricated counts.' );
-spdb_core_assert( false === $state['production_writes'], 'Phase 23G system state must declare production writes disabled.' );
-spdb_core_assert( '23G' === $state['phase'], 'System state must identify the active implementation phase.' );
-spdb_core_assert( false === $state['collections']['repository_available'], 'Phase 23G system state must truthfully expose an unavailable collection repository.' );
+spdb_core_assert( false === $state['production_writes'], 'Full-plan candidate must keep production writes disabled.' );
+spdb_core_assert( 'full_plan_candidate' === $state['phase'], 'System state must identify the full-plan candidate implementation phase.' );
+spdb_core_assert( false === $state['collections']['repository_available'], 'System state must truthfully expose an unavailable collection repository.' );
 spdb_core_assert( false === $state['native_references']['available'] && 0 === $state['native_references']['resolver_count'], 'System state without an injected registry must expose zero unavailable native resolvers.' );
+spdb_core_assert( 'file20' === $state['global_safe_mode_owner'], 'Global Safe Mode ownership must remain with File 20.' );
+spdb_core_assert( true === $state['file23_local_repairs_only'], 'File 23 must expose only local reversible repair authority.' );
+spdb_core_assert( true === $state['completion_status']['coded'] && false === $state['completion_status']['staging_accepted'], 'Completion status must distinguish coded source from staging acceptance.' );
 $overview = ( new SPDB_Overview_Service( $state_service ) )->build( $workspace );
 spdb_core_assert( 4 === count( $overview['cards'] ), 'Overview must provide the bounded dashboard summary cards.' );
 spdb_core_assert( ! empty( $overview['alerts'] ), 'No-provider state must produce an explicit truthful notice.' );
 $navigation = $resolver->navigation( $workspace );
-spdb_core_assert( isset( $navigation['overview'], $navigation['workspace'], $navigation['inventory'], $navigation['collections'], $navigation['review'], $navigation['calendar'], $navigation['saved-views'], $navigation['system-status'] ), 'Only implemented and authorized dashboard destinations must be exposed.' );
+foreach ( $implemented_views as $implemented_view ) {
+	spdb_core_assert( isset( $navigation[ $implemented_view ] ), "Authorized full-plan navigation must expose {$implemented_view}." );
+}
 
 if ( $failed > 0 ) { fwrite( STDERR, "{$failed} of {$tests} dashboard-core tests failed.\n" ); exit( 1 ); }
 echo "All {$tests} File 23 dashboard-core tests passed.\n";

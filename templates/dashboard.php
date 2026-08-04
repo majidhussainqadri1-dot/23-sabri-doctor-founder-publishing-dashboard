@@ -30,8 +30,9 @@ $native_reference_health = is_array( $system_state['native_references'] ?? null 
 			</p>
 		</div>
 		<div class="spdb-phase" aria-label="<?php esc_attr_e( 'Implementation phase', 'sabri-publishing-dashboard' ); ?>">
-			<span><?php esc_html_e( 'Phase 23O', 'sabri-publishing-dashboard' ); ?></span>
-			<strong><?php esc_html_e( 'Native Reference Governance', 'sabri-publishing-dashboard' ); ?></strong>
+			<span><?php esc_html_e( 'Full Plan Candidate', 'sabri-publishing-dashboard' ); ?></span>
+			<strong><?php esc_html_e( 'Federated Publishing Operations', 'sabri-publishing-dashboard' ); ?></strong>
+			<small><?php esc_html_e( 'Phase 23G Native Reference Governance retained', 'sabri-publishing-dashboard' ); ?></small>
 		</div>
 	</header>
 
@@ -47,6 +48,8 @@ $native_reference_health = is_array( $system_state['native_references'] ?? null 
 		<main id="<?php echo esc_attr( $main_id ); ?>" class="spdb-main" tabindex="-1">
 			<?php if ( 'workspace' === $current ) : ?>
 				<?php include SPDB_PLUGIN_DIR . 'templates/workspace.php'; ?>
+			<?php elseif ( 'create' === $current ) : ?>
+				<?php include SPDB_PLUGIN_DIR . 'templates/create.php'; ?>
 			<?php elseif ( 'inventory' === $current ) : ?>
 				<?php include SPDB_PLUGIN_DIR . 'templates/inventory.php'; ?>
 			<?php elseif ( 'collections' === $current ) : ?>
@@ -55,6 +58,16 @@ $native_reference_health = is_array( $system_state['native_references'] ?? null 
 				<?php include SPDB_PLUGIN_DIR . 'templates/review.php'; ?>
 			<?php elseif ( 'calendar' === $current ) : ?>
 				<?php include SPDB_PLUGIN_DIR . 'templates/calendar.php'; ?>
+			<?php elseif ( in_array( $current, array( 'knowledge', 'sources', 'media', 'interactions', 'revisions', 'notifications' ), true ) ) : ?>
+				<?php include SPDB_PLUGIN_DIR . 'templates/operations.php'; ?>
+			<?php elseif ( 'analytics' === $current ) : ?>
+				<?php include SPDB_PLUGIN_DIR . 'templates/analytics.php'; ?>
+			<?php elseif ( 'tasks' === $current ) : ?>
+				<?php include SPDB_PLUGIN_DIR . 'templates/tasks.php'; ?>
+			<?php elseif ( 'reports' === $current ) : ?>
+				<?php include SPDB_PLUGIN_DIR . 'templates/reports.php'; ?>
+			<?php elseif ( 'settings' === $current ) : ?>
+				<?php include SPDB_PLUGIN_DIR . 'templates/settings.php'; ?>
 			<?php elseif ( 'saved-views' === $current ) : ?>
 				<section aria-labelledby="<?php echo esc_attr( $saved_title_id ); ?>">
 					<div class="spdb-section-heading"><div><p class="spdb-eyebrow"><?php esc_html_e( 'Personal workspace', 'sabri-publishing-dashboard' ); ?></p><h2 id="<?php echo esc_attr( $saved_title_id ); ?>"><?php esc_html_e( 'Saved Views', 'sabri-publishing-dashboard' ); ?></h2></div></div>
@@ -97,7 +110,37 @@ $native_reference_health = is_array( $system_state['native_references'] ?? null 
 						<article><span><?php esc_html_e( 'Native resolvers ready', 'sabri-publishing-dashboard' ); ?></span><strong><?php echo esc_html( (string) ( $native_reference_health['ready_count'] ?? 0 ) ); ?></strong></article>
 						<article><span><?php esc_html_e( 'Resolver registration errors', 'sabri-publishing-dashboard' ); ?></span><strong><?php echo esc_html( (string) ( $native_reference_health['registration_errors'] ?? 0 ) ); ?></strong></article>
 					</div>
-					<p class="spdb-caption"><?php echo esc_html( sprintf( __( 'Generated at %s (GMT). Resolver diagnostics contain no object identifiers, destinations, patient data, callback details, or secrets.', 'sabri-publishing-dashboard' ), $system_state['generated_at_gmt'] ) ); ?></p>
+					<?php if ( is_array( $system_check ) && ! empty( $system_check['checks'] ) ) : ?>
+						<section class="spdb-operations-panel" aria-labelledby="<?php echo esc_attr( $instance_id . '-system-check-title' ); ?>">
+							<h3 id="<?php echo esc_attr( $instance_id . '-system-check-title' ); ?>"><?php esc_html_e( 'Full System Check', 'sabri-publishing-dashboard' ); ?></h3>
+							<div class="spdb-operations-grid">
+								<?php foreach ( $system_check['checks'] as $check_key => $check ) : ?>
+									<article class="spdb-operational-card"><span><?php echo esc_html( ucwords( str_replace( '_', ' ', (string) $check_key ) ) ); ?></span><strong><?php echo ! empty( $check['ok'] ) ? esc_html__( 'Ready', 'sabri-publishing-dashboard' ) : esc_html__( 'Needs attention', 'sabri-publishing-dashboard' ); ?></strong><small><?php echo esc_html( (string) ( $check['code'] ?? '' ) ); ?></small></article>
+								<?php endforeach; ?>
+							</div>
+							<?php if ( SPDB_Capabilities::current_user_can( 'spdb_reconcile_projections' ) ) : ?>
+								<form class="spdb-action-form" data-spdb-operation-form data-endpoint="system-check/repair" data-method="POST" data-confirm="true">
+									<label><span><?php esc_html_e( 'Local reversible repair', 'sabri-publishing-dashboard' ); ?></span><select name="action"><option value="install_operations_schema"><?php esc_html_e( 'Verify and repair operations schema', 'sabri-publishing-dashboard' ); ?></option><option value="install_collections_schema"><?php esc_html_e( 'Verify and repair Collections schema', 'sabri-publishing-dashboard' ); ?></option><option value="reschedule_jobs"><?php esc_html_e( 'Restore File 23 background schedule', 'sabri-publishing-dashboard' ); ?></option><option value="verify_audit"><?php esc_html_e( 'Verify audit chain', 'sabri-publishing-dashboard' ); ?></option></select></label>
+									<label><span><?php esc_html_e( 'Audit reason', 'sabri-publishing-dashboard' ); ?></span><input type="text" name="reason" maxlength="500" required></label>
+									<button class="spdb-button" type="submit"><?php esc_html_e( 'Run Local Repair', 'sabri-publishing-dashboard' ); ?></button>
+								</form>
+							<?php endif; ?>
+						</section>
+					<?php endif; ?>
+					<?php if ( ! empty( $system_state['legacy_migration'] ) ) : ?>
+						<section class="spdb-operations-panel" aria-labelledby="<?php echo esc_attr( $instance_id . '-legacy-migration-title' ); ?>">
+							<h3 id="<?php echo esc_attr( $instance_id . '-legacy-migration-title' ); ?>"><?php esc_html_e( 'Legacy File 04 Migration Boundary', 'sabri-publishing-dashboard' ); ?></h3>
+							<p><?php esc_html_e( 'Read-only diagnostics only. File 21 remains the canonical publication owner; File 23 never migrates or mutates legacy publication records.', 'sabri-publishing-dashboard' ); ?></p>
+							<div class="spdb-status-grid"><article><span><?php esc_html_e( 'Evidence', 'sabri-publishing-dashboard' ); ?></span><strong><?php echo esc_html( (string) ( $system_state['legacy_migration']['code'] ?? 'unknown' ) ); ?></strong></article><article><span><?php esc_html_e( 'Candidates', 'sabri-publishing-dashboard' ); ?></span><strong><?php echo esc_html( (string) ( $system_state['legacy_migration']['eligible_candidates'] ?? 0 ) ); ?></strong></article><article><span><?php esc_html_e( 'Mapped', 'sabri-publishing-dashboard' ); ?></span><strong><?php echo esc_html( (string) ( $system_state['legacy_migration']['mapped_records'] ?? 0 ) ); ?></strong></article><article><span><?php esc_html_e( 'Legacy writes', 'sabri-publishing-dashboard' ); ?></span><strong><?php echo esc_html( (string) ( $system_state['legacy_migration']['legacy_write_state'] ?? 'unknown' ) ); ?></strong></article></div>
+						</section>
+					<?php endif; ?>
+					<?php if ( ! empty( $system_state['module_manifest'] ) ) : ?>
+						<section class="spdb-operations-panel" aria-labelledby="<?php echo esc_attr( $instance_id . '-module-manifest-title' ); ?>">
+							<h3 id="<?php echo esc_attr( $instance_id . '-module-manifest-title' ); ?>"><?php esc_html_e( 'File 00–25 Dependency Manifest', 'sabri-publishing-dashboard' ); ?></h3>
+							<div class="spdb-table-wrap" role="region" tabindex="0" aria-label="<?php esc_attr_e( 'Dependency manifest table', 'sabri-publishing-dashboard' ); ?>"><table><thead><tr><th><?php esc_html_e( 'File', 'sabri-publishing-dashboard' ); ?></th><th><?php esc_html_e( 'Boundary', 'sabri-publishing-dashboard' ); ?></th><th><?php esc_html_e( 'Status', 'sabri-publishing-dashboard' ); ?></th></tr></thead><tbody><?php foreach ( $system_state['module_manifest'] as $module ) : ?><tr><td><?php echo esc_html( (string) ( $module['file'] ?? '' ) ); ?></td><td><?php echo esc_html( (string) ( $module['relationship'] ?? '' ) ); ?></td><td><?php echo esc_html( (string) ( $module['effective_state'] ?? 'unknown' ) ); ?></td></tr><?php endforeach; ?></tbody></table></div>
+						</section>
+					<?php endif; ?>
+					<p class="spdb-caption"><?php echo esc_html( sprintf( __( 'Generated at %s (GMT). Diagnostics contain no object identifiers, patient data, private destinations, callback details, credentials, or secrets.', 'sabri-publishing-dashboard' ), $system_state['generated_at_gmt'] ) ); ?></p>
 				</section>
 			<?php else : ?>
 				<section aria-labelledby="<?php echo esc_attr( $overview_title_id ); ?>">

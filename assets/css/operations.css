@@ -1,0 +1,159 @@
+.spdb-operations-section {
+	display: grid;
+	gap: 1rem;
+}
+
+.spdb-operations-panel,
+.spdb-operational-card {
+	background: #fff;
+	border: 1px solid #d8dde3;
+	border-radius: 0.85rem;
+	padding: 1rem;
+	box-shadow: 0 0.1rem 0.5rem rgba( 20, 35, 50, 0.05 );
+}
+
+.spdb-operations-grid {
+	display: grid;
+	grid-template-columns: repeat( auto-fit, minmax( min( 100%, 16rem ), 1fr ) );
+	gap: 1rem;
+}
+
+.spdb-tabular-sections {
+	display: grid;
+	gap: 1rem;
+}
+
+.spdb-card-meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	font-size: 0.78rem;
+	color: #4d5865;
+}
+
+.spdb-card-meta span {
+	border-radius: 999px;
+	background: #f3f5f7;
+	padding: 0.2rem 0.55rem;
+}
+
+.spdb-definition-grid {
+	display: grid;
+	grid-template-columns: repeat( auto-fit, minmax( 8rem, 1fr ) );
+	gap: 0.55rem;
+	margin: 0.85rem 0;
+}
+
+.spdb-definition-grid div {
+	min-width: 0;
+}
+
+.spdb-definition-grid dt {
+	font-weight: 700;
+	font-size: 0.78rem;
+	color: #596471;
+}
+
+.spdb-definition-grid dd {
+	margin: 0.15rem 0 0;
+	overflow-wrap: anywhere;
+}
+
+.spdb-metric-value {
+	display: block;
+	font-size: clamp( 1.5rem, 4vw, 2.4rem );
+	line-height: 1.1;
+	margin: 0.5rem 0;
+}
+
+.spdb-action-form {
+	display: grid;
+	gap: 0.8rem;
+}
+
+.spdb-action-form label,
+.spdb-action-form fieldset {
+	display: grid;
+	gap: 0.35rem;
+	min-width: 0;
+}
+
+.spdb-action-form input,
+.spdb-action-form select,
+.spdb-action-form textarea {
+	box-sizing: border-box;
+	max-width: 100%;
+	min-height: 2.75rem;
+	border: 1px solid #8995a2;
+	border-radius: 0.45rem;
+	background: #fff;
+	color: #15191d;
+	padding: 0.55rem 0.65rem;
+}
+
+.spdb-action-form textarea {
+	min-height: 7rem;
+	resize: vertical;
+}
+
+.spdb-record-list,
+.spdb-readiness-list {
+	list-style: none;
+	margin: 1rem 0 0;
+	padding: 0;
+	display: grid;
+	gap: 0.6rem;
+}
+
+.spdb-record-list li,
+.spdb-readiness-list li {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 1rem;
+	border-block-start: 1px solid #e1e5ea;
+	padding-block-start: 0.75rem;
+}
+
+.spdb-record-list small,
+.spdb-record-list p {
+	display: block;
+	margin: 0.25rem 0 0;
+}
+
+.spdb-live-region[data-error="true"] {
+	color: #9b1c1c;
+	font-weight: 700;
+}
+
+.spdb-severity--critical { border-inline-start: 0.35rem solid #a40000; }
+.spdb-severity--high { border-inline-start: 0.35rem solid #c34f00; }
+.spdb-severity--warning { border-inline-start: 0.35rem solid #cc8b00; }
+
+.spdb-action-form :focus-visible,
+.spdb-operational-card a:focus-visible,
+.spdb-readiness-list a:focus-visible {
+	outline: 0.2rem solid currentColor;
+	outline-offset: 0.18rem;
+}
+
+[dir="rtl"] .spdb-operational-card,
+:dir(rtl) .spdb-operational-card {
+	text-align: right;
+}
+
+@media ( max-width: 48rem ) {
+	.spdb-operations-panel,
+	.spdb-operational-card { padding: 0.8rem; }
+	.spdb-record-list li,
+	.spdb-readiness-list li { flex-direction: column; }
+}
+
+@media ( prefers-reduced-motion: reduce ) {
+	.spdb-operations-section * { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+@media ( forced-colors: active ) {
+	.spdb-operations-panel,
+	.spdb-operational-card { border: 1px solid CanvasText; box-shadow: none; }
+}

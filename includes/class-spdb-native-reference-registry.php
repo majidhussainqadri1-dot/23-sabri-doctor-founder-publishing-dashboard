@@ -259,7 +259,7 @@ final class SPDB_Native_Reference_Registry implements SPDB_Native_Reference_Reso
 		$user_id = get_current_user_id();
 		$scope = is_string( $context['scope'] ) ? $context['scope'] : '';
 		$environment = function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production';
-		$is_founder = $user_id > 0 && SPDB_Membership_Guard::is_user_approved( $user_id ) && function_exists( 'smc_is_founder' ) && smc_is_founder( $user_id );
+		$is_founder = $user_id > 0 && SPDB_Membership_Guard::is_user_founder( $user_id );
 		if ( ! is_int( $context['user_id'] ) || $context['user_id'] !== $user_id || ! in_array( $scope, SPDB_Collections_Policy::scopes(), true ) || ! is_bool( $context['is_founder'] ) || $context['is_founder'] !== $is_founder || ! is_string( $context['environment'] ) || $context['environment'] !== $environment || ! is_string( $context['generated_at'] ) || strlen( $context['generated_at'] ) > 40 ) {
 			return $this->error( 'spdb_native_resolver_context_invalid', 'The native resolver context does not match current server authority.', 403 );
 		}

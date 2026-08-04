@@ -1,125 +1,35 @@
 # Changelog
 
-All notable changes to File 23 are documented here.
+## 1.2.0 — 2026-08-04
 
-## [Unreleased]
+- Completed forty independent thematic review/fix rounds against the Definitive Master Plan v3.0 and File 23 Final Central-Plan-Harmonized v3.0.
+- Centralized Founder, trusted-publisher and institutional authorization on strict, fresh File 00 assertions; incompatible canonical contracts now fail closed without legacy escalation.
+- Reconciled capability schema 4 exactly, removed the retired File 23 Safe Mode grant from roles, and preserved File 20 as the only global Safe Mode owner.
+- Hardened task assignment, delegation attenuation, provider-sensitive exclusions, audit reasons and runtime capability revalidation.
+- Added exact provider acceptance records bound to provider/contract/plugin versions, environment, evidence hash, Founder authority, current MFA and rollback on audit failure.
+- Added bounded nested mutation payload validation, same-origin URL hardening, replay-receipt rollback repair and privacy export/erasure of receipts.
+- Required InnoDB and controlled transactional-engine verification for all 13 File 23-owned tables; added savepoint-aware atomic repository operations and serialized audit-chain writes.
+- Hardened background-job claim/transition evidence, lock ownership, retries/dead-letter transitions, pagination ceilings and reconciliation signals.
+- Encrypted generated exports at rest with AES-256-GCM, verified ciphertext hashes and owner-bound expiring authenticated delivery; expanded privacy export/erasure across all File 23-owned domains.
+- Added the executable forty-round review gate, permanent CI enforcement, the full audit record, Version 1.2.0 deterministic installable/source packages and exact-head release evidence.
 
-Phase 23F remains Draft, unmerged, not staging-accepted, and not production-ready.
+## 1.1.0 — 2026-08-04
 
-## [0.6.2] — Phase 23F Third Corrective Review, Read API, and Read-Only Collections UI
+- Completed File 23-owned runtime surfaces for sources, media, interactions, revisions, notifications and content gaps.
+- Added privacy-safe aggregate analytics, bounded metric snapshots, report models and queued expiring exports.
+- Added tasks, scoped delegations, automation rules, background jobs, retry/dead-letter handling and File 19 notification events.
+- Added optional File 16 source-linked assistance without autonomous publish/review/clinical authority.
+- Added File 23-owned operations schema, privacy export/erasure, retention, append-only audit, local repair and staging acceptance evidence.
+- Added complete File 00–25 module manifest, File 24 assurance evidence and File 04 read-only migration diagnostics.
+- Expanded routes, navigation, templates, responsive CSS, RTL, focus, reduced-motion and forced-colors support.
+- Added explicit mutation nonce and same-origin enforcement, payload-bound idempotency, bounded private replay receipts and transactional audit commit/rollback.
+- Added high-entropy browser idempotency keys and mandatory audit reasons for high-risk settings/acceptance writes.
+- Added a 10,000-operation behavioral integrity model and expanded plan-to-code/security adversarial gates.
+- Added four documented review/fix rounds.
+- Added the complete plan-required delivery set: schema and source manifests, capability and ownership matrices, threat model, requirement traceability, staging checklist, Founder/Doctor/Admin manuals, test report, known-limitations register and pending release sign-off.
+- Added executable final-deliverables QA.
+- Extended deterministic release tooling to produce both the installable WordPress ZIP and the complete Git-tracked source ZIP with SHA-256 checksums, per-file manifests and exact-head release evidence.
 
-### Fixed
+## 1.0.0 — 2026-08-04
 
-- Preserved raw database scalar shapes until strict projection validation instead of permissively casting malformed stored values.
-- Rejected malformed direct repository owner IDs, filters, create records, unknown fields, hashes, lists, timestamps, and actors.
-- Made JSON encoding failure explicit instead of silently persisting empty arrays.
-- Cached repository health and Schema Version 3 inspection for one request.
-- Replaced ambiguous aggregate write diagnostics with truthful collection-write, knowledge-write, and any-write readiness.
-- Enforced mathematically consistent page, per-page, total, count, and continuation metadata.
-- Added parent collection authorization before every collection-item repository query.
-- Excluded archived collection items consistently from default list and detail reads.
-- Added strict collection-item projection and lifecycle validation.
-- Enforced created, updated, archived, and status lifecycle consistency for collections and knowledge links.
-- Returned deterministic `409` conflicts for duplicate canonical knowledge relationships.
-- Corrected dashboard integration that initially left the new Collections view model and template unused.
-- Corrected stale Phase 23E labeling, missing Collections navigation, missing conditional CSS, and missing System Status readiness.
-- Made malformed array-valued view selectors fail closed without sanitization warnings.
-- Restricted institution scope presentation to the Founder workspace while retaining server-side authorization.
-- Preserved authorized scope in back navigation and removed direction-specific back symbols.
-- Replaced free-text status filtering and misleading mutation-readiness wording with bounded, truthful controls.
-- Corrected a dedicated workflow shell-quoting defect that had failed after the executable UI tests themselves passed.
-
-### Added
-
-- Six explicit read-only REST routes for collections, collection details, collection items, item details, knowledge links, and link details.
-- Strict REST query allowlists, private/no-store protection, and truthful pagination headers.
-- A protected read-only Collections and Knowledge dashboard view.
-- `SPDB_Collections_View` with collection list/detail/item and knowledge list/detail modes.
-- Accessible captions, result summaries, definition lists, current-page semantics, pagination, focusable overflow regions, responsive behavior, RTL, reduced-motion, and forced-color controls.
-- Executable item-IDOR, malformed-persistence, continuation, lifecycle, duplicate-relation, health-cache, read-REST, UI-boundary, corrective-static, malformed-route, and no-mutation tests.
-- A dedicated exact-head PHP 8.0–8.3 Collections UI workflow with checksums and retained artifacts.
-- `docs/AUDIT-PHASE-23F-THIRD-REVIEW-2026-07-31.md`.
-- `docs/AUDIT-PHASE-23F-COLLECTIONS-UI-2026-07-31.md`.
-
-### Restrictions retained
-
-- No Phase 23F REST mutation route or mutation UI.
-- No production write enablement.
-- No collection update/archive, item create/reorder/update/archive, or knowledge-link update/archive execution.
-- No concrete native resolver before its separate review and staging gate.
-
-## [0.6.1] — Phase 23F Runtime and Repository Second Corrective Review
-
-### Fixed
-
-- Required an approved current File 00 account for collection and knowledge metadata reads.
-- Rejected unauthorized institution scope instead of silently rewriting it to own scope.
-- Bound status filters to their selected collection or campaign record type.
-- Validated repository envelopes and every projected row before returning metadata.
-- Separated read readiness, collection-write readiness, and knowledge-write readiness.
-- Required verified repository and Schema Version 3 health before any enabled staging write.
-- Re-verified required tables, columns, and indexes on every schema lifecycle check.
-- Added request fingerprints to distinguish exact idempotent replay from same-key/different-payload conflict.
-- Added bounded created and last audit-reason persistence.
-- Added observed native-version persistence without native destination persistence.
-- Rejected malformed native owner IDs, versions, contexts, and cross-user repository records.
-- Kept update, reorder, archive, mutation REST, and production writes explicitly fail-closed.
-
-### Added
-
-- Concrete `SPDB_WP_Collections_Repository` for verified reads and idempotent creates.
-- Schema Version 3 migration and verification requirements.
-- Corrective Phase 23F runtime-authority tests.
-- Corrective Phase 23F concrete-repository, replay, payload-conflict, and missing-index tests.
-- `docs/AUDIT-PHASE-23F-RUNTIME-SECOND-REVIEW-2026-07-30.md`.
-
-## [0.6.0] — Phase 23F Foundation Corrective Review
-
-- Corrected eighteen initial Phase 23F foundation defects.
-- Added bounded metadata schema, policy, native-reference contract, and fail-closed runtime foundation.
-
-## [0.5.1] — Phase 23E Corrective Review
-
-### Fixed
-
-- Rejected malformed filters instead of silently broadening review or calendar scope.
-- Added exact surface, pagination, real-date, reversed-range, timezone, strict-list, total, and continuation validation.
-- Replaced per-provider page slicing with bounded global validation, sorting, and central pagination.
-- Separated native reported total, accessible validated window, current-page count, and reachable pages.
-- Added saturating aggregate-total protection and truthful truncation notices.
-- Required canonical projection identifiers, plain privacy-safe text, unique flags, and unique operations.
-- Required explicit boolean separation metadata and blocked final self-approval/self-rejection independently of provider flags.
-- Added File 23-owned operation contracts for surface, capability, Founder-only policy, eligible state, ownership, assignment, and separation.
-- Added fresh object-level reauthorization before broker execution.
-- Made reviewer assignment Founder-only and validated target account state and capability.
-- Added explicit REST nonce verification and strict operation-specific payload allowlists.
-- Required reason codes and privacy-safe notes for changes/rejection, reviewer IDs for assignment, and UTC time plus IANA timezone for schedule changes.
-- Rejected impossible UTC dates, stale object versions, sensitive audit text, capability downgrade, cross-owner mutation, and mismatched native confirmation references.
-- Added accessible pagination, visible focus, responsive tables, and reduced-motion support.
-- Expanded corrective tests and architecture guards for all twenty-four audit findings.
-
-### Documentation
-
-- Added `docs/AUDIT-PHASE-23E-2026-07-30.md`.
-- Updated the Phase 23E review gate, README, status, plugin metadata, and operational contract documentation.
-
-## [0.5.0] — Phase 23E Initial Review and Calendar Candidate
-
-- Added the first Universal Review Inbox and Federated Publishing Calendar candidate.
-- Superseded by corrective version `0.5.1`.
-
-## [0.4.1] — Phase 23D Corrective Review
-
-- Corrected sixteen role-workspace authority, action-semantic, destination, global-bound, profile/knowledge, timestamp, localization, and failure-isolation defects.
-
-## [0.3.1] — Phase 23C Corrective Review
-
-- Corrected federated inventory authorization, privacy, projection, pagination, URL, and mobile defects.
-
-## [0.2.1] — Phase 23B Second Corrective Review
-
-- Added real File 00 capability provisioning, exact-head CI, retained artifacts, provider isolation, private REST errors, saved-view conflict controls, and accessibility corrections.
-
-## [0.1.1] — Corrective Phase 23A
-
-- Added reviewed contracts, File 00 fail-closed authorization, acceptance separation, guarded operation broker, architecture guards, and PHP 8.0–8.3 CI.
+- Consolidated Phase 23A–23O foundations, Collections readiness integration and source-level File 00/21/22 contract checks.

@@ -95,7 +95,7 @@ spdb_23k_assert(
 	'collection_ready' === $ready_no_resolver['integration_code']
 	&& true === $ready_no_resolver['repository_available']
 	&& true === $ready_no_resolver['repository_ready']
-	&& '3' === $ready_no_resolver['repository_schema_version']
+	&& '4' === $ready_no_resolver['repository_schema_version']
 	&& true === $ready_no_resolver['repository_cached_for_request']
 	&& true === $ready_no_resolver['read_ready']
 	&& true === $ready_no_resolver['collection_write_ready']

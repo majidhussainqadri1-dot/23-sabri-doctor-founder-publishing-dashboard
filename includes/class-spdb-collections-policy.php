@@ -81,7 +81,7 @@ final class SPDB_Collections_Policy {
 		}
 		return SPDB_Capabilities::current_user_can( 'spdb_manage_own_content' ) ? true : self::error( 'spdb_collections_own_forbidden', 'The current account is not authorized to manage own-scope collection metadata.', 403 );
 	}
-	private static function current_user_is_founder(): bool { $user_id = get_current_user_id(); return $user_id > 0 && SPDB_Membership_Guard::is_user_approved( $user_id ) && function_exists( 'smc_is_founder' ) && smc_is_founder( $user_id ); }
+	private static function current_user_is_founder(): bool { $user_id = get_current_user_id(); return $user_id > 0 && SPDB_Membership_Guard::is_user_founder( $user_id ); }
 	private static function contains_prohibited_campaign_pattern( string $value ): bool { return 1 === preg_match( '/\b(?:guarantee(?:d|s)?\s+(?:a\s+)?cure|cure\s+guarantee(?:d|s)?|miracle\s+cure|instant\s+cure|100%\s+(?:success|effective)|no\s+risk|limited\s+(?:seats|time|stock)\s+only|act\s+now|last\s+chance|do\s+not\s+miss|fear\s+of\s+death|everyone\s+is\s+buying|doctor(?:s)?\s+do\s+not\s+want\s+you\s+to\s+know)\b/i', $value ); }
 	private static function enum_value( $raw, array $allowed, string $code ) { $value = is_scalar( $raw ) ? trim( (string) $raw ) : ''; return in_array( $value, $allowed, true ) ? $value : self::error( $code, 'A metadata enumeration value is invalid.' ); }
 	private static function canonical_key( $raw, string $code ) { $value = is_scalar( $raw ) ? trim( (string) $raw ) : ''; return SPDB_Adapter_Registry::is_canonical_key( $value ) ? $value : self::error( $code, 'A canonical metadata key is invalid.' ); }

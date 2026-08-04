@@ -1,7 +1,7 @@
 <?php
 /** Minimal WordPress-compatible test bootstrap for File 23 executable tests. */
 define( 'ABSPATH', __DIR__ . '/' );
-define( 'SPDB_VERSION', '1.0.0' );
+define( 'SPDB_VERSION', '1.2.0' );
 define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
 if ( ! defined( 'ARRAY_A' ) ) { define( 'ARRAY_A', 'ARRAY_A' ); }
 $GLOBALS['spdb_test_environment'] = 'production';
@@ -56,13 +56,13 @@ if ( ! class_exists( 'WP_REST_Request' ) ) {
 		public function get_query_params(): array { return $this->query; }
 		public function get_header( string $key ): string { return $this->headers[ strtolower( $key ) ] ?? ''; }
 		public function set_header( string $key, string $value ): void { $this->headers[ strtolower( $key ) ] = $value; }
-		public function offsetExists( $offset ): bool { return isset( $this->params[ $offset ] ); }
-		public function offsetGet( $offset ) { return $this->params[ $offset ] ?? null; }
-		public function offsetSet( $offset, $value ): void { $this->params[ $offset ] = $value; }
-		public function offsetUnset( $offset ): void { unset( $this->params[ $offset ] ); }
+		public function offsetExists( mixed $offset ): bool { return isset( $this->params[ $offset ] ); }
+		public function offsetGet( mixed $offset ): mixed { return $this->params[ $offset ] ?? null; }
+		public function offsetSet( mixed $offset, mixed $value ): void { $this->params[ $offset ] = $value; }
+		public function offsetUnset( mixed $offset ): void { unset( $this->params[ $offset ] ); }
 	}
 }
-if ( ! class_exists( 'SPDB_Test_Role' ) ) { class SPDB_Test_Role { public array $capabilities = array(); public function add_cap( string $capability, bool $grant = true ): void { $this->capabilities[ $capability ] = $grant; } } }
+if ( ! class_exists( 'SPDB_Test_Role' ) ) { class SPDB_Test_Role { public array $capabilities = array(); public function add_cap( string $capability, bool $grant = true ): void { $this->capabilities[ $capability ] = $grant; } public function remove_cap( string $capability ): void { unset( $this->capabilities[ $capability ] ); } } }
 function is_wp_error( $value ): bool { return $value instanceof WP_Error; }
 function __( string $text, string $domain = '' ): string { return $text; }
 function _n( string $single, string $plural, int $number, string $domain = '' ): string { return 1 === $number ? $single : $plural; }
@@ -90,18 +90,38 @@ function current_time( string $type, bool $gmt = false ): string { return '2026-
 function get_role( string $role_key ) { return $GLOBALS['spdb_test_roles'][ $role_key ] ?? null; }
 function get_option( string $key, $default = false ) { return $GLOBALS['spdb_test_options'][ $key ] ?? $default; }
 function update_option( string $key, $value, $autoload = null ): bool { $GLOBALS['spdb_test_options'][ $key ] = $value; return true; }
+function delete_option( string $key ): bool { unset( $GLOBALS['spdb_test_options'][ $key ] ); return true; }
 function remove_all_actions( string $hook ): void { unset( $GLOBALS['wp_filter'][ $hook ] ); }
 if ( ! function_exists( 'add_action' ) ) { function add_action( string $hook, $callback, int $priority = 10, int $accepted_args = 1 ): void { $GLOBALS['wp_filter'][ $hook ][] = $callback; } }
 if ( ! function_exists( 'add_filter' ) ) { function add_filter( string $hook, $callback, int $priority = 10, int $accepted_args = 1 ): void { $GLOBALS['wp_filter'][ $hook ][] = $callback; } }
+if ( ! function_exists( 'apply_filters' ) ) {
+	function apply_filters( string $hook, $value, ...$args ) {
+		foreach ( $GLOBALS['wp_filter'][ $hook ] ?? array() as $callback ) {
+			$value = call_user_func( $callback, $value, ...$args );
+		}
+		return $value;
+	}
+}
+if ( ! function_exists( 'do_action' ) ) {
+	function do_action( string $hook, ...$args ): void {
+		foreach ( $GLOBALS['wp_filter'][ $hook ] ?? array() as $callback ) {
+			call_user_func_array( $callback, $args );
+		}
+	}
+}
 if ( ! function_exists( 'register_rest_route' ) ) { function register_rest_route( string $namespace, string $route, array $args ): bool { $GLOBALS['spdb_test_rest_routes'][ $namespace . $route ] = $args; return true; } }
 
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-provider-adapter.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-workspace-provider-adapter.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-review-calendar-provider-adapter.php';
+require_once dirname( __DIR__ ) . '/includes/interface-spdb-operational-projection-provider.php';
+require_once dirname( __DIR__ ) . '/includes/interface-spdb-analytics-provider.php';
+require_once dirname( __DIR__ ) . '/includes/interface-spdb-ai-assistance-provider.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-collections-repository.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-native-reference-resolver.php';
 require_once dirname( __DIR__ ) . '/includes/interface-spdb-native-reference-provider.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-adapter-registry.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-adapter-acceptance.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-native-reference-registry.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-native-reference-registration.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-membership-guard.php';
@@ -124,6 +144,21 @@ require_once dirname( __DIR__ ) . '/includes/class-spdb-wp-collections-repositor
 require_once dirname( __DIR__ ) . '/includes/class-spdb-collections-service.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-collections-view.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-collections-rest-controller.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-operations-schema.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-operational-projection-validator.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-operations-repository.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-governance-service.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-export-service.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-automation-engine.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-background-jobs.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-privacy-integration.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-local-repair.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-activation-wizard.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-operations-service.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-operations-rest-controller.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-module-manifest.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-legacy-migration-diagnostics.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-admin-settings.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-dashboard-router.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-workspace-resolver.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-saved-views.php';

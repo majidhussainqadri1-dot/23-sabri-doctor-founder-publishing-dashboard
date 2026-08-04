@@ -28,7 +28,7 @@ final class SPDB_Test_WPDB {
 		if ( false !== stripos( $query, 'SELECT *' ) ) { return $this->filter_select( $query ); }
 		return array();
 	}
-	public function get_row( string $query, $output = null ) { $rows = $this->filter_select( $query ); return $rows[0] ?? null; }
+	public function get_row( string $query, $output = null ) { if ( false !== stripos( $query, 'SHOW TABLE STATUS' ) ) { ++$this->schema_inspections; return array( 'Engine' => 'InnoDB' ); } $rows = $this->filter_select( $query ); return $rows[0] ?? null; }
 	public function insert( string $table, array $data, $format = null ) {
 		if ( ! isset( $this->rows[ $table ] ) ) { return false; }
 		if ( 'wp_spdb_knowledge_links' === $table ) {
@@ -62,7 +62,7 @@ $repository = new SPDB_WP_Collections_Repository( $wpdb );
 $health = $repository->health_check();
 $inspection_count = $wpdb->schema_inspections;
 $health_again = $repository->health_check();
-spdb_repository_assert( true === $health['healthy'] && '3' === $health['schema_version'], 'The concrete repository must verify Schema 3 before use.' );
+spdb_repository_assert( true === $health['healthy'] && '4' === $health['schema_version'], 'The concrete repository must verify Schema 4 before use.' );
 spdb_repository_assert( $inspection_count > 0 && $inspection_count === $wpdb->schema_inspections && $health === $health_again, 'Repository health must be cached for the request instead of repeating schema inspection.' );
 $record = array( 'record_type' => 'collection', 'scope' => 'own', 'title' => 'Study Set', 'objective' => '', 'ethical_declaration' => '', 'contributors' => array(), 'target_surfaces' => array(), 'status' => 'draft', 'start_at_gmt' => '', 'end_at_gmt' => '', 'owner_user_id' => 7, 'created_by' => 7, 'idempotency_hash' => str_repeat( 'a', 64 ), 'request_hash' => str_repeat( 'b', 64 ), 'audit_reason' => 'Create the reviewed repository record.' );
 $created = $repository->create_collection( $record ); spdb_repository_assert( is_array( $created ) && 1 === $created['version'] && 7 === $created['owner_user_id'], 'The repository must create and hydrate an owned collection.' );

@@ -12,7 +12,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Capability_Installer {
-	private const SCHEMA_VERSION     = '1';
+	private const SCHEMA_VERSION     = '4';
 	private const VERSION_OPTION     = 'spdb_capability_schema_version';
 	private const FINGERPRINT_OPTION = 'spdb_capability_role_fingerprint';
 
@@ -32,6 +32,11 @@ final class SPDB_Capability_Installer {
 				array(
 					'spdb_manage_own_content',
 					'spdb_view_own_analytics',
+					'spdb_manage_schedule',
+					'spdb_manage_interactions',
+					'spdb_manage_tasks',
+					'spdb_export_reports',
+					'spdb_request_ai_assistance',
 				)
 			),
 			'sabri_verified_doctor'  => array_merge(
@@ -39,6 +44,11 @@ final class SPDB_Capability_Installer {
 				array(
 					'spdb_manage_own_content',
 					'spdb_view_own_analytics',
+					'spdb_manage_schedule',
+					'spdb_manage_interactions',
+					'spdb_manage_tasks',
+					'spdb_export_reports',
+					'spdb_request_ai_assistance',
 				)
 			),
 			'sabri_medical_reviewer' => array(
@@ -46,22 +56,27 @@ final class SPDB_Capability_Installer {
 				'spdb_view_own_content',
 				'spdb_view_review_queue',
 				'spdb_review_assigned_content',
+				'spdb_manage_tasks',
 			),
 			'sabri_moderator'        => array(
 				'spdb_view_dashboard',
 				'spdb_manage_interactions',
+				'spdb_manage_tasks',
 			),
 		);
 	}
 
 	/**
-	 * Attach missing capabilities to roles that already exist.
+	 * Reconcile exact File 23 capabilities on roles that already exist.
 	 *
 	 * @return array<string,mixed> Non-sensitive installation result.
 	 */
 	public static function ensure(): array {
 		$available_roles = array();
 		$granted         = 0;
+		$revoked         = 0;
+		$canonical       = SPDB_Capabilities::all();
+		$managed_keys    = array_values( array_unique( array_merge( $canonical, SPDB_Capabilities::retired() ) ) );
 
 		foreach ( self::role_matrix() as $role_key => $capabilities ) {
 			$role = get_role( $role_key );
@@ -70,14 +85,17 @@ final class SPDB_Capability_Installer {
 			}
 
 			$available_roles[] = $role_key;
-			foreach ( array_values( array_unique( $capabilities ) ) as $capability ) {
-				if ( ! in_array( $capability, SPDB_Capabilities::all(), true ) ) {
-					continue;
-				}
+			$expected = array_values( array_unique( array_intersect( $capabilities, $canonical ) ) );
 
-				if ( empty( $role->capabilities[ $capability ] ) ) {
+			foreach ( $managed_keys as $capability ) {
+				$should_have = in_array( $capability, $expected, true );
+				$has_cap     = ! empty( $role->capabilities[ $capability ] );
+				if ( $should_have && ! $has_cap ) {
 					$role->add_cap( $capability, true );
 					++$granted;
+				} elseif ( ! $should_have && $has_cap && method_exists( $role, 'remove_cap' ) ) {
+					$role->remove_cap( $capability );
+					++$revoked;
 				}
 			}
 		}
@@ -88,16 +106,15 @@ final class SPDB_Capability_Installer {
 		update_option( self::FINGERPRINT_OPTION, $fingerprint, false );
 
 		return array(
-			'schema_version' => self::SCHEMA_VERSION,
-			'roles_seen'     => $available_roles,
-			'capabilities_added' => $granted,
-			'fingerprint'    => $fingerprint,
+			'schema_version'       => self::SCHEMA_VERSION,
+			'roles_seen'           => $available_roles,
+			'capabilities_added'   => $granted,
+			'capabilities_removed' => $revoked,
+			'fingerprint'          => $fingerprint,
 		);
 	}
 
-	/**
-	 * Reconcile after File 00 creates or changes its existing role inventory.
-	 */
+	/** Reconcile after File 00 creates, changes, or repairs its role inventory. */
 	public static function maybe_upgrade(): void {
 		$available_roles = self::available_role_keys();
 		$fingerprint     = self::fingerprint( $available_roles );
@@ -110,9 +127,7 @@ final class SPDB_Capability_Installer {
 		}
 	}
 
-	/**
-	 * @return string[]
-	 */
+	/** @return string[] */
 	private static function available_role_keys(): array {
 		$available = array();
 		foreach ( array_keys( self::role_matrix() ) as $role_key ) {
@@ -124,10 +139,22 @@ final class SPDB_Capability_Installer {
 		return $available;
 	}
 
-	/**
-	 * @param string[] $role_keys Existing role keys.
-	 */
+	/** @param string[] $role_keys Existing role keys. */
 	private static function fingerprint( array $role_keys ): string {
-		return hash( 'sha256', implode( '|', $role_keys ) );
+		$state  = array();
+		$matrix = self::role_matrix();
+		foreach ( $role_keys as $role_key ) {
+			$role = get_role( $role_key );
+			$assigned = array();
+			foreach ( array_merge( SPDB_Capabilities::all(), SPDB_Capabilities::retired() ) as $capability ) {
+				$assigned[ $capability ] = $role && ! empty( $role->capabilities[ $capability ] );
+			}
+			$state[ $role_key ] = array(
+				'expected' => array_values( array_unique( $matrix[ $role_key ] ?? array() ) ),
+				'assigned' => $assigned,
+			);
+		}
+		$json = wp_json_encode( array( 'schema' => self::SCHEMA_VERSION, 'state' => $state ) );
+		return hash( 'sha256', is_string( $json ) ? $json : '' );
 	}
 }
