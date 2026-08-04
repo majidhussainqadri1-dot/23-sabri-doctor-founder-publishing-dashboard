@@ -1,0 +1,84 @@
+name: File 23 Version 1.2.1 Materialize and Verify
+
+on:
+  push:
+    branches:
+      - fix/file23-provider-consumption-visual-1.2.1
+    paths:
+      - '.file23-transfer/file23-1.2.1.patch.bz2.b64'
+      - '.github/workflows/file23-1.2.1-materialize.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  materialize-review-test-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: fix/file23-provider-consumption-visual-1.2.1
+
+      - name: Reconstruct and verify reviewed patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          tr -d '\r\n' < .file23-transfer/file23-1.2.1.patch.bz2.b64 > /tmp/file23-1.2.1.patch.bz2.b64
+          test "$(sha256sum /tmp/file23-1.2.1.patch.bz2.b64 | awk '{print $1}')" = '92a04e2a1b5556518092db516442ec822ebd04c3277423ee876922c881644723'
+          base64 -d /tmp/file23-1.2.1.patch.bz2.b64 > /tmp/file23-1.2.1.patch.bz2
+          test "$(sha256sum /tmp/file23-1.2.1.patch.bz2 | awk '{print $1}')" = '7f3e3c0e851f41160ec74b7cb4e2a03b9165776ba6ae12a9817c2e162464254a'
+          bunzip2 -c /tmp/file23-1.2.1.patch.bz2 > /tmp/file23-1.2.1.patch
+          git apply --check /tmp/file23-1.2.1.patch
+          git apply /tmp/file23-1.2.1.patch
+          rm -rf .file23-transfer .github/workflows/file23-1.2.1-materialize.yml
+
+      - name: Commit exact reviewed source locally
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'File 23 1.2.1: consume File 21/22 providers and correct visual experience'
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+
+      - name: PHP syntax and complete regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          find . -name '*.php' -not -path './build-*/*' -print0 | xargs -0 -n1 php -l
+          for test_file in tests/*-tests.php; do php "$test_file"; done
+          rm -rf build-one build-two build release-build .release-build
+          php tests/architecture-guard.php
+
+      - name: Deterministic Version 1.2.1 packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          TERM=xterm bash tools/build-final-release.sh
+          sha256sum -c 23-sabri-doctor-founder-publishing-dashboard-1.2.1.zip.sha256
+          sha256sum -c 23-Doctor-Founder-Publishing-Dashboard-Source-1.2.1.zip.sha256
+
+      - name: Push verified corrective head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git push origin HEAD:fix/file23-provider-consumption-visual-1.2.1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: file23-1.2.1-cross-file-provider-visual-candidate
+          if-no-files-found: error
+          path: |
+            23-sabri-doctor-founder-publishing-dashboard-1.2.1.zip
+            23-sabri-doctor-founder-publishing-dashboard-1.2.1.zip.sha256
+            FILE23-1.2.1-MANIFEST.sha256
+            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.1.zip
+            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.1.zip.sha256
+            FILE23-1.2.1-SOURCE-MANIFEST.sha256
