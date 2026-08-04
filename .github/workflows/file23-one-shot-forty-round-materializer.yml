@@ -1,0 +1,50 @@
+name: File 23 One-Shot Forty-Round Materializer
+
+on:
+  push:
+    branches:
+      - feature/file23-full-plan-completion
+    paths:
+      - '.file23-transfer/file23-1.2.0.patch.bz2.b64'
+      - '.github/workflows/file23-one-shot-forty-round-materializer.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: feature/file23-full-plan-completion
+          fetch-depth: 0
+      - name: Verify and apply reviewed patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          base64 -d .file23-transfer/file23-1.2.0.patch.bz2.b64 > /tmp/file23-1.2.0.patch.bz2
+          test "$(sha256sum /tmp/file23-1.2.0.patch.bz2 | awk '{print $1}')" = 'c7d6bfa458ea7928d21312551a16aedf3c3748576afcf7d8b8e9512e6735e199'
+          bunzip2 -c /tmp/file23-1.2.0.patch.bz2 | patch -p1 --batch --forward
+          rm -rf .file23-transfer
+          rm -f .github/workflows/file23-one-shot-forty-round-materializer.yml
+      - name: Run full local source gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+          node --check assets/js/dashboard.js
+          node --check assets/js/operations.js
+          for suite in tests/*-tests.php; do php -d display_errors=1 -d error_reporting=E_ALL "$suite"; done
+          php tests/architecture-guard.php
+      - name: Commit materialized Version 1.2.0 source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && exit 1
+          git commit -m 'Complete File 23 forty-round review and hardening'
+          git push origin HEAD:feature/file23-full-plan-completion
