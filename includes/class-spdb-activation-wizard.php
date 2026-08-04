@@ -34,10 +34,10 @@ final class SPDB_Activation_Wizard {
 		$accepted = get_option( self::OPTION, array() );
 		$accepted = is_array( $accepted ) ? $accepted : array();
 
-		$current_version    = hash_equals( SPDB_VERSION, (string) ( $accepted['plugin_version'] ?? '' ) );
-		$evidence_complete  = $this->stored_evidence_complete( $accepted );
-		$staging_accepted   = true === ( $accepted['staging_accepted'] ?? false ) && $current_version && $evidence_complete;
-		$founder_accepted   = true === ( $accepted['founder_accepted'] ?? false );
+		$current_version   = hash_equals( SPDB_VERSION, (string) ( $accepted['plugin_version'] ?? '' ) );
+		$evidence_complete = $this->stored_evidence_complete( $accepted );
+		$staging_accepted  = true === ( $accepted['staging_accepted'] ?? false ) && $current_version && $evidence_complete;
+		$founder_accepted  = true === ( $accepted['founder_accepted'] ?? false );
 
 		$steps = array(
 			array( 'key' => 'environment', 'label' => __( 'Environment and schemas', 'sabri-publishing-dashboard' ), 'ready' => ! empty( $system['checks']['php']['ok'] ) && ! empty( $system['checks']['wordpress']['ok'] ) && ! empty( $system['checks']['operations_schema']['ok'] ) && ! empty( $system['checks']['collections_schema']['ok'] ) ),
@@ -59,15 +59,15 @@ final class SPDB_Activation_Wizard {
 		}
 
 		return array(
-			'steps'                   => $steps,
-			'code_environment_ready'  => $code_ready,
-			'evidence_complete'       => $evidence_complete,
-			'acceptance_version_valid'=> $current_version,
-			'staging_accepted'        => $staging_accepted,
-			'founder_accepted'        => $founder_accepted,
-			'live_activation_allowed' => $staging_accepted && $founder_accepted,
-			'acceptance'              => $this->public_acceptance( $accepted ),
-			'generated_at_gmt'        => gmdate( 'c' ),
+			'steps'                    => $steps,
+			'code_environment_ready'   => $code_ready,
+			'evidence_complete'        => $evidence_complete,
+			'acceptance_version_valid' => $current_version,
+			'staging_accepted'         => $staging_accepted,
+			'founder_accepted'         => $founder_accepted,
+			'live_activation_allowed'  => $staging_accepted && $founder_accepted,
+			'acceptance'               => $this->public_acceptance( $accepted ),
+			'generated_at_gmt'         => gmdate( 'c' ),
 		);
 	}
 
@@ -83,8 +83,9 @@ final class SPDB_Activation_Wizard {
 			return self::error( 'spdb_activation_forbidden', __( 'You are not authorized to record activation acceptance.', 'sabri-publishing-dashboard' ), 403 );
 		}
 
-		$assertions = SPDB_Membership_Guard::assertions( get_current_user_id() );
-		if ( ! is_array( $assertions ) || ! SPDB_Membership_Guard::is_user_founder( get_current_user_id() ) || empty( $assertions['session_two_factor'] ) ) {
+		$actor_id   = get_current_user_id();
+		$assertions = SPDB_Membership_Guard::assertions( $actor_id );
+		if ( ! is_array( $assertions ) || ! SPDB_Membership_Guard::is_user_founder( $actor_id ) || empty( $assertions['session_two_factor'] ) ) {
 			return self::error( 'spdb_activation_founder_required', __( 'Founder authority and current two-factor authentication are required.', 'sabri-publishing-dashboard' ), 403 );
 		}
 
@@ -121,16 +122,21 @@ final class SPDB_Activation_Wizard {
 				'source_commit'    => $source_commit,
 				'package_sha256'   => $package_sha256,
 				'reason_hash'      => hash( 'sha256', $reason ),
-				'actor_user_id'    => get_current_user_id(),
+				'actor_user_id'    => $actor_id,
 				'plugin_version'   => SPDB_VERSION,
 				'environment'      => sanitize_key( (string) $environment ),
 				'recorded_at_gmt'  => gmdate( 'c' ),
 			)
 		);
 
-		update_option( self::OPTION, $record, false );
-		$this->repository->append_audit(
-			get_current_user_id(),
+		$previous = get_option( self::OPTION, array() );
+		$previous = is_array( $previous ) ? $previous : array();
+		if ( ! update_option( self::OPTION, $record, false ) && $previous !== $record ) {
+			return self::error( 'spdb_activation_persistence_failed', __( 'The staging acceptance record could not be persisted.', 'sabri-publishing-dashboard' ), 500 );
+		}
+
+		$audit = $this->repository->append_audit(
+			$actor_id,
 			'staging_acceptance_recorded',
 			'file23:' . SPDB_VERSION,
 			array(
@@ -140,6 +146,10 @@ final class SPDB_Activation_Wizard {
 				'evidence_keys'    => array_values( self::REQUIRED_EVIDENCE ),
 			)
 		);
+		if ( is_wp_error( $audit ) ) {
+			update_option( self::OPTION, $previous, false );
+			return self::error( 'spdb_activation_audit_failed', __( 'The staging acceptance was not retained because its audit evidence could not be written.', 'sabri-publishing-dashboard' ), 500 );
+		}
 
 		return $this->state();
 	}
