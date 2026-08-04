@@ -30,6 +30,7 @@ foreach ( array( 'role_matrix_evidence', 'provider_contract_evidence', 'cache_pr
 	$assert( str_contains( $activation, "'{$evidence_key}'" ), "Staging acceptance must require {$evidence_key}." );
 }
 $assert( str_contains( $activation, 'acceptance_version_valid' ) && str_contains( $activation, 'hash_equals( SPDB_VERSION' ), 'Acceptance must expire when the installed plugin version changes.' );
+$assert( str_contains( $activation, 'spdb_activation_audit_failed' ) && str_contains( $activation, 'is_wp_error( $audit )' ) && str_contains( $activation, 'update_option( self::OPTION, $previous, false )' ), 'High-risk staging acceptance must roll back when its audit evidence cannot be persisted.' );
 $assert( str_contains( $router, 'DONOTCACHEPAGE' ) && str_contains( $router, 'private, no-store' ) && str_contains( $router, 'noindex, nofollow, noarchive' ), 'Private dashboard route must be cache-excluded and non-indexable.' );
 $assert( str_contains( $export, 'hash_equals' ) && str_contains( $export, 'hash_hmac' ) && str_contains( $export, 'get_current_user_id' ), 'Export downloads must verify owner-bound HMAC signatures.' );
 $assert( str_contains( $export, 'spreadsheet_safe' ) && str_contains( $export, "'/^[=+\\-@]/'" ), 'CSV export must contain spreadsheet-formula neutralization.' );
