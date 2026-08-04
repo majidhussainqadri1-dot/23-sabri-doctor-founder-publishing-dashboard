@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.1
+
+- Register and display real File 21 and File 22 providers through File 23 contract 2.0.0.
+- Resolve Create through the exact File 22 Page Resolver; remove guessed dead-link fallback.
+- Apply the Founder-approved green central identity with semantic status colors.
+- Add local Dashicons navigation and correct card spacing/wrapping for responsive, RTL and accessible layouts.
+- Add focused integration and visual regression tests.
+
+
 ## 1.2.0 — 2026-08-04
 
 - Completed forty independent thematic review/fix rounds against the Definitive Master Plan v3.0 and File 23 Final Central-Plan-Harmonized v3.0.

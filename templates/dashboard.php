@@ -17,6 +17,15 @@ $overview_title_id      = $instance_id . '-overview-title';
 $provider_title_id      = $instance_id . '-provider-title';
 $collections_health     = is_array( $system_state['collections'] ?? null ) ? $system_state['collections'] : array();
 $native_reference_health = is_array( $system_state['native_references'] ?? null ) ? $system_state['native_references'] : array();
+$navigation_icons = array(
+	'overview' => 'dashicons-dashboard', 'workspace' => 'dashicons-portfolio', 'create' => 'dashicons-edit-page',
+	'inventory' => 'dashicons-media-document', 'review' => 'dashicons-yes-alt', 'calendar' => 'dashicons-calendar-alt',
+	'collections' => 'dashicons-category', 'knowledge' => 'dashicons-welcome-learn-more', 'sources' => 'dashicons-book-alt',
+	'media' => 'dashicons-format-gallery', 'revisions' => 'dashicons-backup', 'interactions' => 'dashicons-groups',
+	'analytics' => 'dashicons-chart-bar', 'notifications' => 'dashicons-bell', 'tasks' => 'dashicons-list-view',
+	'reports' => 'dashicons-media-spreadsheet', 'saved-views' => 'dashicons-visibility', 'settings' => 'dashicons-admin-generic',
+	'system-status' => 'dashicons-shield-alt',
+);
 ?>
 <a class="spdb-skip-link" href="#<?php echo esc_attr( $main_id ); ?>"><?php esc_html_e( 'Skip to dashboard content', 'sabri-publishing-dashboard' ); ?></a>
 <div class="spdb-shell" data-spdb-workspace="<?php echo esc_attr( (string) $workspace['key'] ); ?>" data-spdb-instance="<?php echo esc_attr( $instance_id ); ?>">
@@ -40,7 +49,8 @@ $native_reference_health = is_array( $system_state['native_references'] ?? null 
 		<nav class="spdb-navigation" aria-label="<?php esc_attr_e( 'Publishing dashboard', 'sabri-publishing-dashboard' ); ?>">
 			<ul>
 				<?php foreach ( $navigation as $view_key => $item ) : ?>
-					<li><a href="<?php echo esc_url( $item['url'] ); ?>" <?php echo $current === $view_key ? 'aria-current="page"' : ''; ?>><?php echo esc_html( $item['label'] ); ?></a></li>
+					<?php $icon = $navigation_icons[ $view_key ] ?? 'dashicons-marker'; ?>
+					<li><a href="<?php echo esc_url( $item['url'] ); ?>" <?php echo $current === $view_key ? 'aria-current="page"' : ''; ?>><span class="dashicons <?php echo esc_attr( $icon ); ?> spdb-navigation-icon" aria-hidden="true"></span><span class="spdb-navigation-label"><?php echo esc_html( $item['label'] ); ?></span></a></li>
 				<?php endforeach; ?>
 			</ul>
 		</nav>
@@ -146,7 +156,15 @@ $native_reference_health = is_array( $system_state['native_references'] ?? null 
 				<section aria-labelledby="<?php echo esc_attr( $overview_title_id ); ?>">
 					<p class="spdb-eyebrow"><?php esc_html_e( 'Operational overview', 'sabri-publishing-dashboard' ); ?></p><h2 id="<?php echo esc_attr( $overview_title_id ); ?>"><?php esc_html_e( 'Overview', 'sabri-publishing-dashboard' ); ?></h2>
 					<?php if ( ! empty( $overview['alerts'] ) ) : ?><div class="spdb-alerts" aria-label="<?php esc_attr_e( 'Priority notices', 'sabri-publishing-dashboard' ); ?>"><?php foreach ( $overview['alerts'] as $alert ) : ?><div class="spdb-notice spdb-notice--<?php echo esc_attr( $alert['level'] ); ?>" role="<?php echo 'critical' === $alert['level'] ? 'alert' : 'status'; ?>"><?php echo esc_html( $alert['message'] ); ?></div><?php endforeach; ?></div><?php endif; ?>
-					<div class="spdb-card-grid"><?php foreach ( $overview['cards'] as $card ) : ?><article class="spdb-card"><span><?php echo esc_html( $card['label'] ); ?></span><strong><?php echo esc_html( $card['value'] ); ?></strong><small><?php echo esc_html( $card['note'] ); ?></article><?php endforeach; ?></div>
+					<div class="spdb-card-grid">
+						<?php foreach ( $overview['cards'] as $card ) : ?>
+							<article class="spdb-card">
+								<span class="spdb-card-label"><?php echo esc_html( $card['label'] ); ?></span>
+								<strong class="spdb-card-value"><?php echo esc_html( $card['value'] ); ?></strong>
+								<small class="spdb-card-note"><?php echo esc_html( $card['note'] ); ?></small>
+							</article>
+						<?php endforeach; ?>
+					</div>
 					<section class="spdb-provider-section" aria-labelledby="<?php echo esc_attr( $provider_title_id ); ?>">
 						<h3 id="<?php echo esc_attr( $provider_title_id ); ?>"><?php esc_html_e( 'Provider Readiness', 'sabri-publishing-dashboard' ); ?></h3>
 						<?php if ( empty( $overview['providers'] ) ) : ?><p><?php esc_html_e( 'No provider adapter is registered. Native content counts and actions remain unavailable by design.', 'sabri-publishing-dashboard' ); ?></p><?php else : ?>

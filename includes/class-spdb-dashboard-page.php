@@ -104,6 +104,7 @@ final class SPDB_Dashboard_Page {
 
 	public function enqueue_assets(): void {
 		$this->register_assets();
+		wp_enqueue_style( 'dashicons' );
 		wp_enqueue_style( 'spdb-dashboard-corrections' );
 		$current = SPDB_Dashboard_Router::current_view();
 		if ( 'inventory' === $current ) {
