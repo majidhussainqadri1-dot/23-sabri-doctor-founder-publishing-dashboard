@@ -218,7 +218,7 @@ final class SPDB_Federated_Inventory {
 
 	private function resolve_scope( string $requested ): string {
 		$user_id    = get_current_user_id();
-		$is_founder = function_exists( 'smc_is_founder' ) && smc_is_founder( $user_id );
+		$is_founder = SPDB_Membership_Guard::is_user_founder( $user_id );
 		return $is_founder && 'institution' === $requested ? 'institution' : 'own';
 	}
 
@@ -262,7 +262,7 @@ final class SPDB_Federated_Inventory {
 	/** @param array<string,mixed> $item */
 	private function scope_allows_item( array $item, string $scope, int $user_id ): bool {
 		if ( 'institution' === $scope ) {
-			return function_exists( 'smc_is_founder' ) && smc_is_founder( $user_id );
+			return SPDB_Membership_Guard::is_user_founder( $user_id );
 		}
 		return $user_id > 0 && (int) ( $item['owner_user_id'] ?? 0 ) === $user_id;
 	}

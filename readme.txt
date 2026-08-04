@@ -4,7 +4,7 @@ Tags: publishing, dashboard, editorial, doctors, founder, review, calendar, coll
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,7 +14,7 @@ A private, role-aware, federated publishing operations dashboard for the Sabri S
 
 File 23 provides one operational command center for the Founder, verified doctors, reviewers and restricted read-only account states while preserving each native module as the source of truth.
 
-Version 1.1.0 completes the code-level File 23 functional plan on top of the reviewed Phase 23A–23O foundation and includes:
+Version 1.2.0 completes the code-level File 23 functional plan on top of the reviewed Phase 23A–23O foundation and includes:
 
 * File 00 canonical membership assertions with fail-closed compatibility;
 * Founder, Doctor, Reviewer, Pending and Suspended role-specific workspaces;
@@ -64,7 +64,13 @@ No. Provider acceptance, environment, membership, capability, ownership, object 
 
 == Changelog ==
 
-= 1.1.0 =
+= 1.2.0 =
+
+* Forty independent thematic review/fix rounds with executable 40/40 CI gate.
+* Strict File 00 authority, exact capability reconciliation and File 20 Safe Mode ownership.
+* Verified InnoDB schemas, serialized audit chain, atomic jobs/exports and provider acceptance evidence.
+* AES-256-GCM encrypted-at-rest exports and expanded privacy export/erasure.
+* Deterministic installable and complete-source Version 1.2.0 packages.
 * Added complete operational projections for sources, media usage, interactions, revisions, knowledge gaps and publishing notifications.
 * Added provider-owned privacy-safe analytics and secure expiring report exports.
 * Added tasks, scoped delegations, bounded automation rules, background jobs, dead-letter handling, privacy integration and local reversible repair.

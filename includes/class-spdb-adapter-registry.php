@@ -30,6 +30,9 @@ final class SPDB_Adapter_Registry {
 	/** @var array<string,string> */
 	private array $acceptance_states = array();
 
+	/** @var array<string,array<string,mixed>> */
+	private array $acceptance_records = array();
+
 	/** @var array<string,WP_Error[]> */
 	private array $registration_errors = array();
 
@@ -40,8 +43,17 @@ final class SPDB_Adapter_Registry {
 	 */
 	public function __construct( array $acceptance_states = array() ) {
 		foreach ( $acceptance_states as $provider_key => $state ) {
-			if ( self::is_canonical_key( (string) $provider_key ) && in_array( $state, self::acceptance_states(), true ) ) {
+			$provider_key = (string) $provider_key;
+			if ( ! self::is_canonical_key( $provider_key ) ) {
+				continue;
+			}
+			if ( is_string( $state ) && in_array( $state, self::acceptance_states(), true ) ) {
+				// Explicit constructor injection is retained for executable contract tests.
 				$this->acceptance_states[ $provider_key ] = $state;
+				continue;
+			}
+			if ( is_array( $state ) ) {
+				$this->acceptance_records[ $provider_key ] = $state;
 			}
 		}
 	}
@@ -118,6 +130,7 @@ final class SPDB_Adapter_Registry {
 			}
 
 			$this->adapters[ $key ] = $adapter;
+			$this->bind_acceptance_record( $key, $provider_version );
 			$this->metadata[ $key ] = array(
 				'provider_key'           => $key,
 				'provider_name'          => $provider_name,
@@ -222,6 +235,34 @@ final class SPDB_Adapter_Registry {
 
 	public function get_acceptance_state( string $provider_key ): string {
 		return $this->acceptance_states[ $provider_key ] ?? self::ACCEPTANCE_UNREVIEWED;
+	}
+
+	private function bind_acceptance_record( string $provider_key, string $provider_version ): void {
+		$record = $this->acceptance_records[ $provider_key ] ?? null;
+		if ( ! is_array( $record ) ) {
+			return;
+		}
+		$state = sanitize_key( (string) ( $record['state'] ?? '' ) );
+		if ( self::ACCEPTANCE_REVOKED === $state ) {
+			// Revocation remains fail-closed across provider/plugin upgrades until explicitly replaced.
+			$this->acceptance_states[ $provider_key ] = $state;
+			return;
+		}
+		if (
+			! in_array( $state, array( self::ACCEPTANCE_STAGING_ACCEPTED, self::ACCEPTANCE_PRODUCTION_ACCEPTED ), true )
+			|| ! hash_equals( $provider_version, (string) ( $record['provider_version'] ?? '' ) )
+			|| ! hash_equals( SPDB_CONTRACT_VERSION, (string) ( $record['contract_version'] ?? '' ) )
+			|| ! hash_equals( SPDB_VERSION, (string) ( $record['plugin_version'] ?? '' ) )
+			|| 1 !== preg_match( '/\A[A-Za-z0-9][A-Za-z0-9._:\/-]{2,190}\z/', (string) ( $record['evidence_id'] ?? '' ) )
+			|| 1 !== preg_match( '/\A[a-f0-9]{64}\z/', (string) ( $record['evidence_hash'] ?? '' ) )
+		) {
+			return;
+		}
+		$record_environment = sanitize_key( (string) ( $record['environment'] ?? '' ) );
+		if ( self::ACCEPTANCE_STAGING_ACCEPTED === $state && 'production' === $record_environment ) {
+			return;
+		}
+		$this->acceptance_states[ $provider_key ] = $state;
 	}
 
 	/**

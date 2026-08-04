@@ -14,6 +14,7 @@ require_once SPDB_PLUGIN_DIR . 'includes/interface-spdb-native-reference-provide
 require_once SPDB_PLUGIN_DIR . 'includes/interface-spdb-native-reference-readiness.php';
 
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-adapter-registry.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-adapter-acceptance.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-native-reference-registry.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-native-reference-registration.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-membership-guard.php';
@@ -73,6 +74,7 @@ require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-dashboard-page.php';
 final class SPDB_Plugin {
 	private static ?SPDB_Plugin $instance = null;
 	private SPDB_Adapter_Registry $adapter_registry;
+	private SPDB_Adapter_Acceptance $adapter_acceptance;
 	private SPDB_Native_Reference_Registry $native_reference_registry;
 	private SPDB_Operation_Broker $operation_broker;
 	private SPDB_Federated_Inventory $inventory;
@@ -103,7 +105,7 @@ final class SPDB_Plugin {
 	private bool $booted = false;
 
 	private function __construct() {
-		$this->adapter_registry = new SPDB_Adapter_Registry();
+		$this->adapter_registry = new SPDB_Adapter_Registry( SPDB_Adapter_Acceptance::records() );
 		$acceptance = apply_filters( 'spdb/native_reference_acceptance', array() );
 		if ( ! is_array( $acceptance ) ) {
 			$acceptance = array();
@@ -122,6 +124,7 @@ final class SPDB_Plugin {
 		$this->collections_rest = new SPDB_Collections_REST_Controller( $this->collections_service );
 
 		$this->operations_repository = new SPDB_Operations_Repository();
+		$this->adapter_acceptance = new SPDB_Adapter_Acceptance( $this->adapter_registry, $this->operations_repository );
 		$this->operations_service = new SPDB_Operations_Service( $this->adapter_registry, $this->operations_repository );
 		$this->governance_service = new SPDB_Governance_Service( $this->operations_repository );
 		$this->export_service = new SPDB_Export_Service( $this->operations_service, $this->review_calendar_service, $this->operations_repository );
@@ -136,7 +139,8 @@ final class SPDB_Plugin {
 			$this->export_service,
 			$this->operations_repository,
 			$this->local_repair,
-			$this->activation_wizard
+			$this->activation_wizard,
+			$this->adapter_acceptance
 		);
 
 		$this->saved_views = new SPDB_Saved_Views( $this->operations_repository );
@@ -147,7 +151,8 @@ final class SPDB_Plugin {
 			$this->native_reference_registry,
 			$this->operations_repository,
 			$this->local_repair,
-			$this->activation_wizard
+			$this->activation_wizard,
+			$this->adapter_acceptance
 		);
 		$this->overview_service = new SPDB_Overview_Service( $this->system_state );
 		$this->dashboard_page = new SPDB_Dashboard_Page(
@@ -163,7 +168,8 @@ final class SPDB_Plugin {
 			$this->governance_service,
 			$this->export_service,
 			$this->local_repair,
-			$this->activation_wizard
+			$this->activation_wizard,
+			$this->adapter_acceptance
 		);
 		$this->dashboard_router = new SPDB_Dashboard_Router( array( $this->dashboard_page, 'render' ) );
 	}

@@ -1,8 +1,8 @@
-# File 23 Known Limitations and Residual-Risk Register — Version 1.1.0
+# File 23 Known Limitations and Residual-Risk Register — Version 1.2.0
 
 ## Source scope
 
-No known unresolved blocker or critical source defect is intentionally accepted in the Version 1.1.0 candidate after the documented review/fix rounds. The following items are release/operational limitations that require external evidence; they are not treated as completed by source inspection.
+No known unresolved blocker or critical source defect is intentionally accepted in the Version 1.2.0 candidate after the documented review/fix rounds. The following items are release/operational limitations that require external evidence; they are not treated as completed by source inspection.
 
 | ID | Limitation / residual risk | Current control | Closure evidence |
 |---|---|---|---|

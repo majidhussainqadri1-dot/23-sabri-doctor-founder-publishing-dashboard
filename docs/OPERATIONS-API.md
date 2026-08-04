@@ -25,3 +25,7 @@ Every File 23-owned operational mutation is additionally protected by `SPDB_Oper
 The dashboard JavaScript generates one high-entropy idempotency key for a logical form submission, retains it during the same retry and clears it after confirmed success or a subsequent user edit.
 
 Native review, reviewer-assignment and calendar operations continue to use their dedicated operation broker, object version, idempotency, audit reason and provider confirmation contract. The cross-cutting guard does not replace or acquire those native workflows.
+
+## Provider maturity acceptance
+
+`POST /wp-json/spdb/v1/provider-acceptance/{provider_key}` records `staging_accepted`, `production_accepted` or `revoked` for an exact registered provider version. It requires Founder authority, current File 00 MFA, `spdb_manage_dashboard_settings`, REST nonce, same-origin context, a payload-bound idempotency key, privacy-safe reason and evidence identifier. Production acceptance additionally requires the File 23 staging/Founder release record. Persistence is reverted when canonical audit evidence cannot be appended.

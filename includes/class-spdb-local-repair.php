@@ -110,7 +110,7 @@ final class SPDB_Local_Repair {
 	 * @return array<string,mixed>|WP_Error
 	 */
 	public function repair( string $action, string $reason ) {
-		if ( ! SPDB_Capabilities::current_user_can( 'spdb_reconcile_projections' ) || ! SPDB_Capabilities::current_user_can( 'spdb_run_system_check' ) ) {
+		if ( ! SPDB_Capabilities::current_user_can( 'spdb_reconcile_projections' ) || ! SPDB_Capabilities::current_user_can( 'spdb_run_system_check' ) || ! SPDB_Capabilities::current_user_can( 'spdb_repair_owned_data' ) ) {
 			return self::error( 'spdb_repair_forbidden', __( 'You are not authorized to run File 23 repairs.', 'sabri-publishing-dashboard' ), 403 );
 		}
 		$assertions = SPDB_Membership_Guard::assertions( get_current_user_id() );
@@ -119,7 +119,7 @@ final class SPDB_Local_Repair {
 		}
 		$action = sanitize_key( $action );
 		$reason = trim( wp_strip_all_tags( $reason ) );
-		if ( '' === $reason || strlen( $reason ) > 500 ) {
+		if ( self::text_length( $reason ) < 10 || self::text_length( $reason ) > 500 || preg_match( '/[\x00-\x1F\x7F]/', $reason ) || preg_match( '/password|secret|token|nonce|otp|cvv|patient|diagnosis|prescription|message[ _-]?body/i', $reason ) ) {
 			return self::error( 'spdb_repair_reason_required', __( 'A bounded repair reason is required.', 'sabri-publishing-dashboard' ), 400 );
 		}
 
@@ -155,8 +155,15 @@ final class SPDB_Local_Repair {
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
-		$this->repository->append_audit( get_current_user_id(), 'local_repair_completed', 'repair:' . $action, array( 'action' => $action, 'reason_hash' => hash( 'sha256', $reason ) ) );
+		$audit = $this->repository->append_audit( get_current_user_id(), 'local_repair_completed', 'repair:' . $action, array( 'action' => $action, 'reason_hash' => hash( 'sha256', $reason ) ) );
+		if ( is_wp_error( $audit ) ) {
+			return $audit;
+		}
 		return array( 'action' => $action, 'result' => $result, 'system_check' => $this->system_check() );
+	}
+
+	private static function text_length( string $value ): int {
+		return function_exists( 'mb_strlen' ) ? mb_strlen( $value, 'UTF-8' ) : strlen( $value );
 	}
 
 	private static function error( string $code, string $message, int $status ): WP_Error {

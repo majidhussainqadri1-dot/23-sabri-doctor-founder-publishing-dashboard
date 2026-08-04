@@ -213,7 +213,7 @@ final class SPDB_Review_Calendar_Service {
 		$environment = function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production';
 		$available   = $user_id > 0 && SPDB_Membership_Guard::is_available();
 		$approved    = $available && SPDB_Membership_Guard::is_user_approved( $user_id );
-		$is_founder  = $approved && function_exists( 'smc_is_founder' ) && smc_is_founder( $user_id );
+		$is_founder  = $approved && SPDB_Membership_Guard::is_user_founder( $user_id );
 		$can_review  = $approved && SPDB_Capabilities::current_user_can( 'spdb_view_review_queue' );
 		return array(
 			'user_id'           => $user_id,

@@ -247,14 +247,14 @@ final class SPDB_Collections_Service {
 		if ( '' !== $record_type && ! in_array( $record_type, SPDB_Collections_Policy::record_types(), true ) ) { return $this->error( 'spdb_collections_query_type_invalid', 'The collection query type is invalid.' ); }
 		$statuses = 'collection' === $record_type ? SPDB_Collections_Policy::collection_statuses() : ( 'campaign' === $record_type ? SPDB_Collections_Policy::campaign_statuses() : array_unique( array_merge( SPDB_Collections_Policy::collection_statuses(), SPDB_Collections_Policy::campaign_statuses() ) ) );
 		if ( '' !== $status && ! in_array( $status, $statuses, true ) ) { return $this->error( 'spdb_collections_query_status_invalid', 'The collection query status is invalid for the selected record type.' ); }
-		$page = $this->positive_integer( $input['page'] ?? 1, 100000 );
+		$page = $this->positive_integer( $input['page'] ?? 1, 1000 );
 		$per_page = $this->positive_integer( $input['per_page'] ?? 20, 50 );
 		if ( null === $page || null === $per_page ) { return $this->error( 'spdb_collections_query_pagination_invalid', 'The collection query pagination is invalid.' ); }
 		return array( 'scope' => $scope, 'owner_user_id' => get_current_user_id(), 'record_type' => $record_type, 'status' => $status, 'page' => $page, 'per_page' => $per_page );
 	}
 	private function normalize_item_query( array $input ) {
 		if ( array_diff( array_keys( $input ), array( 'page', 'per_page' ) ) ) { return $this->error( 'spdb_collection_items_query_invalid', 'The collection-item query contains an unsupported field.' ); }
-		$page = $this->positive_integer( $input['page'] ?? 1, 100000 );
+		$page = $this->positive_integer( $input['page'] ?? 1, 1000 );
 		$per_page = $this->positive_integer( $input['per_page'] ?? 20, 50 );
 		return null === $page || null === $per_page ? $this->error( 'spdb_collection_items_query_invalid', 'The collection-item pagination is invalid.' ) : array( 'page' => $page, 'per_page' => $per_page );
 	}
@@ -266,7 +266,7 @@ final class SPDB_Collections_Service {
 		$status_raw = $input['status'] ?? '';
 		$status = is_string( $status_raw ) ? $status_raw : '';
 		if ( '' !== $status && ! in_array( $status, array( 'active', 'archived' ), true ) ) { return $this->error( 'spdb_knowledge_query_status_invalid', 'The knowledge-link status filter is invalid.' ); }
-		$page = $this->positive_integer( $input['page'] ?? 1, 100000 );
+		$page = $this->positive_integer( $input['page'] ?? 1, 1000 );
 		$per_page = $this->positive_integer( $input['per_page'] ?? 20, 50 );
 		if ( null === $page || null === $per_page ) { return $this->error( 'spdb_knowledge_query_pagination_invalid', 'The knowledge-link pagination is invalid.' ); }
 		return array( 'scope' => $scope, 'owner_user_id' => get_current_user_id(), 'status' => $status, 'page' => $page, 'per_page' => $per_page );
@@ -426,7 +426,7 @@ final class SPDB_Collections_Service {
 		return ( 'own' === $scope && $owner === get_current_user_id() ) || ( 'institution' === $scope && $this->current_user_is_founder() && SPDB_Capabilities::current_user_can( 'spdb_manage_campaigns' ) );
 	}
 	private function context( string $scope ): array { return array( 'user_id' => get_current_user_id(), 'scope' => $scope, 'is_founder' => $this->current_user_is_founder(), 'environment' => function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production', 'generated_at' => gmdate( 'c' ) ); }
-	private function current_user_is_founder(): bool { $user_id = get_current_user_id(); return $user_id > 0 && SPDB_Membership_Guard::is_user_approved( $user_id ) && function_exists( 'smc_is_founder' ) && smc_is_founder( $user_id ); }
+	private function current_user_is_founder(): bool { $user_id = get_current_user_id(); return $user_id > 0 && SPDB_Membership_Guard::is_user_founder( $user_id ); }
 	/** @return true|WP_Error */
 	private function validate_contributors( array $contributors ) { foreach ( $contributors as $user_id ) { if ( ! SPDB_Membership_Guard::is_user_approved( (int) $user_id ) || ! user_can( (int) $user_id, 'spdb_manage_own_content' ) ) { return $this->error( 'spdb_collection_contributor_ineligible', 'A proposed contributor is not currently approved or authorized.' ); } } return true; }
 	private function native_version( $raw ) { if ( ! is_string( $raw ) ) { return $this->error( 'spdb_native_reference_version_invalid', 'The native object version is invalid.' ); } $value = trim( $raw ); if ( $raw !== $value || '' === $value || $this->text_length( $value ) > 191 || preg_match( '/[\x00-\x1F\x7F]/u', $value ) ) { return $this->error( 'spdb_native_reference_version_invalid', 'The native object version is invalid.' ); } return $value; }

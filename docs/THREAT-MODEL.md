@@ -1,4 +1,4 @@
-# File 23 Threat Model — Version 1.1.0
+# File 23 Threat Model — Version 1.2.0
 
 ## Assets
 
@@ -49,3 +49,13 @@
 - Operational key/secret management and incident response.
 
 These residual risks do not authorize production writes. Production remains fail-closed until the release sign-off form is completed with exact evidence.
+
+## Version 1.2.0 forty-round hardening additions
+
+| Threat | Required control | Evidence |
+|---|---|---|
+| Encrypted export disclosure | AES-256-GCM envelope, owner-bound expiring signature, realpath and ciphertext-hash verification; no plaintext generated export at rest. | Export service and forty-round gate. |
+| Commit-failure replay false success | Rollback, option-cache invalidation and failed receipt finalization before replay. | Mutation guard regressions. |
+| Audit-chain race/fork | Serialized application lock plus row lock, previous-hash verification and transaction/savepoint rollback. | Repository audit tests/markers. |
+| Privacy erasure omission | Paginated export/erasure across receipts, tasks, delegations, rules, exports, collections and institutional pseudonymization. | Privacy integration/repository tests. |
+| Non-transactional table rollback illusion | Actual engine inspection and InnoDB upgrade/verification for all 13 owned tables. | Schema installers and architecture tests. |

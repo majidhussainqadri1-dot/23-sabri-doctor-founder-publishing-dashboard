@@ -25,9 +25,12 @@ A WordPress capability alone is insufficient. File 23 fails closed when the comp
 | `spdb_manage_dashboard_settings` | Configure File 23-owned settings |
 | `spdb_run_system_check` | Run non-destructive diagnostics |
 | `spdb_repair_owned_data` | Repair File 23-owned data only |
-| `spdb_manage_safe_mode` | Enable or disable File 23 read-only Safe Mode |
 
 File 23 defines these keys but does not create editorial WordPress roles. Plugin activation is an administrator-approved process that attaches File 23 keys to existing roles. Runtime Membership Core status checks remain mandatory and can only reduce authority.
+
+## Retired capability
+
+`spdb_manage_safe_mode` is removed from managed roles during capability reconciliation and is never granted by File 23. Global Safe Mode, platform repair and rollback remain File 20 responsibilities.
 
 ## Existing-Role Provisioning
 
@@ -51,17 +54,13 @@ Only these capabilities may pass for a non-approved File 00 status:
 - `spdb_view_dashboard`
 - `spdb_view_own_content`
 
-They provide no submit, edit, review, schedule, interaction, analytics, export, delegation, repair, or Safe Mode authority. The UI must show only status/appeal and policy-permitted owned-content read-only routes.
+They provide no submit, edit, review, schedule, interaction, analytics, export, delegation or repair authority. File 20 alone owns global Safe Mode. The UI must show only status/appeal and policy-permitted owned-content read-only routes.
 
 ## Membership Core Compatibility
 
-File 23 currently accepts Membership Core `>= 1.0.1` and `< 2.0.0` together with the canonical functions:
+File 23 requires the canonical File 00 assertion contract `>= 1.1.2` and a compatible runtime family. The authoritative call is `SMC_Contracts::assertions( $user_id )` (or its versioned public wrapper). Founder, trusted-publisher, approved, suspended, eligible and current-MFA fields are interpreted strictly.
 
-- `smc_user_status()`
-- `smc_is_founder()`
-- `smc_is_trusted_publisher()`
-
-A new major File 00 version requires explicit compatibility review rather than optimistic acceptance.
+When the canonical contract is present but incompatible or malformed, File 23 fails closed and does not fall back to legacy helpers. Legacy helpers are permitted only when the canonical contract is genuinely absent and remain a transitional compatibility boundary, never an escalation path. A new major File 00 contract requires explicit compatibility review.
 
 ## Executable Authorization Order
 

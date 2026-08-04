@@ -15,7 +15,10 @@ final class SPDB_Operational_Mutation_Guard {
 	private const RECEIPT_PREFIX = 'spdb_mutation_receipt_';
 	private const RECEIPT_TTL    = 7 * DAY_IN_SECONDS;
 	private const PENDING_TTL    = 5 * MINUTE_IN_SECONDS;
-	private const RESPONSE_LIMIT = 65535;
+	private const RESPONSE_LIMIT      = 65535;
+	private const MAX_PAYLOAD_DEPTH   = 8;
+	private const MAX_PAYLOAD_NODES   = 500;
+	private const MAX_STRING_LENGTH   = 8192;
 
 	/** @var array<int,array<string,mixed>> */
 	private static array $request_contexts = array();
@@ -67,6 +70,10 @@ final class SPDB_Operational_Mutation_Guard {
 		}
 
 		$payload = self::request_payload( $request );
+		$bounded = self::validate_payload_bounds( $payload );
+		if ( is_wp_error( $bounded ) ) {
+			return $bounded;
+		}
 		$key     = self::request_idempotency_key( $request, $payload );
 		if ( ! self::valid_idempotency_key( $key ) ) {
 			return self::error( 'spdb_mutation_idempotency_required', __( 'A valid idempotency key is required for this dashboard action.', 'sabri-publishing-dashboard' ), 422 );
@@ -75,16 +82,6 @@ final class SPDB_Operational_Mutation_Guard {
 		$reason = self::audit_reason( $payload, $policy );
 		if ( is_wp_error( $reason ) ) {
 			return $reason;
-		}
-
-		global $wpdb;
-		$transactional = ! empty( $policy['transactional'] );
-		$transaction   = false;
-		if ( $transactional ) {
-			$transaction = false !== $wpdb->query( 'START TRANSACTION' );
-			if ( ! $transaction ) {
-				return self::error( 'spdb_mutation_transaction_unavailable', __( 'The dashboard action could not open a safe transaction.', 'sabri-publishing-dashboard' ), 503 );
-			}
 		}
 
 		$fingerprint = self::fingerprint_payload( $payload );
@@ -98,10 +95,18 @@ final class SPDB_Operational_Mutation_Guard {
 		);
 
 		if ( is_wp_error( $claim ) || $claim instanceof WP_REST_Response ) {
-			if ( $transaction ) {
-				$wpdb->query( 'ROLLBACK' );
-			}
 			return $claim;
+		}
+
+		global $wpdb;
+		$transactional = ! empty( $policy['transactional'] );
+		$transaction   = false;
+		if ( $transactional ) {
+			$transaction = false !== $wpdb->query( 'START TRANSACTION' );
+			if ( ! $transaction ) {
+				delete_option( (string) $claim['option_name'] );
+				return self::error( 'spdb_mutation_transaction_unavailable', __( 'The dashboard action could not open a safe transaction.', 'sabri-publishing-dashboard' ), 503 );
+			}
 		}
 
 		self::$request_contexts[ spl_object_id( $request ) ] = array(
@@ -137,25 +142,37 @@ final class SPDB_Operational_Mutation_Guard {
 		$status      = method_exists( $normalized, 'get_status' ) ? (int) $normalized->get_status() : 200;
 		$data        = method_exists( $normalized, 'get_data' ) ? $normalized->get_data() : null;
 
-		if ( $status >= 500 ) {
+		if ( $status >= 400 ) {
 			if ( $transaction ) {
 				$wpdb->query( 'ROLLBACK' );
-				return $response;
 			}
-			self::complete_receipt( $context, $status, $data, 'failed' );
-			return $response;
+			$completed = self::complete_receipt( $context, $status, $data, $status >= 500 ? 'failed' : 'denied' );
+			if ( is_wp_error( $completed ) ) {
+				return new WP_REST_Response(
+					array(
+						'code'    => 'spdb_mutation_failure_evidence_failed',
+						'message' => __( 'The dashboard action failed and its replay evidence could not be finalized.', 'sabri-publishing-dashboard' ),
+					),
+					500
+				);
+			}
+			$normalized->header( 'Cache-Control', 'private, no-store, max-age=0' );
+			$normalized->header( 'X-SPDB-Idempotent', 'recorded' );
+			return $normalized;
 		}
 
-		$completed = self::complete_receipt(
-			$context,
-			$status,
-			$data,
-			$status >= 400 ? 'denied' : 'completed'
-		);
+		$completed = self::complete_receipt( $context, $status, $data, 'completed' );
 		if ( is_wp_error( $completed ) ) {
 			if ( $transaction ) {
 				$wpdb->query( 'ROLLBACK' );
 			}
+			self::clear_receipt_cache( (string) $context['receipt_option'] );
+			self::complete_receipt(
+				$context,
+				500,
+				array( 'code' => 'spdb_mutation_audit_commit_failed' ),
+				'failed'
+			);
 			return new WP_REST_Response(
 				array(
 					'code'    => 'spdb_mutation_audit_commit_failed',
@@ -167,6 +184,13 @@ final class SPDB_Operational_Mutation_Guard {
 
 		if ( $transaction && false === $wpdb->query( 'COMMIT' ) ) {
 			$wpdb->query( 'ROLLBACK' );
+			self::clear_receipt_cache( (string) $context['receipt_option'] );
+			self::complete_receipt(
+				$context,
+				500,
+				array( 'code' => 'spdb_mutation_commit_failed' ),
+				'failed'
+			);
 			return new WP_REST_Response(
 				array(
 					'code'    => 'spdb_mutation_commit_failed',
@@ -202,6 +226,7 @@ final class SPDB_Operational_Mutation_Guard {
 			'#^/spdb/v1/settings$#'                                         => array( 'transactional' => true, 'require_reason' => true ),
 			'#^/spdb/v1/system-check/repair$#'                              => array( 'transactional' => true, 'require_reason' => true ),
 			'#^/spdb/v1/activation$#'                                       => array( 'transactional' => true, 'require_reason' => true ),
+			'#^/spdb/v1/provider-acceptance/[a-z0-9][a-z0-9_-]{1,63}$#'         => array( 'transactional' => true, 'require_reason' => true ),
 		);
 
 		foreach ( $policies as $pattern => $policy ) {
@@ -210,6 +235,19 @@ final class SPDB_Operational_Mutation_Guard {
 			}
 		}
 		return null;
+	}
+
+	/** @return array<int,array<string,mixed>> */
+	public static function privacy_export_receipts( int $user_id, int $page = 1, int $per_page = 100 ): array {
+		$rows = self::receipt_rows_for_user( $user_id, false );
+		$page = max( 1, $page );
+		$per_page = min( 200, max( 1, $per_page ) );
+		return array_slice( $rows, ( $page - 1 ) * $per_page, $per_page );
+	}
+
+	public static function erase_user_receipts( int $user_id ): int {
+		$rows = self::receipt_rows_for_user( $user_id, true );
+		return count( $rows );
 	}
 
 	public static function valid_idempotency_key( string $key ): bool {
@@ -229,6 +267,9 @@ final class SPDB_Operational_Mutation_Guard {
 		$candidate_parts = wp_parse_url( $candidate );
 		$home_parts      = wp_parse_url( $home );
 		if ( ! is_array( $candidate_parts ) || ! is_array( $home_parts ) ) {
+			return false;
+		}
+		if ( isset( $candidate_parts['user'] ) || isset( $candidate_parts['pass'] ) || isset( $home_parts['user'] ) || isset( $home_parts['pass'] ) ) {
 			return false;
 		}
 		$candidate_scheme = strtolower( (string) ( $candidate_parts['scheme'] ?? '' ) );
@@ -309,6 +350,7 @@ final class SPDB_Operational_Mutation_Guard {
 
 		$audit = self::append_audit( $receipt_id, $user_id, 'mutation_requested', $route_hash, $method, 'pending', $reason, $payload_hash );
 		if ( is_wp_error( $audit ) ) {
+			delete_option( $option_name );
 			return $audit;
 		}
 
@@ -447,7 +489,7 @@ final class SPDB_Operational_Mutation_Guard {
 		if ( '' === $reason && empty( $policy['require_reason'] ) ) {
 			$reason = 'Authorized File 23 operational mutation.';
 		}
-		if ( strlen( $reason ) < 10 || strlen( $reason ) > 500 || preg_match( '/[\x00-\x1F\x7F]/', $reason ) || self::sensitive_audit_text( $reason ) ) {
+		if ( self::text_length( $reason ) < 10 || self::text_length( $reason ) > 500 || preg_match( '/[\x00-\x1F\x7F]/', $reason ) || self::sensitive_audit_text( $reason ) ) {
 			return self::error( 'spdb_mutation_audit_reason_invalid', __( 'A meaningful privacy-safe audit reason is required.', 'sabri-publishing-dashboard' ), 422 );
 		}
 		return $reason;
@@ -467,6 +509,63 @@ final class SPDB_Operational_Mutation_Guard {
 		}
 		$params = $request->get_body_params();
 		return is_array( $params ) ? $params : array();
+	}
+
+	private static function clear_receipt_cache( string $option_name ): void {
+		if ( function_exists( 'wp_cache_delete' ) ) {
+			wp_cache_delete( $option_name, 'options' );
+		}
+	}
+
+	/** @return array<int,array<string,mixed>> */
+	private static function receipt_rows_for_user( int $user_id, bool $erase ): array {
+		if ( $user_id < 1 ) {
+			return array();
+		}
+		global $wpdb;
+		if ( ! is_object( $wpdb ) || ! isset( $wpdb->options ) || ! method_exists( $wpdb, 'get_results' ) || ! method_exists( $wpdb, 'prepare' ) ) {
+			return array();
+		}
+		$found  = array();
+		$cursor = 0;
+		$like   = $wpdb->esc_like( self::RECEIPT_PREFIX ) . '%';
+		for ( $batch = 0; $batch < 40; ++$batch ) {
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT option_id, option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s AND option_id > %d ORDER BY option_id ASC LIMIT 250",
+					$like,
+					$cursor
+				),
+				defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
+			);
+			if ( ! is_array( $rows ) || ! $rows ) {
+				break;
+			}
+			foreach ( $rows as $row ) {
+				$cursor  = max( $cursor, (int) ( $row['option_id'] ?? 0 ) );
+				$receipt = maybe_unserialize( $row['option_value'] ?? null );
+				if ( ! is_array( $receipt ) || (int) ( $receipt['actor_user_id'] ?? 0 ) !== $user_id ) {
+					continue;
+				}
+				$found[] = array(
+					'receipt_id_hash' => hash( 'sha256', (string) ( $receipt['receipt_id'] ?? '' ) ),
+					'route_hash'      => (string) ( $receipt['route_hash'] ?? '' ),
+					'method'          => sanitize_key( strtolower( (string) ( $receipt['method'] ?? '' ) ) ),
+					'state'           => sanitize_key( (string) ( $receipt['state'] ?? '' ) ),
+					'response_status' => max( 0, (int) ( $receipt['response_status'] ?? 0 ) ),
+					'created_at'      => max( 0, (int) ( $receipt['created_at'] ?? 0 ) ),
+					'updated_at'      => max( 0, (int) ( $receipt['updated_at'] ?? 0 ) ),
+					'expires_at'      => max( 0, (int) ( $receipt['expires_at'] ?? 0 ) ),
+				);
+				if ( $erase ) {
+					delete_option( (string) ( $row['option_name'] ?? '' ) );
+				}
+			}
+			if ( count( $rows ) < 250 ) {
+				break;
+			}
+		}
+		return $found;
 	}
 
 	private static function receipt_option_name( int $user_id, string $route_hash, string $method, string $key_hash ): string {
@@ -492,9 +591,48 @@ final class SPDB_Operational_Mutation_Guard {
 			return self::sanitize_response_data( get_object_vars( $value ), $depth + 1 );
 		}
 		if ( is_string( $value ) ) {
-			return strlen( $value ) > 4096 ? substr( $value, 0, 4096 ) : $value;
+			return self::text_length( $value ) > 4096 ? self::text_substr( $value, 0, 4096 ) : $value;
 		}
 		return is_scalar( $value ) || null === $value ? $value : null;
+	}
+
+	/** @return true|WP_Error */
+	public static function validate_payload_bounds( array $payload ) {
+		$nodes = 0;
+		$valid = self::walk_payload_bounds( $payload, 0, $nodes );
+		return $valid
+			? true
+			: self::error( 'spdb_mutation_payload_too_large', __( 'The dashboard request payload exceeds the safe complexity limit.', 'sabri-publishing-dashboard' ), 413 );
+	}
+
+	private static function walk_payload_bounds( $value, int $depth, int &$nodes ): bool {
+		++$nodes;
+		if ( $depth > self::MAX_PAYLOAD_DEPTH || $nodes > self::MAX_PAYLOAD_NODES ) {
+			return false;
+		}
+		if ( is_string( $value ) ) {
+			return self::text_length( $value ) <= self::MAX_STRING_LENGTH && ! preg_match( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $value );
+		}
+		if ( is_array( $value ) ) {
+			foreach ( $value as $key => $item ) {
+				if ( is_string( $key ) && self::text_length( $key ) > 128 ) {
+					return false;
+				}
+				if ( ! self::walk_payload_bounds( $item, $depth + 1, $nodes ) ) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return is_scalar( $value ) || null === $value;
+	}
+
+	private static function text_length( string $value ): int {
+		return function_exists( 'mb_strlen' ) ? mb_strlen( $value, 'UTF-8' ) : strlen( $value );
+	}
+
+	private static function text_substr( string $value, int $start, int $length ): string {
+		return function_exists( 'mb_substr' ) ? mb_substr( $value, $start, $length, 'UTF-8' ) : substr( $value, $start, $length );
 	}
 
 	private static function normalize_value( $value ) {

@@ -121,7 +121,7 @@ final class SPDB_WP_Collections_Repository implements SPDB_Collections_Repositor
 		if ( is_wp_error( $ready ) ) { return $ready; }
 		if ( ! $this->valid_id( $collection_id ) ) { return $this->error( 'spdb_collection_id_invalid', 'The collection identifier is invalid.' ); }
 		if ( array_diff( array_keys( $query ), array( 'page', 'per_page' ) ) ) { return $this->error( 'spdb_collection_items_query_invalid', 'The collection item query is invalid.' ); }
-		$page     = $this->bounded_int( $query['page'] ?? 1, 1, 100000 );
+		$page     = $this->bounded_int( $query['page'] ?? 1, 1, 1000 );
 		$per_page = $this->bounded_int( $query['per_page'] ?? 20, 1, 50 );
 		if ( null === $page || null === $per_page ) { return $this->error( 'spdb_collection_items_query_invalid', 'The collection item query is invalid.' ); }
 		$table  = SPDB_Collections_Schema::items_table();
@@ -281,7 +281,7 @@ final class SPDB_WP_Collections_Repository implements SPDB_Collections_Repositor
 		if ( array_diff( array_keys( $query ), $allowed ) ) { return $this->error( 'spdb_repository_query_invalid', 'The repository query contains an unsupported field.' ); }
 		$scope = is_string( $query['scope'] ?? null ) ? $query['scope'] : '';
 		$owner = $this->strict_positive_integer( $query['owner_user_id'] ?? null );
-		$page = $this->bounded_int( $query['page'] ?? 1, 1, 100000 );
+		$page = $this->bounded_int( $query['page'] ?? 1, 1, 1000 );
 		$per_page = $this->bounded_int( $query['per_page'] ?? 20, 1, 50 );
 		$record_type = $collections && is_string( $query['record_type'] ?? '' ) ? $query['record_type'] : '';
 		$status = is_string( $query['status'] ?? '' ) ? $query['status'] : '';

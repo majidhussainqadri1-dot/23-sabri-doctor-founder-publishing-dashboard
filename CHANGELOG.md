@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.2.0 — 2026-08-04
+
+- Completed forty independent thematic review/fix rounds against the Definitive Master Plan v3.0 and File 23 Final Central-Plan-Harmonized v3.0.
+- Centralized Founder, trusted-publisher and institutional authorization on strict, fresh File 00 assertions; incompatible canonical contracts now fail closed without legacy escalation.
+- Reconciled capability schema 4 exactly, removed the retired File 23 Safe Mode grant from roles, and preserved File 20 as the only global Safe Mode owner.
+- Hardened task assignment, delegation attenuation, provider-sensitive exclusions, audit reasons and runtime capability revalidation.
+- Added exact provider acceptance records bound to provider/contract/plugin versions, environment, evidence hash, Founder authority, current MFA and rollback on audit failure.
+- Added bounded nested mutation payload validation, same-origin URL hardening, replay-receipt rollback repair and privacy export/erasure of receipts.
+- Required InnoDB and controlled transactional-engine verification for all 13 File 23-owned tables; added savepoint-aware atomic repository operations and serialized audit-chain writes.
+- Hardened background-job claim/transition evidence, lock ownership, retries/dead-letter transitions, pagination ceilings and reconciliation signals.
+- Encrypted generated exports at rest with AES-256-GCM, verified ciphertext hashes and owner-bound expiring authenticated delivery; expanded privacy export/erasure across all File 23-owned domains.
+- Added the executable forty-round review gate, permanent CI enforcement, the full audit record, Version 1.2.0 deterministic installable/source packages and exact-head release evidence.
+
 ## 1.1.0 — 2026-08-04
 
 - Completed File 23-owned runtime surfaces for sources, media, interactions, revisions, notifications and content gaps.

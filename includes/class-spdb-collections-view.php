@@ -107,8 +107,8 @@ final class SPDB_Collections_View {
 		$collection_id = $this->string_value( $input['collection_id'] ?? '' );
 		$item_id = $this->string_value( $input['item_id'] ?? '' );
 		$link_id = $this->string_value( $input['link_id'] ?? '' );
-		$page = $this->positive_integer( $input['page'] ?? 1, 100000 );
-		$item_page = $this->positive_integer( $input['item_page'] ?? 1, 100000 );
+		$page = $this->positive_integer( $input['page'] ?? 1, 1000 );
+		$item_page = $this->positive_integer( $input['item_page'] ?? 1, 1000 );
 		$per_page = $this->per_page( $input['per_page'] ?? 20 );
 
 		if ( ! in_array( $section, array( 'collections', 'knowledge' ), true ) || ! in_array( $scope, SPDB_Collections_Policy::scopes(), true ) || null === $page || null === $item_page || null === $per_page ) {

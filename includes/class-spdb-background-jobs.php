@@ -69,13 +69,18 @@ final class SPDB_Background_Jobs {
 		$settings = SPDB_Admin_Settings::get();
 		$jobs     = $this->repository->claim_due_jobs( (int) $settings['jobs_per_run'] );
 		if ( is_wp_error( $jobs ) ) {
+			do_action( 'spdb/background_job_claim_failed', array( 'error_code' => $jobs->get_error_code() ) );
 			return;
 		}
 
 		foreach ( $jobs as $job ) {
 			$result = $this->execute( $job );
 			if ( is_wp_error( $result ) ) {
-				$this->repository->fail_or_retry_job( $job['job_id'], $job['lock_token'], $result->get_error_code() );
+				$transition = $this->repository->fail_or_retry_job( $job['job_id'], $job['lock_token'], $result->get_error_code() );
+				if ( is_wp_error( $transition ) ) {
+					do_action( 'spdb/background_job_transition_failed', array( 'job_id' => $job['job_id'], 'error_code' => $transition->get_error_code(), 'phase' => 'retry_or_dead_letter' ) );
+					continue;
+				}
 				$updated = $this->repository->get_job( $job['job_id'] );
 				if ( is_array( $updated ) && 'dead_letter' === $updated['status'] ) {
 					do_action(
@@ -90,7 +95,10 @@ final class SPDB_Background_Jobs {
 				}
 				continue;
 			}
-			$this->repository->complete_job( $job['job_id'], $job['lock_token'] );
+			$completed = $this->repository->complete_job( $job['job_id'], $job['lock_token'] );
+			if ( is_wp_error( $completed ) ) {
+				do_action( 'spdb/background_job_transition_failed', array( 'job_id' => $job['job_id'], 'error_code' => $completed->get_error_code(), 'phase' => 'complete' ) );
+			}
 		}
 	}
 
@@ -228,9 +236,15 @@ final class SPDB_Background_Jobs {
 
 	private function enqueue_maintenance_jobs(): void {
 		$bucket = gmdate( 'YmdHi', (int) floor( time() / ( 5 * MINUTE_IN_SECONDS ) ) * ( 5 * MINUTE_IN_SECONDS ) );
-		$this->repository->enqueue_job( 'adapter_health_check', 0, array(), 'health:' . $bucket, 3 );
+		$health = $this->repository->enqueue_job( 'adapter_health_check', 0, array(), 'health:' . $bucket, 3 );
+		if ( is_wp_error( $health ) ) {
+			do_action( 'spdb/background_job_enqueue_failed', array( 'job_type' => 'adapter_health_check', 'error_code' => $health->get_error_code() ) );
+		}
 		$day = gmdate( 'Ymd' );
-		$this->repository->enqueue_job( 'retention_cleanup', 0, array(), 'retention:' . $day, 3 );
+		$retention = $this->repository->enqueue_job( 'retention_cleanup', 0, array(), 'retention:' . $day, 3 );
+		if ( is_wp_error( $retention ) ) {
+			do_action( 'spdb/background_job_enqueue_failed', array( 'job_type' => 'retention_cleanup', 'error_code' => $retention->get_error_code() ) );
+		}
 	}
 
 	/** @param mixed $raw @return array<string,mixed> */

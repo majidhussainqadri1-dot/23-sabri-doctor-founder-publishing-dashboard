@@ -41,20 +41,26 @@ final class SPDB_Privacy_Integration {
 
 	/** @return array<string,mixed> */
 	public function export_personal_data( string $email_address, int $page = 1 ): array {
-		if ( $page > 1 ) {
-			return array( 'data' => array(), 'done' => true );
-		}
+		$page = max( 1, $page );
 		$user = get_user_by( 'email', $email_address );
 		if ( ! $user instanceof WP_User ) {
 			return array( 'data' => array(), 'done' => true );
 		}
-		$data  = $this->repository->privacy_export( (int) $user->ID );
+		$per_page = 100;
+		$data      = $this->repository->privacy_export( (int) $user->ID, $page, $per_page );
+		$receipts  = SPDB_Operational_Mutation_Guard::privacy_export_receipts( (int) $user->ID, $page, $per_page );
+		$done      = true === ( $data['_done'] ?? false ) && count( $receipts ) < $per_page;
+		unset( $data['_done'] );
+		$data['mutation_receipts'] = $receipts;
 		$items = array();
 		foreach ( $data as $group => $value ) {
+			if ( array() === $value ) {
+				continue;
+			}
 			$items[] = array(
 				'group_id'    => 'spdb-file23',
 				'group_label' => __( 'Publishing Dashboard', 'sabri-publishing-dashboard' ),
-				'item_id'     => 'spdb-' . sanitize_key( $group ) . '-' . (int) $user->ID,
+				'item_id'     => 'spdb-' . sanitize_key( $group ) . '-' . (int) $user->ID . '-page-' . $page,
 				'data'        => array(
 					array(
 						'name'  => ucwords( str_replace( '_', ' ', $group ) ),
@@ -63,7 +69,7 @@ final class SPDB_Privacy_Integration {
 				),
 			);
 		}
-		return array( 'data' => $items, 'done' => true );
+		return array( 'data' => $items, 'done' => $done );
 	}
 
 	/** @return array<string,mixed> */
@@ -75,8 +81,8 @@ final class SPDB_Privacy_Integration {
 		if ( ! $user instanceof WP_User ) {
 			return array( 'items_removed' => false, 'items_retained' => false, 'messages' => array(), 'done' => true );
 		}
-		$files  = $this->exports->erase_user_files( (int) $user->ID );
-		$result = $this->repository->privacy_erase( (int) $user->ID );
+		$files    = $this->exports->erase_user_files( (int) $user->ID );
+		$result   = $this->repository->privacy_erase( (int) $user->ID );
 		if ( is_wp_error( $result ) ) {
 			return array(
 				'items_removed'  => false,
@@ -85,8 +91,9 @@ final class SPDB_Privacy_Integration {
 				'done'           => true,
 			);
 		}
+		$receipts = SPDB_Operational_Mutation_Guard::erase_user_receipts( (int) $user->ID );
 		return array(
-			'items_removed'  => (int) $result['items_removed'] > 0 || $files > 0,
+			'items_removed'  => (int) $result['items_removed'] > 0 || $files > 0 || $receipts > 0,
 			'items_retained' => true === $result['items_retained'],
 			'messages'       => array( __( 'Institutional task and append-only audit evidence may be retained under the approved retention policy.', 'sabri-publishing-dashboard' ) ),
 			'done'           => true,

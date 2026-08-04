@@ -13,3 +13,9 @@ The mutation guard does not create a second content backend or audit table. Requ
 ## Local repair boundary
 
 Local repair is non-destructive: capability reconciliation, schema verification, job rescheduling, route refresh, retention cleanup and audit verification. Global Safe Mode, platform repair and rollback remain File 20 responsibilities. Native publication, source, review, schedule, media, notification-delivery, profile and clinical data remain with their canonical owners.
+
+## Version 1.2.0 privacy completeness
+
+Privacy export is cursor/pagination aware and covers preferences, saved views, tasks, delegations, automation rules, exports, collections/knowledge pointers and bounded mutation receipts. Erasure removes owner-only data and encrypted export artifacts; institutional records that must remain for operational integrity are pseudonymized/minimized rather than silently reassigned or destroyed. Receipt options are scanned in bounded pages and removed for the subject account.
+
+Local repair remains File 23-owned, reversible and capability-separated. It cannot enable File 20 Safe Mode, rewrite companion/native data, clear provider evidence without authority or perform platform rollback.

@@ -1,4 +1,4 @@
-# File 23 Founder Manual — Version 1.1.0
+# File 23 Founder Manual — Version 1.2.0
 
 ## Purpose
 

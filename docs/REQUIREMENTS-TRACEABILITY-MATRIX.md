@@ -1,4 +1,4 @@
-# File 23 Requirements-to-Code Traceability Matrix — Version 1.1.0
+# File 23 Requirements-to-Code Traceability Matrix — Version 1.2.0
 
 Canonical plans: Definitive Master Plan v3.0 and File 23 Final Central-Plan-Harmonized v3.0.
 
@@ -43,3 +43,7 @@ Canonical plans: Definitive Master Plan v3.0 and File 23 Final Central-Plan-Harm
 ## Release-state rule
 
 “Implemented” in this matrix means code and automated source evidence exist. Rows explicitly marked staging pending cannot be classified as staging-accepted, live or operational until their external evidence is attached to the release sign-off.
+
+## Forty-round review evidence
+
+All F23-R001–F23-R035 rows are cross-checked by `docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md` and the executable `tests/forty-round-review-gate-tests.php`. The gate verifies ordered 01–40 rounds, correction/retest fields, strict File 00 authority, capability reconciliation, ownership, transactional schemas, audit concurrency, encrypted exports, privacy lifecycle, provider acceptance, release version and permanent CI enforcement.

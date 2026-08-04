@@ -13,7 +13,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Operations_Schema {
-	public const VERSION = '1.0.0';
+	public const VERSION = '1.1.0';
 
 	private const OPTION_KEY = 'spdb_operations_schema_version';
 
@@ -74,7 +74,7 @@ final class SPDB_Operations_Schema {
 			version bigint(20) unsigned NOT NULL DEFAULT 1,
 			updated_at_gmt datetime NOT NULL,
 			PRIMARY KEY  (user_id)
-		) {$charset_collate};";
+		) ENGINE=InnoDB {$charset_collate};";
 
 		$sql[] = "CREATE TABLE {$tables['saved_views']} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -88,7 +88,7 @@ final class SPDB_Operations_Schema {
 			PRIMARY KEY  (id),
 			UNIQUE KEY view_id (view_id),
 			KEY owner_updated (owner_user_id, updated_at_gmt)
-		) {$charset_collate};";
+		) ENGINE=InnoDB {$charset_collate};";
 
 		$sql[] = "CREATE TABLE {$tables['tasks']} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -116,7 +116,7 @@ final class SPDB_Operations_Schema {
 			KEY owner_status (owner_user_id, status),
 			KEY due_at_gmt (due_at_gmt),
 			KEY native_ref (provider_key, object_type, object_id)
-		) {$charset_collate};";
+		) ENGINE=InnoDB {$charset_collate};";
 
 		$sql[] = "CREATE TABLE {$tables['delegations']} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -138,7 +138,7 @@ final class SPDB_Operations_Schema {
 			KEY principal_status (principal_user_id, status),
 			KEY delegate_status (delegate_user_id, status),
 			KEY expires_at_gmt (expires_at_gmt)
-		) {$charset_collate};";
+		) ENGINE=InnoDB {$charset_collate};";
 
 		$sql[] = "CREATE TABLE {$tables['automation_rules']} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -161,7 +161,7 @@ final class SPDB_Operations_Schema {
 			KEY owner_status (owner_user_id, status),
 			KEY event_status (event_key, status),
 			KEY next_run_at_gmt (next_run_at_gmt)
-		) {$charset_collate};";
+		) ENGINE=InnoDB {$charset_collate};";
 
 		$sql[] = "CREATE TABLE {$tables['metric_snapshots']} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -182,7 +182,7 @@ final class SPDB_Operations_Schema {
 			UNIQUE KEY snapshot_id (snapshot_id),
 			UNIQUE KEY metric_period (provider_key, metric_key, scope, owner_user_id, period_start_gmt, period_end_gmt),
 			KEY expires_at_gmt (expires_at_gmt)
-		) {$charset_collate};";
+		) ENGINE=InnoDB {$charset_collate};";
 
 		$sql[] = "CREATE TABLE {$tables['export_jobs']} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -204,7 +204,7 @@ final class SPDB_Operations_Schema {
 			UNIQUE KEY export_id (export_id),
 			KEY owner_status (owner_user_id, status),
 			KEY expires_at_gmt (expires_at_gmt)
-		) {$charset_collate};";
+		) ENGINE=InnoDB {$charset_collate};";
 
 		$sql[] = "CREATE TABLE {$tables['adapter_health']} (
 			provider_key varchar(64) NOT NULL,
@@ -214,7 +214,7 @@ final class SPDB_Operations_Schema {
 			expires_at_gmt datetime NOT NULL,
 			PRIMARY KEY  (provider_key),
 			KEY expires_at_gmt (expires_at_gmt)
-		) {$charset_collate};";
+		) ENGINE=InnoDB {$charset_collate};";
 
 		$sql[] = "CREATE TABLE {$tables['background_jobs']} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -238,7 +238,7 @@ final class SPDB_Operations_Schema {
 			UNIQUE KEY type_idempotency (job_type, idempotency_key),
 			KEY status_available (status, available_at_gmt),
 			KEY owner_status (owner_user_id, status)
-		) {$charset_collate};";
+		) ENGINE=InnoDB {$charset_collate};";
 
 		$sql[] = "CREATE TABLE {$tables['dashboard_audit']} (
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
@@ -254,9 +254,14 @@ final class SPDB_Operations_Schema {
 			UNIQUE KEY event_id (event_id),
 			KEY actor_created (actor_user_id, created_at_gmt),
 			KEY event_created (event_key, created_at_gmt)
-		) {$charset_collate};";
+		) ENGINE=InnoDB {$charset_collate};";
 
 		dbDelta( $sql );
+
+		$converted = self::ensure_transactional_tables();
+		if ( is_wp_error( $converted ) ) {
+			return $converted;
+		}
 
 		$verified = self::verify();
 		if ( is_wp_error( $verified ) ) {
@@ -298,6 +303,13 @@ final class SPDB_Operations_Schema {
 					__( 'A required File 23 operational metadata table is missing.', 'sabri-publishing-dashboard' )
 				);
 			}
+			$engine = self::table_engine( $table );
+			if ( 'innodb' !== strtolower( $engine ) ) {
+				return self::error(
+					'spdb_operations_table_not_transactional',
+					__( 'A required File 23 operational metadata table is not using InnoDB.', 'sabri-publishing-dashboard' )
+				);
+			}
 		}
 
 		return true;
@@ -332,11 +344,40 @@ final class SPDB_Operations_Schema {
 		);
 	}
 
+	/** @return true|WP_Error */
+	private static function ensure_transactional_tables() {
+		global $wpdb;
+		if ( ! method_exists( $wpdb, 'query' ) ) { return self::error( 'spdb_operations_database_unavailable', __( 'The WordPress database service is unavailable.', 'sabri-publishing-dashboard' ) ); }
+		foreach ( self::table_names() as $table ) {
+			if ( 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $table ) ) {
+				return self::error( 'spdb_operations_table_identifier_invalid', __( 'An operational table identifier is invalid.', 'sabri-publishing-dashboard' ) );
+			}
+			$engine = self::table_engine( $table );
+			if ( '' !== $engine && 'innodb' !== strtolower( $engine ) ) {
+				$result = $wpdb->query( "ALTER TABLE `{$table}` ENGINE=InnoDB" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Identifier is strictly allowlisted.
+				if ( false === $result ) {
+					return self::error( 'spdb_operations_engine_upgrade_failed', __( 'A File 23 operational table could not be upgraded to InnoDB.', 'sabri-publishing-dashboard' ) );
+				}
+			}
+		}
+		return true;
+	}
+
+	private static function table_engine( string $table ): string {
+		global $wpdb;
+		if ( 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $table ) || ! method_exists( $wpdb, 'get_row' ) ) {
+			return '';
+		}
+		$row = $wpdb->get_row( $wpdb->prepare( 'SHOW TABLE STATUS LIKE %s', $table ), defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Identifier is strictly allowlisted.
+		return is_array( $row ) ? (string) ( $row['Engine'] ?? '' ) : '';
+	}
+
 	private static function database_available(): bool {
 		global $wpdb;
 		return is_object( $wpdb )
 			&& isset( $wpdb->prefix )
 			&& method_exists( $wpdb, 'get_var' )
+			&& method_exists( $wpdb, 'get_row' )
 			&& method_exists( $wpdb, 'prepare' )
 			&& method_exists( $wpdb, 'esc_like' );
 	}

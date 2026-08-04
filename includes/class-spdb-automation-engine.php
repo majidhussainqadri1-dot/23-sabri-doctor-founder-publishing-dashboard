@@ -43,13 +43,16 @@ final class SPDB_Automation_Engine {
 				continue;
 			}
 			$dedupe = 'automation:' . $rule_id . ':' . $version . ':' . hash( 'sha256', wp_json_encode( $payload ) ?: '' );
-			$this->repository->enqueue_job(
+			$enqueued = $this->repository->enqueue_job(
 				'automation_rule',
 				max( 0, (int) ( $rule['owner_user_id'] ?? 0 ) ),
 				array( 'rule_id' => $rule_id, 'rule_version' => $version, 'event_key' => $event_key, 'event' => $payload ),
 				$dedupe,
 				(int) SPDB_Admin_Settings::get()['job_max_attempts']
 			);
+			if ( is_wp_error( $enqueued ) ) {
+				do_action( 'spdb/automation_enqueue_failed', array( 'rule_id' => $rule_id, 'event_key' => $event_key, 'error_code' => $enqueued->get_error_code() ) );
+			}
 		}
 	}
 

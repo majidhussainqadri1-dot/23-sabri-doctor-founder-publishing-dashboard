@@ -1,4 +1,4 @@
-# File 23 Capability Matrix — Version 1.1.0
+# File 23 Capability Matrix — Version 1.2.0
 
 ## Authority model
 
@@ -26,7 +26,10 @@ File 23 defines capabilities but does not create identity truth or autonomous in
 | `spdb_manage_dashboard_settings` | Yes | No | No | No | File 23 settings and staging evidence. |
 | `spdb_run_system_check` | Yes | No | Optional read | No | Read-first diagnostics. |
 | `spdb_repair_owned_data` | Yes | No | No | No | Reversible File 23-owned repair only. |
-| `spdb_manage_safe_mode` | Compatibility key only | No | No | No | Does not grant global Safe Mode; File 20 remains owner. |
+
+## Retired migration key
+
+`spdb_manage_safe_mode` is not a canonical File 23 capability. The installer removes it from managed roles during schema reconciliation. File 20 remains the sole global Safe Mode owner.
 
 ## Mandatory enforcement
 

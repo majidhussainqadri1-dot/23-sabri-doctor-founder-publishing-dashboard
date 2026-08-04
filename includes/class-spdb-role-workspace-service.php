@@ -96,8 +96,8 @@ final class SPDB_Role_Workspace_Service {
 		if ( ! SPDB_Membership_Guard::can_user_view_restricted_dashboard( $user_id ) ) { return $this->context( $user_id, 'denied', $status, true, false, false, false, $environment ); }
 		$is_approved = SPDB_Membership_Guard::is_user_approved( $user_id );
 		if ( ! $is_approved ) { return $this->context( $user_id, 'restricted', $status, true, false, false, false, $environment ); }
-		$is_founder = function_exists( 'smc_is_founder' ) && smc_is_founder( $user_id );
-		$is_trusted = ! $is_founder && function_exists( 'smc_is_trusted_publisher' ) && smc_is_trusted_publisher( $user_id );
+		$is_founder = SPDB_Membership_Guard::is_user_founder( $user_id );
+		$is_trusted = ! $is_founder && SPDB_Membership_Guard::is_user_trusted_publisher( $user_id );
 		$key = $is_founder ? 'founder' : ( $is_trusted ? 'trusted_doctor' : 'doctor' );
 		return $this->context( $user_id, $key, $status, false, $is_founder, $is_trusted, true, $environment );
 	}

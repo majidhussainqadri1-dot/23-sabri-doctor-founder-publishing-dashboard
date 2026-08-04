@@ -1,4 +1,4 @@
-# File 23 Data Ownership Matrix — Version 1.1.0
+# File 23 Data Ownership Matrix — Version 1.2.0
 
 ## Governing principle
 

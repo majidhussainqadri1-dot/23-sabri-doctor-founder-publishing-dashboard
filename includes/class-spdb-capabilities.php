@@ -38,9 +38,19 @@ final class SPDB_Capabilities {
 			'spdb_manage_dashboard_settings',
 			'spdb_run_system_check',
 			'spdb_repair_owned_data',
-			// Retained only as a backward-compatible key. Global Safe Mode remains File 20-owned.
-			'spdb_manage_safe_mode',
 		);
+	}
+
+	/**
+	 * Capabilities previously created by File 23 that are no longer valid.
+	 *
+	 * Global Safe Mode is owned by File 20 and must not remain grantable through
+	 * File 23 after an upgrade.
+	 *
+	 * @return string[]
+	 */
+	public static function retired(): array {
+		return array( 'spdb_manage_safe_mode' );
 	}
 
 	/**

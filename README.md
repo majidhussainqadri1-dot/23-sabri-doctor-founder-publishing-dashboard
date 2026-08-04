@@ -13,18 +13,22 @@ File 23 is the operational command center. It does not own native publication bo
 - File 24: security/privacy/compliance assurance evidence.
 - File 25: public visual/profile/timeline presentation.
 
-## 1.1.0 full-plan candidate
+## 1.2.0 forty-round hardened candidate
 
-The source includes the remaining File 23-owned runtime domains:
+The source has passed forty independent thematic review/fix rounds and includes the remaining File 23-owned runtime domains:
 
 - Sources/evidence, asset usage, interactions, content gaps, revisions and publishing notifications as strict native projections.
 - Provider-owned privacy-thresholded analytics and bounded rebuildable snapshots.
-- Doctor/Founder reports and queued CSV, JSON, printable HTML, PDF and private-calendar exports with owner-bound expiring signatures.
+- Doctor/Founder reports and queued CSV, JSON, printable HTML, PDF and private-calendar exports encrypted at rest and delivered through owner-bound expiring signatures.
 - Cross-module tasks, scoped MFA-bound delegation, bounded automation rules and a reviewed native-action execution boundary.
 - Background jobs with idempotency, locks, retries, exponential backoff, dead-letter state and privacy-safe File 19 notifications.
 - WordPress privacy export/erasure for File 23-owned data, retention cleanup, append-only audit integrity, local reversible repair and explicit staging acceptance evidence.
 - Complete File 00–25 dependency manifest, File 24 sanitized assurance manifest and read-only File 04 migration diagnostics.
 - Full private navigation and responsive, RTL and accessibility treatment.
+
+## Forty-round hardening
+
+Capability schema 4 removes stale grants, File 20 remains the sole global Safe Mode owner, all 13 File 23-owned tables require verified InnoDB, provider maturity acceptance is evidence/version bound, audit-chain writes are serialized, background jobs verify lock ownership and transition results, and privacy export/erasure covers receipts, exports, collections and institutional pseudonymization.
 
 ## Operational mutation integrity
 
@@ -35,7 +39,7 @@ Native review/calendar commands remain under their separate object-version, idem
 ## Truthful status
 
 - Specified: complete.
-- Coded: full File 23-owned 1.1.0 candidate.
+- Coded: full File 23-owned 1.2.0 candidate.
 - Automated QA: exact-head GitHub Actions required.
 - Staging accepted: pending Hostinger execution.
 - Live deployed/operational: pending.

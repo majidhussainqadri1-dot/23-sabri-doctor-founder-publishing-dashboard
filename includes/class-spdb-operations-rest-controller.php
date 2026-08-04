@@ -16,6 +16,7 @@ final class SPDB_Operations_REST_Controller {
 	private SPDB_Operations_Repository $repository;
 	private SPDB_Local_Repair $repair;
 	private SPDB_Activation_Wizard $activation;
+	private SPDB_Adapter_Acceptance $adapter_acceptance;
 
 	public function __construct(
 		SPDB_Operations_Service $operations,
@@ -23,7 +24,8 @@ final class SPDB_Operations_REST_Controller {
 		SPDB_Export_Service $exports,
 		SPDB_Operations_Repository $repository,
 		SPDB_Local_Repair $repair,
-		SPDB_Activation_Wizard $activation
+		SPDB_Activation_Wizard $activation,
+		SPDB_Adapter_Acceptance $adapter_acceptance
 	) {
 		$this->operations = $operations;
 		$this->governance = $governance;
@@ -31,6 +33,7 @@ final class SPDB_Operations_REST_Controller {
 		$this->repository = $repository;
 		$this->repair     = $repair;
 		$this->activation = $activation;
+		$this->adapter_acceptance = $adapter_acceptance;
 	}
 
 	public function register(): void {
@@ -217,6 +220,15 @@ final class SPDB_Operations_REST_Controller {
 		);
 		register_rest_route(
 			self::NAMESPACE,
+			'/provider-acceptance/(?P<provider_key>[a-z0-9][a-z0-9_-]{1,63})',
+			array(
+				'methods'             => WP_REST_Server::CREATABLE,
+				'callback'            => array( $this, 'record_provider_acceptance' ),
+				'permission_callback' => array( $this, 'settings_permission' ),
+			)
+		);
+		register_rest_route(
+			self::NAMESPACE,
 			'/activation',
 			array(
 				array(
@@ -377,6 +389,10 @@ final class SPDB_Operations_REST_Controller {
 
 	public function record_activation( WP_REST_Request $request ) {
 		return rest_ensure_response( $this->activation->record_acceptance( $this->json( $request ) ) );
+	}
+
+	public function record_provider_acceptance( WP_REST_Request $request ) {
+		return rest_ensure_response( $this->adapter_acceptance->record( (string) $request['provider_key'], $this->json( $request ) ) );
 	}
 
 	/** @return array<string,mixed> */

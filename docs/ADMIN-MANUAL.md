@@ -1,4 +1,4 @@
-# File 23 Administrator and Release Operator Manual — Version 1.1.0
+# File 23 Administrator and Release Operator Manual — Version 1.2.0
 
 ## Administrative boundary
 
@@ -6,7 +6,7 @@ Administrators may install, diagnose and maintain File 23, but may not bypass Fi
 
 ## Pre-install checks
 
-- Confirm exact Git commit, Version 1.1.0 package and SHA-256.
+- Confirm exact Git commit, Version 1.2.0 package and SHA-256.
 - Confirm supported WordPress/PHP versions and exact companion-plugin pins.
 - Create database and files backup and verify restoration access.
 - Perform first installation on Hostinger staging, never directly on Live.

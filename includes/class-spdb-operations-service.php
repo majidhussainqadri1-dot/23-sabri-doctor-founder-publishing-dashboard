@@ -332,7 +332,10 @@ final class SPDB_Operations_Service {
 			return self::error( 'spdb_ai_evidence_insufficient', __( 'The AI provider did not return sufficient source evidence. Continue with the manual workflow.', 'sabri-publishing-dashboard' ), 422 );
 		}
 
-		$this->repository->append_audit( get_current_user_id(), 'ai_assistance_requested', 'type:' . $type, array( 'provider_key' => $provider_key, 'citation_count' => count( $citations ) ) );
+		$audit = $this->repository->append_audit( get_current_user_id(), 'ai_assistance_requested', 'type:' . $type, array( 'provider_key' => $provider_key, 'citation_count' => count( $citations ) ) );
+		if ( is_wp_error( $audit ) ) {
+			return $audit;
+		}
 		return array(
 			'suggestion'       => substr( $suggestion, 0, 12000 ),
 			'citations'        => $citations,
@@ -361,7 +364,7 @@ final class SPDB_Operations_Service {
 		if ( 'institution' === $scope && ! self::is_institutional( get_current_user_id() ) ) {
 			return self::error( 'spdb_query_scope_forbidden', __( 'Institution-wide scope is not authorized.', 'sabri-publishing-dashboard' ), 403 );
 		}
-		$page     = min( 100000, max( 1, (int) ( $query['page'] ?? 1 ) ) );
+		$page     = min( 1000, max( 1, (int) ( $query['page'] ?? 1 ) ) );
 		$per_page = min( 100, max( 1, (int) ( $query['per_page'] ?? 25 ) ) );
 		$search   = isset( $query['search'] ) && is_scalar( $query['search'] ) ? trim( sanitize_text_field( (string) $query['search'] ) ) : '';
 		if ( strlen( $search ) > 200 || self::contains_sensitive_data( $search ) ) {
@@ -423,7 +426,11 @@ final class SPDB_Operations_Service {
 
 	private static function is_institutional( int $user_id ): bool {
 		$assertions = SPDB_Membership_Guard::assertions( $user_id );
-		return is_array( $assertions ) && ! empty( $assertions['institutional_account'] );
+		return is_array( $assertions )
+			&& true === ( $assertions['institutional_account'] ?? false )
+			&& true === ( $assertions['approved'] ?? false )
+			&& true === ( $assertions['eligible'] ?? false )
+			&& false === ( $assertions['suspended'] ?? true );
 	}
 
 	private static function error( string $code, string $message, int $status ): WP_Error {

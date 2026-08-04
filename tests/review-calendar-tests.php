@@ -190,7 +190,7 @@ $GLOBALS['spdb_test_founder'] = false;
 $mismatch_registry = new SPDB_Adapter_Registry( array( 'review_calendar_provider' => SPDB_Adapter_Registry::ACCEPTANCE_PRODUCTION_ACCEPTED ) );
 $mismatch_registry->register( new SPDB_Test_Review_Calendar_Adapter( array( 'review' => array( 'items' => array( $review_item ), 'total' => 1, 'has_more' => false ), 'allowed_operations' => array( 'approve_review' ), 'confirmation_id' => 'other-id' ) ) );
 $mismatch_controller = new SPDB_Review_Calendar_REST_Controller( new SPDB_Review_Calendar_Service( $mismatch_registry ), new SPDB_Operation_Broker( $mismatch_registry ) );
-spdb_rc_assert( 'spdb_native_confirmation_invalid' === spdb_rc_error_code( $mismatch_controller->execute_operation( spdb_rc_request( $base_params ), 'approve_review' ) ), 'Mismatched native confirmation references must not be reported as success.' );
+spdb_rc_assert( 'spdb_native_action_failed' === spdb_rc_error_code( $mismatch_controller->execute_operation( spdb_rc_request( $base_params ), 'approve_review' ) ), 'Mismatched native confirmation references must not be reported as success.' );
 
 /* Cross-owner calendar operation denial. */
 $foreign_calendar = $calendar_item; $foreign_calendar['author_id'] = 8; $foreign_calendar['author_name'] = 'Doctor Eight';

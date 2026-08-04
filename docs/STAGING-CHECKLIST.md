@@ -1,4 +1,4 @@
-# File 23 Hostinger Staging Acceptance Checklist — Version 1.1.0
+# File 23 Hostinger Staging Acceptance Checklist — Version 1.2.0
 
 This checklist is an execution record, not a declaration of success. Every row requires dated evidence, tester identity, environment/version and defect reference where applicable.
 

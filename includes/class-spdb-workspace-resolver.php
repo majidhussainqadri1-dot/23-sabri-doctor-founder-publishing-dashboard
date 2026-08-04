@@ -36,11 +36,11 @@ final class SPDB_Workspace_Resolver {
 			return $this->workspace( 'restricted', __( 'Restricted Read-Only Workspace', 'sabri-publishing-dashboard' ), true, $status, $user_id );
 		}
 
-		if ( function_exists( 'smc_is_founder' ) && smc_is_founder( $user_id ) ) {
+		if ( SPDB_Membership_Guard::is_user_founder( $user_id ) ) {
 			return $this->workspace( 'founder', __( 'Founder Publishing Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
 		}
 
-		if ( function_exists( 'smc_is_trusted_publisher' ) && smc_is_trusted_publisher( $user_id ) ) {
+		if ( SPDB_Membership_Guard::is_user_trusted_publisher( $user_id ) ) {
 			return $this->workspace( 'trusted_doctor', __( 'Trusted Doctor Publishing Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
 		}
 

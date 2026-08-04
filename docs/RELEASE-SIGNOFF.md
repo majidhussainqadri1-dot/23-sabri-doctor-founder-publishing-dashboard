@@ -1,15 +1,15 @@
-# File 23 Release Sign-Off Form — Version 1.1.0
+# File 23 Release Sign-Off Form — Version 1.2.0
 
 This form must remain **Pending** until every required evidence field is complete. A green CI run alone is not release approval.
 
 ## Artifact identity
 
-- Release version: `1.1.0`
+- Release version: `1.2.0`
 - Exact Git head: ________________________________
 - Base/main head reviewed: _________________________
-- Installable ZIP: `23-sabri-doctor-founder-publishing-dashboard-1.1.0.zip`
+- Installable ZIP: `23-sabri-doctor-founder-publishing-dashboard-1.2.0.zip`
 - Installable ZIP SHA-256: _________________________
-- Complete-source ZIP: `23-Doctor-Founder-Publishing-Dashboard-Source-1.1.0.zip`
+- Complete-source ZIP: `23-Doctor-Founder-Publishing-Dashboard-Source-1.2.0.zip`
 - Complete-source ZIP SHA-256: _____________________
 - Source manifest SHA-256: _________________________
 - CI run ID and URL/reference: _____________________
@@ -32,7 +32,7 @@ This form must remain **Pending** until every required evidence field is complet
 ## Acceptance evidence
 
 - [ ] Exact-head automated suites all pass with no unexplained skip.
-- [ ] Two fresh review/fix rounds after the final code change are complete.
+- [ ] Forty thematic review/fix rounds and the executable 40/40 gate are complete; two fresh reviews after any later code change remain mandatory.
 - [ ] Database schema/capability/data-ownership/threat-model documents reviewed.
 - [ ] Fresh install and supported upgrades pass.
 - [ ] Founder/Doctor/Reviewer/Pending/Suspended journeys pass.
@@ -56,6 +56,7 @@ This form must remain **Pending** until every required evidence field is complet
 - Migration/rollback: ______________________________
 - Security/privacy review: _________________________
 - Defect register and retests: ______________________
+- Forty-round audit: `docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md`
 
 ## Approvals
 

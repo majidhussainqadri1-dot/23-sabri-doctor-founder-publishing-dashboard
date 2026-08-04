@@ -25,7 +25,12 @@ final class SPDB_Membership_Guard {
 			&& version_compare( $version, self::MAXIMUM_CONTRACT_EXCLUSIVE, '<' );
 	}
 
-	/** Canonical File 00 assertions are preferred; legacy helpers remain a bounded compatibility path. */
+	/** Whether a canonical File 00 contract implementation is present at all. */
+	public static function canonical_contract_present(): bool {
+		return class_exists( 'SMC_Contracts' ) || defined( 'SMC_CONTRACT_VERSION' );
+	}
+
+	/** Canonical File 00 assertions are preferred and must be version-compatible. */
 	public static function has_canonical_assertions(): bool {
 		return class_exists( 'SMC_Contracts' )
 			&& is_callable( array( 'SMC_Contracts', 'assertions' ) )
@@ -37,8 +42,8 @@ final class SPDB_Membership_Guard {
 		if ( ! defined( 'SMC_VERSION' ) || ! self::supports_version( (string) SMC_VERSION ) ) {
 			return false;
 		}
-		if ( self::has_canonical_assertions() ) {
-			return true;
+		if ( self::canonical_contract_present() ) {
+			return self::has_canonical_assertions();
 		}
 		return function_exists( 'smc_user_status' )
 			&& function_exists( 'smc_is_founder' )
@@ -59,7 +64,7 @@ final class SPDB_Membership_Guard {
 			if ( ! is_array( $assertions ) ) {
 				return null;
 			}
-			$required = array( 'contract_version', 'user_id', 'status', 'approved', 'suspended', 'eligible', 'session_two_factor', 'can_publish' );
+			$required = array( 'contract_version', 'user_id', 'status', 'approved', 'suspended', 'eligible', 'session_two_factor', 'can_publish', 'institutional_account' );
 			foreach ( $required as $key ) {
 				if ( ! array_key_exists( $key, $assertions ) ) {
 					return null;
@@ -68,17 +73,24 @@ final class SPDB_Membership_Guard {
 			if ( ! is_string( $assertions['contract_version'] ) || ! self::supports_contract_version( $assertions['contract_version'] ) || (int) $assertions['user_id'] !== $user_id ) {
 				return null;
 			}
+			foreach ( array( 'approved', 'suspended', 'eligible', 'session_two_factor', 'can_publish', 'institutional_account' ) as $boolean_key ) {
+				if ( ! is_bool( $assertions[ $boolean_key ] ) ) {
+					return null;
+				}
+			}
+			$institutional = true === $assertions['institutional_account'];
+			$founder       = $institutional && function_exists( 'smc_is_founder' ) && true === smc_is_founder( $user_id );
 			return array(
 				'contract_version'      => $assertions['contract_version'],
 				'user_id'               => $user_id,
 				'status'                => sanitize_key( (string) $assertions['status'] ),
-				'approved'              => true === $assertions['approved'],
-				'suspended'             => true === $assertions['suspended'],
-				'eligible'              => true === $assertions['eligible'],
-				'session_two_factor'    => true === $assertions['session_two_factor'],
-				'can_publish'           => true === $assertions['can_publish'],
-				'institutional_account' => ! empty( $assertions['institutional_account'] ),
-				'founder'               => function_exists( 'smc_is_founder' ) && smc_is_founder( $user_id ),
+				'approved'              => $assertions['approved'],
+				'suspended'             => $assertions['suspended'],
+				'eligible'              => $assertions['eligible'],
+				'session_two_factor'    => $assertions['session_two_factor'],
+				'can_publish'           => $assertions['can_publish'],
+				'institutional_account' => $institutional,
+				'founder'               => $founder,
 				'account_class'         => sanitize_key( (string) ( $assertions['account_class'] ?? '' ) ),
 				'membership_type'       => sanitize_key( (string) ( $assertions['membership_type'] ?? '' ) ),
 			);
@@ -93,9 +105,9 @@ final class SPDB_Membership_Guard {
 			'suspended'             => in_array( $status, array( 'suspended', 'rejected', 'expired', 'expired_document', 'appeal_review', 'erasure_pending', 'invalid_application' ), true ),
 			'eligible'              => $approved,
 			'session_two_factor'    => $approved,
-			'can_publish'           => $approved && ( smc_is_founder( $user_id ) || smc_is_trusted_publisher( $user_id ) ),
-			'institutional_account' => smc_is_founder( $user_id ),
-			'founder'               => smc_is_founder( $user_id ),
+			'can_publish'           => $approved && ( true === smc_is_founder( $user_id ) || true === smc_is_trusted_publisher( $user_id ) ),
+			'institutional_account' => true === smc_is_founder( $user_id ),
+			'founder'               => true === smc_is_founder( $user_id ),
 			'account_class'         => '',
 			'membership_type'       => '',
 		);
@@ -127,9 +139,25 @@ final class SPDB_Membership_Guard {
 			&& false === $assertions['suspended'];
 	}
 
+
+	public static function is_user_trusted_publisher( int $user_id ): bool {
+		$assertions = self::assertions( $user_id );
+		return is_array( $assertions )
+			&& true === $assertions['approved']
+			&& true === $assertions['eligible']
+			&& false === $assertions['suspended']
+			&& true === $assertions['can_publish']
+			&& false === ( $assertions['founder'] ?? false )
+			&& function_exists( 'smc_is_trusted_publisher' )
+			&& true === smc_is_trusted_publisher( $user_id );
+	}
+
 	public static function is_user_approved( int $user_id ): bool {
 		$assertions = self::assertions( $user_id );
-		return is_array( $assertions ) && true === $assertions['approved'] && false === $assertions['suspended'];
+		return is_array( $assertions )
+			&& true === $assertions['approved']
+			&& true === $assertions['eligible']
+			&& false === $assertions['suspended'];
 	}
 
 	public static function can_user_publish( int $user_id ): bool {
@@ -169,6 +197,7 @@ final class SPDB_Membership_Guard {
 		$contract = defined( 'SMC_CONTRACT_VERSION' ) ? (string) SMC_CONTRACT_VERSION : null;
 		return array(
 			'available'                   => self::is_available(),
+			'canonical_contract_present'   => self::canonical_contract_present(),
 			'canonical_assertions'        => self::has_canonical_assertions(),
 			'version'                     => $version,
 			'contract_version'            => $contract,

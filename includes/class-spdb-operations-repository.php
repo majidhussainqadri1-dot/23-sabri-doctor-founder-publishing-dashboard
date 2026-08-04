@@ -98,7 +98,10 @@ final class SPDB_Operations_Repository {
 			}
 		}
 
-		$this->append_audit( $user_id, 'preferences_updated', 'user:' . $user_id, array( 'version' => $expected_version + 1 ) );
+		$audit = $this->append_audit( $user_id, 'preferences_updated', 'user:' . $user_id, array( 'version' => $expected_version + 1 ) );
+		if ( is_wp_error( $audit ) ) {
+			return $audit;
+		}
 		return $this->get_preferences( $user_id );
 	}
 
@@ -169,7 +172,10 @@ final class SPDB_Operations_Repository {
 		if ( false === $inserted ) {
 			return self::error( 'spdb_saved_view_write_failed', __( 'The saved view could not be stored.', 'sabri-publishing-dashboard' ), 500 );
 		}
-		$this->append_audit( $user_id, 'saved_view_created', 'saved-view:' . $view_id, array() );
+		$audit = $this->append_audit( $user_id, 'saved_view_created', 'saved-view:' . $view_id, array() );
+		if ( is_wp_error( $audit ) ) {
+			return $audit;
+		}
 		return array( 'id' => $view_id, 'label' => $label, 'filters' => $filters, 'version' => 1, 'created_at' => $now, 'updated_at' => $now );
 	}
 
@@ -187,8 +193,8 @@ final class SPDB_Operations_Repository {
 		if ( 0 === $deleted ) {
 			return self::error( 'spdb_saved_view_not_found', __( 'The saved view was not found.', 'sabri-publishing-dashboard' ), 404 );
 		}
-		$this->append_audit( $user_id, 'saved_view_deleted', 'saved-view:' . $view_id, array() );
-		return true;
+		$audit = $this->append_audit( $user_id, 'saved_view_deleted', 'saved-view:' . $view_id, array() );
+		return is_wp_error( $audit ) ? $audit : true;
 	}
 
 	public function list_tasks( int $user_id, bool $institution, int $page = 1, int $per_page = 25 ) {
@@ -256,7 +262,7 @@ final class SPDB_Operations_Repository {
 			return self::error( 'spdb_task_create_failed', __( 'The task could not be created.', 'sabri-publishing-dashboard' ), 500 );
 		}
 
-		$this->append_audit(
+		$audit = $this->append_audit(
 			(int) $data['created_by'],
 			'task_created',
 			$task_id,
@@ -266,8 +272,12 @@ final class SPDB_Operations_Repository {
 				'provider_key'     => $row['provider_key'],
 				'object_type'      => $row['object_type'],
 				'status'           => 'open',
+				'reason_hash'      => hash( 'sha256', (string) $data['audit_reason'] ),
 			)
 		);
+		if ( is_wp_error( $audit ) ) {
+			return $audit;
+		}
 
 		return $this->get_task( $task_id, (int) $data['created_by'], true );
 	}
@@ -296,7 +306,7 @@ final class SPDB_Operations_Repository {
 	 * @param array<string,mixed> $changes Validated changes.
 	 * @return array<string,mixed>|WP_Error
 	 */
-	public function update_task( string $task_id, int $actor_id, int $expected_version, array $changes, bool $institution = false ) {
+	public function update_task( string $task_id, int $actor_id, int $expected_version, array $changes, bool $institution = false, string $audit_reason = '' ) {
 		$current = $this->get_task( $task_id, $actor_id, $institution );
 		if ( is_wp_error( $current ) ) {
 			return $current;
@@ -336,12 +346,19 @@ final class SPDB_Operations_Repository {
 			return self::error( 'spdb_task_conflict', __( 'The task changed in another request.', 'sabri-publishing-dashboard' ), 409 );
 		}
 
-		$this->append_audit(
+		$audit = $this->append_audit(
 			$actor_id,
 			'task_updated',
 			$task_id,
-			array( 'fields' => array_keys( $update ), 'version' => $expected_version + 1 )
+			array(
+				'fields'      => array_values( array_diff( array_keys( $update ), array( 'updated_at_gmt', 'completed_at_gmt' ) ) ),
+				'version'     => $expected_version + 1,
+				'reason_hash' => hash( 'sha256', $audit_reason ),
+			)
 		);
+		if ( is_wp_error( $audit ) ) {
+			return $audit;
+		}
 		return $this->get_task( $task_id, $actor_id, $institution );
 	}
 
@@ -393,7 +410,7 @@ final class SPDB_Operations_Repository {
 		if ( false === $wpdb->insert( $table, $row ) ) {
 			return self::error( 'spdb_delegation_create_failed', __( 'The delegation could not be created.', 'sabri-publishing-dashboard' ), 500 );
 		}
-		$this->append_audit(
+		$audit = $this->append_audit(
 			(int) $data['created_by'],
 			'delegation_created',
 			$id,
@@ -401,8 +418,12 @@ final class SPDB_Operations_Repository {
 				'principal_user_id' => $row['principal_user_id'],
 				'delegate_user_id'  => $row['delegate_user_id'],
 				'expires_at_gmt'    => $row['expires_at_gmt'],
+				'reason_hash'       => hash( 'sha256', (string) $data['reason'] ),
 			)
 		);
+		if ( is_wp_error( $audit ) ) {
+			return $audit;
+		}
 		return $this->get_delegation( $id, (int) $data['created_by'], true );
 	}
 
@@ -427,7 +448,7 @@ final class SPDB_Operations_Repository {
 	}
 
 	/** @return array<string,mixed>|WP_Error */
-	public function revoke_delegation( string $id, int $actor_id, int $expected_version, bool $institution = false ) {
+	public function revoke_delegation( string $id, int $actor_id, int $expected_version, bool $institution = false, string $audit_reason = '' ) {
 		$current = $this->get_delegation( $id, $actor_id, $institution );
 		if ( is_wp_error( $current ) ) {
 			return $current;
@@ -454,7 +475,10 @@ final class SPDB_Operations_Repository {
 		if ( 0 === $wpdb->rows_affected ) {
 			return self::error( 'spdb_delegation_conflict', __( 'The delegation changed in another request.', 'sabri-publishing-dashboard' ), 409 );
 		}
-		$this->append_audit( $actor_id, 'delegation_revoked', $id, array( 'version' => $expected_version + 1 ) );
+		$audit = $this->append_audit( $actor_id, 'delegation_revoked', $id, array( 'version' => $expected_version + 1, 'reason_hash' => hash( 'sha256', $audit_reason ) ) );
+		if ( is_wp_error( $audit ) ) {
+			return $audit;
+		}
 		return $this->get_delegation( $id, $actor_id, true );
 	}
 
@@ -514,12 +538,20 @@ final class SPDB_Operations_Repository {
 		if ( false === $wpdb->insert( $table, $row ) ) {
 			return self::error( 'spdb_rule_create_failed', __( 'The automation rule could not be created.', 'sabri-publishing-dashboard' ), 500 );
 		}
-		$this->append_audit(
+		$audit = $this->append_audit(
 			(int) $data['created_by'],
 			'automation_rule_created',
 			$id,
-			array( 'rule_type' => $row['rule_type'], 'event_key' => $row['event_key'], 'status' => 'disabled' )
+			array(
+				'rule_type'   => $row['rule_type'],
+				'event_key'   => $row['event_key'],
+				'status'      => 'disabled',
+				'reason_hash' => hash( 'sha256', (string) $data['audit_reason'] ),
+			)
 		);
+		if ( is_wp_error( $audit ) ) {
+			return $audit;
+		}
 		return $this->get_rule( $id, (int) $data['created_by'], true );
 	}
 
@@ -539,7 +571,7 @@ final class SPDB_Operations_Repository {
 	}
 
 	/** @return array<string,mixed>|WP_Error */
-	public function update_rule_status( string $id, int $actor_id, int $expected_version, string $status, bool $institution = false ) {
+	public function update_rule_status( string $id, int $actor_id, int $expected_version, string $status, bool $institution = false, string $audit_reason = '' ) {
 		$current = $this->get_rule( $id, $actor_id, $institution );
 		if ( is_wp_error( $current ) ) {
 			return $current;
@@ -565,7 +597,10 @@ final class SPDB_Operations_Repository {
 		if ( 0 === $wpdb->rows_affected ) {
 			return self::error( 'spdb_rule_conflict', __( 'The automation rule changed in another request.', 'sabri-publishing-dashboard' ), 409 );
 		}
-		$this->append_audit( $actor_id, 'automation_rule_status_changed', $id, array( 'status' => $status, 'version' => $expected_version + 1 ) );
+		$audit = $this->append_audit( $actor_id, 'automation_rule_status_changed', $id, array( 'status' => $status, 'version' => $expected_version + 1, 'reason_hash' => hash( 'sha256', $audit_reason ) ) );
+		if ( is_wp_error( $audit ) ) {
+			return $audit;
+		}
 		return $this->get_rule( $id, $actor_id, true );
 	}
 
@@ -591,27 +626,33 @@ final class SPDB_Operations_Repository {
 
 	/** @return array<string,mixed>|WP_Error */
 	public function mark_rule_run( string $rule_id, int $expected_version, ?string $next_run_at_gmt = null ) {
-		global $wpdb;
-		$table = SPDB_Operations_Schema::table( 'automation_rules' );
-		$now   = current_time( 'mysql', true );
-		$result = $wpdb->update(
-			$table,
-			array(
-				'last_run_at_gmt' => $now,
-				'next_run_at_gmt' => $next_run_at_gmt,
-				'version'         => $expected_version + 1,
-				'updated_at_gmt'  => $now,
-			),
-			array( 'rule_id' => $rule_id, 'version' => $expected_version, 'status' => 'enabled' )
+		$result = $this->atomic(
+			function () use ( $rule_id, $expected_version, $next_run_at_gmt ) {
+				global $wpdb;
+				$table = SPDB_Operations_Schema::table( 'automation_rules' );
+				$now   = current_time( 'mysql', true );
+				$updated = $wpdb->update(
+					$table,
+					array(
+						'last_run_at_gmt' => $now,
+						'next_run_at_gmt' => $next_run_at_gmt,
+						'version'         => $expected_version + 1,
+						'updated_at_gmt'  => $now,
+					),
+					array( 'rule_id' => $rule_id, 'version' => $expected_version, 'status' => 'enabled' )
+				);
+				if ( false === $updated ) {
+					return self::error( 'spdb_rule_run_update_failed', __( 'The automation rule run could not be recorded.', 'sabri-publishing-dashboard' ), 500 );
+				}
+				if ( 1 !== (int) $wpdb->rows_affected ) {
+					return self::error( 'spdb_rule_run_conflict', __( 'The automation rule changed before execution completed.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				$audit = $this->append_audit( 0, 'automation_rule_executed', $rule_id, array( 'version' => $expected_version + 1 ) );
+				return is_wp_error( $audit ) ? $audit : true;
+			},
+			'rule_run'
 		);
-		if ( false === $result ) {
-			return self::error( 'spdb_rule_run_update_failed', __( 'The automation rule run could not be recorded.', 'sabri-publishing-dashboard' ), 500 );
-		}
-		if ( 0 === $wpdb->rows_affected ) {
-			return self::error( 'spdb_rule_run_conflict', __( 'The automation rule changed before execution completed.', 'sabri-publishing-dashboard' ), 409 );
-		}
-		$this->append_audit( 0, 'automation_rule_executed', $rule_id, array( 'version' => $expected_version + 1 ) );
-		return $this->get_rule( $rule_id, 0, true );
+		return is_wp_error( $result ) ? $result : $this->get_rule( $rule_id, 0, true );
 	}
 
 	/**
@@ -713,7 +754,10 @@ final class SPDB_Operations_Repository {
 		if ( false === $wpdb->insert( $table, $row ) ) {
 			return self::error( 'spdb_export_create_failed', __( 'The export job could not be created.', 'sabri-publishing-dashboard' ), 500 );
 		}
-		$this->append_audit( (int) $data['owner_user_id'], 'export_requested', $export_id, array( 'report_key' => $row['report_key'], 'format' => $row['format'], 'scope' => $row['scope'] ) );
+		$audit = $this->append_audit( (int) $data['owner_user_id'], 'export_requested', $export_id, array( 'report_key' => $row['report_key'], 'format' => $row['format'], 'scope' => $row['scope'] ) );
+		if ( is_wp_error( $audit ) ) {
+			return $audit;
+		}
 		return $this->get_export_job( $export_id, (int) $data['owner_user_id'], true );
 	}
 
@@ -751,6 +795,9 @@ final class SPDB_Operations_Repository {
 
 	/** @return true|WP_Error */
 	public function mark_export_processing( string $export_id ) {
+		if ( 1 !== preg_match( '/^export_[a-z0-9]{32}$/', $export_id ) ) {
+			return self::error( 'spdb_export_invalid', __( 'The export identifier is invalid.', 'sabri-publishing-dashboard' ), 400 );
+		}
 		global $wpdb;
 		$table  = SPDB_Operations_Schema::table( 'export_jobs' );
 		$result = $wpdb->update(
@@ -758,50 +805,87 @@ final class SPDB_Operations_Repository {
 			array( 'status' => 'processing', 'updated_at_gmt' => current_time( 'mysql', true ), 'error_code' => '' ),
 			array( 'export_id' => $export_id, 'status' => 'queued' )
 		);
-		return false === $result
-			? self::error( 'spdb_export_update_failed', __( 'The export job could not be updated.', 'sabri-publishing-dashboard' ), 500 )
-			: true;
+		if ( false === $result ) {
+			return self::error( 'spdb_export_update_failed', __( 'The export job could not be updated.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		return 1 === (int) $wpdb->rows_affected
+			? true
+			: self::error( 'spdb_export_state_conflict', __( 'The export job is not queued or was already claimed.', 'sabri-publishing-dashboard' ), 409 );
 	}
 
 	/** @return true|WP_Error */
 	public function complete_export_job( string $export_id, string $storage_ref, string $file_hash, int $row_count ) {
-		global $wpdb;
-		$table  = SPDB_Operations_Schema::table( 'export_jobs' );
-		$result = $wpdb->update(
-			$table,
-			array(
-				'status'         => 'ready',
-				'storage_ref'    => $storage_ref,
-				'file_hash'      => $file_hash,
-				'row_count'      => max( 0, $row_count ),
-				'error_code'     => '',
-				'updated_at_gmt' => current_time( 'mysql', true ),
-			),
-			array( 'export_id' => $export_id )
-		);
-		if ( false === $result ) {
-			return self::error( 'spdb_export_update_failed', __( 'The export job could not be completed.', 'sabri-publishing-dashboard' ), 500 );
+		$storage_ref = trim( $storage_ref );
+		$file_hash   = strtolower( trim( $file_hash ) );
+		if (
+			1 !== preg_match( '/^export_[a-z0-9]{32}$/', $export_id )
+			|| '' === $storage_ref
+			|| strlen( $storage_ref ) > 500
+			|| preg_match( '/[\x00-\x1F\x7F]/', $storage_ref )
+			|| 1 !== preg_match( '/^[a-f0-9]{64}$/', $file_hash )
+			|| $row_count < 0
+		) {
+			return self::error( 'spdb_export_completion_invalid', __( 'The export completion evidence is invalid.', 'sabri-publishing-dashboard' ), 400 );
 		}
-		$this->append_audit( 0, 'export_generated', $export_id, array( 'row_count' => max( 0, $row_count ), 'file_hash' => $file_hash ) );
-		return true;
+
+		return $this->atomic(
+			function () use ( $export_id, $storage_ref, $file_hash, $row_count ) {
+				global $wpdb;
+				$table  = SPDB_Operations_Schema::table( 'export_jobs' );
+				$result = $wpdb->update(
+					$table,
+					array(
+						'status'         => 'ready',
+						'storage_ref'    => $storage_ref,
+						'file_hash'      => $file_hash,
+						'row_count'      => $row_count,
+						'error_code'     => '',
+						'updated_at_gmt' => current_time( 'mysql', true ),
+					),
+					array( 'export_id' => $export_id, 'status' => 'processing' )
+				);
+				if ( false === $result ) {
+					return self::error( 'spdb_export_update_failed', __( 'The export job could not be completed.', 'sabri-publishing-dashboard' ), 500 );
+				}
+				if ( 1 !== (int) $wpdb->rows_affected ) {
+					return self::error( 'spdb_export_state_conflict', __( 'The export job is not processing or was already finalized.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				$audit = $this->append_audit( 0, 'export_generated', $export_id, array( 'row_count' => $row_count, 'file_hash' => $file_hash ) );
+				return is_wp_error( $audit ) ? $audit : true;
+			},
+			'export_complete'
+		);
 	}
 
 	/** @return true|WP_Error */
 	public function fail_export_job( string $export_id, string $error_code ) {
-		global $wpdb;
-		$table  = SPDB_Operations_Schema::table( 'export_jobs' );
-		$result = $wpdb->update(
-			$table,
-			array(
-				'status'         => 'failed',
-				'error_code'     => sanitize_key( $error_code ),
-				'updated_at_gmt' => current_time( 'mysql', true ),
-			),
-			array( 'export_id' => $export_id )
+		$error_code = sanitize_key( $error_code );
+		if ( 1 !== preg_match( '/^export_[a-z0-9]{32}$/', $export_id ) || '' === $error_code ) {
+			return self::error( 'spdb_export_failure_invalid', __( 'The export failure evidence is invalid.', 'sabri-publishing-dashboard' ), 400 );
+		}
+		return $this->atomic(
+			function () use ( $export_id, $error_code ) {
+				global $wpdb;
+				$table  = SPDB_Operations_Schema::table( 'export_jobs' );
+				$result = $wpdb->query(
+					$wpdb->prepare(
+						"UPDATE {$table} SET status = 'failed', error_code = %s, updated_at_gmt = %s WHERE export_id = %s AND status IN ('queued','processing')",
+						$error_code,
+						current_time( 'mysql', true ),
+						$export_id
+					)
+				);
+				if ( false === $result ) {
+					return self::error( 'spdb_export_update_failed', __( 'The export job could not be marked as failed.', 'sabri-publishing-dashboard' ), 500 );
+				}
+				if ( 1 !== (int) $result ) {
+					return self::error( 'spdb_export_state_conflict', __( 'The export job was already finalized or does not exist.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				$audit = $this->append_audit( 0, 'export_failed', $export_id, array( 'error_code' => $error_code ) );
+				return is_wp_error( $audit ) ? $audit : true;
+			},
+			'export_fail'
 		);
-		return false === $result
-			? self::error( 'spdb_export_update_failed', __( 'The export job could not be marked as failed.', 'sabri-publishing-dashboard' ), 500 )
-			: true;
 	}
 
 	/**
@@ -882,13 +966,16 @@ final class SPDB_Operations_Repository {
 		$limit = min( 25, max( 1, $limit ) );
 		$now   = current_time( 'mysql', true );
 		$stale = gmdate( 'Y-m-d H:i:s', time() - max( 60, $lock_ttl ) );
-		$wpdb->query(
+		$recovered = $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$table} SET status = 'queued', lock_token = '', locked_at_gmt = NULL, updated_at_gmt = %s WHERE status = 'processing' AND locked_at_gmt < %s",
 				$now,
 				$stale
 			)
 		);
+		if ( false === $recovered ) {
+			return self::error( 'spdb_job_lock_recovery_failed', __( 'Expired background-job locks could not be recovered safely.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT job_id FROM {$table} WHERE status = 'queued' AND available_at_gmt <= %s ORDER BY available_at_gmt ASC, id ASC LIMIT %d",
@@ -949,41 +1036,53 @@ final class SPDB_Operations_Repository {
 
 	/** @return true|WP_Error */
 	public function fail_or_retry_job( string $job_id, string $lock_token, string $error_code ) {
-		$job = $this->get_job( $job_id );
-		if ( is_wp_error( $job ) ) {
-			return $job;
+		$error_code = sanitize_key( $error_code );
+		if ( '' === $error_code || 1 !== preg_match( '/^job_[a-z0-9]{32}$/', $job_id ) || 1 !== preg_match( '/^[a-f0-9]{64}$/', $lock_token ) ) {
+			return self::error( 'spdb_job_transition_invalid', __( 'The background-job transition evidence is invalid.', 'sabri-publishing-dashboard' ), 400 );
 		}
-		if ( 'processing' !== $job['status'] || ! hash_equals( (string) $job['lock_token'], $lock_token ) ) {
-			return self::error( 'spdb_job_lock_conflict', __( 'The background job lock is no longer current.', 'sabri-publishing-dashboard' ), 409 );
-		}
-		$attempts = (int) $job['attempts'] + 1;
-		$dead     = $attempts >= (int) $job['max_attempts'];
-		$delay    = min( DAY_IN_SECONDS, 60 * ( 2 ** min( 10, $attempts - 1 ) ) );
-		$now      = current_time( 'mysql', true );
+		return $this->atomic(
+			function () use ( $job_id, $lock_token, $error_code ) {
+				$job = $this->get_job( $job_id );
+				if ( is_wp_error( $job ) ) {
+					return $job;
+				}
+				if ( 'processing' !== $job['status'] || ! hash_equals( (string) $job['lock_token'], $lock_token ) ) {
+					return self::error( 'spdb_job_lock_conflict', __( 'The background job lock is no longer current.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				$attempts = (int) $job['attempts'] + 1;
+				$dead     = $attempts >= (int) $job['max_attempts'];
+				$delay    = min( DAY_IN_SECONDS, 60 * ( 2 ** min( 10, $attempts - 1 ) ) );
+				$now      = current_time( 'mysql', true );
 
-		global $wpdb;
-		$table  = SPDB_Operations_Schema::table( 'background_jobs' );
-		$result = $wpdb->update(
-			$table,
-			array(
-				'status'           => $dead ? 'dead_letter' : 'queued',
-				'attempts'         => $attempts,
-				'available_at_gmt' => $dead ? $now : gmdate( 'Y-m-d H:i:s', time() + $delay ),
-				'lock_token'       => '',
-				'locked_at_gmt'    => null,
-				'last_error_code'  => sanitize_key( $error_code ),
-				'updated_at_gmt'   => $now,
-				'finished_at_gmt'  => $dead ? $now : null,
-			),
-			array( 'job_id' => $job_id, 'status' => 'processing', 'lock_token' => $lock_token )
+				global $wpdb;
+				$table  = SPDB_Operations_Schema::table( 'background_jobs' );
+				$result = $wpdb->update(
+					$table,
+					array(
+						'status'           => $dead ? 'dead_letter' : 'queued',
+						'attempts'         => $attempts,
+						'available_at_gmt' => $dead ? $now : gmdate( 'Y-m-d H:i:s', time() + $delay ),
+						'lock_token'       => '',
+						'locked_at_gmt'    => null,
+						'last_error_code'  => $error_code,
+						'updated_at_gmt'   => $now,
+						'finished_at_gmt'  => $dead ? $now : null,
+					),
+					array( 'job_id' => $job_id, 'status' => 'processing', 'lock_token' => $lock_token )
+				);
+				if ( false === $result || 1 !== (int) $wpdb->rows_affected ) {
+					return self::error( 'spdb_job_lock_conflict', __( 'The background job lock is no longer current.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				if ( $dead ) {
+					$audit = $this->append_audit( 0, 'background_job_dead_lettered', $job_id, array( 'job_type' => $job['job_type'], 'error_code' => $error_code, 'attempts' => $attempts ) );
+					if ( is_wp_error( $audit ) ) {
+						return $audit;
+					}
+				}
+				return true;
+			},
+			'job_fail_retry'
 		);
-		if ( false === $result || 0 === $wpdb->rows_affected ) {
-			return self::error( 'spdb_job_lock_conflict', __( 'The background job lock is no longer current.', 'sabri-publishing-dashboard' ), 409 );
-		}
-		if ( $dead ) {
-			$this->append_audit( 0, 'background_job_dead_lettered', $job_id, array( 'job_type' => $job['job_type'], 'error_code' => sanitize_key( $error_code ), 'attempts' => $attempts ) );
-		}
-		return true;
 	}
 
 	/** @return array<string,int>|WP_Error */
@@ -1062,9 +1161,9 @@ final class SPDB_Operations_Repository {
 	 */
 	public function append_audit( int $actor_user_id, string $event_key, string $object_reference, array $payload ) {
 		global $wpdb;
-		$table = SPDB_Operations_Schema::table( 'dashboard_audit' );
+		$table     = SPDB_Operations_Schema::table( 'dashboard_audit' );
 		$event_key = sanitize_key( $event_key );
-		if ( '' === $event_key ) {
+		if ( '' === $event_key || '' === $table ) {
 			return self::error( 'spdb_audit_event_invalid', __( 'The audit event is invalid.', 'sabri-publishing-dashboard' ), 400 );
 		}
 		$payload = self::sanitize_audit_payload( $payload );
@@ -1072,28 +1171,39 @@ final class SPDB_Operations_Repository {
 		if ( is_wp_error( $json ) ) {
 			return $json;
 		}
-		$previous = $wpdb->get_var( "SELECT event_hash FROM {$table} ORDER BY id DESC LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Static allowlisted table and query.
-		$previous = is_string( $previous ) && 64 === strlen( $previous ) ? $previous : str_repeat( '0', 64 );
-		$event_id = self::id( 'audit' );
-		$created  = current_time( 'mysql', true );
-		$object_hash = hash( 'sha256', $object_reference );
-		$event_hash  = hash( 'sha256', implode( '|', array( $event_id, (string) max( 0, $actor_user_id ), $event_key, $object_hash, $json, $previous, $created ) ) );
-		$result = $wpdb->insert(
-			$table,
-			array(
-				'event_id'        => $event_id,
-				'actor_user_id'   => max( 0, $actor_user_id ),
-				'event_key'       => $event_key,
-				'object_ref_hash' => $object_hash,
-				'payload_json'    => $json,
-				'previous_hash'   => $previous,
-				'event_hash'      => $event_hash,
-				'created_at_gmt'  => $created,
-			)
-		);
-		return false === $result
-			? self::error( 'spdb_audit_write_failed', __( 'The dashboard audit event could not be written.', 'sabri-publishing-dashboard' ), 500 )
-			: true;
+
+		$lock_name = 'spdb_audit_' . substr( hash( 'sha256', $table ), 0, 40 );
+		$locked    = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock_name ) );
+		if ( '1' !== (string) $locked ) {
+			return self::error( 'spdb_audit_lock_unavailable', __( 'The dashboard audit sequence is busy and could not be secured.', 'sabri-publishing-dashboard' ), 503 );
+		}
+
+		try {
+			$previous = $wpdb->get_var( "SELECT event_hash FROM {$table} ORDER BY id DESC LIMIT 1 FOR UPDATE" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Static allowlisted table.
+			$previous = is_string( $previous ) && 64 === strlen( $previous ) ? $previous : str_repeat( '0', 64 );
+			$event_id = self::id( 'audit' );
+			$created  = current_time( 'mysql', true );
+			$object_hash = hash( 'sha256', $object_reference );
+			$event_hash  = hash( 'sha256', implode( '|', array( $event_id, (string) max( 0, $actor_user_id ), $event_key, $object_hash, $json, $previous, $created ) ) );
+			$result = $wpdb->insert(
+				$table,
+				array(
+					'event_id'        => $event_id,
+					'actor_user_id'   => max( 0, $actor_user_id ),
+					'event_key'       => $event_key,
+					'object_ref_hash' => $object_hash,
+					'payload_json'    => $json,
+					'previous_hash'   => $previous,
+					'event_hash'      => $event_hash,
+					'created_at_gmt'  => $created,
+				)
+			);
+			return false === $result
+				? self::error( 'spdb_audit_write_failed', __( 'The dashboard audit event could not be written.', 'sabri-publishing-dashboard' ), 500 )
+				: true;
+		} finally {
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
+		}
 	}
 
 	/** @return array<string,mixed> */
@@ -1134,18 +1244,55 @@ final class SPDB_Operations_Repository {
 	 *
 	 * @return array<string,mixed>
 	 */
-	public function privacy_export( int $user_id ): array {
-		$preferences = $this->get_preferences( $user_id );
-		$tasks       = $this->list_tasks( $user_id, false, 1, 100 );
-		$delegations = $this->list_delegations( $user_id, false );
-		$rules       = $this->list_rules( $user_id, false );
-		$exports     = $this->list_export_jobs( $user_id, false, 100 );
+	public function privacy_export( int $user_id, int $page = 1, int $per_page = 100 ): array {
+		global $wpdb;
+		$page     = min( 10000, max( 1, $page ) );
+		$per_page = min( 200, max( 1, $per_page ) );
+		$offset   = ( $page - 1 ) * $per_page;
+
+		$tasks = $this->list_tasks( $user_id, false, $page, $per_page );
+		$tasks = is_array( $tasks ) ? $tasks : array();
+
+		$saved_table = SPDB_Operations_Schema::table( 'saved_views' );
+		$saved_rows  = $wpdb->get_results( $wpdb->prepare( "SELECT view_id, label, filters_json, version, created_at_gmt, updated_at_gmt FROM {$saved_table} WHERE owner_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $per_page, $offset ), self::array_output() );
+		$saved_views = array();
+		foreach ( is_array( $saved_rows ) ? $saved_rows : array() as $row ) {
+			$saved_views[] = array(
+				'view_id'        => sanitize_key( (string) ( $row['view_id'] ?? '' ) ),
+				'label'          => sanitize_text_field( (string) ( $row['label'] ?? '' ) ),
+				'filters'        => self::decode_object( $row['filters_json'] ?? '' ),
+				'version'        => max( 1, (int) ( $row['version'] ?? 1 ) ),
+				'created_at_gmt' => self::mysql_datetime( $row['created_at_gmt'] ?? '' ),
+				'updated_at_gmt' => self::mysql_datetime( $row['updated_at_gmt'] ?? '' ),
+			);
+		}
+
+		$delegation_table = SPDB_Operations_Schema::table( 'delegations' );
+		$delegation_rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$delegation_table} WHERE principal_user_id = %d OR delegate_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $user_id, $per_page, $offset ), self::array_output() );
+		$delegations = array_map( array( $this, 'normalize_delegation_row' ), is_array( $delegation_rows ) ? $delegation_rows : array() );
+
+		$rule_table = SPDB_Operations_Schema::table( 'automation_rules' );
+		$rule_rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$rule_table} WHERE owner_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $per_page, $offset ), self::array_output() );
+		$rules = array_map( array( $this, 'normalize_rule_row' ), is_array( $rule_rows ) ? $rule_rows : array() );
+
+		$export_table = SPDB_Operations_Schema::table( 'export_jobs' );
+		$export_rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$export_table} WHERE owner_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $per_page, $offset ), self::array_output() );
+		$exports = array_map( array( $this, 'normalize_export_row' ), is_array( $export_rows ) ? $export_rows : array() );
+
+		$collection_page = $this->privacy_collection_export( $user_id, $page, $per_page );
+		$preferences     = 1 === $page ? $this->get_preferences( $user_id ) : array();
+		$counts = array( count( $tasks ), count( $saved_views ), count( $delegations ), count( $rules ), count( $exports ) );
+		$has_more = in_array( $per_page, $counts, true ) || true === ( $collection_page['has_more'] ?? false );
+
 		return array(
-			'preferences'     => $preferences,
-			'tasks'           => is_array( $tasks ) ? $tasks : array(),
-			'delegations'     => is_array( $delegations ) ? $delegations : array(),
-			'automation_rules' => is_array( $rules ) ? $rules : array(),
-			'export_jobs'     => is_array( $exports ) ? $exports : array(),
+			'preferences'      => $preferences,
+			'saved_views'      => $saved_views,
+			'tasks'            => $tasks,
+			'delegations'      => $delegations,
+			'automation_rules' => $rules,
+			'export_jobs'      => $exports,
+			'collections'      => $collection_page['data'] ?? array(),
+			'_done'            => ! $has_more,
 		);
 	}
 
@@ -1157,25 +1304,94 @@ final class SPDB_Operations_Repository {
 	 * @return array<string,mixed>|WP_Error
 	 */
 	public function privacy_erase( int $user_id ) {
-		global $wpdb;
-		$now = current_time( 'mysql', true );
-		$deleted = 0;
-		foreach ( array( 'preferences' => 'user_id', 'saved_views' => 'owner_user_id' ) as $suffix => $column ) {
-			$table  = SPDB_Operations_Schema::table( $suffix );
-			$result = $wpdb->delete( $table, array( $column => $user_id ) );
-			if ( false === $result ) {
-				return self::error( 'spdb_privacy_erase_failed', __( 'File 23-owned personal data could not be erased.', 'sabri-publishing-dashboard' ), 500 );
-			}
-			$deleted += (int) $result;
+		if ( $user_id < 1 ) {
+			return self::error( 'spdb_privacy_user_invalid', __( 'The privacy-erasure user is invalid.', 'sabri-publishing-dashboard' ), 400 );
 		}
-		$exports_table = SPDB_Operations_Schema::table( 'export_jobs' );
-		$wpdb->update(
-			$exports_table,
-			array( 'status' => 'erased', 'storage_ref' => '', 'file_hash' => '', 'updated_at_gmt' => $now ),
-			array( 'owner_user_id' => $user_id )
+
+		return $this->atomic(
+			function () use ( $user_id ) {
+				global $wpdb;
+				$now         = current_time( 'mysql', true );
+				$deleted     = 0;
+				$pseudonymized = 0;
+
+				$deletes = array(
+					array( SPDB_Operations_Schema::table( 'preferences' ), 'user_id = %d' ),
+					array( SPDB_Operations_Schema::table( 'saved_views' ), 'owner_user_id = %d' ),
+					array( SPDB_Operations_Schema::table( 'delegations' ), '(principal_user_id = %d OR delegate_user_id = %d)' ),
+					array( SPDB_Operations_Schema::table( 'automation_rules' ), 'owner_user_id = %d' ),
+					array( SPDB_Operations_Schema::table( 'metric_snapshots' ), "scope = 'own' AND owner_user_id = %d" ),
+					array( SPDB_Operations_Schema::table( 'export_jobs' ), 'owner_user_id = %d' ),
+					array( SPDB_Operations_Schema::table( 'background_jobs' ), 'owner_user_id = %d' ),
+				);
+				foreach ( $deletes as $delete ) {
+					$args = str_contains( $delete[1], ' OR ' ) ? array( $user_id, $user_id ) : array( $user_id );
+					$result = $wpdb->query( $wpdb->prepare( "DELETE FROM {$delete[0]} WHERE {$delete[1]}", ...$args ) );
+					if ( false === $result ) {
+						return self::error( 'spdb_privacy_erase_failed', __( 'File 23-owned personal data could not be erased.', 'sabri-publishing-dashboard' ), 500 );
+					}
+					$deleted += (int) $result;
+				}
+
+				$tasks = SPDB_Operations_Schema::table( 'tasks' );
+				$result = $wpdb->query( $wpdb->prepare( "DELETE FROM {$tasks} WHERE scope = 'own' AND (owner_user_id = %d OR assignee_user_id = %d)", $user_id, $user_id ) );
+				if ( false === $result ) { return self::error( 'spdb_privacy_erase_failed', __( 'Personal tasks could not be erased.', 'sabri-publishing-dashboard' ), 500 ); }
+				$deleted += (int) $result;
+				$result = $wpdb->query( $wpdb->prepare( "UPDATE {$tasks} SET owner_user_id = IF(owner_user_id = %d, 0, owner_user_id), assignee_user_id = IF(assignee_user_id = %d, 0, assignee_user_id), updated_at_gmt = %s WHERE scope = 'institution' AND (owner_user_id = %d OR assignee_user_id = %d)", $user_id, $user_id, $now, $user_id, $user_id ) );
+				if ( false === $result ) { return self::error( 'spdb_privacy_pseudonymize_failed', __( 'Institutional task references could not be pseudonymized.', 'sabri-publishing-dashboard' ), 500 ); }
+				$pseudonymized += (int) $result;
+
+				$collections_table = SPDB_Collections_Schema::collections_table();
+				$items_table       = SPDB_Collections_Schema::items_table();
+				$links_table       = SPDB_Collections_Schema::links_table();
+				$own_ids = $wpdb->get_col( $wpdb->prepare( "SELECT collection_id FROM {$collections_table} WHERE scope = 'own' AND owner_user_id = %d", $user_id ) );
+				if ( ! is_array( $own_ids ) ) { return self::error( 'spdb_privacy_collection_read_failed', __( 'Personal collections could not be inspected.', 'sabri-publishing-dashboard' ), 500 ); }
+				$own_ids = array_values( array_filter( array_map( 'strval', $own_ids ) ) );
+				if ( $own_ids ) {
+					$placeholders = implode( ',', array_fill( 0, count( $own_ids ), '%s' ) );
+					$result = $wpdb->query( $wpdb->prepare( "DELETE FROM {$items_table} WHERE collection_id IN ({$placeholders})", ...$own_ids ) );
+					if ( false === $result ) { return self::error( 'spdb_privacy_collection_erase_failed', __( 'Personal collection items could not be erased.', 'sabri-publishing-dashboard' ), 500 ); }
+					$deleted += (int) $result;
+				}
+				$result = $wpdb->query( $wpdb->prepare( "DELETE FROM {$collections_table} WHERE scope = 'own' AND owner_user_id = %d", $user_id ) );
+				if ( false === $result ) { return self::error( 'spdb_privacy_collection_erase_failed', __( 'Personal collections could not be erased.', 'sabri-publishing-dashboard' ), 500 ); }
+				$deleted += (int) $result;
+				$result = $wpdb->query( $wpdb->prepare( "DELETE FROM {$links_table} WHERE scope = 'own' AND owner_user_id = %d", $user_id ) );
+				if ( false === $result ) { return self::error( 'spdb_privacy_collection_erase_failed', __( 'Personal knowledge links could not be erased.', 'sabri-publishing-dashboard' ), 500 ); }
+				$deleted += (int) $result;
+				$result = $wpdb->query( $wpdb->prepare( "UPDATE {$links_table} SET owner_user_id = 0, updated_at_gmt = %s WHERE scope = 'institution' AND owner_user_id = %d", $now, $user_id ) );
+				if ( false === $result ) { return self::error( 'spdb_privacy_pseudonymize_failed', __( 'Institutional knowledge-link references could not be pseudonymized.', 'sabri-publishing-dashboard' ), 500 ); }
+				$pseudonymized += (int) $result;
+
+				$pattern = '%' . $wpdb->esc_like( (string) $user_id ) . '%';
+				$rows = $wpdb->get_results( $wpdb->prepare( "SELECT collection_id, owner_user_id, contributors_json FROM {$collections_table} WHERE scope = 'institution' AND (owner_user_id = %d OR contributors_json LIKE %s) LIMIT 5000", $user_id, $pattern ), self::array_output() );
+				if ( ! is_array( $rows ) ) { return self::error( 'spdb_privacy_collection_read_failed', __( 'Institutional collection references could not be inspected.', 'sabri-publishing-dashboard' ), 500 ); }
+				foreach ( $rows as $row ) {
+					$contributors = self::decode_object( $row['contributors_json'] ?? '' );
+					if ( self::is_list_array( $contributors ) ) {
+						$contributors = array_values( array_filter( array_map( 'intval', $contributors ), static fn( int $id ): bool => $id > 0 && $id !== $user_id ) );
+					} else {
+						$contributors = array();
+					}
+					$encoded = self::encode_json( $contributors );
+					if ( is_wp_error( $encoded ) ) { return $encoded; }
+					$result = $wpdb->update(
+						$collections_table,
+						array( 'owner_user_id' => (int) ( $row['owner_user_id'] ?? 0 ) === $user_id ? 0 : (int) $row['owner_user_id'], 'contributors_json' => $encoded, 'updated_at_gmt' => $now ),
+						array( 'collection_id' => (string) $row['collection_id'], 'scope' => 'institution' )
+					);
+					if ( false === $result ) { return self::error( 'spdb_privacy_pseudonymize_failed', __( 'Institutional collection references could not be pseudonymized.', 'sabri-publishing-dashboard' ), 500 ); }
+					$pseudonymized += (int) $result;
+				}
+
+				$audit = $this->append_audit( 0, 'privacy_erasure_completed', 'user:' . $user_id, array( 'deleted_personal_rows' => $deleted, 'pseudonymized_rows' => $pseudonymized ) );
+				if ( is_wp_error( $audit ) ) {
+					return $audit;
+				}
+				return array( 'items_removed' => $deleted, 'items_pseudonymized' => $pseudonymized, 'items_retained' => $pseudonymized > 0, 'messages' => array() );
+			},
+			'privacy_erase'
 		);
-		$this->append_audit( 0, 'privacy_erasure_completed', 'user:' . $user_id, array( 'deleted_personal_rows' => $deleted ) );
-		return array( 'items_removed' => $deleted, 'items_retained' => true, 'messages' => array() );
 	}
 
 	/**
@@ -1184,31 +1400,69 @@ final class SPDB_Operations_Repository {
 	 * @return array<string,int>|WP_Error
 	 */
 	public function cleanup_retention( array $settings ) {
-		global $wpdb;
-		$now = current_time( 'mysql', true );
-		$deleted = array( 'metrics' => 0, 'exports' => 0, 'jobs' => 0, 'tasks' => 0, 'health' => 0 );
-		$queries = array(
-			'metrics' => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'metric_snapshots' ) . ' WHERE expires_at_gmt <= %s', $now ),
-			'exports' => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'export_jobs' ) . ' WHERE expires_at_gmt <= %s', $now ),
-			'health'  => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'adapter_health' ) . ' WHERE expires_at_gmt <= %s', $now ),
-			'jobs'    => $wpdb->prepare(
-				'DELETE FROM ' . SPDB_Operations_Schema::table( 'background_jobs' ) . " WHERE status IN ('completed','dead_letter') AND updated_at_gmt < %s",
-				gmdate( 'Y-m-d H:i:s', time() - max( 30, (int) $settings['failed_job_retention_days'] ) * DAY_IN_SECONDS )
-			),
-			'tasks'   => $wpdb->prepare(
-				'DELETE FROM ' . SPDB_Operations_Schema::table( 'tasks' ) . " WHERE status IN ('completed','cancelled') AND updated_at_gmt < %s",
-				gmdate( 'Y-m-d H:i:s', time() - max( 365, (int) $settings['task_retention_days'] ) * DAY_IN_SECONDS )
-			),
+		return $this->atomic(
+			function () use ( $settings ) {
+				global $wpdb;
+				$now = current_time( 'mysql', true );
+				$deleted = array( 'metrics' => 0, 'exports' => 0, 'jobs' => 0, 'tasks' => 0, 'health' => 0 );
+				$queries = array(
+					'metrics' => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'metric_snapshots' ) . ' WHERE expires_at_gmt <= %s', $now ),
+					'exports' => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'export_jobs' ) . ' WHERE expires_at_gmt <= %s', $now ),
+					'health'  => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'adapter_health' ) . ' WHERE expires_at_gmt <= %s', $now ),
+					'jobs'    => $wpdb->prepare(
+						'DELETE FROM ' . SPDB_Operations_Schema::table( 'background_jobs' ) . " WHERE status IN ('completed','dead_letter') AND updated_at_gmt < %s",
+						gmdate( 'Y-m-d H:i:s', time() - max( 30, (int) $settings['failed_job_retention_days'] ) * DAY_IN_SECONDS )
+					),
+					'tasks'   => $wpdb->prepare(
+						'DELETE FROM ' . SPDB_Operations_Schema::table( 'tasks' ) . " WHERE status IN ('completed','cancelled') AND updated_at_gmt < %s",
+						gmdate( 'Y-m-d H:i:s', time() - max( 365, (int) $settings['task_retention_days'] ) * DAY_IN_SECONDS )
+					),
+				);
+				foreach ( $queries as $key => $sql ) {
+					$result = $wpdb->query( $sql );
+					if ( false === $result ) {
+						return self::error( 'spdb_retention_cleanup_failed', __( 'File 23 retention cleanup failed.', 'sabri-publishing-dashboard' ), 500 );
+					}
+					$deleted[ $key ] = (int) $result;
+				}
+				$audit = $this->append_audit( 0, 'retention_cleanup_completed', 'operations', $deleted );
+				return is_wp_error( $audit ) ? $audit : $deleted;
+			},
+			'retention_cleanup'
 		);
-		foreach ( $queries as $key => $sql ) {
-			$result = $wpdb->query( $sql );
-			if ( false === $result ) {
-				return self::error( 'spdb_retention_cleanup_failed', __( 'File 23 retention cleanup failed.', 'sabri-publishing-dashboard' ), 500 );
-			}
-			$deleted[ $key ] = (int) $result;
+	}
+
+	/** @return array<string,mixed> */
+	private function privacy_collection_export( int $user_id, int $page, int $per_page ): array {
+		global $wpdb;
+		$collections_table = SPDB_Collections_Schema::collections_table();
+		$items_table       = SPDB_Collections_Schema::items_table();
+		$links_table       = SPDB_Collections_Schema::links_table();
+		$pattern           = '%' . $wpdb->esc_like( (string) $user_id ) . '%';
+		$offset            = ( $page - 1 ) * $per_page;
+		$raw = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$collections_table} WHERE owner_user_id = %d OR contributors_json LIKE %s ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $pattern, $per_page, $offset ), self::array_output() );
+		$raw = is_array( $raw ) ? $raw : array();
+		$collections = array_values( array_filter( $raw, static function ( array $row ) use ( $user_id ): bool {
+			if ( (int) ( $row['owner_user_id'] ?? 0 ) === $user_id ) { return true; }
+			$contributors = self::decode_object( $row['contributors_json'] ?? '' );
+			return in_array( $user_id, array_map( 'intval', $contributors ), true );
+		} ) );
+		$ids = array_values( array_filter( array_map( static fn( array $row ): string => (string) ( $row['collection_id'] ?? '' ), $collections ) ) );
+		$items = array();
+		if ( $ids ) {
+			$placeholders = implode( ',', array_fill( 0, count( $ids ), '%s' ) );
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$items_table} WHERE collection_id IN ({$placeholders}) ORDER BY id ASC LIMIT 5000", ...$ids ), self::array_output() );
+			$items = is_array( $rows ) ? $rows : array();
 		}
-		$this->append_audit( 0, 'retention_cleanup_completed', 'operations', $deleted );
-		return $deleted;
+		$links = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$links_table} WHERE owner_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $per_page, $offset ), self::array_output() );
+		return array(
+			'data' => array( 'collections' => $collections, 'items' => $items, 'knowledge_links' => is_array( $links ) ? $links : array() ),
+			'has_more' => count( $raw ) === $per_page || ( is_array( $links ) && count( $links ) === $per_page ),
+		);
+	}
+
+	private static function is_list_array( array $value ): bool {
+		return array() === $value || array_keys( $value ) === range( 0, count( $value ) - 1 );
 	}
 
 	/** @param array<string,mixed> $row @return array<string,mixed> */
@@ -1331,6 +1585,69 @@ final class SPDB_Operations_Repository {
 			'updated_at_gmt'  => self::mysql_datetime( $row['updated_at_gmt'] ?? '' ),
 			'finished_at_gmt' => self::mysql_datetime( $row['finished_at_gmt'] ?? '' ),
 		);
+	}
+
+
+	/**
+	 * Execute a bounded repository mutation atomically.
+	 *
+	 * Reuses the caller transaction through a savepoint where one already
+	 * exists, otherwise opens and owns a short transaction. All errors roll
+	 * back the exact File 23-owned mutation scope.
+	 *
+	 * @param callable():mixed $callback Mutation callback.
+	 * @return mixed|WP_Error
+	 */
+	private function atomic( callable $callback, string $label ) {
+		global $wpdb;
+		if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'query' ) || ! method_exists( $wpdb, 'get_var' ) ) {
+			return self::error( 'spdb_transaction_unavailable', __( 'The database transaction service is unavailable.', 'sabri-publishing-dashboard' ), 503 );
+		}
+
+		$label     = sanitize_key( $label );
+		$savepoint = 'spdb_' . substr( hash( 'sha256', $label . '|' . wp_generate_uuid4() ), 0, 24 );
+		$nested    = 1 === (int) $wpdb->get_var( 'SELECT @@in_transaction' );
+		$opened    = $nested
+			? false !== $wpdb->query( "SAVEPOINT {$savepoint}" )
+			: false !== $wpdb->query( 'START TRANSACTION' );
+		if ( ! $opened ) {
+			return self::error( 'spdb_transaction_start_failed', __( 'The database transaction could not be started.', 'sabri-publishing-dashboard' ), 503 );
+		}
+
+		try {
+			$result = $callback();
+			if ( is_wp_error( $result ) ) {
+				if ( $nested ) {
+					$wpdb->query( "ROLLBACK TO SAVEPOINT {$savepoint}" );
+					$wpdb->query( "RELEASE SAVEPOINT {$savepoint}" );
+				} else {
+					$wpdb->query( 'ROLLBACK' );
+				}
+				return $result;
+			}
+
+			$committed = $nested
+				? false !== $wpdb->query( "RELEASE SAVEPOINT {$savepoint}" )
+				: false !== $wpdb->query( 'COMMIT' );
+			if ( ! $committed ) {
+				if ( $nested ) {
+					$wpdb->query( "ROLLBACK TO SAVEPOINT {$savepoint}" );
+					$wpdb->query( "RELEASE SAVEPOINT {$savepoint}" );
+				} else {
+					$wpdb->query( 'ROLLBACK' );
+				}
+				return self::error( 'spdb_transaction_commit_failed', __( 'The database transaction could not be committed.', 'sabri-publishing-dashboard' ), 500 );
+			}
+			return $result;
+		} catch ( Throwable $error ) {
+			if ( $nested ) {
+				$wpdb->query( "ROLLBACK TO SAVEPOINT {$savepoint}" );
+				$wpdb->query( "RELEASE SAVEPOINT {$savepoint}" );
+			} else {
+				$wpdb->query( 'ROLLBACK' );
+			}
+			return self::error( 'spdb_transaction_exception', __( 'The database transaction failed safely.', 'sabri-publishing-dashboard' ), 500 );
+		}
 	}
 
 	/** @param mixed $value @return string|WP_Error */

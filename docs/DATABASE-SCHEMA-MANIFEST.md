@@ -1,4 +1,4 @@
-# File 23 Database Schema Manifest — Version 1.1.0
+# File 23 Database Schema Manifest — Version 1.2.0
 
 ## Scope law
 
@@ -8,8 +8,8 @@ File 23 owns bounded dashboard-operational metadata only. It does not own public
 
 | Schema | Version | Installer |
 |---|---:|---|
-| Operational metadata | `1.0.0` | `SPDB_Operations_Schema` |
-| Collections and knowledge pointers | `3` | `SPDB_Collections_Schema` |
+| Operational metadata | `1.1.0` | `SPDB_Operations_Schema` |
+| Collections and knowledge pointers | `4` | `SPDB_Collections_Schema` |
 
 ## Operational metadata tables
 
@@ -39,6 +39,7 @@ WordPress prefix is represented as `{prefix}`.
 ## Installation and verification
 
 - Installation uses WordPress `dbDelta()` and is idempotent.
+- All 13 File 23-owned tables must use transactional `InnoDB`; verification inspects the actual engine and performs a controlled upgrade when required.
 - Required tables, columns and indexes are verified after installation.
 - Schema versions are recorded only after verification succeeds.
 - Missing database/upgrade APIs fail closed with bounded `WP_Error` responses.

@@ -9,6 +9,7 @@ defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Export_Service {
 	private const DOWNLOAD_ACTION = 'spdb_download_export';
+	private const ENVELOPE_MAGIC = 'SPDBEXP1';
 
 	private SPDB_Operations_Service $operations;
 	private SPDB_Review_Calendar_Service $calendar;
@@ -70,8 +71,8 @@ final class SPDB_Export_Service {
 			(int) SPDB_Admin_Settings::get()['job_max_attempts']
 		);
 		if ( is_wp_error( $queued ) ) {
-			$this->repository->fail_export_job( $job['export_id'], $queued->get_error_code() );
-			return $queued;
+			$transition = $this->repository->fail_export_job( $job['export_id'], $queued->get_error_code() );
+			return is_wp_error( $transition ) ? $transition : $queued;
 		}
 		return $this->public_export( $job );
 	}
@@ -102,47 +103,55 @@ final class SPDB_Export_Service {
 			return true;
 		}
 		if ( '' !== $job['expires_at_gmt'] && strtotime( $job['expires_at_gmt'] . ' UTC' ) <= time() ) {
-			$this->repository->fail_export_job( $export_id, 'expired_before_generation' );
-			return self::error( 'spdb_export_expired', __( 'The export request expired before generation.', 'sabri-publishing-dashboard' ), 410 );
+			return $this->fail_processing( $export_id, self::error( 'spdb_export_expired', __( 'The export request expired before generation.', 'sabri-publishing-dashboard' ), 410 ) );
 		}
 
-		$this->repository->mark_export_processing( $export_id );
+		if ( 'queued' === $job['status'] ) {
+			$claimed = $this->repository->mark_export_processing( $export_id );
+			if ( is_wp_error( $claimed ) ) {
+				return $claimed;
+			}
+		}
+
 		if ( 'ics' === $job['format'] ) {
 			$model = $this->calendar_model( $job );
 		} else {
 			$model = $this->operations->report( $job['report_key'], $job['scope'], $job['filters'] );
 		}
 		if ( is_wp_error( $model ) ) {
-			$this->repository->fail_export_job( $export_id, $model->get_error_code() );
-			return $model;
+			return $this->fail_processing( $export_id, $model );
 		}
 
 		$directory = $this->private_directory();
 		if ( is_wp_error( $directory ) ) {
-			$this->repository->fail_export_job( $export_id, $directory->get_error_code() );
-			return $directory;
+			return $this->fail_processing( $export_id, $directory );
 		}
-		$extension = $job['format'];
-		$filename  = $export_id . '.' . $extension;
-		$path      = trailingslashit( $directory ) . $filename;
-		$content   = $this->render( $job['format'], $model );
+		$filename = $export_id . '.spdb';
+		$path     = trailingslashit( $directory ) . $filename;
+		$content  = $this->render( $job['format'], $model );
 		if ( is_wp_error( $content ) ) {
-			$this->repository->fail_export_job( $export_id, $content->get_error_code() );
-			return $content;
+			return $this->fail_processing( $export_id, $content );
 		}
-		if ( false === file_put_contents( $path, $content, LOCK_EX ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Protected generated artifact directory.
-			$this->repository->fail_export_job( $export_id, 'file_write_failed' );
-			return self::error( 'spdb_export_file_write_failed', __( 'The export file could not be written.', 'sabri-publishing-dashboard' ), 500 );
+		$sealed = $this->seal_content( $content, $export_id );
+		if ( is_wp_error( $sealed ) ) {
+			return $this->fail_processing( $export_id, $sealed );
+		}
+		if ( false === file_put_contents( $path, $sealed, LOCK_EX ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Protected generated artifact directory.
+			return $this->fail_processing( $export_id, self::error( 'spdb_export_file_write_failed', __( 'The export file could not be written.', 'sabri-publishing-dashboard' ), 500 ) );
 		}
 		@chmod( $path, 0640 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Best-effort hardening.
 		$hash = hash_file( 'sha256', $path );
 		if ( ! is_string( $hash ) || 64 !== strlen( $hash ) ) {
 			@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Cleanup generated file.
-			$this->repository->fail_export_job( $export_id, 'hash_failed' );
-			return self::error( 'spdb_export_hash_failed', __( 'The export file could not be verified.', 'sabri-publishing-dashboard' ), 500 );
+			return $this->fail_processing( $export_id, self::error( 'spdb_export_hash_failed', __( 'The export file could not be verified.', 'sabri-publishing-dashboard' ), 500 ) );
 		}
 		$row_count = isset( $model['rows'] ) && is_array( $model['rows'] ) ? count( $model['rows'] ) : ( isset( $model['events'] ) && is_array( $model['events'] ) ? count( $model['events'] ) : 0 );
-		return $this->repository->complete_export_job( $export_id, $filename, $hash, $row_count );
+		$completed = $this->repository->complete_export_job( $export_id, $filename, $hash, $row_count );
+		if ( is_wp_error( $completed ) ) {
+			@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove an uncommitted generated artifact.
+			return $completed;
+		}
+		return true;
 	}
 
 	/** Download only through an authenticated, owner-bound, expiring signature. */
@@ -176,35 +185,55 @@ final class SPDB_Export_Service {
 		if ( false === $real_dir || false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) || ! hash_equals( (string) $job['file_hash'], (string) hash_file( 'sha256', $real ) ) ) {
 			wp_die( esc_html__( 'The export file failed integrity verification.', 'sabri-publishing-dashboard' ), esc_html__( 'Export unavailable', 'sabri-publishing-dashboard' ), array( 'response' => 409 ) );
 		}
+		$sealed = file_get_contents( $real ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Verified private generated file.
+		$content = is_string( $sealed ) ? $this->open_content( $sealed, $export_id ) : self::error( 'spdb_export_file_read_failed', __( 'The export file could not be read.', 'sabri-publishing-dashboard' ), 500 );
+		if ( is_wp_error( $content ) ) {
+			wp_die( esc_html__( 'The export file could not be decrypted safely.', 'sabri-publishing-dashboard' ), esc_html__( 'Export unavailable', 'sabri-publishing-dashboard' ), array( 'response' => 409 ) );
+		}
 		$mime = $this->mime_type( (string) $job['format'] );
 		nocache_headers();
 		header( 'Content-Type: ' . $mime );
 		header( 'Content-Disposition: attachment; filename="' . rawurlencode( 'file23-' . $job['report_key'] . '-' . gmdate( 'Ymd-His' ) . '.' . $job['format'] ) . '"' );
-		header( 'Content-Length: ' . (string) filesize( $real ) );
+		header( 'Content-Length: ' . (string) strlen( $content ) );
 		header( 'X-Content-Type-Options: nosniff' );
-		readfile( $real ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- Verified private generated file.
+		echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Authorized binary-safe download body.
 		exit;
 	}
 
 	/** Remove generated temporary export files owned by one user. */
 	public function erase_user_files( int $user_id ): int {
-		$jobs = $this->repository->list_export_jobs( $user_id, false, 100 );
-		if ( ! is_array( $jobs ) ) {
+		if ( $user_id < 1 ) {
 			return 0;
 		}
 		$directory = $this->private_directory();
 		if ( is_wp_error( $directory ) ) {
 			return 0;
 		}
+		global $wpdb;
+		$table   = SPDB_Operations_Schema::table( 'export_jobs' );
 		$deleted = 0;
-		foreach ( $jobs as $job ) {
-			$filename = basename( (string) ( $job['storage_ref'] ?? '' ) );
-			if ( '' === $filename ) {
-				continue;
+		$cursor  = 0;
+		for ( $batch = 0; $batch < 100; ++$batch ) {
+			$rows = $wpdb->get_results(
+				$wpdb->prepare( "SELECT id, storage_ref FROM {$table} WHERE owner_user_id = %d AND id > %d ORDER BY id ASC LIMIT 200", $user_id, $cursor ),
+				defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
+			);
+			if ( ! is_array( $rows ) || ! $rows ) {
+				break;
 			}
-			$path = trailingslashit( $directory ) . $filename;
-			if ( is_file( $path ) && unlink( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Deleting File 23-owned temporary export only.
-				++$deleted;
+			foreach ( $rows as $row ) {
+				$cursor   = max( $cursor, (int) ( $row['id'] ?? 0 ) );
+				$filename = basename( (string) ( $row['storage_ref'] ?? '' ) );
+				if ( '' === $filename || 1 !== preg_match( '/^export_[a-z0-9]{32}\.spdb$/', $filename ) ) {
+					continue;
+				}
+				$path = trailingslashit( $directory ) . $filename;
+				if ( is_file( $path ) && unlink( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Deleting File 23-owned encrypted temporary export only.
+					++$deleted;
+				}
+			}
+			if ( count( $rows ) < 200 ) {
+				break;
 			}
 		}
 		return $deleted;
@@ -258,6 +287,7 @@ final class SPDB_Export_Service {
 		if ( ! wp_mkdir_p( $directory ) ) {
 			return self::error( 'spdb_export_storage_unavailable', __( 'Private export storage could not be created.', 'sabri-publishing-dashboard' ), 500 );
 		}
+		@chmod( $directory, 0700 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Best-effort private-directory hardening.
 		$guards = array(
 			'.htaccess' => "Deny from all\n<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n",
 			'index.php' => "<?php\nhttp_response_code( 404 );\nexit;\n",
@@ -265,11 +295,51 @@ final class SPDB_Export_Service {
 		);
 		foreach ( $guards as $file => $content ) {
 			$path = trailingslashit( $directory ) . $file;
-			if ( ! file_exists( $path ) ) {
-				file_put_contents( $path, $content, LOCK_EX ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Required private directory guard.
+			if ( ! file_exists( $path ) && false === file_put_contents( $path, $content, LOCK_EX ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Required private directory guard.
+				return self::error( 'spdb_export_storage_guard_failed', __( 'Private export storage could not be guarded.', 'sabri-publishing-dashboard' ), 500 );
 			}
 		}
 		return $directory;
+	}
+
+	/** @return WP_Error */
+	private function fail_processing( string $export_id, WP_Error $cause ): WP_Error {
+		$transition = $this->repository->fail_export_job( $export_id, $cause->get_error_code() );
+		return is_wp_error( $transition ) ? $transition : $cause;
+	}
+
+	/** @return string|WP_Error */
+	private function seal_content( string $content, string $export_id ) {
+		if ( ! function_exists( 'openssl_encrypt' ) || ! function_exists( 'wp_salt' ) ) {
+			return self::error( 'spdb_export_encryption_unavailable', __( 'The export encryption service is unavailable.', 'sabri-publishing-dashboard' ), 503 );
+		}
+		try {
+			$iv = random_bytes( 12 );
+		} catch ( Throwable $error ) {
+			return self::error( 'spdb_export_entropy_unavailable', __( 'Secure export encryption entropy is unavailable.', 'sabri-publishing-dashboard' ), 503 );
+		}
+		$key        = hash_hmac( 'sha256', 'file23-export|' . $export_id, wp_salt( 'secure_auth' ), true );
+		$tag        = '';
+		$ciphertext = openssl_encrypt( $content, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag, 'file23|' . $export_id, 16 );
+		if ( ! is_string( $ciphertext ) || 16 !== strlen( $tag ) ) {
+			return self::error( 'spdb_export_encryption_failed', __( 'The export could not be encrypted.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		return self::ENVELOPE_MAGIC . $iv . $tag . $ciphertext;
+	}
+
+	/** @return string|WP_Error */
+	private function open_content( string $sealed, string $export_id ) {
+		if ( ! function_exists( 'openssl_decrypt' ) || strlen( $sealed ) < 36 || ! hash_equals( self::ENVELOPE_MAGIC, substr( $sealed, 0, 8 ) ) ) {
+			return self::error( 'spdb_export_envelope_invalid', __( 'The export encryption envelope is invalid.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		$iv         = substr( $sealed, 8, 12 );
+		$tag        = substr( $sealed, 20, 16 );
+		$ciphertext = substr( $sealed, 36 );
+		$key        = hash_hmac( 'sha256', 'file23-export|' . $export_id, wp_salt( 'secure_auth' ), true );
+		$plaintext  = openssl_decrypt( $ciphertext, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag, 'file23|' . $export_id );
+		return is_string( $plaintext )
+			? $plaintext
+			: self::error( 'spdb_export_decryption_failed', __( 'The export file could not be decrypted.', 'sabri-publishing-dashboard' ), 409 );
 	}
 
 	/** @param array<string,mixed> $job @return array<string,mixed> */

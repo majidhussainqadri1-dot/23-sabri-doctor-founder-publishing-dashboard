@@ -32,9 +32,10 @@ $deliverables = array(
 	'docs/DOCTOR-MANUAL.md'                                        => array( 'Doctor', 'submits for review', 'idempotency' ),
 	'docs/ADMIN-MANUAL.md'                                         => array( 'Administrator', 'Hostinger staging', 'rollback' ),
 	'docs/TEST-REPORT.md'                                          => array( 'Automated source gates', 'Hostinger staging', 'Defect policy' ),
-	'CHANGELOG.md'                                                  => array( '1.1.0' ),
+	'CHANGELOG.md'                                                  => array( '1.2.0' ),
 	'docs/KNOWN-LIMITATIONS.md'                                    => array( 'Residual-risk', 'LiteSpeed', 'F23-LIM-010' ),
 	'docs/RELEASE-SIGNOFF.md'                                      => array( 'Exact Git head', 'PENDING', 'Founder' ),
+	'docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md' => array( 'چالیس ادوار', 'دور 40', 'Hostinger staging' ),
 );
 
 foreach ( $deliverables as $relative => $markers ) {
@@ -64,9 +65,11 @@ foreach ( array(
 $workflow = (string) file_get_contents( $root . '/.github/workflows/file23-final-release-candidate.yml' );
 foreach ( array(
 	'php tests/final-deliverables-tests.php',
-	'23-Doctor-Founder-Publishing-Dashboard-Source-1.1.0.zip',
-	'FILE23-1.1.0-SOURCE-MANIFEST.sha256',
+	'php tests/forty-round-review-gate-tests.php',
+	'23-Doctor-Founder-Publishing-Dashboard-Source-1.2.0.zip',
+	'FILE23-1.2.0-SOURCE-MANIFEST.sha256',
 	'docs/RELEASE-SIGNOFF.md',
+	'docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md',
 ) as $marker ) {
 	$assert( false !== strpos( $workflow, $marker ), "Final release workflow is missing marker: {$marker}." );
 }
