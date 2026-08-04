@@ -12,7 +12,10 @@
 - Added explicit mutation nonce and same-origin enforcement, payload-bound idempotency, bounded private replay receipts and transactional audit commit/rollback.
 - Added high-entropy browser idempotency keys and mandatory audit reasons for high-risk settings/acceptance writes.
 - Added a 10,000-operation behavioral integrity model and expanded plan-to-code/security adversarial gates.
-- Added four documented review/fix rounds and deterministic 1.1.0 packaging.
+- Added four documented review/fix rounds.
+- Added the complete plan-required delivery set: schema and source manifests, capability and ownership matrices, threat model, requirement traceability, staging checklist, Founder/Doctor/Admin manuals, test report, known-limitations register and pending release sign-off.
+- Added executable final-deliverables QA.
+- Extended deterministic release tooling to produce both the installable WordPress ZIP and the complete Git-tracked source ZIP with SHA-256 checksums, per-file manifests and exact-head release evidence.
 
 ## 1.0.0 — 2026-08-04
 

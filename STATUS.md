@@ -20,21 +20,23 @@ Implemented:
 - File 00–25 manifest, File 24 assurance evidence and File 04 read-only migration diagnostics.
 - Explicit operational mutation nonce, same-origin, approved-account, idempotency, replay, privacy and transaction/audit boundaries.
 - Stable browser idempotency keys, required reasons for high-risk writes and a 10,000-operation behavioral integrity model.
-- Four documented review/fix rounds, exact versioned package tooling and plan-to-code/adversarial tests.
+- Four documented review/fix rounds and plan-to-code/adversarial tests.
+- Complete final-deliverables set: source/package policy, schema manifest, capability matrix, ownership matrix, threat model, requirements traceability, staging checklist, Founder/Doctor/Admin manuals, test report, limitations register and release sign-off form.
+- Deterministic installable package plus complete Git-tracked source package, checksums, per-file manifests and exact-head release evidence.
 
 ## Completion classification
 
-The correct source status after the final exact-head automated run is **coded and package-ready within File 23-owned scope**. Source review and CI do not establish staging or live operation.
+The correct source status after a successful final exact-head automated run is **coded, documented and package-ready within File 23-owned scope**. Source review and CI do not establish staging or live operation.
 
 ## External acceptance still required
 
 - Hostinger fresh install and upgrade.
 - Real Founder, Doctor, Reviewer, Pending and Suspended accounts.
-- Real File 21/22 and optional-provider projections/actions.
+- Real File 19/20/21/22/24/25 and optional-provider projections/actions.
 - LiteSpeed cross-user cache tests.
 - Browser/device/RTL/keyboard/screen-reader/zoom/contrast acceptance.
 - Real 10,000+ object database and response-time measurement.
 - Backup, restore, migration and rollback rehearsal.
-- Founder visual/functional acceptance and controlled live deployment.
+- Founder visual/functional acceptance, explicit merge authorization and controlled live deployment.
 
 Until those gates pass, File 23 is **not staging-accepted, live or operational** and production writes remain fail-closed.

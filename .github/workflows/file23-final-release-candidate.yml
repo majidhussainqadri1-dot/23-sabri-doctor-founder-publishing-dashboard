@@ -123,7 +123,7 @@ jobs:
         with:
           php-version: '8.3'
           coverage: none
-      - name: Run release-critical regressions
+      - name: Run release-critical regressions and final-deliverables gate
         shell: bash
         run: |
           set -euo pipefail
@@ -131,9 +131,18 @@ jobs:
           php tests/full-plan-security-adversarial-tests.php
           php tests/operational-validator-tests.php
           php tests/legacy-migration-diagnostics-tests.php
+          php tests/final-deliverables-tests.php
           php tests/architecture-guard.php
           test -s docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md
-      - name: Build deterministic 1.1.0 package
+          test -s docs/CAPABILITY-MATRIX.md
+          test -s docs/DATABASE-SCHEMA-MANIFEST.md
+          test -s docs/DATA-OWNERSHIP-MATRIX.md
+          test -s docs/THREAT-MODEL.md
+          test -s docs/STAGING-CHECKLIST.md
+          test -s docs/TEST-REPORT.md
+          test -s docs/KNOWN-LIMITATIONS.md
+          test -s docs/RELEASE-SIGNOFF.md
+      - name: Build deterministic installable and complete-source packages
         run: bash tools/build-final-release.sh
       - name: Record exact release evidence
         shell: bash
@@ -143,12 +152,18 @@ jobs:
             "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.1.0-RELEASE-EVIDENCE.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: file23-1.1.0-canonical-installable
+          name: file23-1.1.0-canonical-release-evidence
           path: |
             23-sabri-doctor-founder-publishing-dashboard-1.1.0.zip
             23-sabri-doctor-founder-publishing-dashboard-1.1.0.zip.sha256
             FILE23-1.1.0-MANIFEST.sha256
+            23-Doctor-Founder-Publishing-Dashboard-Source-1.1.0.zip
+            23-Doctor-Founder-Publishing-Dashboard-Source-1.1.0.zip.sha256
+            FILE23-1.1.0-SOURCE-MANIFEST.sha256
             FILE23-1.1.0-RELEASE-EVIDENCE.txt
-            docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md
+            docs/STAGING-CHECKLIST.md
+            docs/RELEASE-SIGNOFF.md
+            docs/KNOWN-LIMITATIONS.md
+            docs/TEST-REPORT.md
           if-no-files-found: error
           retention-days: 90
