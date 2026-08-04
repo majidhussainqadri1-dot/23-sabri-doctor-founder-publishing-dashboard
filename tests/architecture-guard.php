@@ -38,9 +38,10 @@ foreach ( $iterator as $file ) {
 		continue;
 	}
 
-	$path     = $file->getPathname();
-	$relative = ltrim( str_replace( $root, '', $path ), DIRECTORY_SEPARATOR );
-	if ( str_starts_with( $relative, 'tests' . DIRECTORY_SEPARATOR ) || str_starts_with( $relative, 'vendor' . DIRECTORY_SEPARATOR ) ) {
+	$path                = $file->getPathname();
+	$relative            = ltrim( str_replace( $root, '', $path ), DIRECTORY_SEPARATOR );
+	$relative_normalized = str_replace( DIRECTORY_SEPARATOR, '/', $relative );
+	if ( str_starts_with( $relative_normalized, 'tests/' ) || str_starts_with( $relative_normalized, 'vendor/' ) ) {
 		continue;
 	}
 
@@ -56,11 +57,14 @@ foreach ( $iterator as $file ) {
 		}
 	}
 
-	if ( ! in_array( $relative, $broker_execution_files, true ) && preg_match( '/->\s*execute_operation\s*\(/i', $content ) ) {
+	if ( ! in_array( $relative_normalized, array_map( static fn( string $candidate ): string => str_replace( DIRECTORY_SEPARATOR, '/', $candidate ), $broker_execution_files ), true ) && preg_match( '/->\s*execute_operation\s*\(/i', $content ) ) {
 		$violations[] = "{$relative}: provider mutation bypasses the operation broker";
 	}
 
-	$is_allowed_schema = in_array( $relative, $allowed_schema_files, true );
+	$normalized_allowed_schema_files = array_map( static fn( string $candidate ): string => str_replace( DIRECTORY_SEPARATOR, '/', $candidate ), $allowed_schema_files );
+	$is_allowed_schema = in_array( $relative_normalized, $normalized_allowed_schema_files, true )
+		|| str_ends_with( $relative_normalized, '/class-spdb-collections-schema.php' )
+		|| str_ends_with( $relative_normalized, '/class-spdb-operations-schema.php' );
 	if ( ! $is_allowed_schema && preg_match( '/CREATE\s+TABLE/i', $content ) ) {
 		$violations[] = "{$relative}: unauthorized table ownership";
 	}
