@@ -24,11 +24,11 @@ jobs:
           fetch-depth: 0
           ref: fix/file23-provider-consumption-visual-1.2.1
 
-      - name: Reconstruct and verify reviewed patch
+      - name: Reconstruct exact reviewed patch
         shell: bash
         run: |
           set -euo pipefail
-          test -f .file23-transfer/file23-1.2.1.patch.bz2.b64 || exit 0
+          git rev-parse HEAD > /tmp/file23-original-head
           tr -d '\r\n' < .file23-transfer/file23-1.2.1.patch.bz2.b64 > /tmp/file23-1.2.1.patch.bz2.b64
           test "$(sha256sum /tmp/file23-1.2.1.patch.bz2.b64 | awk '{print $1}')" = '92a04e2a1b5556518092db516442ec822ebd04c3277423ee876922c881644723'
           base64 -d /tmp/file23-1.2.1.patch.bz2.b64 > /tmp/file23-1.2.1.patch.bz2
@@ -36,8 +36,17 @@ jobs:
           bunzip2 -c /tmp/file23-1.2.1.patch.bz2 > /tmp/file23-1.2.1.patch
           git apply --check /tmp/file23-1.2.1.patch
           git apply /tmp/file23-1.2.1.patch
+
+      - name: Create clean local packaging snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
           rm -rf .file23-transfer
           rm -f .github/workflows/file23-1.2.1-materialize.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'File 23 1.2.1 packaging snapshot'
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -60,18 +69,26 @@ jobs:
           TERM=xterm bash tools/build-final-release.sh
           sha256sum -c 23-sabri-doctor-founder-publishing-dashboard-1.2.1.zip.sha256
           sha256sum -c 23-Doctor-Founder-Publishing-Dashboard-Source-1.2.1.zip.sha256
+          mkdir -p /tmp/file23-artifacts
+          cp 23-sabri-doctor-founder-publishing-dashboard-1.2.1.zip* /tmp/file23-artifacts/
+          cp FILE23-1.2.1-MANIFEST.sha256 /tmp/file23-artifacts/
+          cp 23-Doctor-Founder-Publishing-Dashboard-Source-1.2.1.zip* /tmp/file23-artifacts/
+          cp FILE23-1.2.1-SOURCE-MANIFEST.sha256 /tmp/file23-artifacts/
 
       - name: Prepare workflow-permission-safe source commit
         shell: bash
         run: |
           set -euo pipefail
-          git checkout HEAD -- \
+          original_head="$(cat /tmp/file23-original-head)"
+          git reset --hard "$original_head"
+          git apply --check /tmp/file23-1.2.1.patch
+          git apply /tmp/file23-1.2.1.patch
+          git checkout "$original_head" -- \
             .github/workflows/file23-1.2.1-materialize.yml \
             .github/workflows/baseline-integrity.yml \
             .github/workflows/file23-final-release-candidate.yml \
             .github/workflows/file23-full-plan-completion.yml
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm -rf .file23-transfer
           git add -A
           git commit -m 'File 23 1.2.1: consume File 21/22 providers and correct visual experience'
 
@@ -85,7 +102,4 @@ jobs:
         with:
           name: file23-1.2.1-pre-workflow-update-verification
           if-no-files-found: error
-          path: |
-            23-sabri-doctor-founder-publishing-dashboard-1.2.1.zip
-            23-sabri-doctor-founder-publishing-dashboard-1.2.1.zip.sha256
-            FILE23-1.2.1-MANIFEST.sha256
+          path: /tmp/file23-artifacts/*
