@@ -9,7 +9,11 @@
 - Added File 23-owned operations schema, privacy export/erasure, retention, append-only audit, local repair and staging acceptance evidence.
 - Added complete File 00–25 module manifest, File 24 assurance evidence and File 04 read-only migration diagnostics.
 - Expanded routes, navigation, templates, responsive CSS, RTL, focus, reduced-motion and forced-colors support.
-- Added full-plan traceability, executable validator tests, adversarial security tests and deterministic 1.1.0 packaging.
+- Added explicit mutation nonce and same-origin enforcement, payload-bound idempotency, bounded private replay receipts and transactional audit commit/rollback.
+- Added high-entropy browser idempotency keys and mandatory audit reasons for high-risk settings/acceptance writes.
+- Added a 10,000-operation behavioral integrity model and expanded plan-to-code/security adversarial gates.
+- Added two further corrective review records after the mutation-integrity implementation.
+- Added full-plan traceability, executable validator tests and deterministic 1.1.0 packaging.
 
 ## 1.0.0 — 2026-08-04
 
