@@ -67,6 +67,10 @@ jobs:
           node --check assets/js/operations.js
           for suite in tests/*-tests.php; do php -d display_errors=1 -d error_reporting=E_ALL "$suite"; done
           php tests/architecture-guard.php
+          mkdir -p .file23-workflow-transfer
+          cp .github/workflows/baseline-integrity.yml .file23-workflow-transfer/baseline-integrity.yml
+          cp .github/workflows/file23-full-plan-completion.yml .file23-workflow-transfer/file23-full-plan-completion.yml
+          git checkout -- .github/workflows/baseline-integrity.yml .github/workflows/file23-full-plan-completion.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
