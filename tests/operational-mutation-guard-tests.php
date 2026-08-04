@@ -81,6 +81,8 @@ $assert( is_string( $source ) && false !== strpos( $source, 'START TRANSACTION' 
 $assert( is_string( $source ) && false !== strpos( $source, 'ROLLBACK' ) && false !== strpos( $source, 'COMMIT' ), 'Guard must contain explicit rollback and commit paths.' );
 $assert( is_string( $source ) && false !== strpos( $source, 'mutation_requested' ) && false !== strpos( $source, 'append_audit' ), 'Guard must append request and outcome audit evidence.' );
 $assert( is_string( $source ) && false !== strpos( $source, 'Idempotency-Key' ) && false !== strpos( $source, 'X-WP-Nonce' ), 'Guard must enforce idempotency and REST nonce headers.' );
+$assert( is_string( $source ) && false === strpos( $source, 'CREATE TABLE' ), 'Mutation guard must not create an alternate schema.' );
+$assert( is_string( $source ) && false !== strpos( $source, 'SPDB_Operations_Repository' ), 'Mutation audit must use the canonical hash-chained File 23 audit repository.' );
 
 if ( $failed ) {
 	fwrite( STDERR, "{$failed} of {$tests} operational mutation guard tests failed.\n" );
