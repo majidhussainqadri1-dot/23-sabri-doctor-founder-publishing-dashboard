@@ -51,7 +51,37 @@
 		return '/spdb/v1/' + path;
 	}
 
+	function randomHex( length ) {
+		var bytes = new Uint8Array( Math.ceil( length / 2 ) );
+		if ( window.crypto && window.crypto.getRandomValues ) {
+			window.crypto.getRandomValues( bytes );
+		} else {
+			for ( var i = 0; i < bytes.length; i++ ) {
+				bytes[ i ] = Math.floor( Math.random() * 256 );
+			}
+		}
+		return Array.prototype.map.call( bytes, function ( byte ) {
+			return byte.toString( 16 ).padStart( 2, '0' );
+		} ).join( '' ).slice( 0, length );
+	}
+
+	function idempotencyKey( form ) {
+		var existing = String( form.getAttribute( 'data-spdb-idempotency-key' ) || '' );
+		if ( existing ) { return existing; }
+		var key = 'spdb_' + randomHex( 32 );
+		form.setAttribute( 'data-spdb-idempotency-key', key );
+		return key;
+	}
+
 	function initialize( form ) {
+		function clearIdempotencyKey() {
+			if ( 'true' !== form.getAttribute( 'data-spdb-submitting' ) ) {
+				form.removeAttribute( 'data-spdb-idempotency-key' );
+			}
+		}
+		form.addEventListener( 'input', clearIdempotencyKey );
+		form.addEventListener( 'change', clearIdempotencyKey );
+
 		form.addEventListener( 'submit', function ( event ) {
 			event.preventDefault();
 			if ( 'true' === form.getAttribute( 'data-confirm' ) && ! window.confirm( config.strings.confirm ) ) {
@@ -59,13 +89,17 @@
 			}
 			var submit = form.querySelector( 'button[type="submit"]' );
 			if ( submit ) { submit.disabled = true; }
+			form.setAttribute( 'data-spdb-submitting', 'true' );
 			announce( form, config.strings.working, false );
 
+			var requestKey = idempotencyKey( form );
 			apiFetch( {
 				path: endpoint( form ),
 				method: form.getAttribute( 'data-method' ) || 'POST',
+				headers: { 'Idempotency-Key': requestKey },
 				data: serialize( form )
 			} ).then( function ( response ) {
+				form.removeAttribute( 'data-spdb-idempotency-key' );
 				if ( /ai-assistance$/.test( endpoint( form ) ) && response && response.suggestion ) {
 					var shell = form.closest( '.spdb-shell' ) || document;
 					var target = shell.querySelector( '[data-spdb-operation-status]' );
@@ -95,6 +129,7 @@
 			} ).catch( function ( error ) {
 				announce( form, error && error.message ? error.message : config.strings.failed, true );
 			} ).finally( function () {
+				form.removeAttribute( 'data-spdb-submitting' );
 				if ( submit ) { submit.disabled = false; }
 			} );
 		} );
