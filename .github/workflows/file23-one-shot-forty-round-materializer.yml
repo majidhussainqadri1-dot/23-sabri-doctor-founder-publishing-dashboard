@@ -1,5 +1,6 @@
 name: File 23 One-Shot Forty-Round Materializer
 
+# Triggered after the reviewed transfer payload already exists on the protected feature branch.
 on:
   push:
     branches:
