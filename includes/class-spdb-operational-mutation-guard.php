@@ -3,7 +3,7 @@
  * Cross-cutting integrity guard for File 23-owned REST mutations.
  *
  * Enforces REST nonce, same-origin browser requests, request idempotency,
- * bounded replay receipts, append-only audit evidence and transactional
+ * bounded replay receipts, hash-chained audit evidence and transactional
  * commit/rollback for local File 23 writes.
  *
  * @package Sabri_Publishing_Dashboard
@@ -12,7 +12,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Operational_Mutation_Guard {
-	private const SCHEMA_VERSION = '1.0.0';
+	private const RECEIPT_PREFIX = 'spdb_mutation_receipt_';
 	private const RECEIPT_TTL    = 7 * DAY_IN_SECONDS;
 	private const PENDING_TTL    = 5 * MINUTE_IN_SECONDS;
 	private const RESPONSE_LIMIT = 65535;
@@ -28,7 +28,6 @@ final class SPDB_Operational_Mutation_Guard {
 	}
 
 	public static function activate(): void {
-		self::install_schema();
 		self::schedule_cleanup();
 	}
 
@@ -78,8 +77,6 @@ final class SPDB_Operational_Mutation_Guard {
 			return $reason;
 		}
 
-		self::install_schema();
-
 		global $wpdb;
 		$transactional = ! empty( $policy['transactional'] );
 		$transaction   = false;
@@ -108,12 +105,13 @@ final class SPDB_Operational_Mutation_Guard {
 		}
 
 		self::$request_contexts[ spl_object_id( $request ) ] = array(
-			'receipt_id'    => (string) $claim,
-			'actor_user_id' => $user_id,
-			'route'         => (string) $request->get_route(),
-			'method'        => strtoupper( (string) $request->get_method() ),
-			'reason'        => (string) $reason,
-			'transaction'   => $transaction,
+			'receipt_option' => (string) $claim['option_name'],
+			'receipt_id'     => (string) $claim['receipt_id'],
+			'actor_user_id'  => $user_id,
+			'route'          => (string) $request->get_route(),
+			'method'         => strtoupper( (string) $request->get_method() ),
+			'reason'         => (string) $reason,
+			'transaction'    => $transaction,
 		);
 
 		return null;
@@ -142,9 +140,9 @@ final class SPDB_Operational_Mutation_Guard {
 		if ( $status >= 500 ) {
 			if ( $transaction ) {
 				$wpdb->query( 'ROLLBACK' );
-			} else {
-				self::complete_receipt( $context, $status, $data, 'failed' );
+				return $response;
 			}
+			self::complete_receipt( $context, $status, $data, 'failed' );
 			return $response;
 		}
 
@@ -195,15 +193,15 @@ final class SPDB_Operational_Mutation_Guard {
 		}
 
 		$policies = array(
-			'#^/spdb/v1/tasks(?:/task_[a-z0-9]{32})?$#'                   => array( 'transactional' => true, 'require_reason' => false ),
+			'#^/spdb/v1/tasks(?:/task_[a-z0-9]{32})?$#'                    => array( 'transactional' => true, 'require_reason' => false ),
 			'#^/spdb/v1/delegations(?:/delegation_[a-z0-9]{32}/revoke)?$#' => array( 'transactional' => true, 'require_reason' => true ),
-			'#^/spdb/v1/automation-rules(?:/rule_[a-z0-9]{32}/status)?$#'  => array( 'transactional' => true, 'require_reason' => false ),
-			'#^/spdb/v1/exports$#'                                         => array( 'transactional' => true, 'require_reason' => false ),
-			'#^/spdb/v1/ai-assistance$#'                                   => array( 'transactional' => false, 'require_reason' => false ),
-			'#^/spdb/v1/preferences$#'                                     => array( 'transactional' => true, 'require_reason' => false ),
-			'#^/spdb/v1/settings$#'                                        => array( 'transactional' => true, 'require_reason' => true ),
-			'#^/spdb/v1/system-check/repair$#'                             => array( 'transactional' => true, 'require_reason' => true ),
-			'#^/spdb/v1/activation$#'                                      => array( 'transactional' => true, 'require_reason' => true ),
+			'#^/spdb/v1/automation-rules(?:/rule_[a-z0-9]{32}/status)?$#'   => array( 'transactional' => true, 'require_reason' => false ),
+			'#^/spdb/v1/exports$#'                                          => array( 'transactional' => true, 'require_reason' => false ),
+			'#^/spdb/v1/ai-assistance$#'                                    => array( 'transactional' => false, 'require_reason' => false ),
+			'#^/spdb/v1/preferences$#'                                      => array( 'transactional' => true, 'require_reason' => false ),
+			'#^/spdb/v1/settings$#'                                         => array( 'transactional' => true, 'require_reason' => true ),
+			'#^/spdb/v1/system-check/repair$#'                              => array( 'transactional' => true, 'require_reason' => true ),
+			'#^/spdb/v1/activation$#'                                       => array( 'transactional' => true, 'require_reason' => true ),
 		);
 
 		foreach ( $policies as $pattern => $policy ) {
@@ -253,128 +251,68 @@ final class SPDB_Operational_Mutation_Guard {
 
 	public static function cleanup(): void {
 		global $wpdb;
-		$receipts = self::receipt_table();
-		$audit    = self::audit_table();
-		$now      = current_time( 'mysql', true );
-		$days     = max( 365, (int) apply_filters( 'spdb_mutation_audit_retention_days', 2555 ) );
-		$cutoff   = gmdate( 'Y-m-d H:i:s', time() - $days * DAY_IN_SECONDS );
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$receipts} WHERE expires_at_gmt < %s LIMIT 1000", $now ) );
-		$wpdb->query( $wpdb->prepare( "DELETE FROM {$audit} WHERE created_at_gmt < %s LIMIT 1000", $cutoff ) );
-	}
-
-	private static function install_schema(): void {
-		if ( get_option( 'spdb_mutation_guard_schema_version' ) === self::SCHEMA_VERSION ) {
-			return;
-		}
-		global $wpdb;
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-		$charset  = $wpdb->get_charset_collate();
-		$receipts = self::receipt_table();
-		$audit    = self::audit_table();
-
-		dbDelta(
-			"CREATE TABLE {$receipts} (
-				receipt_id char(37) NOT NULL,
-				actor_user_id bigint(20) unsigned NOT NULL,
-				route_hash char(64) NOT NULL,
-				route varchar(191) NOT NULL,
-				method varchar(10) NOT NULL,
-				idempotency_hash char(64) NOT NULL,
-				payload_hash char(64) NOT NULL,
-				state varchar(20) NOT NULL,
-				response_status smallint(5) unsigned NOT NULL DEFAULT 0,
-				response_json longtext NULL,
-				audit_reason varchar(500) NOT NULL,
-				created_at_gmt datetime NOT NULL,
-				updated_at_gmt datetime NOT NULL,
-				expires_at_gmt datetime NOT NULL,
-				PRIMARY KEY  (receipt_id),
-				UNIQUE KEY actor_route_idempotency (actor_user_id,route_hash,method,idempotency_hash),
-				KEY expires_at_gmt (expires_at_gmt)
-			) {$charset};"
-		);
-
-		dbDelta(
-			"CREATE TABLE {$audit} (
-				audit_id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-				receipt_id char(37) NOT NULL,
-				actor_user_id bigint(20) unsigned NOT NULL,
-				event_key varchar(64) NOT NULL,
-				route_hash char(64) NOT NULL,
-				method varchar(10) NOT NULL,
-				outcome varchar(20) NOT NULL,
-				reason varchar(500) NOT NULL,
-				details_hash char(64) NOT NULL,
-				created_at_gmt datetime NOT NULL,
-				PRIMARY KEY  (audit_id),
-				KEY receipt_id (receipt_id),
-				KEY created_at_gmt (created_at_gmt)
-			) {$charset};"
-		);
-
-		update_option( 'spdb_mutation_guard_schema_version', self::SCHEMA_VERSION, false );
-	}
-
-	/** @return string|WP_Error|WP_REST_Response */
-	private static function claim_receipt( int $user_id, string $route, string $method, string $idempotency_key, string $payload_hash, string $reason ) {
-		global $wpdb;
-		$table      = self::receipt_table();
-		$route_hash = hash( 'sha256', $route );
-		$key_hash   = hash( 'sha256', $idempotency_key );
-		$existing   = $wpdb->get_row(
+		$like = $wpdb->esc_like( self::RECEIPT_PREFIX ) . '%';
+		$rows = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE actor_user_id = %d AND route_hash = %s AND method = %s AND idempotency_hash = %s",
-				$user_id,
-				$route_hash,
-				$method,
-				$key_hash
+				"SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s ORDER BY option_id ASC LIMIT 1000",
+				$like
 			),
 			ARRAY_A
 		);
+		if ( ! is_array( $rows ) ) {
+			return;
+		}
+		$now = time();
+		foreach ( $rows as $row ) {
+			$name = (string) ( $row['option_name'] ?? '' );
+			$data = maybe_unserialize( $row['option_value'] ?? null );
+			if ( ! is_array( $data ) || (int) ( $data['expires_at'] ?? 0 ) <= $now ) {
+				delete_option( $name );
+			}
+		}
+	}
+
+	/** @return array{option_name:string,receipt_id:string}|WP_Error|WP_REST_Response */
+	private static function claim_receipt( int $user_id, string $route, string $method, string $idempotency_key, string $payload_hash, string $reason ) {
+		$route_hash  = hash( 'sha256', $route );
+		$key_hash    = hash( 'sha256', $idempotency_key );
+		$option_name = self::receipt_option_name( $user_id, $route_hash, $method, $key_hash );
+		$existing    = get_option( $option_name, null );
 
 		if ( is_array( $existing ) ) {
 			return self::existing_receipt_result( $existing, $payload_hash );
 		}
 
 		$receipt_id = wp_generate_uuid4();
-		$now        = current_time( 'mysql', true );
-		$inserted   = $wpdb->insert(
-			$table,
-			array(
-				'receipt_id'       => $receipt_id,
-				'actor_user_id'    => $user_id,
-				'route_hash'       => $route_hash,
-				'route'            => substr( $route, 0, 191 ),
-				'method'           => $method,
-				'idempotency_hash' => $key_hash,
-				'payload_hash'     => $payload_hash,
-				'state'            => 'pending',
-				'response_status'  => 0,
-				'response_json'    => null,
-				'audit_reason'     => $reason,
-				'created_at_gmt'   => $now,
-				'updated_at_gmt'   => $now,
-				'expires_at_gmt'   => gmdate( 'Y-m-d H:i:s', time() + self::RECEIPT_TTL ),
-			)
+		$now        = time();
+		$receipt    = array(
+			'receipt_id'       => $receipt_id,
+			'actor_user_id'    => $user_id,
+			'route_hash'       => $route_hash,
+			'method'           => $method,
+			'idempotency_hash' => $key_hash,
+			'payload_hash'     => $payload_hash,
+			'state'            => 'pending',
+			'response_status'  => 0,
+			'response_data'    => null,
+			'created_at'       => $now,
+			'updated_at'       => $now,
+			'expires_at'       => $now + self::RECEIPT_TTL,
 		);
-		if ( false === $inserted ) {
-			$existing = $wpdb->get_row(
-				$wpdb->prepare(
-					"SELECT * FROM {$table} WHERE actor_user_id = %d AND route_hash = %s AND method = %s AND idempotency_hash = %s",
-					$user_id,
-					$route_hash,
-					$method,
-					$key_hash
-				),
-				ARRAY_A
-			);
+
+		if ( ! add_option( $option_name, $receipt, '', false ) ) {
+			$existing = get_option( $option_name, null );
 			return is_array( $existing )
 				? self::existing_receipt_result( $existing, $payload_hash )
 				: self::error( 'spdb_mutation_receipt_failed', __( 'The mutation receipt could not be secured.', 'sabri-publishing-dashboard' ), 503 );
 		}
 
 		$audit = self::append_audit( $receipt_id, $user_id, 'mutation_requested', $route_hash, $method, 'pending', $reason, $payload_hash );
-		return is_wp_error( $audit ) ? $audit : $receipt_id;
+		if ( is_wp_error( $audit ) ) {
+			return $audit;
+		}
+
+		return array( 'option_name' => $option_name, 'receipt_id' => $receipt_id );
 	}
 
 	/** @return WP_Error|WP_REST_Response */
@@ -385,15 +323,14 @@ final class SPDB_Operational_Mutation_Guard {
 
 		$state = (string) ( $row['state'] ?? '' );
 		if ( in_array( $state, array( 'completed', 'denied', 'failed' ), true ) ) {
-			$data = json_decode( (string) ( $row['response_json'] ?? '' ), true );
-			$response = new WP_REST_Response( null === $data ? array() : $data, max( 200, (int) ( $row['response_status'] ?? 200 ) ) );
+			$response = new WP_REST_Response( $row['response_data'] ?? array(), max( 200, (int) ( $row['response_status'] ?? 200 ) ) );
 			$response->header( 'Cache-Control', 'private, no-store, max-age=0' );
 			$response->header( 'X-SPDB-Idempotent', 'replayed' );
 			return $response;
 		}
 
-		$updated = strtotime( (string) ( $row['updated_at_gmt'] ?? '' ) );
-		if ( $updated && $updated > time() - self::PENDING_TTL ) {
+		$updated = (int) ( $row['updated_at'] ?? 0 );
+		if ( $updated > time() - self::PENDING_TTL ) {
 			return self::error( 'spdb_mutation_in_progress', __( 'The same dashboard action is already being processed.', 'sabri-publishing-dashboard' ), 409 );
 		}
 		return self::error( 'spdb_mutation_stale_receipt', __( 'A stale mutation receipt requires reconciliation before retry.', 'sabri-publishing-dashboard' ), 409 );
@@ -401,8 +338,8 @@ final class SPDB_Operational_Mutation_Guard {
 
 	/** @return true|WP_Error */
 	private static function complete_receipt( array $context, int $status, $data, string $outcome ) {
-		global $wpdb;
-		$json = wp_json_encode( self::sanitize_response_data( $data ), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		$safe_data = self::sanitize_response_data( $data );
+		$json      = wp_json_encode( $safe_data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 		if ( ! is_string( $json ) || strlen( $json ) > self::RESPONSE_LIMIT ) {
 			return self::error( 'spdb_mutation_response_unrecordable', __( 'The dashboard response could not be recorded safely for replay.', 'sabri-publishing-dashboard' ), 500 );
 		}
@@ -424,43 +361,45 @@ final class SPDB_Operational_Mutation_Guard {
 			return $audit;
 		}
 
-		$updated = $wpdb->update(
-			self::receipt_table(),
-			array(
-				'state'           => $outcome,
-				'response_status' => min( 599, max( 100, $status ) ),
-				'response_json'   => $json,
-				'updated_at_gmt'  => current_time( 'mysql', true ),
-			),
-			array( 'receipt_id' => $receipt_id, 'state' => 'pending' ),
-			array( '%s', '%d', '%s', '%s' ),
-			array( '%s', '%s' )
-		);
-		return false === $updated || 1 !== (int) $wpdb->rows_affected
-			? self::error( 'spdb_mutation_receipt_update_failed', __( 'The mutation receipt could not be finalized.', 'sabri-publishing-dashboard' ), 500 )
-			: true;
+		$option_name = (string) $context['receipt_option'];
+		$receipt     = get_option( $option_name, null );
+		if ( ! is_array( $receipt ) || ! hash_equals( $receipt_id, (string) ( $receipt['receipt_id'] ?? '' ) ) || 'pending' !== (string) ( $receipt['state'] ?? '' ) ) {
+			return self::error( 'spdb_mutation_receipt_state_invalid', __( 'The mutation receipt is no longer current.', 'sabri-publishing-dashboard' ), 409 );
+		}
+
+		$receipt['state']           = $outcome;
+		$receipt['response_status'] = min( 599, max( 100, $status ) );
+		$receipt['response_data']   = $safe_data;
+		$receipt['updated_at']      = time();
+		$updated = update_option( $option_name, $receipt, false );
+		if ( ! $updated ) {
+			$stored = get_option( $option_name, null );
+			if ( ! is_array( $stored ) || ! hash_equals( $outcome, (string) ( $stored['state'] ?? '' ) ) || (int) ( $stored['response_status'] ?? 0 ) !== (int) $receipt['response_status'] ) {
+				return self::error( 'spdb_mutation_receipt_update_failed', __( 'The mutation receipt could not be finalized.', 'sabri-publishing-dashboard' ), 500 );
+			}
+		}
+		return true;
 	}
 
 	/** @return true|WP_Error */
 	private static function append_audit( string $receipt_id, int $user_id, string $event_key, string $route_hash, string $method, string $outcome, string $reason, string $details_hash ) {
-		global $wpdb;
-		$inserted = $wpdb->insert(
-			self::audit_table(),
+		if ( ! class_exists( 'SPDB_Operations_Repository' ) ) {
+			return self::error( 'spdb_mutation_audit_unavailable', __( 'The dashboard audit service is unavailable.', 'sabri-publishing-dashboard' ), 503 );
+		}
+		$repository = new SPDB_Operations_Repository();
+		return $repository->append_audit(
+			$user_id,
+			$event_key,
+			'mutation-receipt:' . $receipt_id,
 			array(
-				'receipt_id'     => $receipt_id,
-				'actor_user_id'  => $user_id,
-				'event_key'      => substr( sanitize_key( $event_key ), 0, 64 ),
-				'route_hash'     => $route_hash,
-				'method'         => substr( strtoupper( $method ), 0, 10 ),
-				'outcome'        => substr( sanitize_key( $outcome ), 0, 20 ),
-				'reason'         => substr( sanitize_text_field( $reason ), 0, 500 ),
-				'details_hash'   => $details_hash,
-				'created_at_gmt' => current_time( 'mysql', true ),
+				'receipt_hash' => hash( 'sha256', $receipt_id ),
+				'route_hash'   => $route_hash,
+				'method'       => $method,
+				'outcome'      => $outcome,
+				'reason'       => $reason,
+				'details_hash' => $details_hash,
 			)
 		);
-		return false === $inserted
-			? self::error( 'spdb_mutation_audit_write_failed', __( 'The mutation audit record could not be secured.', 'sabri-publishing-dashboard' ), 500 )
-			: true;
 	}
 
 	private static function valid_nonce( WP_REST_Request $request ): bool {
@@ -508,10 +447,16 @@ final class SPDB_Operational_Mutation_Guard {
 		if ( '' === $reason && empty( $policy['require_reason'] ) ) {
 			$reason = 'Authorized File 23 operational mutation.';
 		}
-		if ( strlen( $reason ) < 10 || strlen( $reason ) > 500 || preg_match( '/[\x00-\x1F\x7F]/', $reason ) ) {
+		if ( strlen( $reason ) < 10 || strlen( $reason ) > 500 || preg_match( '/[\x00-\x1F\x7F]/', $reason ) || self::sensitive_audit_text( $reason ) ) {
 			return self::error( 'spdb_mutation_audit_reason_invalid', __( 'A meaningful privacy-safe audit reason is required.', 'sabri-publishing-dashboard' ), 422 );
 		}
 		return $reason;
+	}
+
+	private static function sensitive_audit_text( string $value ): bool {
+		return 1 === preg_match( '/password|secret|token|nonce|otp|cvv|authorization|cookie|bearer|api[ _-]?key|patient[ _-]?(?:name|id)|message[ _-]?body|diagnosis|prescription/i', $value )
+			|| 1 === preg_match( '/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i', $value )
+			|| 1 === preg_match( '/\b\+?\d[\d ()-]{7,}\d\b/', $value );
 	}
 
 	/** @return array<string,mixed> */
@@ -524,14 +469,8 @@ final class SPDB_Operational_Mutation_Guard {
 		return is_array( $params ) ? $params : array();
 	}
 
-	private static function receipt_table(): string {
-		global $wpdb;
-		return $wpdb->prefix . 'spdb_mutation_receipts';
-	}
-
-	private static function audit_table(): string {
-		global $wpdb;
-		return $wpdb->prefix . 'spdb_mutation_audit';
+	private static function receipt_option_name( int $user_id, string $route_hash, string $method, string $key_hash ): string {
+		return self::RECEIPT_PREFIX . hash( 'sha256', implode( '|', array( (string) $user_id, $route_hash, $method, $key_hash ) ) );
 	}
 
 	private static function sanitize_response_data( $value, int $depth = 0 ) {
