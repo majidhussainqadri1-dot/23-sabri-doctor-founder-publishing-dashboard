@@ -14,8 +14,8 @@ concurrency:
 
 env:
   FILE00_SHA: 1831c7ed767ce8590a97dc8e2f2d38ad81661494
-  FILE21_SHA: e1bbfb514b859a51b9731a43d6a15fb824124507
-  FILE22_SHA: 1274e380268c2ab235c66fd21906cf4b1bcadf9a
+  FILE21_SHA: 116deca6026d7fbfe2549570e74d4bee0b68ec93
+  FILE22_SHA: ce3dc881395cf22e5b33a538cbb7e104d1a51931
 
 jobs:
   php-matrix:
@@ -55,8 +55,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq "Version:     1.2.0" sabri-publishing-dashboard.php
-          grep -Fq "Stable tag: 1.2.0" readme.txt
+          grep -Fq "Version:     1.2.1" sabri-publishing-dashboard.php
+          grep -Fq "Stable tag: 1.2.1" readme.txt
           grep -Fq 'spdb/file24_assurance_evidence' includes/class-spdb-plugin.php
           grep -Fq "global_safe_mode_owner' => 'file20" includes/class-spdb-local-repair.php
           grep -Fq "mutation_supported'         => false" includes/class-spdb-legacy-migration-diagnostics.php
@@ -160,22 +160,22 @@ jobs:
           set -euo pipefail
           php tests/forty-round-review-gate-tests.php
           test -s docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md
-      - name: Build deterministic 1.2.0 package
+      - name: Build deterministic 1.2.1 package
         run: bash tools/build-final-release.sh
       - name: Record exact source evidence
         shell: bash
         run: |
-          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.0\n' \
+          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.1\n' \
             "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" \
-            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.0-RELEASE-EVIDENCE.txt
+            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.1-RELEASE-EVIDENCE.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: file23-1.2.0-full-plan-candidate
+          name: file23-1.2.1-full-plan-candidate
           path: |
-            23-sabri-doctor-founder-publishing-dashboard-1.2.0.zip
-            23-sabri-doctor-founder-publishing-dashboard-1.2.0.zip.sha256
-            FILE23-1.2.0-MANIFEST.sha256
-            FILE23-1.2.0-RELEASE-EVIDENCE.txt
+            23-sabri-doctor-founder-publishing-dashboard-1.2.1.zip
+            23-sabri-doctor-founder-publishing-dashboard-1.2.1.zip.sha256
+            FILE23-1.2.1-MANIFEST.sha256
+            FILE23-1.2.1-RELEASE-EVIDENCE.txt
             docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md
             docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md
           if-no-files-found: error
