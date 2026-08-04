@@ -52,8 +52,9 @@ final class SPDB_Module_Manifest {
 				$version  = SPDB_VERSION;
 				$state    = 'native_owner';
 			}
+			$display_number = str_starts_with( $file_number, '01-' ) ? strtoupper( $file_number ) : $file_number;
 			$out[] = array(
-				'file'                 => $file_number,
+				'file'                 => $display_number,
 				'name'                 => $definition['name'],
 				'relationship'         => $definition['relationship'],
 				'required_level'       => $definition['required_level'],
@@ -100,8 +101,8 @@ final class SPDB_Module_Manifest {
 	private static function definitions(): array {
 		return array(
 			'00'   => self::definition( 'Sabri Membership Core', 'identity and authorization assertions', 'hard', 'file00', array( 'file00', 'membership' ) ),
-			'01-A' => self::definition( 'Definitive Master Plan and Product Constitution', 'numbering, ownership, release law and change control', 'governing', 'file01-a', array( 'file01-a', 'master_plan', 'governance' ) ),
-			'01-B' => self::definition( 'Platform Foundation and Contract Registry', 'module registry, contract discovery, routes and activation conventions', 'core', 'file01-b', array( 'file01-b', 'foundation', 'contract_registry' ) ),
+			'01-a' => self::definition( 'Definitive Master Plan and Product Constitution', 'numbering, ownership, release law and change control', 'governing', 'file01-a', array( 'file01-a', 'master_plan', 'governance' ) ),
+			'01-b' => self::definition( 'Platform Foundation and Contract Registry', 'module registry, contract discovery, routes and activation conventions', 'core', 'file01-b', array( 'file01-b', 'foundation', 'contract_registry' ) ),
 			'02'   => self::definition( 'Authentication and Accounts', 'authenticated session entry', 'core', 'file00', array( 'file02', 'authentication' ) ),
 			'03'   => self::definition( 'Profiles and Doctors', 'identity projection and native edit route', 'domain', 'file03', array( 'file03', 'profile' ) ),
 			'04'   => self::definition( 'Legacy Publishing Adapter', 'migration diagnostics only', 'legacy', 'file21', array( 'file04', 'legacy' ) ),
