@@ -32,8 +32,8 @@ $settings = $read( 'templates/settings.php' );
 $main    = $read( 'sabri-publishing-dashboard.php' );
 $readme  = $read( 'readme.txt' );
 
-$assert( str_contains( $main, "Version:     1.2.0" ) && str_contains( $main, "SPDB_VERSION', '1.2.0" ), 'Plugin release identity must be 1.2.0.' );
-$assert( str_contains( $readme, 'Stable tag: 1.2.0' ), 'Readme stable tag must match 1.2.0.' );
+$assert( str_contains( $main, "Version:     1.2.1" ) && str_contains( $main, "SPDB_VERSION', '1.2.1" ), 'Plugin release identity must be 1.2.1.' );
+$assert( str_contains( $readme, 'Stable tag: 1.2.1' ), 'Readme stable tag must match 1.2.1.' );
 $assert( str_contains( $main, 'class-spdb-operational-mutation-guard.php' ) && str_contains( $main, 'SPDB_Operational_Mutation_Guard::register' ), 'Operational mutation guard must be loaded and registered before runtime boot.' );
 
 $views = array( 'overview', 'create', 'workspace', 'inventory', 'review', 'calendar', 'collections', 'knowledge', 'sources', 'media', 'interactions', 'revisions', 'analytics', 'notifications', 'tasks', 'reports', 'settings', 'saved-views', 'system-status' );

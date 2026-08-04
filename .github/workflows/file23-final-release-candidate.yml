@@ -11,8 +11,8 @@ permissions:
 
 env:
   FILE00_SHA: 1831c7ed767ce8590a97dc8e2f2d38ad81661494
-  FILE21_SHA: e1bbfb514b859a51b9731a43d6a15fb824124507
-  FILE22_SHA: 1274e380268c2ab235c66fd21906cf4b1bcadf9a
+  FILE21_SHA: 116deca6026d7fbfe2549570e74d4bee0b68ec93
+  FILE22_SHA: ce3dc881395cf22e5b33a538cbb7e104d1a51931
 
 jobs:
   real-contracts:
@@ -61,6 +61,12 @@ jobs:
         run: |
           cat > file22-autoload.php <<'PHP'
           <?php
+          if ( ! function_exists( 'apply_filters' ) ) {
+              function apply_filters( string $hook, mixed $value, mixed ...$args ): mixed {
+                  unset( $hook, $args );
+                  return $value;
+              }
+          }
           $root = getenv( 'FILE22_ROOT' );
           spl_autoload_register(
               static function ( string $class ) use ( $root ): void {
@@ -149,20 +155,20 @@ jobs:
       - name: Record exact release evidence
         shell: bash
         run: |
-          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.0\n' \
+          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.1\n' \
             "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" \
-            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.0-RELEASE-EVIDENCE.txt
+            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.1-RELEASE-EVIDENCE.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: file23-1.2.0-canonical-release-evidence
+          name: file23-1.2.1-canonical-release-evidence
           path: |
-            23-sabri-doctor-founder-publishing-dashboard-1.2.0.zip
-            23-sabri-doctor-founder-publishing-dashboard-1.2.0.zip.sha256
-            FILE23-1.2.0-MANIFEST.sha256
-            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.0.zip
-            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.0.zip.sha256
-            FILE23-1.2.0-SOURCE-MANIFEST.sha256
-            FILE23-1.2.0-RELEASE-EVIDENCE.txt
+            23-sabri-doctor-founder-publishing-dashboard-1.2.1.zip
+            23-sabri-doctor-founder-publishing-dashboard-1.2.1.zip.sha256
+            FILE23-1.2.1-MANIFEST.sha256
+            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.1.zip
+            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.1.zip.sha256
+            FILE23-1.2.1-SOURCE-MANIFEST.sha256
+            FILE23-1.2.1-RELEASE-EVIDENCE.txt
             docs/STAGING-CHECKLIST.md
             docs/RELEASE-SIGNOFF.md
             docs/KNOWN-LIMITATIONS.md

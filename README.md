@@ -13,6 +13,10 @@ File 23 is the operational command center. It does not own native publication bo
 - File 24: security/privacy/compliance assurance evidence.
 - File 25: public visual/profile/timeline presentation.
 
+## 1.2.1 cross-file integration corrective candidate
+
+Version 1.2.1 adds exact File 21/File 22 provider discovery, canonical File 22 Composer routing, green central visual identity, local navigation icons and corrected card spacing without weakening the Version 1.2.0 forty-round security boundary.
+
 ## 1.2.0 forty-round hardened candidate
 
 The source has passed forty independent thematic review/fix rounds and includes the remaining File 23-owned runtime domains:

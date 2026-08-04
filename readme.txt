@@ -4,7 +4,7 @@ Tags: publishing, dashboard, editorial, doctors, founder, review, calendar, coll
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,7 +14,7 @@ A private, role-aware, federated publishing operations dashboard for the Sabri S
 
 File 23 provides one operational command center for the Founder, verified doctors, reviewers and restricted read-only account states while preserving each native module as the source of truth.
 
-Version 1.2.0 completes the code-level File 23 functional plan on top of the reviewed Phase 23A–23O foundation and includes:
+Version 1.2.1 preserves the completed File 23 plan and adds live cross-file provider discovery, exact Composer routing, green visual identity, Vision/Dashicons navigation, and corrected responsive card spacing. Version 1.2.0 completed the code-level File 23 functional plan on top of the reviewed Phase 23A–23O foundation and includes:
 
 * File 00 canonical membership assertions with fail-closed compatibility;
 * Founder, Doctor, Reviewer, Pending and Suspended role-specific workspaces;
@@ -63,6 +63,14 @@ No. File 22 is the creation, draft, autosave, preview and submission orchestrato
 No. Provider acceptance, environment, membership, capability, ownership, object version, nonce, same-origin, idempotency and native authorization must all pass. The default state is fail-closed.
 
 == Changelog ==
+
+= 1.2.1 =
+
+* Added exact File 21 and File 22 provider discovery consumption through the versioned File 23 registry.
+* Removed the guessed /create/ fallback; Create now resolves only the canonical File 22 page or reports unavailable.
+* Changed the central visual identity to accessible green while retaining semantic warning, critical and informational colors.
+* Added local WordPress Dashicons navigation icons and corrected card label/value/note spacing across desktop, mobile, RTL, zoom and forced-colors modes.
+* Added targeted provider/Composer/visual regression gates.
 
 = 1.2.0 =
 

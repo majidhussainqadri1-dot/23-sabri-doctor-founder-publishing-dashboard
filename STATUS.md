@@ -2,7 +2,7 @@
 
 ## Current candidate
 
-- Version: `1.2.0`
+- Version: `1.2.1`
 - Phase: Full File 23-owned plan completion candidate
 - Branch target: `feature/file23-full-plan-completion`
 - Canonical parent plans: Definitive Master Plan v3.0 and File 23 Final Central-Plan-Harmonized v3.0
@@ -40,3 +40,8 @@ The correct source status after a successful final exact-head automated run is *
 - Founder visual/functional acceptance, explicit merge authorization and controlled live deployment.
 
 Until those gates pass, File 23 is **not staging-accepted, live or operational** and production writes remain fail-closed.
+
+
+## 1.2.1 corrective scope
+
+Exact File 21/File 22 provider discovery, canonical Composer routing, green visual identity, local icons and responsive card-spacing corrections are coded; staging acceptance remains separate.

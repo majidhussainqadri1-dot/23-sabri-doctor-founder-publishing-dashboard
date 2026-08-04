@@ -1,7 +1,7 @@
 <?php
 /** Minimal WordPress-compatible test bootstrap for File 23 executable tests. */
 define( 'ABSPATH', __DIR__ . '/' );
-define( 'SPDB_VERSION', '1.2.0' );
+define( 'SPDB_VERSION', '1.2.1' );
 define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
 if ( ! defined( 'ARRAY_A' ) ) { define( 'ARRAY_A', 'ARRAY_A' ); }
 $GLOBALS['spdb_test_environment'] = 'production';

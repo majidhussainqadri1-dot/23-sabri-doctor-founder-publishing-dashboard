@@ -347,8 +347,18 @@ final class SPDB_Operations_Service {
 
 	/** File 22 remains the sole create/edit orchestration surface. */
 	public function composer_url(): string {
-		$url = apply_filters( 'spdb/file22_composer_url', home_url( '/create/' ) );
-		if ( ! is_string( $url ) ) {
+		$url = '';
+		$resolver = array( '\\Sabri\\UniversalComposer\\Core\\Page_Resolver', 'url' );
+		$ready    = array( '\\Sabri\\UniversalComposer\\Core\\Page_Resolver', 'is_ready' );
+		if ( is_callable( $resolver ) && is_callable( $ready ) ) {
+			try {
+				$url = call_user_func( $ready ) ? (string) call_user_func( $resolver ) : '';
+			} catch ( Throwable $exception ) {
+				$url = '';
+			}
+		}
+		$url = apply_filters( 'spdb/file22_composer_url', $url );
+		if ( ! is_string( $url ) || '' === trim( $url ) ) {
 			return '';
 		}
 		$normalized = SPDB_Safe_Destination::normalize( $url );
