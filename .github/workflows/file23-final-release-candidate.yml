@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 env:
   FILE00_SHA: 1831c7ed767ce8590a97dc8e2f2d38ad81661494
@@ -15,75 +15,9 @@ env:
   FILE22_SHA: 1274e380268c2ab235c66fd21906cf4b1bcadf9a
 
 jobs:
-  materialize-reviewed-source:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    outputs:
-      changed: ${{ steps.materialize.outputs.changed }}
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
-          fetch-depth: 0
-      - id: materialize
-        name: Materialize reviewed Version 1.2.0 source when transfer is present
-        shell: bash
-        run: |
-          set -euo pipefail
-          transfer_dir='.file23-transfer/chunks'
-          if [ ! -d "$transfer_dir" ] || ! compgen -G "$transfer_dir/part-*" > /dev/null; then
-            echo 'changed=false' >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          cat \
-            "$transfer_dir/part-00" \
-            "$transfer_dir/part-01" \
-            "$transfer_dir/part-02" \
-            "$transfer_dir/part-03" \
-            "$transfer_dir/part-04" \
-            "$transfer_dir/part-05" \
-            "$transfer_dir/part-06" \
-            "$transfer_dir/part-07" \
-            "$transfer_dir/part-08-09" \
-            "$transfer_dir/part-10" \
-            "$transfer_dir/part-11" \
-            "$transfer_dir/part-12" \
-            "$transfer_dir/part-13" \
-            "$transfer_dir/part-14" \
-            "$transfer_dir/part-15" \
-            > /tmp/file23-1.2.0.patch.bz2.b64
-          base64 -d /tmp/file23-1.2.0.patch.bz2.b64 > /tmp/file23-1.2.0.patch.bz2
-          test "$(sha256sum /tmp/file23-1.2.0.patch.bz2 | awk '{print $1}')" = 'c7d6bfa458ea7928d21312551a16aedf3c3748576afcf7d8b8e9512e6735e199'
-          bunzip2 -c /tmp/file23-1.2.0.patch.bz2 > /tmp/file23-full.patch
-          awk '
-            /^diff -ruN .*a\/\.github\/workflows\/file23-final-release-candidate\.yml b\/\.github\/workflows\/file23-final-release-candidate\.yml$/ { skip=1; next }
-            /^diff -ruN / { if (skip) skip=0 }
-            !skip { print }
-          ' /tmp/file23-full.patch > /tmp/file23-apply.patch
-          patch -p1 --batch --forward < /tmp/file23-apply.patch
-          rm -rf .file23-transfer
-          find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
-          node --check assets/js/dashboard.js
-          node --check assets/js/operations.js
-          for suite in tests/*-tests.php; do php -d display_errors=1 -d error_reporting=E_ALL "$suite"; done
-          php tests/architecture-guard.php
-          mkdir -p .file23-workflow-transfer
-          cp .github/workflows/baseline-integrity.yml .file23-workflow-transfer/baseline-integrity.yml
-          cp .github/workflows/file23-full-plan-completion.yml .file23-workflow-transfer/file23-full-plan-completion.yml
-          git checkout -- .github/workflows/baseline-integrity.yml .github/workflows/file23-full-plan-completion.yml
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git diff --cached --quiet && exit 1
-          git commit -m 'Complete File 23 forty-round review and hardening'
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
-          echo 'changed=true' >> "$GITHUB_OUTPUT"
-
   real-contracts:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    needs: materialize-reviewed-source
-    if: needs.materialize-reviewed-source.outputs.changed != 'true'
     steps:
       - uses: actions/checkout@v5
         with:
