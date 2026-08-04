@@ -36,7 +36,7 @@ Native review/calendar commands remain under their separate object-version, idem
 
 - Specified: complete.
 - Coded: full File 23-owned 1.1.0 candidate.
-- Automated QA: subject to the final exact-head GitHub Actions run.
+- Automated QA: exact-head GitHub Actions required.
 - Staging accepted: pending Hostinger execution.
 - Live deployed/operational: pending.
 
