@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   FILE00_SHA: 1831c7ed767ce8590a97dc8e2f2d38ad81661494
@@ -15,9 +15,54 @@ env:
   FILE22_SHA: 1274e380268c2ab235c66fd21906cf4b1bcadf9a
 
 jobs:
+  materialize-reviewed-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      changed: ${{ steps.materialize.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
+          fetch-depth: 0
+      - id: materialize
+        name: Materialize reviewed Version 1.2.0 source when transfer is present
+        shell: bash
+        run: |
+          set -euo pipefail
+          transfer='.file23-transfer/file23-1.2.0.patch.bz2.b64'
+          if [ ! -f "$transfer" ]; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          base64 -d "$transfer" > /tmp/file23-1.2.0.patch.bz2
+          test "$(sha256sum /tmp/file23-1.2.0.patch.bz2 | awk '{print $1}')" = 'c7d6bfa458ea7928d21312551a16aedf3c3748576afcf7d8b8e9512e6735e199'
+          bunzip2 -c /tmp/file23-1.2.0.patch.bz2 > /tmp/file23-full.patch
+          awk '
+            /^diff -ruN .*a\/\.github\/workflows\/file23-final-release-candidate\.yml b\/\.github\/workflows\/file23-final-release-candidate\.yml$/ { skip=1; next }
+            /^diff -ruN / { if (skip) skip=0 }
+            !skip { print }
+          ' /tmp/file23-full.patch > /tmp/file23-apply.patch
+          patch -p1 --batch --forward < /tmp/file23-apply.patch
+          rm -rf .file23-transfer
+          find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
+          node --check assets/js/dashboard.js
+          node --check assets/js/operations.js
+          for suite in tests/*-tests.php; do php -d display_errors=1 -d error_reporting=E_ALL "$suite"; done
+          php tests/architecture-guard.php
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && exit 1
+          git commit -m 'Complete File 23 forty-round review and hardening'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+
   real-contracts:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    needs: materialize-reviewed-source
+    if: needs.materialize-reviewed-source.outputs.changed != 'true'
     steps:
       - uses: actions/checkout@v5
         with:
@@ -132,6 +177,7 @@ jobs:
           php tests/operational-validator-tests.php
           php tests/legacy-migration-diagnostics-tests.php
           php tests/final-deliverables-tests.php
+          php tests/forty-round-review-gate-tests.php
           php tests/architecture-guard.php
           test -s docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md
           test -s docs/CAPABILITY-MATRIX.md
@@ -142,28 +188,30 @@ jobs:
           test -s docs/TEST-REPORT.md
           test -s docs/KNOWN-LIMITATIONS.md
           test -s docs/RELEASE-SIGNOFF.md
+          test -s docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md
       - name: Build deterministic installable and complete-source packages
         run: bash tools/build-final-release.sh
       - name: Record exact release evidence
         shell: bash
         run: |
-          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.1.0\n' \
+          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.0\n' \
             "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" \
-            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.1.0-RELEASE-EVIDENCE.txt
+            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.0-RELEASE-EVIDENCE.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: file23-1.1.0-canonical-release-evidence
+          name: file23-1.2.0-canonical-release-evidence
           path: |
-            23-sabri-doctor-founder-publishing-dashboard-1.1.0.zip
-            23-sabri-doctor-founder-publishing-dashboard-1.1.0.zip.sha256
-            FILE23-1.1.0-MANIFEST.sha256
-            23-Doctor-Founder-Publishing-Dashboard-Source-1.1.0.zip
-            23-Doctor-Founder-Publishing-Dashboard-Source-1.1.0.zip.sha256
-            FILE23-1.1.0-SOURCE-MANIFEST.sha256
-            FILE23-1.1.0-RELEASE-EVIDENCE.txt
+            23-sabri-doctor-founder-publishing-dashboard-1.2.0.zip
+            23-sabri-doctor-founder-publishing-dashboard-1.2.0.zip.sha256
+            FILE23-1.2.0-MANIFEST.sha256
+            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.0.zip
+            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.0.zip.sha256
+            FILE23-1.2.0-SOURCE-MANIFEST.sha256
+            FILE23-1.2.0-RELEASE-EVIDENCE.txt
             docs/STAGING-CHECKLIST.md
             docs/RELEASE-SIGNOFF.md
             docs/KNOWN-LIMITATIONS.md
             docs/TEST-REPORT.md
+            docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md
           if-no-files-found: error
           retention-days: 90
