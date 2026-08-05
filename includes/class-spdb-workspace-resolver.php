@@ -99,6 +99,7 @@ final class SPDB_Workspace_Resolver {
 		}
 		if ( SPDB_Capabilities::current_user_can( 'spdb_view_own_content' ) ) {
 			$items['notifications'] = $this->item( 'notifications', __( 'Notifications', 'sabri-publishing-dashboard' ) );
+			$this->append_native_professional_surfaces( $items );
 		}
 		if ( SPDB_Capabilities::current_user_can( 'spdb_manage_tasks' ) || SPDB_Capabilities::current_user_can( 'spdb_manage_delegations' ) ) {
 			$items['tasks'] = $this->item( 'tasks', __( 'Team & Tasks', 'sabri-publishing-dashboard' ) );
@@ -115,6 +116,51 @@ final class SPDB_Workspace_Resolver {
 			$items['system-status'] = $this->item( 'system-status', __( 'System Status', 'sabri-publishing-dashboard' ) );
 		}
 		return $items;
+	}
+
+	/**
+	 * Append One-Stop Doctor Ecosystem links only when their canonical native
+	 * owner supplies an approved same-origin destination. File 23 never guesses
+	 * routes and never creates substitute records for an absent provider.
+	 *
+	 * @param array<string,array<string,string>> $items Navigation items.
+	 */
+	private function append_native_professional_surfaces( array &$items ): void {
+		$surfaces = array(
+			'appointments' => __( 'Appointments', 'sabri-publishing-dashboard' ),
+			'messages'     => __( 'Smail & Messages', 'sabri-publishing-dashboard' ),
+			'reviews'      => __( 'Doctor & Clinic Reviews', 'sabri-publishing-dashboard' ),
+			'followers'    => __( 'Followers', 'sabri-publishing-dashboard' ),
+			'downloads'    => __( 'Downloads', 'sabri-publishing-dashboard' ),
+			'support'      => __( 'Support & Appeals', 'sabri-publishing-dashboard' ),
+			'learning'     => __( 'Books, Courses & Learning', 'sabri-publishing-dashboard' ),
+		);
+
+		foreach ( $surfaces as $surface => $label ) {
+			$url = apply_filters( 'spdb_native_professional_surface_url', '', $surface, get_current_user_id() );
+			$url = $this->same_origin_url( is_scalar( $url ) ? (string) $url : '' );
+			if ( '' !== $url ) {
+				$items[ 'native-' . $surface ] = array( 'label' => $label, 'url' => $url );
+			}
+		}
+	}
+
+	/** Return a sanitized same-origin URL or an empty fail-closed value. */
+	private function same_origin_url( string $url ): string {
+		$url = esc_url_raw( trim( $url ), array( 'http', 'https' ) );
+		if ( '' === $url ) {
+			return '';
+		}
+		$home   = wp_parse_url( home_url( '/' ) );
+		$target = wp_parse_url( $url );
+		if (
+			! is_array( $home ) || ! is_array( $target ) || empty( $home['host'] ) || empty( $target['host'] )
+			|| strtolower( (string) $home['host'] ) !== strtolower( (string) $target['host'] )
+			|| isset( $target['user'] ) || isset( $target['pass'] )
+		) {
+			return '';
+		}
+		return $url;
 	}
 
 	/** @return array<string,string> */
