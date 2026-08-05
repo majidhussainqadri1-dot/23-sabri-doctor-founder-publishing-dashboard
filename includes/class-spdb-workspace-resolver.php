@@ -71,6 +71,8 @@ final class SPDB_Workspace_Resolver {
 	/** @param array<string,array<string,string>> $items */
 	private function append_native_professional_surfaces( array &$items ): void {
 		if ( ! SPDB_Membership_Guard::current_user_is_approved() ) { return; }
+		$registry = SPDB_Provider_Registration::registry();
+		if ( ! $registry instanceof SPDB_Adapter_Registry ) { return; }
 		$surfaces = array(
 			'appointments' => __( 'Appointments', 'sabri-publishing-dashboard' ),
 			'messages' => __( 'Smail & Messages', 'sabri-publishing-dashboard' ),
@@ -80,7 +82,6 @@ final class SPDB_Workspace_Resolver {
 			'support' => __( 'Support & Appeals', 'sabri-publishing-dashboard' ),
 			'learning' => __( 'Books, Courses & Learning', 'sabri-publishing-dashboard' ),
 		);
-		$acceptance_records = SPDB_Adapter_Acceptance::records();
 		foreach ( $surfaces as $surface => $label ) {
 			$contract = apply_filters( 'spdb_native_professional_surface_contract', array(), $surface, get_current_user_id() );
 			if ( ! is_array( $contract ) || true !== ( $contract['enabled'] ?? null ) ) { continue; }
@@ -91,18 +92,17 @@ final class SPDB_Workspace_Resolver {
 			$raw_capability = is_scalar( $contract['capability'] ?? null ) ? trim( (string) $contract['capability'] ) : '';
 			$capability = sanitize_key( $raw_capability );
 			if ( $provider !== $raw_provider || ! SPDB_Adapter_Registry::is_canonical_key( $provider ) || ! $this->is_semver( $provider_version ) || ! hash_equals( SPDB_CONTRACT_VERSION, $contract_version ) || '' === $capability || $capability !== $raw_capability ) { continue; }
-			if ( ! $this->provider_is_accepted( $provider, $provider_version, $acceptance_records ) ) { continue; }
+			$metadata = $registry->metadata( $provider );
+			if ( ! is_array( $metadata ) || ! hash_equals( $provider_version, (string) ( $metadata['provider_version'] ?? '' ) ) ) { continue; }
+			if ( ! $this->provider_is_accepted( $registry, $provider ) ) { continue; }
 			if ( ! current_user_can( $capability ) ) { continue; }
 			$url = $this->same_origin_url( is_scalar( $contract['url'] ?? null ) ? (string) $contract['url'] : '' );
 			if ( '' !== $url ) { $items[ 'native-' . $surface ] = array( 'label' => $label, 'url' => $url ); }
 		}
 	}
 
-	/** @param array<string,array<string,mixed>> $records */
-	private function provider_is_accepted( string $provider, string $provider_version, array $records ): bool {
-		$record = $records[ $provider ] ?? null;
-		if ( ! is_array( $record ) || ! hash_equals( $provider_version, (string) ( $record['provider_version'] ?? '' ) ) || ! hash_equals( SPDB_CONTRACT_VERSION, (string) ( $record['contract_version'] ?? '' ) ) || ! hash_equals( SPDB_VERSION, (string) ( $record['plugin_version'] ?? '' ) ) ) { return false; }
-		$state = sanitize_key( (string) ( $record['state'] ?? '' ) );
+	private function provider_is_accepted( SPDB_Adapter_Registry $registry, string $provider ): bool {
+		$state = $registry->get_acceptance_state( $provider );
 		$environment = function_exists( 'wp_get_environment_type' ) ? sanitize_key( wp_get_environment_type() ) : 'production';
 		if ( 'production' === $environment ) { return SPDB_Adapter_Registry::ACCEPTANCE_PRODUCTION_ACCEPTED === $state; }
 		return in_array( $state, array( SPDB_Adapter_Registry::ACCEPTANCE_STAGING_ACCEPTED, SPDB_Adapter_Registry::ACCEPTANCE_PRODUCTION_ACCEPTED ), true );
