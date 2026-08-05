@@ -22,6 +22,7 @@ $jobs = spdb_ten_round_source( 'includes/class-spdb-background-jobs.php' );
 $plugin = spdb_ten_round_source( 'includes/class-spdb-plugin.php' );
 $operations_js = spdb_ten_round_source( 'assets/js/operations.js' );
 $dashboard_js = spdb_ten_round_source( 'assets/js/dashboard.js' );
+$build = spdb_ten_round_source( 'tools/build-final-release.sh' );
 $audit = spdb_ten_round_source( 'docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md' );
 
 spdb_ten_round_assert( str_contains( $audit, 'Round 1 — Branch convergence' ) && str_contains( $audit, 'File 21/File 22' ), 'Round 1 must preserve the previously reviewed live provider integration.' );
@@ -44,6 +45,7 @@ $domains = array( 'appointments', 'messages', 'reviews', 'followers', 'downloads
 foreach ( $domains as $domain ) { spdb_ten_round_assert( str_contains( $controller, $domain ), "Round 9 must expose the {$domain} projection route." ); }
 spdb_ten_round_assert( str_contains( $service, 'spdb_projection_provider_domains_invalid' ) && ! str_contains( $service, "array_map( 'sanitize_key', \$domains )" ), 'Round 9 must reject non-canonical provider domain declarations instead of normalizing them.' );
 spdb_ten_round_assert( str_contains( $main, 'Version:     1.2.2' ) && str_contains( $main, "SPDB_VERSION', '1.2.2" ), 'Round 10 must identify the combined corrective candidate as Version 1.2.2.' );
+spdb_ten_round_assert( 2 === substr_count( $build, '1\.2\.2$' ) && ! str_contains( $build, '1\.2\.1$' ), 'Round 10 package metadata checks must verify Version 1.2.2 rather than the superseded escaped pattern.' );
 spdb_ten_round_assert( 10 === preg_match_all( '/^## Round (?:10|[1-9]) /m', $audit ), 'The corrective record must contain exactly ten numbered review rounds.' );
 
 if ( $failed ) { fwrite( STDERR, "{$failed} of {$tests} ten-round corrective review tests failed.\n" ); exit( 1 ); }

@@ -35,7 +35,7 @@ cmp build-one.zip build-two.zip
 mv build-one.zip "$package_name"
 unzip -t "$package_name"
 test "$(unzip -Z1 "$package_name" | head -n1 | cut -d/ -f1)" = 'sabri-publishing-dashboard'
-unzip -p "$package_name" sabri-publishing-dashboard/sabri-publishing-dashboard.php | grep -Eq '^ \* Version:[[:space:]]+1\.2\.1$'
+unzip -p "$package_name" sabri-publishing-dashboard/sabri-publishing-dashboard.php | grep -Eq '^ \* Version:[[:space:]]+1\.2\.2$'
 unzip -p "$package_name" sabri-publishing-dashboard/readme.txt | grep -Fq 'Stable tag: 1.2.2'
 sha256sum "$package_name" > "$package_name.sha256"
 (
@@ -47,7 +47,7 @@ sha256sum "$package_name" > "$package_name.sha256"
 git archive --format=zip --prefix="${source_root}/" -o "$source_package" HEAD
 unzip -t "$source_package"
 test "$(unzip -Z1 "$source_package" | head -n1 | cut -d/ -f1)" = "$source_root"
-unzip -p "$source_package" "${source_root}/sabri-publishing-dashboard.php" | grep -Eq '^ \* Version:[[:space:]]+1\.2\.1$'
+unzip -p "$source_package" "${source_root}/sabri-publishing-dashboard.php" | grep -Eq '^ \* Version:[[:space:]]+1\.2\.2$'
 unzip -p "$source_package" "${source_root}/docs/RELEASE-SIGNOFF.md" | grep -Fq 'PENDING — DO NOT MERGE OR DEPLOY'
 sha256sum "$source_package" > "$source_package.sha256"
 git ls-files -z | LC_ALL=C sort -z | xargs -0 sha256sum > "$source_manifest"
