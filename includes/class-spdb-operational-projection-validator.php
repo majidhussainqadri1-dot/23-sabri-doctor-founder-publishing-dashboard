@@ -4,7 +4,21 @@ defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Operational_Projection_Validator {
 	public const MAX_ITEMS = 100;
-	private const DOMAINS = array( 'sources', 'media', 'interactions', 'gaps', 'revisions', 'notifications' );
+	private const DOMAINS = array(
+		'sources',
+		'media',
+		'interactions',
+		'gaps',
+		'revisions',
+		'notifications',
+		'appointments',
+		'messages',
+		'reviews',
+		'followers',
+		'downloads',
+		'support',
+		'learning',
+	);
 	private const PRIVACY = array( 'public', 'restricted', 'private', 'clinical_sensitive' );
 
 	public static function domains(): array { return self::DOMAINS; }
@@ -122,6 +136,8 @@ final class SPDB_Operational_Projection_Validator {
 		if ( ! is_array( $home ) || ! is_array( $target ) || empty( $target['host'] ) || empty( $home['host'] ) || strtolower( (string) $target['host'] ) !== strtolower( (string) $home['host'] ) || isset( $target['user'] ) || isset( $target['pass'] ) || isset( $target['fragment'] ) ) { return ''; }
 		return $url;
 	}
-	private static function sensitive_key( string $key ): bool { return 1 === preg_match( '/(?:patient|email|phone|address|message_body|ip|token|secret|password|consent_document|appointment)/', $key ); }
+	private static function sensitive_key( string $key ): bool {
+		return 1 === preg_match( '/(?:patient|email|phone|address|message_body|message_text|conversation|recipient|sender|ip|token|secret|password|consent_document|appointment|clinical|diagnosis|prescription|payment|billing|national_id|passport|guardian)/', $key );
+	}
 	private static function error( string $code, string $message ): WP_Error { return new WP_Error( $code, __( $message, 'sabri-publishing-dashboard' ), array( 'status' => 502 ) ); }
 }
