@@ -1,3 +1,10 @@
+:root {
+	/* Platform identity: green is canonical; semantic status colors remain distinct. */
+	--spdb-accent: #16843f;
+	--spdb-accent-strong: #0b5f2b;
+	--spdb-focus: #0b5f2b;
+}
+
 .spdb-main:focus {
 	outline: 3px solid var(--spdb-focus);
 	outline-offset: 3px;
@@ -5,4 +12,15 @@
 
 .spdb-empty-state[hidden] {
 	display: none;
+}
+
+/* Text labels remain mandatory; optional icons may supplement them. */
+.spdb-navigation a,
+.spdb-button {
+	text-decoration-thickness: 0.08em;
+	text-underline-offset: 0.18em;
+}
+
+.spdb-navigation a[aria-current="page"] {
+	border-inline-start: 0.25rem solid var(--spdb-accent-strong);
 }
