@@ -6,6 +6,7 @@ on:
       - 'includes/class-spdb-workspace-resolver.php'
       - 'includes/class-spdb-operational-projection-validator.php'
       - 'assets/css/dashboard-corrections.css'
+      - 'docs/REQUIREMENTS-TRACEABILITY-MATRIX.md'
       - 'docs/THREE-PLAN-HARMONIZATION-IMPLEMENTATION-2026-08-05.md'
       - 'tests/three-plan-harmonization-tests.php'
       - '.github/workflows/file23-three-plan-harmonization.yml'
