@@ -1,6 +1,10 @@
 # File 23 Requirements-to-Code Traceability Matrix — Version 1.2.0
 
-Canonical plans: Definitive Master Plan v3.0 and File 23 Final Central-Plan-Harmonized v3.0.
+Canonical plans:
+
+1. Sabri Social Homeopathy Platform Definitive Master Plan v3.0.
+2. Consolidated All-Chats Recovered Directive Register v2.1 — 5 August 2026.
+3. File 23 Final Central-Plan-Harmonized v3.0.
 
 | Requirement | Implemented evidence | Automated / staging evidence |
 |---|---|---|
@@ -39,6 +43,14 @@ Canonical plans: Definitive Master Plan v3.0 and File 23 Final Central-Plan-Harm
 | F23-R033 Viewer/role/privacy/state/version cache isolation | Private route, bounded cache contracts and invalidation hooks | Static/privacy tests; LiteSpeed staging pending |
 | F23-R034 Retention and erasure propagation | Privacy integration, expiry/cleanup and retention documentation | Export/erase/retention tests; legal-hold integration pending |
 | F23-R035 Idempotent non-destructive activation | Schema installers, capability reconciliation and activation wizard | Fresh/upgrade/reactivation staging pending |
+| F23-R036 One-Stop Doctor appointments surface remains native-owner controlled | Accepted versioned professional-surface contract; no guessed route | Three-plan harmonization gate; real File 08/provider staging pending |
+| F23-R037 Smail/messages surface remains File 17-owned | Accepted versioned professional-surface contract; message metadata minimization | Three-plan harmonization gate; real File 17 staging pending |
+| F23-R038 Doctor/clinic reviews and followers remain native projections | Accepted contract, capability recheck, no duplicate truth | Static contract tests; real owner providers pending |
+| F23-R039 Rights-aware downloads remain native and revocable | Accepted download contract and secure same-origin destination only | Static gate; entitlement/revocation staging pending |
+| F23-R040 Support/appeals remain CF-02 or current native-owner controlled | Accepted support contract; no case record stored by File 23 | Static gate; real support provider pending |
+| F23-R041 Books/courses/learning remain native module assets | Accepted learning contract; dashboard only routes/projections | Static gate; File 05/12 provider staging pending |
+| F23-R042 Green identity accent with semantic status colors and visible labels | Green CSS tokens, focus treatment and text-label preservation | Three-plan CSS regression; File 25 visual acceptance pending |
+| F23-R043 Professional surface contract must be accepted, enabled, versioned, capability-checked and same-origin | `spdb_native_professional_surface_contract`, provider key/version/capability/URL validation | Three-plan adversarial regression and exact-head CI |
 
 ## Release-state rule
 
@@ -46,4 +58,4 @@ Canonical plans: Definitive Master Plan v3.0 and File 23 Final Central-Plan-Harm
 
 ## Forty-round review evidence
 
-All F23-R001–F23-R035 rows are cross-checked by `docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md` and the executable `tests/forty-round-review-gate-tests.php`. The gate verifies ordered 01–40 rounds, correction/retest fields, strict File 00 authority, capability reconciliation, ownership, transactional schemas, audit concurrency, encrypted exports, privacy lifecycle, provider acceptance, release version and permanent CI enforcement.
+F23-R001–F23-R035 remain cross-checked by `docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md` and `tests/forty-round-review-gate-tests.php`. F23-R036–F23-R043 are additionally enforced by `docs/THREE-PLAN-HARMONIZATION-IMPLEMENTATION-2026-08-05.md`, `tests/three-plan-harmonization-tests.php` and `.github/workflows/file23-three-plan-harmonization.yml`.
