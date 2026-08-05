@@ -70,6 +70,7 @@ final class SPDB_Workspace_Resolver {
 
 	/** @param array<string,array<string,string>> $items */
 	private function append_native_professional_surfaces( array &$items ): void {
+		if ( ! SPDB_Membership_Guard::current_user_is_approved() ) { return; }
 		$surfaces = array(
 			'appointments' => __( 'Appointments', 'sabri-publishing-dashboard' ),
 			'messages' => __( 'Smail & Messages', 'sabri-publishing-dashboard' ),
@@ -79,27 +80,51 @@ final class SPDB_Workspace_Resolver {
 			'support' => __( 'Support & Appeals', 'sabri-publishing-dashboard' ),
 			'learning' => __( 'Books, Courses & Learning', 'sabri-publishing-dashboard' ),
 		);
+		$acceptance_records = SPDB_Adapter_Acceptance::records();
 		foreach ( $surfaces as $surface => $label ) {
 			$contract = apply_filters( 'spdb_native_professional_surface_contract', array(), $surface, get_current_user_id() );
-			if ( ! is_array( $contract ) || empty( $contract['enabled'] ) || empty( $contract['accepted'] ) ) { continue; }
-			$provider = sanitize_key( (string) ( $contract['provider_key'] ?? '' ) );
-			$version = trim( (string) ( $contract['contract_version'] ?? '' ) );
-			$capability = sanitize_key( (string) ( $contract['capability'] ?? '' ) );
-			if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9_-]{1,63}$/', $provider ) || 1 !== preg_match( '/^\d+\.\d+(?:\.\d+)?$/', $version ) || '' === $capability ) { continue; }
-			if ( ! SPDB_Capabilities::current_user_can( $capability ) ) { continue; }
+			if ( ! is_array( $contract ) || true !== ( $contract['enabled'] ?? null ) ) { continue; }
+			$raw_provider = is_scalar( $contract['provider_key'] ?? null ) ? trim( (string) $contract['provider_key'] ) : '';
+			$provider = sanitize_key( $raw_provider );
+			$provider_version = is_scalar( $contract['provider_version'] ?? null ) ? trim( (string) $contract['provider_version'] ) : '';
+			$contract_version = is_scalar( $contract['contract_version'] ?? null ) ? trim( (string) $contract['contract_version'] ) : '';
+			$raw_capability = is_scalar( $contract['capability'] ?? null ) ? trim( (string) $contract['capability'] ) : '';
+			$capability = sanitize_key( $raw_capability );
+			if ( $provider !== $raw_provider || ! SPDB_Adapter_Registry::is_canonical_key( $provider ) || ! $this->is_semver( $provider_version ) || ! hash_equals( SPDB_CONTRACT_VERSION, $contract_version ) || '' === $capability || $capability !== $raw_capability ) { continue; }
+			if ( ! $this->provider_is_accepted( $provider, $provider_version, $acceptance_records ) ) { continue; }
+			if ( ! current_user_can( $capability ) ) { continue; }
 			$url = $this->same_origin_url( is_scalar( $contract['url'] ?? null ) ? (string) $contract['url'] : '' );
 			if ( '' !== $url ) { $items[ 'native-' . $surface ] = array( 'label' => $label, 'url' => $url ); }
 		}
+	}
+
+	/** @param array<string,array<string,mixed>> $records */
+	private function provider_is_accepted( string $provider, string $provider_version, array $records ): bool {
+		$record = $records[ $provider ] ?? null;
+		if ( ! is_array( $record ) || ! hash_equals( $provider_version, (string) ( $record['provider_version'] ?? '' ) ) || ! hash_equals( SPDB_CONTRACT_VERSION, (string) ( $record['contract_version'] ?? '' ) ) || ! hash_equals( SPDB_VERSION, (string) ( $record['plugin_version'] ?? '' ) ) ) { return false; }
+		$state = sanitize_key( (string) ( $record['state'] ?? '' ) );
+		$environment = function_exists( 'wp_get_environment_type' ) ? sanitize_key( wp_get_environment_type() ) : 'production';
+		if ( 'production' === $environment ) { return SPDB_Adapter_Registry::ACCEPTANCE_PRODUCTION_ACCEPTED === $state; }
+		return in_array( $state, array( SPDB_Adapter_Registry::ACCEPTANCE_STAGING_ACCEPTED, SPDB_Adapter_Registry::ACCEPTANCE_PRODUCTION_ACCEPTED ), true );
 	}
 
 	private function same_origin_url( string $url ): string {
 		$url = esc_url_raw( trim( $url ), array( 'http', 'https' ) );
 		if ( '' === $url ) { return ''; }
 		$home = wp_parse_url( home_url( '/' ) ); $target = wp_parse_url( $url );
-		if ( ! is_array( $home ) || ! is_array( $target ) || empty( $home['host'] ) || empty( $target['host'] ) || strtolower( (string) $home['host'] ) !== strtolower( (string) $target['host'] ) || isset( $target['user'] ) || isset( $target['pass'] ) || isset( $target['fragment'] ) ) { return ''; }
-		$home_port = isset( $home['port'] ) ? (int) $home['port'] : null; $target_port = isset( $target['port'] ) ? (int) $target['port'] : null;
-		if ( $home_port !== $target_port ) { return ''; }
+		if ( ! is_array( $home ) || ! is_array( $target ) || empty( $home['scheme'] ) || empty( $target['scheme'] ) || empty( $home['host'] ) || empty( $target['host'] ) || strtolower( (string) $home['scheme'] ) !== strtolower( (string) $target['scheme'] ) || strtolower( (string) $home['host'] ) !== strtolower( (string) $target['host'] ) || isset( $target['user'] ) || isset( $target['pass'] ) || isset( $target['fragment'] ) ) { return ''; }
+		if ( $this->normalized_port( $home ) !== $this->normalized_port( $target ) ) { return ''; }
 		return $url;
+	}
+
+	/** @param array<string,mixed> $parts */
+	private function normalized_port( array $parts ): int {
+		if ( isset( $parts['port'] ) ) { return (int) $parts['port']; }
+		return 'https' === strtolower( (string) ( $parts['scheme'] ?? '' ) ) ? 443 : 80;
+	}
+
+	private function is_semver( string $version ): bool {
+		return 1 === preg_match( '/^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/', $version );
 	}
 
 	/** @return array<string,string> */
