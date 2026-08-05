@@ -15,6 +15,7 @@ $activation = $read( 'includes/class-spdb-activation-wizard.php' );
 $router     = $read( 'includes/class-spdb-dashboard-router.php' );
 $export     = $read( 'includes/class-spdb-export-service.php' );
 $validator  = $read( 'includes/class-spdb-operational-projection-validator.php' );
+$destination = $read( 'includes/class-spdb-safe-destination.php' );
 $repository = $read( 'includes/class-spdb-operations-repository.php' );
 $guard      = $read( 'includes/class-spdb-operational-mutation-guard.php' );
 $client     = $read( 'assets/js/operations.js' );
@@ -36,7 +37,7 @@ $assert( str_contains( $activation, 'spdb_activation_audit_failed' ) && str_cont
 $assert( str_contains( $router, 'DONOTCACHEPAGE' ) && str_contains( $router, 'private, no-store' ) && str_contains( $router, 'noindex, nofollow, noarchive' ), 'Private dashboard route must be cache-excluded and non-indexable.' );
 $assert( str_contains( $export, 'hash_equals' ) && str_contains( $export, 'hash_hmac' ) && str_contains( $export, 'get_current_user_id' ), 'Export downloads must verify owner-bound HMAC signatures.' );
 $assert( str_contains( $export, 'spreadsheet_safe' ) && str_contains( $export, "'/^[=+\\-@]/'" ), 'CSV export must contain spreadsheet-formula neutralization.' );
-$assert( str_contains( $validator, 'sensitive_key' ) && str_contains( $validator, 'same-origin' ) === false && str_contains( $validator, 'home_url' ), 'Operational projections must filter sensitive metadata and validate destinations against the site origin.' );
+$assert( str_contains( $validator, 'sensitive_key' ) && str_contains( $validator, 'SPDB_Safe_Destination::normalize' ) && str_contains( $destination, 'home_url' ) && str_contains( $destination, 'key_is_sensitive' ), 'Operational projections must filter sensitive metadata and use the centralized exact-origin, secret-free destination validator.' );
 $assert( str_contains( $repository, 'previous_hash' ) && str_contains( $repository, 'event_hash' ) && str_contains( $repository, 'hash_equals' ), 'Dashboard audit must use an append-only integrity chain.' );
 $assert( str_contains( $repository, 'idempotency_key' ) && str_contains( $repository, 'lock_token' ) && str_contains( $repository, 'dead_letter' ), 'Background jobs must use idempotency, locking, and dead-letter state.' );
 

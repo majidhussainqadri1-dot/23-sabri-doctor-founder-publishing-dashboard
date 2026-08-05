@@ -43,7 +43,7 @@ final class SPDB_Operations_REST_Controller {
 	public function register_routes(): void {
 		register_rest_route(
 			self::NAMESPACE,
-			'/operations/(?P<domain>sources|media|interactions|gaps|revisions|notifications)',
+			'/operations/(?P<domain>sources|media|interactions|gaps|revisions|notifications|appointments|messages|reviews|followers|downloads|support|learning)',
 			array(
 				'methods'             => WP_REST_Server::READABLE,
 				'callback'            => array( $this, 'get_projections' ),
@@ -66,12 +66,12 @@ final class SPDB_Operations_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_tasks' ),
-					'permission_callback' => array( $this, 'read_permission' ),
+					'permission_callback' => array( $this, 'tasks_permission' ),
 				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_task' ),
-					'permission_callback' => array( $this, 'write_permission' ),
+					'permission_callback' => array( $this, 'tasks_permission' ),
 				),
 			)
 		);
@@ -81,7 +81,7 @@ final class SPDB_Operations_REST_Controller {
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,
 				'callback'            => array( $this, 'update_task' ),
-				'permission_callback' => array( $this, 'write_permission' ),
+				'permission_callback' => array( $this, 'tasks_permission' ),
 			)
 		);
 		register_rest_route(
@@ -91,12 +91,12 @@ final class SPDB_Operations_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_delegations' ),
-					'permission_callback' => array( $this, 'read_permission' ),
+					'permission_callback' => array( $this, 'delegations_permission' ),
 				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_delegation' ),
-					'permission_callback' => array( $this, 'write_permission' ),
+					'permission_callback' => array( $this, 'delegations_permission' ),
 				),
 			)
 		);
@@ -106,7 +106,7 @@ final class SPDB_Operations_REST_Controller {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'revoke_delegation' ),
-				'permission_callback' => array( $this, 'write_permission' ),
+				'permission_callback' => array( $this, 'delegations_permission' ),
 			)
 		);
 		register_rest_route(
@@ -116,12 +116,12 @@ final class SPDB_Operations_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_rules' ),
-					'permission_callback' => array( $this, 'read_permission' ),
+					'permission_callback' => array( $this, 'rules_permission' ),
 				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_rule' ),
-					'permission_callback' => array( $this, 'write_permission' ),
+					'permission_callback' => array( $this, 'rules_permission' ),
 				),
 			)
 		);
@@ -131,7 +131,7 @@ final class SPDB_Operations_REST_Controller {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'update_rule_status' ),
-				'permission_callback' => array( $this, 'write_permission' ),
+				'permission_callback' => array( $this, 'rules_permission' ),
 			)
 		);
 		register_rest_route(
@@ -141,12 +141,12 @@ final class SPDB_Operations_REST_Controller {
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_exports' ),
-					'permission_callback' => array( $this, 'read_permission' ),
+					'permission_callback' => array( $this, 'exports_permission' ),
 				),
 				array(
 					'methods'             => WP_REST_Server::CREATABLE,
 					'callback'            => array( $this, 'create_export' ),
-					'permission_callback' => array( $this, 'write_permission' ),
+					'permission_callback' => array( $this, 'exports_permission' ),
 				),
 			)
 		);
@@ -156,7 +156,7 @@ final class SPDB_Operations_REST_Controller {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'request_ai' ),
-				'permission_callback' => array( $this, 'write_permission' ),
+				'permission_callback' => array( $this, 'ai_permission' ),
 			)
 		);
 		register_rest_route(
@@ -263,6 +263,31 @@ final class SPDB_Operations_REST_Controller {
 		return SPDB_Membership_Guard::current_user_is_approved()
 			? true
 			: new WP_Error( 'spdb_workspace_read_only', __( 'The current dashboard workspace is read-only.', 'sabri-publishing-dashboard' ), array( 'status' => 403 ) );
+	}
+
+	/** @return true|WP_Error */
+	public function tasks_permission() {
+		return $this->capability_permission( 'spdb_manage_tasks' );
+	}
+
+	/** @return true|WP_Error */
+	public function delegations_permission() {
+		return $this->capability_permission( 'spdb_manage_delegations' );
+	}
+
+	/** @return true|WP_Error */
+	public function rules_permission() {
+		return $this->capability_permission( 'spdb_manage_automation_rules' );
+	}
+
+	/** @return true|WP_Error */
+	public function exports_permission() {
+		return $this->capability_permission( 'spdb_export_reports' );
+	}
+
+	/** @return true|WP_Error */
+	public function ai_permission() {
+		return $this->capability_permission( 'spdb_request_ai_assistance' );
 	}
 
 	/** @return true|WP_Error */
@@ -417,6 +442,15 @@ final class SPDB_Operations_REST_Controller {
 			}
 		}
 		return $out;
+	}
+
+	/** @return true|WP_Error */
+	private function capability_permission( string $capability ) {
+		$write = $this->write_permission();
+		if ( is_wp_error( $write ) ) {
+			return $write;
+		}
+		return SPDB_Capabilities::current_user_can( $capability ) ? true : self::forbidden();
 	}
 
 	private static function forbidden(): WP_Error {

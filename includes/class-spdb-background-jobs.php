@@ -53,10 +53,16 @@ final class SPDB_Background_Jobs {
 	}
 
 	public static function deactivate(): void {
+		if ( function_exists( 'wp_clear_scheduled_hook' ) ) {
+			wp_clear_scheduled_hook( self::HOOK );
+			return;
+		}
 		$timestamp = wp_next_scheduled( self::HOOK );
 		while ( $timestamp ) {
 			wp_unschedule_event( $timestamp, self::HOOK );
-			$timestamp = wp_next_scheduled( self::HOOK );
+			$next = wp_next_scheduled( self::HOOK );
+			if ( $next === $timestamp ) { break; }
+			$timestamp = $next;
 		}
 	}
 

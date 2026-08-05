@@ -168,8 +168,7 @@ final class SPDB_Plugin {
 			$this->governance_service,
 			$this->export_service,
 			$this->local_repair,
-			$this->activation_wizard,
-			$this->adapter_acceptance
+			$this->activation_wizard
 		);
 		$this->dashboard_router = new SPDB_Dashboard_Router( array( $this->dashboard_page, 'render' ) );
 	}

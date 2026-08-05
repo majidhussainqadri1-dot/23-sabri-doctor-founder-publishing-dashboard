@@ -2,9 +2,9 @@
 
 ## Current candidate
 
-- Version: `1.2.0`
+- Version: `1.2.2`
 - Phase: Full File 23-owned plan completion candidate
-- Branch target: `feature/file23-full-plan-completion`
+- Branch target: `codex/file23-three-plan-harmonization`
 - Canonical parent plans: Definitive Master Plan v3.0 and File 23 Final Central-Plan-Harmonized v3.0
 
 ## Source completion
@@ -21,6 +21,7 @@ Implemented:
 - Explicit operational mutation nonce, same-origin, approved-account, idempotency, replay, privacy and transaction/audit boundaries.
 - Stable browser idempotency keys, required reasons for high-risk writes and a 10,000-operation behavioral integrity model.
 - Forty documented thematic review/fix rounds, an executable 40/40 gate and full plan-to-code/adversarial regression tests.
+- Ten additional corrective review/fix rounds with an executable exact-source gate.
 - Complete final-deliverables set: source/package policy, schema manifest, capability matrix, ownership matrix, threat model, requirements traceability, staging checklist, Founder/Doctor/Admin manuals, test report, limitations register and release sign-off form.
 - Deterministic installable package plus complete Git-tracked source package, checksums, per-file manifests and exact-head release evidence.
 
@@ -40,3 +41,8 @@ The correct source status after a successful final exact-head automated run is *
 - Founder visual/functional acceptance, explicit merge authorization and controlled live deployment.
 
 Until those gates pass, File 23 is **not staging-accepted, live or operational** and production writes remain fail-closed.
+
+
+## 1.2.2 corrective scope
+
+Exact File 21/File 22 provider discovery, canonical Composer routing, green visual identity, local icons, responsive card corrections, and all ten review/fix rounds are coded; staging acceptance remains separate.
