@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'includes/class-spdb-workspace-resolver.php'
+      - 'includes/class-spdb-provider-registration.php'
+      - 'includes/class-spdb-adapter-registry.php'
       - 'includes/class-spdb-operational-projection-validator.php'
       - 'assets/css/dashboard-corrections.css'
       - 'docs/REQUIREMENTS-TRACEABILITY-MATRIX.md'
@@ -34,6 +36,8 @@ jobs:
         run: |
           set -euo pipefail
           php -l includes/class-spdb-workspace-resolver.php
+          php -l includes/class-spdb-provider-registration.php
+          php -l includes/class-spdb-adapter-registry.php
           php -l includes/class-spdb-operational-projection-validator.php
           php -l tests/three-plan-harmonization-tests.php
 
