@@ -83,15 +83,25 @@ final class SPDB_Workspace_Resolver {
 			'learning' => __( 'Books, Courses & Learning', 'sabri-publishing-dashboard' ),
 		);
 		foreach ( $surfaces as $surface => $label ) {
-			$contract = apply_filters( 'spdb_native_professional_surface_contract', array(), $surface, get_current_user_id() );
-			if ( ! is_array( $contract ) || true !== ( $contract['enabled'] ?? null ) ) { continue; }
-			$raw_provider = is_scalar( $contract['provider_key'] ?? null ) ? trim( (string) $contract['provider_key'] ) : '';
+			$selected = apply_filters( 'spdb_native_professional_surface_provider', '', $surface, get_current_user_id() );
+			$raw_provider = is_scalar( $selected ) ? trim( (string) $selected ) : '';
 			$provider = sanitize_key( $raw_provider );
+			if ( $provider !== $raw_provider || ! SPDB_Adapter_Registry::is_canonical_key( $provider ) ) { continue; }
+			$adapter = $registry->get( $provider );
+			if ( ! is_object( $adapter ) || ! method_exists( $adapter, 'get_professional_surface_contract' ) ) { continue; }
+			try {
+				$contract = $adapter->get_professional_surface_contract( $surface, get_current_user_id() );
+			} catch ( Throwable $throwable ) {
+				$registry->record_error( $provider, new WP_Error( 'spdb_professional_surface_contract_exception', __( 'A professional surface provider failed and was isolated.', 'sabri-publishing-dashboard' ) ) );
+				continue;
+			}
+			if ( ! is_array( $contract ) || true !== ( $contract['enabled'] ?? null ) ) { continue; }
+			$contract_provider = is_scalar( $contract['provider_key'] ?? null ) ? trim( (string) $contract['provider_key'] ) : '';
 			$provider_version = is_scalar( $contract['provider_version'] ?? null ) ? trim( (string) $contract['provider_version'] ) : '';
 			$contract_version = is_scalar( $contract['contract_version'] ?? null ) ? trim( (string) $contract['contract_version'] ) : '';
 			$raw_capability = is_scalar( $contract['capability'] ?? null ) ? trim( (string) $contract['capability'] ) : '';
 			$capability = sanitize_key( $raw_capability );
-			if ( $provider !== $raw_provider || ! SPDB_Adapter_Registry::is_canonical_key( $provider ) || ! $this->is_semver( $provider_version ) || ! hash_equals( SPDB_CONTRACT_VERSION, $contract_version ) || '' === $capability || $capability !== $raw_capability ) { continue; }
+			if ( ! hash_equals( $provider, $contract_provider ) || ! $this->is_semver( $provider_version ) || ! hash_equals( SPDB_CONTRACT_VERSION, $contract_version ) || '' === $capability || $capability !== $raw_capability ) { continue; }
 			$metadata = $registry->metadata( $provider );
 			if ( ! is_array( $metadata ) || ! hash_equals( $provider_version, (string) ( $metadata['provider_version'] ?? '' ) ) ) { continue; }
 			if ( ! $this->provider_is_accepted( $registry, $provider ) ) { continue; }
