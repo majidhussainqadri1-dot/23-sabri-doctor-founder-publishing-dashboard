@@ -50,7 +50,7 @@ Canonical plans:
 | F23-R040 Support/appeals remain CF-02 or current native-owner controlled | Accepted support contract; no case record stored by File 23 | Static gate; real support provider pending |
 | F23-R041 Books/courses/learning remain native module assets | Accepted learning contract; dashboard only routes/projections | Static gate; File 05/12 provider staging pending |
 | F23-R042 Green identity accent with semantic status colors and visible labels | Green CSS tokens, focus treatment and text-label preservation | Three-plan CSS regression; File 25 visual acceptance pending |
-| F23-R043 Professional surface contract must be accepted, enabled, versioned, capability-checked and same-origin | `spdb_native_professional_surface_contract`, provider key/version/capability/URL validation | Three-plan adversarial regression and exact-head CI |
+| F23-R043 Professional surfaces require File 23-owned acceptance, exact versions, native capability and exact same origin | `spdb_native_professional_surface_contract`; File 23 acceptance record bound to provider/File 23 contract/plugin versions; provider cannot self-approve; external capability rechecked; scheme/host/normalized-port validated | Three-plan adversarial regression and exact-head CI; real provider acceptance staging pending |
 
 ## Release-state rule
 
