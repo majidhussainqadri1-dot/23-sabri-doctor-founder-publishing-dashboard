@@ -44,8 +44,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq "Version:     1.2.0" sabri-publishing-dashboard.php
-          grep -Fq "Stable tag: 1.2.0" readme.txt
+          grep -Fq "Version:     1.2.2" sabri-publishing-dashboard.php
+          grep -Fq "Stable tag: 1.2.2" readme.txt
           grep -Fq "'phase'                   => 'full_plan_candidate'" includes/class-spdb-system-state.php
           grep -Fq 'class-spdb-operations-service.php' includes/class-spdb-plugin.php
           grep -Fq 'class-spdb-background-jobs.php' includes/class-spdb-plugin.php

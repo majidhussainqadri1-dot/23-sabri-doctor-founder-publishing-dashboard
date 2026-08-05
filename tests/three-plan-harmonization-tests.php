@@ -10,6 +10,7 @@ $resolver = (string) file_get_contents( $root . '/includes/class-spdb-workspace-
 $registration = (string) file_get_contents( $root . '/includes/class-spdb-provider-registration.php' );
 $adapter_registry = (string) file_get_contents( $root . '/includes/class-spdb-adapter-registry.php' );
 $validator = (string) file_get_contents( $root . '/includes/class-spdb-operational-projection-validator.php' );
+$controller = (string) file_get_contents( $root . '/includes/class-spdb-operations-rest-controller.php' );
 $css = (string) file_get_contents( $root . '/assets/css/dashboard-corrections.css' );
 $harmonized = (string) file_get_contents( $root . '/docs/THREE-PLAN-HARMONIZATION-IMPLEMENTATION-2026-08-05.md' );
 $provider_contract = (string) file_get_contents( $root . '/docs/PROFESSIONAL-SURFACE-PROVIDER-CONTRACT.md' );
@@ -17,6 +18,7 @@ $surfaces = array( 'appointments', 'messages', 'reviews', 'followers', 'download
 foreach ( $surfaces as $surface ) {
 	spdb_three_plan_assert( str_contains( $resolver, "'{$surface}'" ), "Workspace navigation must declare the {$surface} native professional surface." );
 	spdb_three_plan_assert( str_contains( $validator, "'{$surface}'" ), "Projection validator must recognize the {$surface} domain." );
+	spdb_three_plan_assert( str_contains( $controller, $surface ), "Operations REST routing must expose the {$surface} provider projection domain." );
 	spdb_three_plan_assert( str_contains( $provider_contract, "`{$surface}`" ), "Provider documentation must define the {$surface} surface." );
 }
 spdb_three_plan_assert( str_contains( $resolver, "apply_filters( 'spdb_native_professional_surface_provider'" ), 'File 23 may select only a registered provider identifier for each professional surface.' );
@@ -34,8 +36,8 @@ spdb_three_plan_assert( str_contains( $resolver, 'current_user_can( $capability 
 spdb_three_plan_assert( ! str_contains( $resolver, 'SPDB_Capabilities::current_user_can( $capability )' ), 'External native capabilities must not be rejected by the File 23-only capability allowlist.' );
 spdb_three_plan_assert( str_contains( $resolver, 'provider_version' ) && str_contains( $resolver, 'contract_version' ) && str_contains( $resolver, 'provider_key' ), 'Provider identity, semantic version and contract version must be mandatory.' );
 spdb_three_plan_assert( str_contains( $resolver, 'is_semver' ) && str_contains( $resolver, '[0-9A-Za-z.-]+' ), 'Provider versions must support semantic prerelease/build identifiers.' );
-spdb_three_plan_assert( str_contains( $resolver, "\$home['scheme']" ) && str_contains( $resolver, "\$target['scheme']" ) && str_contains( $resolver, 'normalized_port' ), 'Same-origin validation must compare scheme, host and normalized port.' );
-spdb_three_plan_assert( str_contains( $resolver, "isset( \$target['fragment'] )" ) && str_contains( $resolver, "isset( \$target['user'] )" ), 'Professional links must reject fragments and embedded credentials.' );
+spdb_three_plan_assert( str_contains( $resolver, 'SPDB_Safe_Destination::normalize' ), 'Professional surfaces must reuse the exact-origin, secret-rejecting destination contract.' );
+spdb_three_plan_assert( ! str_contains( $resolver, 'private function normalized_port' ), 'Professional links must not retain a weaker duplicate URL validator.' );
 spdb_three_plan_assert( str_contains( $provider_contract, 'same scheme, host and normalized port' ) && str_contains( $provider_contract, 'native route authorization rechecked again on arrival' ), 'Provider documentation must require exact-origin and destination-side authorization.' );
 spdb_three_plan_assert( ! str_contains( $resolver, "home_url( '/appointments/'" ), 'File 23 must not guess or invent native routes.' );
 spdb_three_plan_assert( str_contains( $validator, 'message_text' ) && str_contains( $validator, 'national_id' ) && str_contains( $validator, 'prescription' ), 'Projection metadata filtering must cover messaging, identity and clinical secrets.' );

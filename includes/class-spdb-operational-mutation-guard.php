@@ -35,9 +35,16 @@ final class SPDB_Operational_Mutation_Guard {
 	}
 
 	public static function deactivate(): void {
+		if ( function_exists( 'wp_clear_scheduled_hook' ) ) {
+			wp_clear_scheduled_hook( 'spdb_mutation_guard_cleanup' );
+			return;
+		}
 		$timestamp = wp_next_scheduled( 'spdb_mutation_guard_cleanup' );
-		if ( $timestamp ) {
+		while ( $timestamp ) {
 			wp_unschedule_event( $timestamp, 'spdb_mutation_guard_cleanup' );
+			$next = wp_next_scheduled( 'spdb_mutation_guard_cleanup' );
+			if ( $next === $timestamp ) { break; }
+			$timestamp = $next;
 		}
 	}
 
@@ -75,6 +82,9 @@ final class SPDB_Operational_Mutation_Guard {
 			return $bounded;
 		}
 		$key     = self::request_idempotency_key( $request, $payload );
+		if ( is_wp_error( $key ) ) {
+			return $key;
+		}
 		if ( ! self::valid_idempotency_key( $key ) ) {
 			return self::error( 'spdb_mutation_idempotency_required', __( 'A valid idempotency key is required for this dashboard action.', 'sabri-publishing-dashboard' ), 422 );
 		}
@@ -223,6 +233,7 @@ final class SPDB_Operational_Mutation_Guard {
 			'#^/spdb/v1/exports$#'                                          => array( 'transactional' => true, 'require_reason' => false ),
 			'#^/spdb/v1/ai-assistance$#'                                    => array( 'transactional' => false, 'require_reason' => false ),
 			'#^/spdb/v1/preferences$#'                                      => array( 'transactional' => true, 'require_reason' => false ),
+			'#^/spdb/v1/saved-views(?:/view_[a-z0-9]{32})?$#'                => array( 'transactional' => true, 'require_reason' => false ),
 			'#^/spdb/v1/settings$#'                                         => array( 'transactional' => true, 'require_reason' => true ),
 			'#^/spdb/v1/system-check/repair$#'                              => array( 'transactional' => true, 'require_reason' => true ),
 			'#^/spdb/v1/activation$#'                                       => array( 'transactional' => true, 'require_reason' => true ),
@@ -464,15 +475,16 @@ final class SPDB_Operational_Mutation_Guard {
 			&& ( '' === $referer || self::same_origin_value( $referer, $home ) );
 	}
 
-	/** @param array<string,mixed> $payload */
-	private static function request_idempotency_key( WP_REST_Request $request, array $payload ): string {
+	/** @param array<string,mixed> $payload @return string|WP_Error */
+	private static function request_idempotency_key( WP_REST_Request $request, array $payload ) {
 		$header = trim( (string) $request->get_header( 'Idempotency-Key' ) );
-		if ( '' !== $header ) {
-			return $header;
-		}
-		return isset( $payload['idempotency_key'] ) && is_scalar( $payload['idempotency_key'] )
+		$body = isset( $payload['idempotency_key'] ) && is_scalar( $payload['idempotency_key'] )
 			? trim( (string) $payload['idempotency_key'] )
 			: '';
+		if ( '' !== $header && '' !== $body && ! hash_equals( $header, $body ) ) {
+			return self::error( 'spdb_mutation_idempotency_mismatch', __( 'The idempotency key must be identical in every request transport.', 'sabri-publishing-dashboard' ), 422 );
+		}
+		return '' !== $header ? $header : $body;
 	}
 
 	/** @return string|WP_Error */

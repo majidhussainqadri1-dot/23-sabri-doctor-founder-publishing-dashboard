@@ -1,15 +1,15 @@
-# File 23 Release Sign-Off Form — Version 1.2.0
+# File 23 Release Sign-Off Form — Version 1.2.2
 
 This form must remain **Pending** until every required evidence field is complete. A green CI run alone is not release approval.
 
 ## Artifact identity
 
-- Release version: `1.2.0`
+- Release version: `1.2.2`
 - Exact Git head: ________________________________
 - Base/main head reviewed: _________________________
-- Installable ZIP: `23-sabri-doctor-founder-publishing-dashboard-1.2.0.zip`
+- Installable ZIP: `23-sabri-doctor-founder-publishing-dashboard-1.2.2.zip`
 - Installable ZIP SHA-256: _________________________
-- Complete-source ZIP: `23-Doctor-Founder-Publishing-Dashboard-Source-1.2.0.zip`
+- Complete-source ZIP: `23-Doctor-Founder-Publishing-Dashboard-Source-1.2.2.zip`
 - Complete-source ZIP SHA-256: _____________________
 - Source manifest SHA-256: _________________________
 - CI run ID and URL/reference: _____________________
@@ -57,6 +57,7 @@ This form must remain **Pending** until every required evidence field is complet
 - Security/privacy review: _________________________
 - Defect register and retests: ______________________
 - Forty-round audit: `docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md`
+- Ten-round corrective audit: `docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md`
 
 ## Approvals
 

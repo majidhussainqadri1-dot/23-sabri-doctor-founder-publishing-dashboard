@@ -3,7 +3,9 @@
 defined( 'ABSPATH' ) || exit;
 
 interface SPDB_Operational_Projection_Provider {
-	/** @return string[] Canonical domains: sources, media, interactions, gaps, revisions, notifications. */
+	/**
+	 * @return string[] Canonical domains from SPDB_Operational_Projection_Validator::domains().
+	 */
 	public function get_operational_projection_domains(): array;
 
 	/**

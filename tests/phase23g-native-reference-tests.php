@@ -141,6 +141,10 @@ spdb_23g_assert( 1 === $dispatch_snapshot['registration_errors'], 'Registration 
 spdb_23g_assert( ! array_key_exists( 'ignored_sensitive_detail', $dispatch_snapshot['providers'][0] ), 'Resolver diagnostics must reconstruct rather than relay provider health payloads.' );
 $recorded_errors = $dispatch_registry->registration_errors();
 spdb_23g_assert( false === strpos( $recorded_errors['system'][0]->get_error_message(), 'Synthetic' ), 'Stored registration errors must not retain callback or provider details.' );
+for ( $i = 0; $i < 100; ++$i ) { $dispatch_registry->record_error( 'provider_two', new WP_Error( 'spdb_native_synthetic', 'Patient detail ' . $i ) ); }
+$native_bounded = $dispatch_registry->registration_errors()['provider_two'] ?? array();
+spdb_23g_assert( count( $native_bounded ) <= 8, 'Native resolver errors must be bounded per provider.' );
+spdb_23g_assert( $native_bounded && false === strpos( $native_bounded[0]->get_error_message(), 'Patient detail' ), 'Native resolver error text must never be retained.' );
 
 if ( $failed > 0 ) { fwrite( STDERR, "{$failed} of {$tests} Phase 23G native resolver tests failed.\n" ); exit( 1 ); }
 echo "All {$tests} Phase 23G native resolver registry tests passed.\n";

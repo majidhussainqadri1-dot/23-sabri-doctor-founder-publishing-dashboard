@@ -13,6 +13,10 @@ File 23 is the operational command center. It does not own native publication bo
 - File 24: security/privacy/compliance assurance evidence.
 - File 25: public visual/profile/timeline presentation.
 
+## 1.2.2 ten-round corrective candidate
+
+Version 1.2.2 combines the exact File 21/File 22 provider discovery and canonical File 22 Composer routing from Version 1.2.1 with ten additional review/fix rounds. The corrections strengthen REST least privilege, provider isolation, URL safety, projection truth, replay integrity, browser submissions, lifecycle cleanup, and complete operational-domain routing without weakening the Version 1.2.0 forty-round security boundary.
+
 ## 1.2.0 forty-round hardened candidate
 
 The source has passed forty independent thematic review/fix rounds and includes the remaining File 23-owned runtime domains:
@@ -39,7 +43,7 @@ Native review/calendar commands remain under their separate object-version, idem
 ## Truthful status
 
 - Specified: complete.
-- Coded: full File 23-owned 1.2.0 candidate.
+- Coded: full File 23-owned 1.2.2 corrective candidate.
 - Automated QA: exact-head GitHub Actions required.
 - Staging accepted: pending Hostinger execution.
 - Live deployed/operational: pending.

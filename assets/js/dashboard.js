@@ -9,6 +9,15 @@
 	var config = window.SPDBDashboard;
 	apiFetch.use( apiFetch.createNonceMiddleware( config.nonce ) );
 
+	function idempotencyKey() {
+		if ( ! window.crypto || 'function' !== typeof window.crypto.getRandomValues ) { return ''; }
+		var bytes = new Uint8Array( 16 );
+		window.crypto.getRandomValues( bytes );
+		return 'spdb_' + Array.prototype.map.call( bytes, function ( byte ) {
+			return byte.toString( 16 ).padStart( 2, '0' );
+		} ).join( '' );
+	}
+
 	function filtersSummary( filters ) {
 		var keys = Object.keys( filters || {} );
 		if ( ! keys.length ) {
@@ -83,26 +92,32 @@
 
 		form.addEventListener( 'submit', function ( event ) {
 			event.preventDefault();
+			if ( 'true' === form.getAttribute( 'data-spdb-submitting' ) ) { return; }
 			var submit = form.querySelector( 'button[type="submit"]' );
 			var labelInput = form.elements.label;
 			var label = labelInput ? labelInput.value.trim() : '';
+			var requestKey = idempotencyKey();
 
-			if ( ! label || ! submit ) {
+			if ( ! label || ! submit || ! requestKey ) {
 				if ( labelInput ) {
 					labelInput.focus();
 				}
+				if ( ! requestKey ) { announce( config.strings.createFailed, true ); }
 				return;
 			}
 
 			submit.disabled = true;
+			form.setAttribute( 'data-spdb-submitting', 'true' );
 			announce( config.strings.loading, false );
 
 			apiFetch( {
 				path: '/spdb/v1/saved-views',
 				method: 'POST',
+				headers: { 'Idempotency-Key': requestKey },
 				data: {
 					label: label,
-					filters: collectFilters( form )
+					filters: collectFilters( form ),
+					idempotency_key: requestKey
 				}
 			} ).then( function ( view ) {
 				list.appendChild( createListItem( view ) );
@@ -112,6 +127,7 @@
 			} ).catch( function ( error ) {
 				announce( error && error.message ? error.message : config.strings.createFailed, true );
 			} ).finally( function () {
+				form.removeAttribute( 'data-spdb-submitting' );
 				submit.disabled = false;
 			} );
 		} );
@@ -128,14 +144,17 @@
 			}
 
 			var id = button.getAttribute( 'data-spdb-delete-view' );
-			if ( ! id ) {
+			var requestKey = idempotencyKey();
+			if ( ! id || ! requestKey ) {
+				if ( ! requestKey ) { announce( config.strings.deleteFailed, true ); }
 				return;
 			}
 
 			button.disabled = true;
 			apiFetch( {
 				path: '/spdb/v1/saved-views/' + encodeURIComponent( id ),
-				method: 'DELETE'
+				method: 'DELETE',
+				headers: { 'Idempotency-Key': requestKey }
 			} ).then( function () {
 				var item = button.closest( 'li' );
 				if ( item ) {

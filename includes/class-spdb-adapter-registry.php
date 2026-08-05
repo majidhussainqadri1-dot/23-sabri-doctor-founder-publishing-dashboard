@@ -8,6 +8,9 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Adapter_Registry {
+	private const MAX_ERROR_PROVIDERS = 32;
+	private const MAX_ERRORS_PER_PROVIDER = 8;
+	private const MAX_TOTAL_ERRORS = 64;
 	public const CAPABILITY_UNAVAILABLE           = 'unavailable';
 	public const CAPABILITY_DETECTED              = 'detected';
 	public const CAPABILITY_INCOMPATIBLE          = 'incompatible';
@@ -35,6 +38,7 @@ final class SPDB_Adapter_Registry {
 
 	/** @var array<string,WP_Error[]> */
 	private array $registration_errors = array();
+	private int $registration_error_count = 0;
 
 	/**
 	 * Acceptance is injected by File 23-owned governance, never by providers.
@@ -270,7 +274,24 @@ final class SPDB_Adapter_Registry {
 	 */
 	public function record_error( string $provider_key, WP_Error $error ): void {
 		$key = self::is_canonical_key( $provider_key ) ? $provider_key : 'system';
-		$this->registration_errors[ $key ][] = $error;
+		if ( $this->registration_error_count >= self::MAX_TOTAL_ERRORS ) {
+			return;
+		}
+		if ( ! isset( $this->registration_errors[ $key ] ) && count( $this->registration_errors ) >= self::MAX_ERROR_PROVIDERS ) {
+			if ( ! isset( $this->registration_errors['system'] ) ) {
+				return;
+			}
+			$key = 'system';
+		}
+		if ( count( $this->registration_errors[ $key ] ?? array() ) >= self::MAX_ERRORS_PER_PROVIDER ) {
+			return;
+		}
+		$code = (string) $error->get_error_code();
+		if ( ! self::is_canonical_key( $code ) ) {
+			$code = 'spdb_provider_registration_error';
+		}
+		$this->registration_errors[ $key ][] = new WP_Error( $code, __( 'A bounded provider integration error was isolated.', 'sabri-publishing-dashboard' ) );
+		++$this->registration_error_count;
 	}
 
 	/**

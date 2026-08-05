@@ -7,11 +7,22 @@ on:
       - 'includes/class-spdb-provider-registration.php'
       - 'includes/class-spdb-adapter-registry.php'
       - 'includes/class-spdb-operational-projection-validator.php'
+      - 'includes/interface-spdb-operational-projection-provider.php'
+      - 'includes/class-spdb-operations-rest-controller.php'
+      - 'includes/class-spdb-operations-service.php'
+      - 'includes/class-spdb-operational-mutation-guard.php'
+      - 'includes/class-spdb-native-reference-registry.php'
+      - 'includes/class-spdb-background-jobs.php'
+      - 'includes/class-spdb-plugin.php'
+      - 'assets/js/dashboard.js'
+      - 'assets/js/operations.js'
       - 'assets/css/dashboard-corrections.css'
       - 'docs/REQUIREMENTS-TRACEABILITY-MATRIX.md'
       - 'docs/THREE-PLAN-HARMONIZATION-IMPLEMENTATION-2026-08-05.md'
       - 'docs/PROFESSIONAL-SURFACE-PROVIDER-CONTRACT.md'
       - 'tests/three-plan-harmonization-tests.php'
+      - 'tests/ten-round-corrective-review-tests.php'
+      - 'docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md'
       - '.github/workflows/file23-three-plan-harmonization.yml'
   workflow_dispatch:
 
@@ -40,13 +51,28 @@ jobs:
           php -l includes/class-spdb-provider-registration.php
           php -l includes/class-spdb-adapter-registry.php
           php -l includes/class-spdb-operational-projection-validator.php
+          php -l includes/interface-spdb-operational-projection-provider.php
+          php -l includes/class-spdb-operations-rest-controller.php
+          php -l includes/class-spdb-operations-service.php
+          php -l includes/class-spdb-operational-mutation-guard.php
+          php -l includes/class-spdb-native-reference-registry.php
+          php -l includes/class-spdb-background-jobs.php
+          php -l includes/class-spdb-plugin.php
           php -l tests/three-plan-harmonization-tests.php
+          php -l tests/ten-round-corrective-review-tests.php
+          node --check assets/js/dashboard.js
+          node --check assets/js/operations.js
 
       - name: Run three-plan regression gate
         shell: bash
         run: |
           set -euo pipefail
           php tests/three-plan-harmonization-tests.php
+          php tests/ten-round-corrective-review-tests.php
+          php tests/operational-validator-tests.php
+          php tests/operational-mutation-guard-tests.php
+          php tests/provider-registration-tests.php
+          php tests/phase23g-native-reference-tests.php
 
       - name: Re-run architecture and consolidation guards
         shell: bash

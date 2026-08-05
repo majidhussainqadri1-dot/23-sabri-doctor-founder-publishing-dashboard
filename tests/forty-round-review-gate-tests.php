@@ -53,7 +53,7 @@ $files = array(
 );
 
 $gates = array(
-	array( 'main', array( 'Version:     1.2.0', "SPDB_VERSION', '1.2.0" ) ),
+	array( 'main', array( 'Version:     1.2.2', "SPDB_VERSION', '1.2.2" ) ),
 	array( 'caps', array( "return array( 'spdb_manage_safe_mode' )" ) ),
 	array( 'installer', array( 'private const SCHEMA_VERSION', "= '4';", 'remove_cap' ) ),
 	array( 'membership', array( 'canonical_contract_present', 'is_user_founder', 'is_user_trusted_publisher', 'true === $assertions[\'approved\']' ) ),
@@ -79,8 +79,8 @@ $gates = array(
 	array( 'rest', array( '/provider-acceptance/', 'record_provider_acceptance', 'write_permission' ) ),
 	array( 'migration', array( 'canonical_owner', 'migration' ) ),
 	array( 'activation', array( 'backup_restore_evidence', 'rollback_evidence', 'source_commit' ) ),
-	array( 'build', array( 'version="1.2.0"', 'git archive', 'SOURCE-MANIFEST' ) ),
-	array( 'workflow', array( 'forty-round-review-gate-tests.php', 'AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS', 'file23-1.2.0' ) ),
+	array( 'build', array( 'version="1.2.2"', 'git archive', 'SOURCE-MANIFEST' ) ),
+	array( 'workflow', array( 'forty-round-review-gate-tests.php', 'AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS', 'file23-1.2.2' ) ),
 );
 foreach ( $gates as $index => $gate ) {
 	foreach ( $gate[1] as $marker ) {

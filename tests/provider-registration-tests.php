@@ -43,6 +43,13 @@ spdb_provider_assert( $registry->has( 'provider_one' ), 'A later healthy provide
 spdb_provider_assert( ! empty( $registry->registration_errors()['system'] ), 'The isolated provider failure must be recorded for diagnostics.' );
 spdb_provider_assert( ! isset( $GLOBALS['wp_filter'][ SPDB_Provider_Registration::HOOK ] ), 'Registration callbacks must not remain available for accidental duplicate dispatch.' );
 
+for ( $i = 0; $i < 100; ++$i ) {
+	$registry->record_error( 'provider_one', new WP_Error( 'spdb_synthetic_failure', 'Patient secret ' . $i ) );
+}
+$bounded_errors = $registry->registration_errors()['provider_one'] ?? array();
+spdb_provider_assert( count( $bounded_errors ) <= 8, 'Provider-controlled registration errors must be bounded per provider.' );
+spdb_provider_assert( $bounded_errors && false === strpos( $bounded_errors[0]->get_error_message(), 'Patient secret' ), 'Provider-controlled registration error text must never be retained.' );
+
 if ( $failed > 0 ) {
 	exit( 1 );
 }

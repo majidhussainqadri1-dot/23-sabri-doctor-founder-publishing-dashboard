@@ -119,18 +119,8 @@ final class SPDB_Workspace_Resolver {
 	}
 
 	private function same_origin_url( string $url ): string {
-		$url = esc_url_raw( trim( $url ), array( 'http', 'https' ) );
-		if ( '' === $url ) { return ''; }
-		$home = wp_parse_url( home_url( '/' ) ); $target = wp_parse_url( $url );
-		if ( ! is_array( $home ) || ! is_array( $target ) || empty( $home['scheme'] ) || empty( $target['scheme'] ) || empty( $home['host'] ) || empty( $target['host'] ) || strtolower( (string) $home['scheme'] ) !== strtolower( (string) $target['scheme'] ) || strtolower( (string) $home['host'] ) !== strtolower( (string) $target['host'] ) || isset( $target['user'] ) || isset( $target['pass'] ) || isset( $target['fragment'] ) ) { return ''; }
-		if ( $this->normalized_port( $home ) !== $this->normalized_port( $target ) ) { return ''; }
-		return $url;
-	}
-
-	/** @param array<string,mixed> $parts */
-	private function normalized_port( array $parts ): int {
-		if ( isset( $parts['port'] ) ) { return (int) $parts['port']; }
-		return 'https' === strtolower( (string) ( $parts['scheme'] ?? '' ) ) ? 443 : 80;
+		$normalized = SPDB_Safe_Destination::normalize( $url );
+		return is_wp_error( $normalized ) ? '' : $normalized;
 	}
 
 	private function is_semver( string $version ): bool {

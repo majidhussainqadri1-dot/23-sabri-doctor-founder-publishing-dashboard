@@ -11,8 +11,8 @@ permissions:
 
 env:
   FILE00_SHA: 1831c7ed767ce8590a97dc8e2f2d38ad81661494
-  FILE21_SHA: e1bbfb514b859a51b9731a43d6a15fb824124507
-  FILE22_SHA: 1274e380268c2ab235c66fd21906cf4b1bcadf9a
+  FILE21_SHA: 116deca6026d7fbfe2549570e74d4bee0b68ec93
+  FILE22_SHA: ce3dc881395cf22e5b33a538cbb7e104d1a51931
 
 jobs:
   real-contracts:
@@ -61,6 +61,12 @@ jobs:
         run: |
           cat > file22-autoload.php <<'PHP'
           <?php
+          if ( ! function_exists( 'apply_filters' ) ) {
+              function apply_filters( string $hook, mixed $value, mixed ...$args ): mixed {
+                  unset( $hook, $args );
+                  return $value;
+              }
+          }
           $root = getenv( 'FILE22_ROOT' );
           spl_autoload_register(
               static function ( string $class ) use ( $root ): void {
@@ -133,6 +139,7 @@ jobs:
           php tests/legacy-migration-diagnostics-tests.php
           php tests/final-deliverables-tests.php
           php tests/forty-round-review-gate-tests.php
+          php tests/ten-round-corrective-review-tests.php
           php tests/architecture-guard.php
           test -s docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md
           test -s docs/CAPABILITY-MATRIX.md
@@ -144,25 +151,26 @@ jobs:
           test -s docs/KNOWN-LIMITATIONS.md
           test -s docs/RELEASE-SIGNOFF.md
           test -s docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md
+          test -s docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md
       - name: Build deterministic installable and complete-source packages
         run: bash tools/build-final-release.sh
       - name: Record exact release evidence
         shell: bash
         run: |
-          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.0\n' \
+          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.2\n' \
             "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" \
-            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.0-RELEASE-EVIDENCE.txt
+            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.2-RELEASE-EVIDENCE.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: file23-1.2.0-canonical-release-evidence
+          name: file23-1.2.2-canonical-release-evidence
           path: |
-            23-sabri-doctor-founder-publishing-dashboard-1.2.0.zip
-            23-sabri-doctor-founder-publishing-dashboard-1.2.0.zip.sha256
-            FILE23-1.2.0-MANIFEST.sha256
-            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.0.zip
-            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.0.zip.sha256
-            FILE23-1.2.0-SOURCE-MANIFEST.sha256
-            FILE23-1.2.0-RELEASE-EVIDENCE.txt
+            23-sabri-doctor-founder-publishing-dashboard-1.2.2.zip
+            23-sabri-doctor-founder-publishing-dashboard-1.2.2.zip.sha256
+            FILE23-1.2.2-MANIFEST.sha256
+            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.2.zip
+            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.2.zip.sha256
+            FILE23-1.2.2-SOURCE-MANIFEST.sha256
+            FILE23-1.2.2-RELEASE-EVIDENCE.txt
             docs/STAGING-CHECKLIST.md
             docs/RELEASE-SIGNOFF.md
             docs/KNOWN-LIMITATIONS.md
