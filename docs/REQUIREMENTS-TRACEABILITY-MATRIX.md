@@ -50,7 +50,7 @@ Canonical plans:
 | F23-R040 Support/appeals remain CF-02 or current native-owner controlled | Accepted support contract; no case record stored by File 23 | Static gate; real support provider pending |
 | F23-R041 Books/courses/learning remain native module assets | Accepted learning contract; dashboard only routes/projections | Static gate; File 05/12 provider staging pending |
 | F23-R042 Green identity accent with semantic status colors and visible labels | Green CSS tokens, focus treatment and text-label preservation | Three-plan CSS regression; File 25 visual acceptance pending |
-| F23-R043 Professional surfaces require File 23-owned acceptance, exact versions, native capability and exact same origin | `spdb_native_professional_surface_contract`; File 23 acceptance record bound to provider/File 23 contract/plugin versions; provider cannot self-approve; external capability rechecked; scheme/host/normalized-port validated | Three-plan adversarial regression and exact-head CI; real provider acceptance staging pending |
+| F23-R043 Professional surfaces require a registered adapter, File 23-owned acceptance, exact versions, native capability and exact same origin | Selector returns provider key only; registered adapter supplies `get_professional_surface_contract`; registry binds exact provider/contract/plugin versions; provider cannot self-approve; native capability rechecked; scheme/host/normalized-port validated; contract documented in `docs/PROFESSIONAL-SURFACE-PROVIDER-CONTRACT.md` | Three-plan adversarial regression and exact-head CI; real provider acceptance staging pending |
 
 ## Release-state rule
 
@@ -58,4 +58,4 @@ Canonical plans:
 
 ## Forty-round review evidence
 
-F23-R001–F23-R035 remain cross-checked by `docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md` and `tests/forty-round-review-gate-tests.php`. F23-R036–F23-R043 are additionally enforced by `docs/THREE-PLAN-HARMONIZATION-IMPLEMENTATION-2026-08-05.md`, `tests/three-plan-harmonization-tests.php` and `.github/workflows/file23-three-plan-harmonization.yml`.
+F23-R001–F23-R035 remain cross-checked by `docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md` and `tests/forty-round-review-gate-tests.php`. F23-R036–F23-R043 are additionally enforced by `docs/THREE-PLAN-HARMONIZATION-IMPLEMENTATION-2026-08-05.md`, `docs/PROFESSIONAL-SURFACE-PROVIDER-CONTRACT.md`, `tests/three-plan-harmonization-tests.php` and `.github/workflows/file23-three-plan-harmonization.yml`.
