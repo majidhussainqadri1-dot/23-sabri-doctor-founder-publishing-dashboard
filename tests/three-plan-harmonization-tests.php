@@ -7,6 +7,8 @@ function spdb_three_plan_assert( bool $condition, string $message ): void {
 }
 $root = dirname( __DIR__ );
 $resolver = (string) file_get_contents( $root . '/includes/class-spdb-workspace-resolver.php' );
+$registration = (string) file_get_contents( $root . '/includes/class-spdb-provider-registration.php' );
+$adapter_registry = (string) file_get_contents( $root . '/includes/class-spdb-adapter-registry.php' );
 $validator = (string) file_get_contents( $root . '/includes/class-spdb-operational-projection-validator.php' );
 $css = (string) file_get_contents( $root . '/assets/css/dashboard-corrections.css' );
 $harmonized = (string) file_get_contents( $root . '/docs/THREE-PLAN-HARMONIZATION-IMPLEMENTATION-2026-08-05.md' );
@@ -16,10 +18,12 @@ foreach ( $surfaces as $surface ) {
 	spdb_three_plan_assert( str_contains( $validator, "'{$surface}'" ), "Projection validator must recognize the {$surface} domain." );
 }
 spdb_three_plan_assert( str_contains( $resolver, "apply_filters( 'spdb_native_professional_surface_contract'" ), 'Native modules must provide a versioned professional-surface contract.' );
-spdb_three_plan_assert( str_contains( $resolver, 'SPDB_Adapter_Acceptance::records()' ), 'Provider acceptance must come from File 23 governance, not from a provider self-assertion.' );
+spdb_three_plan_assert( str_contains( $registration, 'private static ?SPDB_Adapter_Registry $registry' ) && str_contains( $registration, 'self::$registry = $registry' ) && str_contains( $registration, 'public static function registry()' ), 'File 23 must retain the canonical request-scoped registered adapter registry.' );
+spdb_three_plan_assert( str_contains( $resolver, 'SPDB_Provider_Registration::registry()' ) && str_contains( $resolver, '$registry->metadata( $provider )' ), 'A surface contract must bind to a provider that actually registered in the canonical File 23 registry.' );
 spdb_three_plan_assert( ! str_contains( $resolver, "\$contract['accepted']" ), 'A provider must not be able to self-declare acceptance in its surface contract.' );
-spdb_three_plan_assert( str_contains( $resolver, 'provider_is_accepted' ) && str_contains( $resolver, 'ACCEPTANCE_PRODUCTION_ACCEPTED' ) && str_contains( $resolver, 'ACCEPTANCE_STAGING_ACCEPTED' ), 'Environment-aware File 23 acceptance must fail closed.' );
-spdb_three_plan_assert( str_contains( $resolver, "hash_equals( \$provider_version" ) && str_contains( $resolver, 'hash_equals( SPDB_CONTRACT_VERSION' ) && str_contains( $resolver, 'hash_equals( SPDB_VERSION' ), 'Acceptance must be bound to the exact provider, contract and File 23 versions.' );
+spdb_three_plan_assert( str_contains( $resolver, 'provider_is_accepted' ) && str_contains( $resolver, 'get_acceptance_state' ) && str_contains( $resolver, 'ACCEPTANCE_PRODUCTION_ACCEPTED' ) && str_contains( $resolver, 'ACCEPTANCE_STAGING_ACCEPTED' ), 'Environment-aware File 23 acceptance must fail closed.' );
+spdb_three_plan_assert( str_contains( $adapter_registry, 'bind_acceptance_record' ) && str_contains( $adapter_registry, 'hash_equals( $provider_version' ) && str_contains( $adapter_registry, 'hash_equals( SPDB_CONTRACT_VERSION' ) && str_contains( $adapter_registry, 'hash_equals( SPDB_VERSION' ), 'Registry acceptance must be bound to the exact provider, contract and File 23 versions.' );
+spdb_three_plan_assert( str_contains( $resolver, 'hash_equals( $provider_version' ), 'Surface contract provider version must match registered adapter metadata.' );
 spdb_three_plan_assert( str_contains( $resolver, 'current_user_can( $capability )' ), 'Each native surface must recheck its provider-declared WordPress capability.' );
 spdb_three_plan_assert( ! str_contains( $resolver, 'SPDB_Capabilities::current_user_can( $capability )' ), 'External native capabilities must not be rejected by the File 23-only capability allowlist.' );
 spdb_three_plan_assert( str_contains( $resolver, 'provider_version' ) && str_contains( $resolver, 'contract_version' ) && str_contains( $resolver, 'provider_key' ), 'Provider identity, semantic version and contract version must be mandatory.' );
