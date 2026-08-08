@@ -2,14 +2,14 @@ name: Baseline Integrity
 
 on:
   push:
-    branches: [main, 'feature/**', 'release/**']
+    branches: [main, 'feature/**', 'release/**', 'codex/**']
   pull_request:
 
 permissions:
   contents: read
 
 concurrency:
-  group: file23-baseline-${{ github.event.pull_request.number || github.ref }}-${{ matrix.php }}
+  group: file23-baseline-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -44,11 +44,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq "Version:     1.2.2" sabri-publishing-dashboard.php
-          grep -Fq "Stable tag: 1.2.2" readme.txt
+          grep -Fq "Version:     1.2.3" sabri-publishing-dashboard.php
+          grep -Fq "define( 'SPDB_VERSION', '1.2.3' )" sabri-publishing-dashboard.php
+          grep -Fq "Stable tag: 1.2.3" readme.txt
           grep -Fq "'phase'                   => 'full_plan_candidate'" includes/class-spdb-system-state.php
           grep -Fq 'class-spdb-operations-service.php' includes/class-spdb-plugin.php
           grep -Fq 'class-spdb-background-jobs.php' includes/class-spdb-plugin.php
           grep -Fq 'class-spdb-privacy-integration.php' includes/class-spdb-plugin.php
           grep -Fq 'spdb/file24_assurance_evidence' includes/class-spdb-plugin.php
           grep -Fq "global_safe_mode_owner' => 'file20" includes/class-spdb-local-repair.php
+          php tests/second-ten-round-review-tests.php
