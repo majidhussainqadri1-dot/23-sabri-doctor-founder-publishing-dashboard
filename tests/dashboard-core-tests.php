@@ -33,12 +33,17 @@ $workspace = $resolver->resolve( 7 );
 spdb_core_assert( 'founder' === $workspace['key'], 'Approved Founder must receive the Founder workspace.' );
 spdb_core_assert( false === $workspace['read_only'], 'Founder workspace must not be marked read-only.' );
 $GLOBALS['spdb_test_founder'] = false;
+/* Isolate identity fallback from valid reviewer/moderator capability-derived workspaces. */
+$GLOBALS['spdb_test_capabilities']['spdb_view_review_queue'] = false;
+$GLOBALS['spdb_test_capabilities']['spdb_manage_interactions'] = false;
 $GLOBALS['spdb_test_trusted'] = true;
 $workspace = $resolver->resolve( 7 );
 spdb_core_assert( 'restricted' === $workspace['key'], 'Legacy trusted-publisher status without a verified-doctor assertion must fail closed instead of being labeled a Doctor.' );
 $GLOBALS['spdb_test_trusted'] = false;
 $workspace = $resolver->resolve( 7 );
 spdb_core_assert( 'restricted' === $workspace['key'], 'Generic approved membership without a verified-doctor assertion must not receive a Doctor workspace.' );
+$GLOBALS['spdb_test_capabilities']['spdb_view_review_queue'] = true;
+$GLOBALS['spdb_test_capabilities']['spdb_manage_interactions'] = true;
 $other_user_workspace = $resolver->resolve( 99 );
 spdb_core_assert( 'denied' === $other_user_workspace['key'], 'Current-user capability resolution must deny another user ID.' );
 spdb_core_assert( 'unknown' === $other_user_workspace['account_status'], 'Another user membership status must not be projected.' );
