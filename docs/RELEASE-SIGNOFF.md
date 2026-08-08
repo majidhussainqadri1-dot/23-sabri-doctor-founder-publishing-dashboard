@@ -34,11 +34,12 @@ This form must remain **Pending** until every required evidence field is complet
 ## Acceptance evidence
 
 - [ ] Exact-head automated suites all pass with no unexplained skip.
-- [ ] Forty thematic review/fix rounds, the earlier corrective ten-round cycles, this third fresh ten-round review and their executable gates are complete; fresh review is reopened after later code/evidence changes.
+- [ ] Forty thematic review/fix rounds, the earlier corrective ten-round cycles, this fourth fresh ten-round review and their executable gates are complete; fresh review is reopened after later code/evidence changes.
 - [ ] Database schema/capability/data-ownership/threat-model documents reviewed.
 - [ ] Fresh install and supported upgrades pass.
 - [ ] Founder/verified Doctor/Reviewer/Pending/Suspended and institutional-AI identity-boundary journeys pass.
 - [ ] File 16/21/22 and required companion integrations pass with real plugins.
+- [ ] **Current File 00 exact head has no unresolved production-blocking Critical/High identity/security defect, or a later corrected File 00 head has been pinned and all File 23 contract/real-role gates rerun.** The current `3a84c32a6ddad151f2ed09d244fa8aa536a58108` engineering audit is a production blocker until superseded by accepted corrective evidence.
 - [ ] IDOR/CSRF/replay/concurrency/export/privacy/security negative tests pass.
 - [ ] Institutional AI cannot self-authorize/self-oversee and cannot inherit doctor verification.
 - [ ] LiteSpeed cross-user cache isolation passes.
@@ -46,7 +47,7 @@ This form must remain **Pending** until every required evidence field is complet
 - [ ] Real 10,000+ object performance/SLO evidence is accepted.
 - [ ] Backup restore, migration and rollback rehearsal passes.
 - [ ] Cache purge and post-deployment smoke tests pass.
-- [ ] Zero known unresolved blocker/critical defects; residual risks approved.
+- [ ] Zero known unresolved blocker/critical defects across File 23 and required production dependencies; residual risks approved where policy permits.
 
 ## Evidence references
 
@@ -59,11 +60,13 @@ This form must remain **Pending** until every required evidence field is complet
 - Backup/restore: __________________________________
 - Migration/rollback: ______________________________
 - Security/privacy review: _________________________
+- File 00 current audit/corrective acceptance: ______
 - Defect register and retests: ______________________
 - Forty-round audit: `docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md`
 - First ten-round corrective audit: `docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md`
 - Second ten-round corrective audit: `docs/AUDIT-SECOND-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md`
 - Third ten-round corrective audit: `docs/AUDIT-THIRD-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md`
+- Fourth ten-round corrective audit: `docs/AUDIT-FOURTH-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md`
 
 ## Approvals
 
