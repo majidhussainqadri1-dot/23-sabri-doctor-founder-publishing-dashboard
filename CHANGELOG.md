@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.2.5 — 2026-08-09
+
+- Completed a fourth fresh ten-round review of File 23, fixing every evidence-backed defect before continuing to the next round.
+- Removed `membership_type=doctor` as a verified-doctor fallback; current File 00 publishing authority and doctor-verification assertions are now canonical.
+- Bound writable role workspaces and sensitive operational mutations to current File 00 strong-session assurance and excluded institutional AI from human sensitive-session authority.
+- Corrected the independent role-workspace service so approved non-doctors, reviewers, moderators and institutional AI cannot fall through to a Doctor projection.
+- Added a centralized sensitive REST mutation gate and extended it to native review/calendar operations with same-origin enforcement.
+- Strengthened export download reauthorization to require current strong-session assurance as well as report-export capability.
+- Refreshed File 21 exact reviewed contract pin to `e9bf82f78fc7b4b327ac4c6be4ed7147ea155cd8`; retained File 00 `3a84c32a6ddad151f2ed09d244fa8aa536a58108` and File 22 `4008521f9860e6181560ac07ff1c7e75868f1982` reviewed pins.
+- Corrected the second-review regression gate so historical audit evidence stays immutable without freezing future File 21 reviewed heads.
+- Added explicit release-truth documentation that the currently pinned File 00 head has a separate engineering audit with unresolved Critical/High defects and therefore remains a production-promotion blocker until superseded by accepted corrective evidence.
+- Added the permanent fourth-ten-round audit/regression evidence and promoted deterministic installable/source package identity to Version 1.2.5; staging/live/operational acceptance remains separate.
+
 ## 1.2.4 — 2026-08-08
 
 - Completed a third fresh ten-round review of File 23 after Version 1.2.3, correcting every evidence-backed defect before continuing to the next round.
