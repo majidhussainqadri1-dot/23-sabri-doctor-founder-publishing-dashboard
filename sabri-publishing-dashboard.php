@@ -31,5 +31,24 @@ function spdb_get_capabilities(): array { return SPDB_Capabilities::all(); }
 function spdb_get_assurance_manifest(): array { return spdb()->assurance_manifest(); }
 /** @return array<int,array<string,mixed>> Complete File 00–26 discovery manifest. */
 function spdb_get_dependency_manifest(): array { return spdb()->dependency_manifest(); }
+/**
+ * Revalidate the current File 00 state and File 23 report capability immediately
+ * before an already-generated export is served. The export service still verifies
+ * its owner-bound expiring HMAC, job ownership, expiry, hash and encrypted envelope.
+ */
+function spdb_export_download_authorization_gate(): void {
+	if ( ! is_user_logged_in() ) {
+		return;
+	}
+	if ( SPDB_Capabilities::current_user_can( 'spdb_export_reports' ) ) {
+		return;
+	}
+	wp_die(
+		esc_html__( 'The export is no longer authorized for the current account or session.', 'sabri-publishing-dashboard' ),
+		esc_html__( 'Export unavailable', 'sabri-publishing-dashboard' ),
+		array( 'response' => 403 )
+	);
+}
+add_action( 'admin_post_spdb_download_export', 'spdb_export_download_authorization_gate', 1 );
 SPDB_Operational_Mutation_Guard::register();
 spdb()->boot();
