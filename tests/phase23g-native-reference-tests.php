@@ -94,7 +94,7 @@ spdb_23g_assert( 'spdb_native_resolver_adapter_missing' === spdb_23g_code( $miss
 $version_mismatch = new SPDB_Native_Reference_Registry( $adapters );
 spdb_23g_assert( 'spdb_native_resolver_provider_version_mismatch' === spdb_23g_code( $version_mismatch->register( new SPDB_Test_Native_Reference_Provider( array( 'provider_version' => '2.0.0' ) ) ) ), 'Resolver and adapter provider versions must match exactly.' );
 $type_widening = new SPDB_Native_Reference_Registry( $adapters );
-spdb_23g_assert( 'spdb_native_resolver_object_type_invalid' === spdb_23g_code( $type_widening->register( new SPDB_Test_Native_Reference_Provider( array( 'object_types' => array( 'publication', 'patient_record' ) ) ) ), 'A resolver may not widen its adapter object types.' );
+spdb_23g_assert( 'spdb_native_resolver_object_type_invalid' === spdb_23g_code( $type_widening->register( new SPDB_Test_Native_Reference_Provider( array( 'object_types' => array( 'publication', 'patient_record' ) ) ) ) ), 'A resolver may not widen its adapter object types.' );
 $duplicate = new SPDB_Native_Reference_Registry( $adapters );
 $duplicate->register( new SPDB_Test_Native_Reference_Provider() );
 spdb_23g_assert( 'spdb_native_resolver_duplicate' === spdb_23g_code( $duplicate->register( new SPDB_Test_Native_Reference_Provider() ) ), 'Duplicate provider resolver registration must conflict deterministically.' );
