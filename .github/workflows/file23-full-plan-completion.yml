@@ -53,14 +53,16 @@ jobs:
           php tests/ten-round-corrective-review-tests.php
           php tests/second-ten-round-review-tests.php
           php tests/third-ten-round-review-tests.php
+          php tests/fourth-ten-round-review-tests.php
           php tests/architecture-guard.php
       - name: Verify final-plan boundaries
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq "Version:     1.2.4" sabri-publishing-dashboard.php
-          grep -Fq "Stable tag: 1.2.4" readme.txt
+          grep -Fq "Version:     1.2.5" sabri-publishing-dashboard.php
+          grep -Fq "Stable tag: 1.2.5" readme.txt
           grep -Fq 'class-spdb-ai-teacher-oversight-rest.php' sabri-publishing-dashboard.php
+          grep -Fq 'class-spdb-sensitive-session-guard.php' sabri-publishing-dashboard.php
           grep -Fq 'spdb/file24_assurance_evidence' includes/class-spdb-plugin.php
           grep -Fq "global_safe_mode_owner' => 'file20" includes/class-spdb-local-repair.php
           grep -Fq "mutation_supported'         => false" includes/class-spdb-legacy-migration-diagnostics.php
@@ -120,27 +122,22 @@ jobs:
           cat > file22-autoload.php <<'PHP'
           <?php
           if ( ! function_exists( 'apply_filters' ) ) {
-              function apply_filters( string $hook, mixed $value, mixed ...$args ): mixed {
-                  unset( $hook, $args );
-                  return $value;
-              }
+              function apply_filters( string $hook, mixed $value, mixed ...$args ): mixed { unset( $hook, $args ); return $value; }
           }
           $root = getenv( 'FILE22_ROOT' );
-          spl_autoload_register(
-              static function ( string $class ) use ( $root ): void {
-                  $prefix = 'Sabri\\UniversalComposer\\';
-                  if ( ! str_starts_with( $class, $prefix ) ) { return; }
-                  $relative = substr( $class, strlen( $prefix ) );
-                  $parts = explode( '\\', $relative );
-                  $area = strtolower( array_shift( $parts ) ?? '' );
-                  $name = array_pop( $parts );
-                  if ( ! in_array( $area, array( 'core', 'contracts' ), true ) || ! is_string( $name ) ) { return; }
-                  $slug = strtolower( str_replace( '_', '-', $name ) );
-                  $kind = 'contracts' === $area && str_starts_with( $name, 'Workflow_' ) ? 'interface-' : 'class-';
-                  $file = rtrim( (string) $root, '/\\' ) . '/includes/' . $area . '/' . $kind . $slug . '.php';
-                  if ( is_file( $file ) ) { require_once $file; }
-              }
-          );
+          spl_autoload_register(static function ( string $class ) use ( $root ): void {
+              $prefix = 'Sabri\\UniversalComposer\\';
+              if ( ! str_starts_with( $class, $prefix ) ) { return; }
+              $relative = substr( $class, strlen( $prefix ) );
+              $parts = explode( '\\', $relative );
+              $area = strtolower( array_shift( $parts ) ?? '' );
+              $name = array_pop( $parts );
+              if ( ! in_array( $area, array( 'core', 'contracts' ), true ) || ! is_string( $name ) ) { return; }
+              $slug = strtolower( str_replace( '_', '-', $name ) );
+              $kind = 'contracts' === $area && str_starts_with( $name, 'Workflow_' ) ? 'interface-' : 'class-';
+              $file = rtrim( (string) $root, '/\\' ) . '/includes/' . $area . '/' . $kind . $slug . '.php';
+              if ( is_file( $file ) ) { require_once $file; }
+          });
           PHP
       - name: Run real File 21 and File 22 contracts
         shell: bash
@@ -178,26 +175,29 @@ jobs:
           test -s docs/AUDIT-SECOND-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
           php tests/third-ten-round-review-tests.php
           test -s docs/AUDIT-THIRD-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
-      - name: Build deterministic 1.2.4 package
+          php tests/fourth-ten-round-review-tests.php
+          test -s docs/AUDIT-FOURTH-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md
+      - name: Build deterministic 1.2.5 package
         run: bash tools/build-final-release.sh
       - name: Record exact source evidence
         shell: bash
         run: |
-          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.4\n' \
+          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.5\n' \
             "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" \
-            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.4-RELEASE-EVIDENCE.txt
+            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.5-RELEASE-EVIDENCE.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: file23-1.2.4-full-plan-candidate
+          name: file23-1.2.5-full-plan-candidate
           path: |
-            23-sabri-doctor-founder-publishing-dashboard-1.2.4.zip
-            23-sabri-doctor-founder-publishing-dashboard-1.2.4.zip.sha256
-            FILE23-1.2.4-MANIFEST.sha256
-            FILE23-1.2.4-RELEASE-EVIDENCE.txt
+            23-sabri-doctor-founder-publishing-dashboard-1.2.5.zip
+            23-sabri-doctor-founder-publishing-dashboard-1.2.5.zip.sha256
+            FILE23-1.2.5-MANIFEST.sha256
+            FILE23-1.2.5-RELEASE-EVIDENCE.txt
             docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md
             docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md
             docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md
             docs/AUDIT-SECOND-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
             docs/AUDIT-THIRD-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
+            docs/AUDIT-FOURTH-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md
           if-no-files-found: error
           retention-days: 90
