@@ -21,10 +21,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Syntax — runtime bootstrap and manifest
-        run: |
-          php -l sabri-publishing-dashboard.php
-          php -l includes/class-spdb-module-manifest.php
+      - name: Syntax — plugin bootstrap
+        run: php -l sabri-publishing-dashboard.php
+
+      - name: Syntax — dependency manifest
+        run: php -l includes/class-spdb-module-manifest.php
 
       - name: Syntax — authorization and automation
         run: |
