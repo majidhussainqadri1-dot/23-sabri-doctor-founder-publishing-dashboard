@@ -35,10 +35,10 @@ spdb_core_assert( false === $workspace['read_only'], 'Founder workspace must not
 $GLOBALS['spdb_test_founder'] = false;
 $GLOBALS['spdb_test_trusted'] = true;
 $workspace = $resolver->resolve( 7 );
-spdb_core_assert( 'trusted_doctor' === $workspace['key'], 'Trusted publisher must receive the trusted-doctor workspace.' );
+spdb_core_assert( 'restricted' === $workspace['key'], 'Legacy trusted-publisher status without a verified-doctor assertion must fail closed instead of being labeled a Doctor.' );
 $GLOBALS['spdb_test_trusted'] = false;
 $workspace = $resolver->resolve( 7 );
-spdb_core_assert( 'doctor' === $workspace['key'], 'Approved doctor must receive the doctor workspace.' );
+spdb_core_assert( 'restricted' === $workspace['key'], 'Generic approved membership without a verified-doctor assertion must not receive a Doctor workspace.' );
 $other_user_workspace = $resolver->resolve( 99 );
 spdb_core_assert( 'denied' === $other_user_workspace['key'], 'Current-user capability resolution must deny another user ID.' );
 spdb_core_assert( 'unknown' === $other_user_workspace['account_status'], 'Another user membership status must not be projected.' );
@@ -120,6 +120,8 @@ spdb_core_assert( true === $saved_views->write_permission_check(), 'Approved acc
 $registry = new SPDB_Adapter_Registry();
 $collections = new SPDB_Collections_Service();
 $state_service = new SPDB_System_State( $registry, $collections );
+/* Use a Founder for full authorized navigation; generic approval is intentionally restricted. */
+$GLOBALS['spdb_test_founder'] = true;
 $workspace = $resolver->resolve( 7 );
 $state = $state_service->snapshot( $workspace );
 spdb_core_assert( 0 === $state['provider_count'], 'An empty registry must report zero providers without fabricated counts.' );
@@ -137,6 +139,7 @@ $navigation = $resolver->navigation( $workspace );
 foreach ( $implemented_views as $implemented_view ) {
 	spdb_core_assert( isset( $navigation[ $implemented_view ] ), "Authorized full-plan navigation must expose {$implemented_view}." );
 }
+$GLOBALS['spdb_test_founder'] = false;
 
 if ( $failed > 0 ) { fwrite( STDERR, "{$failed} of {$tests} dashboard-core tests failed.\n" ); exit( 1 ); }
 echo "All {$tests} File 23 dashboard-core tests passed.\n";
