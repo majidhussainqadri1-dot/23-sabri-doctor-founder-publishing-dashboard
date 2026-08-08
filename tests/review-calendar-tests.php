@@ -196,12 +196,12 @@ $mismatch_registry->register( new SPDB_Test_Review_Calendar_Adapter( array( 'rev
 $mismatch_controller = new SPDB_Review_Calendar_REST_Controller( new SPDB_Review_Calendar_Service( $mismatch_registry ), new SPDB_Operation_Broker( $mismatch_registry ) );
 spdb_rc_assert( 'spdb_native_action_failed' === spdb_rc_error_code( $mismatch_controller->execute_operation( spdb_rc_request( $base_params ), 'approve_review' ) ), 'Mismatched native confirmation references must not be reported as success.' );
 
-/* Cross-owner calendar operation denial: no canonical Doctor/Founder publishing identity is present here. */
+/* Cross-owner calendar operation denial: identity is rejected before object authorization when no canonical publishing identity is present. */
 $foreign_calendar = $calendar_item; $foreign_calendar['author_id'] = 8; $foreign_calendar['author_name'] = 'Doctor Eight';
 $foreign_registry = new SPDB_Adapter_Registry( array( 'review_calendar_provider' => SPDB_Adapter_Registry::ACCEPTANCE_PRODUCTION_ACCEPTED ) );
 $foreign_registry->register( new SPDB_Test_Review_Calendar_Adapter( array( 'calendar' => array( 'items' => array( $foreign_calendar ), 'total' => 1, 'has_more' => false ), 'allowed_operations' => array( 'reschedule' ) ) ) );
 $foreign_controller = new SPDB_Review_Calendar_REST_Controller( new SPDB_Review_Calendar_Service( $foreign_registry ), new SPDB_Operation_Broker( $foreign_registry ) );
-spdb_rc_assert( 'spdb_operation_not_authorized' === spdb_rc_error_code( $foreign_controller->execute_operation( spdb_rc_request( $schedule_params ), 'reschedule' ) ), 'A non-authorized actor cannot reschedule another Doctor’s native object.' );
+spdb_rc_assert( 'spdb_operation_forbidden' === spdb_rc_error_code( $foreign_controller->execute_operation( spdb_rc_request( $schedule_params ), 'reschedule' ) ), 'A non-authorized actor must be denied before another Doctor’s schedule object is evaluated.' );
 
 /* Central pagination must be truthful and bounded. */
 $many = array();
