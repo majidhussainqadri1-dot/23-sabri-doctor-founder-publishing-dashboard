@@ -61,14 +61,17 @@ $adapter = new SPDB_Test_Review_Calendar_Adapter( array(
 spdb_rc_assert( true === $registry->register( $adapter ), 'A valid Phase 23E adapter must register.' );
 $service = new SPDB_Review_Calendar_Service( $registry );
 $review = $service->review_queue();
-$calendar = $service->calendar();
 spdb_rc_assert( 1 === $review['validated_count'] && 1 === $review['accessible_total'], 'A valid assigned native review item must be projected.' );
 spdb_rc_assert( array( 'approve_review', 'request_changes', 'reject_review' ) === $review['items'][0]['allowed_operations'], 'Accepted review operations must remain available.' );
 spdb_rc_assert( 7 === $GLOBALS['spdb_test_review_context']['user_id'], 'Review authority context must use the authenticated user.' );
+/* Scheduling mutation metadata is publishing authority, so the positive calendar projection uses a current canonical Founder identity. */
+$GLOBALS['spdb_test_founder'] = true;
+$calendar = $service->calendar();
 spdb_rc_assert( 1 === $calendar['validated_count'] && 1 === $calendar['accessible_total'], 'A valid own-scope calendar item must be projected.' );
 spdb_rc_assert( 'Asia/Karachi' === $calendar['items'][0]['native_timezone'], 'Native timezone must be preserved.' );
-spdb_rc_assert( array( 'reschedule', 'unschedule' ) === $calendar['items'][0]['allowed_operations'], 'Accepted schedule operations must remain available.' );
+spdb_rc_assert( array( 'reschedule', 'unschedule' ) === $calendar['items'][0]['allowed_operations'], 'Accepted schedule operations must remain available for a current publishing identity.' );
 spdb_rc_assert( 1 === $GLOBALS['spdb_test_last_review_query']['page'] && 100 === $GLOBALS['spdb_test_last_review_query']['per_page'], 'Providers must receive a bounded first-page window for central pagination.' );
+$GLOBALS['spdb_test_founder'] = false;
 
 /* Query validation must fail closed, never silently broaden. */
 $before = $GLOBALS['spdb_test_review_query_count'];
@@ -165,6 +168,7 @@ $request_changes['review_note'] = 'Please add the cited native sources before re
 spdb_rc_assert( is_array( $controller->execute_operation( spdb_rc_request( $request_changes ), 'request_changes' ) ), 'A complete privacy-safe request-changes operation may proceed.' );
 
 $calendar_controller = $controller;
+$GLOBALS['spdb_test_founder'] = true;
 $schedule_params = array( 'provider' => 'review_calendar_provider', 'object_type' => 'publication', 'object_id' => 'post-201', 'object_version' => 'v2', 'idempotency_key' => 'abcdef1234567890', 'audit_reason' => 'Schedule verified against the publication plan.' );
 spdb_rc_assert( 'spdb_operation_payload_incomplete' === spdb_rc_error_code( $calendar_controller->execute_operation( spdb_rc_request( $schedule_params ), 'reschedule' ) ), 'Rescheduling requires UTC time and native timezone.' );
 $schedule_params['scheduled_at_utc'] = '2026-02-30T10:00:00Z'; $schedule_params['native_timezone'] = 'Asia/Karachi';
@@ -192,12 +196,12 @@ $mismatch_registry->register( new SPDB_Test_Review_Calendar_Adapter( array( 'rev
 $mismatch_controller = new SPDB_Review_Calendar_REST_Controller( new SPDB_Review_Calendar_Service( $mismatch_registry ), new SPDB_Operation_Broker( $mismatch_registry ) );
 spdb_rc_assert( 'spdb_native_action_failed' === spdb_rc_error_code( $mismatch_controller->execute_operation( spdb_rc_request( $base_params ), 'approve_review' ) ), 'Mismatched native confirmation references must not be reported as success.' );
 
-/* Cross-owner calendar operation denial. */
+/* Cross-owner calendar operation denial: no canonical Doctor/Founder publishing identity is present here. */
 $foreign_calendar = $calendar_item; $foreign_calendar['author_id'] = 8; $foreign_calendar['author_name'] = 'Doctor Eight';
 $foreign_registry = new SPDB_Adapter_Registry( array( 'review_calendar_provider' => SPDB_Adapter_Registry::ACCEPTANCE_PRODUCTION_ACCEPTED ) );
 $foreign_registry->register( new SPDB_Test_Review_Calendar_Adapter( array( 'calendar' => array( 'items' => array( $foreign_calendar ), 'total' => 1, 'has_more' => false ), 'allowed_operations' => array( 'reschedule' ) ) ) );
 $foreign_controller = new SPDB_Review_Calendar_REST_Controller( new SPDB_Review_Calendar_Service( $foreign_registry ), new SPDB_Operation_Broker( $foreign_registry ) );
-spdb_rc_assert( 'spdb_operation_not_authorized' === spdb_rc_error_code( $foreign_controller->execute_operation( spdb_rc_request( $schedule_params ), 'reschedule' ) ), 'A Doctor cannot reschedule another Doctor’s native object.' );
+spdb_rc_assert( 'spdb_operation_not_authorized' === spdb_rc_error_code( $foreign_controller->execute_operation( spdb_rc_request( $schedule_params ), 'reschedule' ) ), 'A non-authorized actor cannot reschedule another Doctor’s native object.' );
 
 /* Central pagination must be truthful and bounded. */
 $many = array();
