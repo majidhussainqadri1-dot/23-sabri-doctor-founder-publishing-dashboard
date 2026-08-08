@@ -8,9 +8,9 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Membership_Guard {
-	public const MINIMUM_VERSION           = '1.0.1';
-	public const MAXIMUM_VERSION_EXCLUSIVE = '2.0.0';
-	public const MINIMUM_CONTRACT_VERSION  = '1.1.2';
+	public const MINIMUM_VERSION            = '1.0.1';
+	public const MAXIMUM_VERSION_EXCLUSIVE  = '2.0.0';
+	public const MINIMUM_CONTRACT_VERSION   = '1.1.2';
 	public const MAXIMUM_CONTRACT_EXCLUSIVE = '2.0.0';
 
 	public static function supports_version( string $version ): bool {
@@ -25,12 +25,10 @@ final class SPDB_Membership_Guard {
 			&& version_compare( $version, self::MAXIMUM_CONTRACT_EXCLUSIVE, '<' );
 	}
 
-	/** Whether a canonical File 00 contract implementation is present at all. */
 	public static function canonical_contract_present(): bool {
 		return class_exists( 'SMC_Contracts' ) || defined( 'SMC_CONTRACT_VERSION' );
 	}
 
-	/** Canonical File 00 assertions are preferred and must be version-compatible. */
 	public static function has_canonical_assertions(): bool {
 		return class_exists( 'SMC_Contracts' )
 			&& is_callable( array( 'SMC_Contracts', 'assertions' ) )
@@ -78,6 +76,26 @@ final class SPDB_Membership_Guard {
 					return null;
 				}
 			}
+
+			$institutional_ai = false;
+			if ( array_key_exists( 'institutional_ai', $assertions ) ) {
+				if ( ! is_bool( $assertions['institutional_ai'] ) ) {
+					return null;
+				}
+				$institutional_ai = $assertions['institutional_ai'];
+			}
+
+			$publishing = array();
+			if ( array_key_exists( 'publishing', $assertions ) ) {
+				if ( ! is_array( $assertions['publishing'] ) ) {
+					return null;
+				}
+				$publishing = self::sanitize_publishing_assertions( $assertions['publishing'] );
+				if ( null === $publishing ) {
+					return null;
+				}
+			}
+
 			$institutional = true === $assertions['institutional_account'];
 			$founder       = $institutional && function_exists( 'smc_is_founder' ) && true === smc_is_founder( $user_id );
 			return array(
@@ -90,13 +108,18 @@ final class SPDB_Membership_Guard {
 				'session_two_factor'    => $assertions['session_two_factor'],
 				'can_publish'           => $assertions['can_publish'],
 				'institutional_account' => $institutional,
+				'institutional_ai'      => $institutional_ai,
 				'founder'               => $founder,
 				'account_class'         => sanitize_key( (string) ( $assertions['account_class'] ?? '' ) ),
 				'membership_type'       => sanitize_key( (string) ( $assertions['membership_type'] ?? '' ) ),
+				'publishing'            => $publishing,
 			);
 		}
-		$status = sanitize_key( (string) smc_user_status( $user_id ) );
+
+		$status   = sanitize_key( (string) smc_user_status( $user_id ) );
 		$approved = in_array( $status, array( 'approved', 'verified' ), true );
+		$founder  = true === smc_is_founder( $user_id );
+		$trusted  = true === smc_is_trusted_publisher( $user_id );
 		return array(
 			'contract_version'      => 'legacy',
 			'user_id'               => $user_id,
@@ -105,17 +128,40 @@ final class SPDB_Membership_Guard {
 			'suspended'             => in_array( $status, array( 'suspended', 'rejected', 'expired', 'expired_document', 'appeal_review', 'erasure_pending', 'invalid_application' ), true ),
 			'eligible'              => $approved,
 			'session_two_factor'    => $approved,
-			'can_publish'           => $approved && ( true === smc_is_founder( $user_id ) || true === smc_is_trusted_publisher( $user_id ) ),
-			'institutional_account' => true === smc_is_founder( $user_id ),
-			'founder'               => true === smc_is_founder( $user_id ),
+			'can_publish'           => $approved && ( $founder || $trusted ),
+			'institutional_account' => $founder,
+			'institutional_ai'      => false,
+			'founder'               => $founder,
 			'account_class'         => '',
 			'membership_type'       => '',
+			'publishing'            => array(
+				'authority_class'                 => $founder ? 'founder' : ( $trusted ? 'trusted_publisher' : '' ),
+				'can_open_composer'               => $approved && ( $founder || $trusted ),
+				'can_submit_for_review'            => $approved && ( $founder || $trusted ),
+				'can_direct_publish'               => $approved && $founder,
+				'requires_human_review'            => false,
+				'doctor_verification_claim'        => false,
+				'ai_generated_disclosure_required' => false,
+			),
 		);
+	}
+
+	/** @param array<string,mixed> $publishing @return array<string,mixed>|null */
+	private static function sanitize_publishing_assertions( array $publishing ): ?array {
+		$authority = sanitize_key( (string) ( $publishing['authority_class'] ?? '' ) );
+		$out       = array( 'authority_class' => $authority );
+		foreach ( array( 'can_open_composer', 'can_submit_for_review', 'can_direct_publish', 'requires_human_review', 'doctor_verification_claim', 'ai_generated_disclosure_required' ) as $key ) {
+			if ( array_key_exists( $key, $publishing ) && ! is_bool( $publishing[ $key ] ) ) {
+				return null;
+			}
+			$out[ $key ] = true === ( $publishing[ $key ] ?? false );
+		}
+		return $out;
 	}
 
 	public static function restricted_view_statuses(): array {
 		return array(
-			'draft', 'email_pending', 'phone_pending', '2fa_pending', 'documents_incomplete',
+			'draft', 'guardian_pending', 'email_pending', 'phone_pending', '2fa_pending', 'documents_incomplete',
 			'submitted', 'under_review', 'more_information', 'resubmitted', 'approval_pending',
 			'approved', 'verified', 'rejected', 'suspended', 'expired', 'expired_document',
 			'appeal_review', 'erasure_pending', 'invalid_application',
@@ -139,6 +185,33 @@ final class SPDB_Membership_Guard {
 			&& false === $assertions['suspended'];
 	}
 
+	public static function is_user_institutional_ai( int $user_id ): bool {
+		$assertions = self::assertions( $user_id );
+		return is_array( $assertions )
+			&& true === ( $assertions['institutional_ai'] ?? false )
+			&& true === $assertions['approved']
+			&& false === $assertions['suspended'];
+	}
+
+	public static function publishing_authority_class( int $user_id ): string {
+		$assertions = self::assertions( $user_id );
+		if ( ! is_array( $assertions ) || ! is_array( $assertions['publishing'] ?? null ) ) {
+			return '';
+		}
+		return sanitize_key( (string) ( $assertions['publishing']['authority_class'] ?? '' ) );
+	}
+
+	public static function is_user_verified_doctor( int $user_id ): bool {
+		$assertions = self::assertions( $user_id );
+		if ( ! is_array( $assertions ) || true !== $assertions['approved'] || true !== $assertions['eligible'] || true === $assertions['suspended'] || true === ( $assertions['institutional_ai'] ?? false ) ) {
+			return false;
+		}
+		$publishing = is_array( $assertions['publishing'] ?? null ) ? $assertions['publishing'] : array();
+		if ( true === ( $publishing['doctor_verification_claim'] ?? false ) || 'verified_doctor' === sanitize_key( (string) ( $publishing['authority_class'] ?? '' ) ) ) {
+			return true;
+		}
+		return 'doctor' === sanitize_key( (string) ( $assertions['membership_type'] ?? '' ) );
+	}
 
 	public static function is_user_trusted_publisher( int $user_id ): bool {
 		$assertions = self::assertions( $user_id );
@@ -193,20 +266,20 @@ final class SPDB_Membership_Guard {
 
 	/** @return array<string,mixed> */
 	public static function health_snapshot(): array {
-		$version = defined( 'SMC_VERSION' ) ? (string) SMC_VERSION : null;
+		$version  = defined( 'SMC_VERSION' ) ? (string) SMC_VERSION : null;
 		$contract = defined( 'SMC_CONTRACT_VERSION' ) ? (string) SMC_CONTRACT_VERSION : null;
 		return array(
-			'available'                   => self::is_available(),
-			'canonical_contract_present'   => self::canonical_contract_present(),
-			'canonical_assertions'        => self::has_canonical_assertions(),
-			'version'                     => $version,
-			'contract_version'            => $contract,
-			'minimum_supported'           => self::MINIMUM_VERSION,
-			'maximum_exclusive'           => self::MAXIMUM_VERSION_EXCLUSIVE,
-			'minimum_contract_supported'  => self::MINIMUM_CONTRACT_VERSION,
-			'maximum_contract_exclusive'  => self::MAXIMUM_CONTRACT_EXCLUSIVE,
-			'version_compatible'          => is_string( $version ) ? self::supports_version( $version ) : false,
-			'contract_compatible'         => is_string( $contract ) ? self::supports_contract_version( $contract ) : false,
+			'available'                  => self::is_available(),
+			'canonical_contract_present' => self::canonical_contract_present(),
+			'canonical_assertions'       => self::has_canonical_assertions(),
+			'version'                    => $version,
+			'contract_version'           => $contract,
+			'minimum_supported'          => self::MINIMUM_VERSION,
+			'maximum_exclusive'          => self::MAXIMUM_VERSION_EXCLUSIVE,
+			'minimum_contract_supported' => self::MINIMUM_CONTRACT_VERSION,
+			'maximum_contract_exclusive' => self::MAXIMUM_CONTRACT_EXCLUSIVE,
+			'version_compatible'         => is_string( $version ) ? self::supports_version( $version ) : false,
+			'contract_compatible'        => is_string( $contract ) ? self::supports_contract_version( $contract ) : false,
 		);
 	}
 }

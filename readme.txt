@@ -4,7 +4,7 @@ Tags: publishing, dashboard, editorial, doctors, founder, review, calendar, coll
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.2.3
+Stable tag: 1.2.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,13 +14,15 @@ A private, role-aware, federated publishing operations dashboard for the Sabri S
 
 File 23 provides one operational command center for the Founder, verified doctors, reviewers and restricted read-only account states while preserving each native module as the source of truth.
 
-Version 1.2.3 is the second fresh ten-round corrective pass. It adds the approved File 26 Search/Discovery/Ranking dependency to the complete 00–26 manifest, requires a current File 00 MFA/step-up assertion for privileged interactive actions, revalidates report-export authority immediately before download, revalidates automation ownership/eligibility/capability before background execution, and refreshes exact File 00/21/22 contract pins. Version 1.2.2 combined the live File 21/File 22 integration with a ten-round corrective review covering least privilege, provider isolation, exact destinations, projection truth, mutation replay, client reliability, lifecycle cleanup, and operational domain routing. Version 1.2.1 added live cross-file provider discovery, exact Composer routing, green visual identity, Vision/Dashicons navigation, and corrected responsive card spacing. Version 1.2.0 completed the code-level File 23 functional plan on top of the reviewed Phase 23A–23O foundation and includes:
+Version 1.2.4 is the third fresh ten-round corrective pass. It reconciles File 23 with the current File 00 role and publishing-assertion contract, prevents approved non-doctors or the institutional AI Teacher from being mislabeled as verified doctors, adds a bounded human-only AI Teacher oversight projection owned by File 23 while preserving Files 16/22/21 native ownership, recognizes the current `guardian_pending` membership lifecycle state, refreshes the File 22 exact contract pin to the latest reviewed candidate, and makes historical review gates forward-compatible instead of freezing future corrected releases to old package identities. Version 1.2.3 was the second fresh ten-round corrective pass. Version 1.2.2 combined the live File 21/File 22 integration with a ten-round corrective review covering least privilege, provider isolation, exact destinations, projection truth, mutation replay, client reliability, lifecycle cleanup, and operational domain routing.
 
-* File 00 canonical membership assertions with fail-closed compatibility;
-* Founder, Doctor, Reviewer, Pending and Suspended role-specific workspaces;
+Current File 23 scope includes:
+
+* File 00 canonical membership assertions with fail-closed compatibility and current publishing/institutional-AI assertion consumption;
+* Founder, verified Doctor, Reviewer, Moderator, Pending/Suspended and explicitly non-doctor institutional-AI-aware workspace classification;
 * federated inventory, review inbox and publishing calendar;
 * File 23-owned collections, campaigns, tasks, saved views, scoped delegations, automation-rule metadata, aggregate snapshots, export jobs, health cache, background jobs and append-only audit evidence;
-* guarded native operations plus strict Sources, Media Usage, Interactions, Knowledge Gaps, Revisions and Notifications projections through accepted, versioned provider adapters;
+* guarded native operations plus strict Sources, Media Usage, Interactions, Knowledge Gaps, Revisions, Notifications and AI Teacher oversight projections through accepted, versioned provider adapters;
 * privacy-thresholded provider aggregate analytics, secure expiring CSV/JSON/HTML/PDF/iCalendar exports and optional source-linked File 16 assistance;
 * idempotent jobs, retries, exponential backoff, dead-letter state, operator notifications, retention cleanup, privacy export/erasure and non-destructive local repair;
 * explicit operational mutation REST nonce, approved-account, same-origin and payload-bound idempotency enforcement;
@@ -31,10 +33,9 @@ Version 1.2.3 is the second fresh ten-round corrective pass. It adds the approve
 * reviewed native-reference registry and readiness consumer wired into Collections;
 * strict IDOR, privacy, no-store/noindex, same-origin and capability boundaries;
 * responsive, RTL, keyboard, reduced-motion and forced-color presentation controls;
-* schema version 3 with idempotent activation and non-destructive uninstall defaults;
 * deterministic release packaging, exact-head PHP 8.0–8.3 verification and a 10,000-operation behavioral integrity model.
 
-File 23 does not copy native publication bodies, drafts, profiles, knowledge objects, review decisions, schedules, media, comments, corrections, retractions, patient data, search/ranking truth or raw analytics. File 21 remains the native social/news publication owner, File 22 remains the universal creation workflow owner, and File 26 remains the search/discovery/ranking owner.
+File 23 does not copy native publication bodies, drafts, profiles, knowledge objects, review decisions, schedules, media, comments, corrections, retractions, patient data, search/ranking truth, AI-generated publication bodies or raw analytics. File 21 remains the native social/news publication owner, File 22 remains the universal creation workflow owner, File 16 remains AI generation/policy owner, and File 26 remains the search/discovery/ranking owner.
 
 Provider and resolver acceptance is File 23-controlled and default-denied. Production writes remain disabled until the relevant real provider, staging, rollback and Founder acceptance gates are recorded.
 
@@ -42,8 +43,8 @@ Provider and resolver acceptance is File 23-controlled and default-denied. Produ
 
 1. Install the canonical ZIP on a backed-up staging site first.
 2. Confirm compatible File 00, File 21 and File 22 versions and contracts.
-3. Activate File 23; activation idempotently installs or reconciles the Collections schema and the declared File 23 operational metadata schema without altering native provider records.
-4. Test Founder, Doctor, Reviewer, Pending and Suspended accounts.
+3. Activate File 23; activation idempotently installs or reconciles the Collections schema, capability schema and declared File 23 operational metadata schema without altering native provider records.
+4. Test Founder, verified Doctor, Reviewer, Pending, Suspended and institutional-AI identity boundaries.
 5. Verify IDOR, nonce, origin, replay, privacy, LiteSpeed/no-store, RTL, mobile, keyboard, screen-reader, zoom and contrast behavior.
 6. Rehearse database backup, restore, schema upgrade, plugin rollback and application rollback.
 7. Record Founder staging acceptance before production activation.
@@ -58,11 +59,26 @@ No. Native publications remain with File 21 and other canonical domain owners. F
 
 No. File 22 is the creation, draft, autosave, preview and submission orchestrator. File 23 is the private operational dashboard.
 
+= Does File 23 generate AI Teacher posts? =
+
+No. File 16 owns AI generation/policy, File 22 owns creation orchestration and File 21 owns publication lifecycle. File 23 provides bounded human oversight projections and never lets the institutional AI account authorize or oversee itself.
+
 = Are production writes enabled automatically? =
 
 No. Provider acceptance, environment, membership, capability, ownership, object version, nonce, same-origin, idempotency and native authorization must all pass. The default state is fail-closed.
 
 == Changelog ==
+
+= 1.2.4 =
+
+* Completed a third independent ten-round review with correction before progression to each subsequent round.
+* Reconciled the capability installer with current File 00 role keys: `sabri_doctor_pending`, `sabri_doctor_verified`, `sabri_membership_reviewer`, and `sabri_membership_senior_reviewer`; historical aliases remain migration-only.
+* Consumed current File 00 institutional-AI and publishing assertions and prevented institutional AI/non-doctor accounts from inheriting Doctor workspace identity.
+* Added a human-only `ai_teacher` operational oversight projection while preserving File 16/File 22/File 21 canonical ownership.
+* Added the current File 00 `guardian_pending` lifecycle state to the restricted read-only status model.
+* Refreshed exact File 22 integration evidence to reviewed head `4008521f9860e6181560ac07ff1c7e75868f1982`.
+* Made earlier ten-round regression evidence forward-compatible with later corrected package/companion revisions.
+* Promoted deterministic package/release identity to Version 1.2.4.
 
 = 1.2.3 =
 
@@ -71,8 +87,7 @@ No. Provider acceptance, environment, membership, capability, ownership, object 
 * Required current File 00 session MFA for privileged interactive File 23 capabilities.
 * Revalidated export-report authorization at download time so suspension, capability loss or session-step-up loss invalidates previously issued download access.
 * Revalidated automation owner identity, current approval, capability and owner binding before background action dispatch.
-* Refreshed exact companion pins to current File 00, File 21 and the current plan-complete File 22 core candidate.
-* Bumped deterministic installable/source package identity and release evidence to Version 1.2.3.
+* Refreshed exact companion pins to current File 00, File 21 and the plan-complete File 22 core candidate.
 
 = 1.2.2 =
 
@@ -88,8 +103,7 @@ No. Provider acceptance, environment, membership, capability, ownership, object 
 * Added exact File 21 and File 22 provider discovery consumption through the versioned File 23 registry.
 * Removed the guessed /create/ fallback; Create now resolves only the canonical File 22 page or reports unavailable.
 * Changed the central visual identity to accessible green while retaining semantic warning, critical and informational colors.
-* Added local WordPress Dashicons navigation icons and corrected card label/value/note spacing across desktop, mobile, RTL, zoom and forced-colors modes.
-* Added targeted provider/Composer/visual regression gates.
+* Added local WordPress Dashicons navigation icons and corrected card spacing/wrapping for responsive, RTL and accessible layouts.
 
 = 1.2.0 =
 
@@ -98,11 +112,6 @@ No. Provider acceptance, environment, membership, capability, ownership, object 
 * Verified InnoDB schemas, serialized audit chain, atomic jobs/exports and provider acceptance evidence.
 * AES-256-GCM encrypted-at-rest exports and expanded privacy export/erasure.
 * Deterministic installable and complete-source Version 1.2.0 packages.
-* Added complete operational projections for sources, media usage, interactions, revisions, knowledge gaps and publishing notifications.
-* Added provider-owned privacy-safe analytics and secure expiring report exports.
-* Added tasks, scoped delegations, bounded automation rules, background jobs, dead-letter handling, privacy integration and local reversible repair.
-* Added explicit nonce, same-origin, idempotency, replay and transactional audit integrity to File 23-owned mutations.
-* Added complete File 23 navigation, settings, activation readiness and operational schema.
 * Preserved fail-closed native ownership and kept staging/live acceptance as separate evidence gates.
 
 = 1.0.0 =

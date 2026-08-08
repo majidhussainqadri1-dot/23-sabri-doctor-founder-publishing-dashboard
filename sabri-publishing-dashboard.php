@@ -3,7 +3,7 @@
  * Plugin Name: Sabri Doctor and Founder Publishing Dashboard
  * Plugin URI:  https://www.sabrihomeopathy.com/
  * Description: A private, role-aware, federated publishing operations dashboard for the Founder and verified doctors of the Sabri Social Homeopathy Platform.
- * Version:     1.2.3
+ * Version:     1.2.4
  * Author:      Dr. Allamah Majid Hussain Sabri Muhaddith Mursheed
  * Text Domain: sabri-publishing-dashboard
  * Domain Path: /languages
@@ -13,13 +13,14 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-define( 'SPDB_VERSION', '1.2.3' );
+define( 'SPDB_VERSION', '1.2.4' );
 define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
 define( 'SPDB_PLUGIN_FILE', __FILE__ );
 define( 'SPDB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SPDB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-operational-mutation-guard.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-plugin.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-ai-teacher-oversight-rest.php';
 register_activation_hook( __FILE__, array( 'SPDB_Operational_Mutation_Guard', 'activate' ) );
 register_activation_hook( __FILE__, array( 'SPDB_Plugin', 'activate' ) );
 register_deactivation_hook( __FILE__, array( 'SPDB_Operational_Mutation_Guard', 'deactivate' ) );
@@ -50,5 +51,6 @@ function spdb_export_download_authorization_gate(): void {
 	);
 }
 add_action( 'admin_post_spdb_download_export', 'spdb_export_download_authorization_gate', 1 );
+SPDB_AI_Teacher_Oversight_REST::register();
 SPDB_Operational_Mutation_Guard::register();
 spdb()->boot();

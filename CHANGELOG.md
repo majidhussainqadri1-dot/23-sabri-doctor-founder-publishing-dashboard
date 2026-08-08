@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.4 — 2026-08-08
+
+- Completed a third fresh ten-round review of File 23 after Version 1.2.3, correcting every evidence-backed defect before continuing to the next round.
+- Reconciled File 23 capability installation with current File 00 role keys: `sabri_doctor_pending`, `sabri_doctor_verified`, `sabri_membership_reviewer`, and `sabri_membership_senior_reviewer`; retained historical aliases only for migration compatibility.
+- Consumed bounded current File 00 `institutional_ai` and publishing-authority assertions and prevented approved non-doctor or institutional-AI accounts from inheriting a Doctor workspace identity.
+- Added a bounded human-only `ai_teacher` operational oversight projection while preserving File 16 AI policy/generation, File 22 composer orchestration and File 21 publication ownership.
+- Added `guardian_pending` to the restricted read-only File 00 lifecycle states.
+- Refreshed exact File 22 integration evidence to reviewed head `4008521f9860e6181560ac07ff1c7e75868f1982`, while retaining File 00 `3a84c32a6ddad151f2ed09d244fa8aa536a58108` and File 21 `d00f60ce0ca4d1c9860d724a2beb57e3d03e5d5b` pins.
+- Made the prior second-ten-round regression gate forward-compatible so its historical evidence remains immutable without freezing all later corrected releases to Version 1.2.3 or an obsolete File 22 candidate.
+- Added the permanent third-ten-round regression gate and audit record.
+- Promoted deterministic installable/source package identity and release evidence from Version 1.2.3 to Version 1.2.4; staging/live/operational acceptance remains separate.
+
 ## 1.2.3 — 2026-08-08
 
 - Completed a second fresh ten-round review of the full File 23 source after Version 1.2.2.
@@ -29,7 +41,6 @@
 - Apply the Founder-approved green central identity with semantic status colors.
 - Add local Dashicons navigation and correct card spacing/wrapping for responsive, RTL and accessible layouts.
 - Add focused integration and visual regression tests.
-
 
 ## 1.2.0 — 2026-08-04
 
