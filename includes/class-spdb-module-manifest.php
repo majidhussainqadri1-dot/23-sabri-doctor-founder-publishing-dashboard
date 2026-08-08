@@ -41,6 +41,7 @@ final class SPDB_Module_Manifest {
 						$state    = $provider['effective_state'];
 						break 2;
 					}
+				}
 			}
 			if ( '00' === $file_number ) {
 				$detected = SPDB_Membership_Guard::is_available();
