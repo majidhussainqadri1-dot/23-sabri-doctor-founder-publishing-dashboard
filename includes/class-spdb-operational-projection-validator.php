@@ -18,6 +18,7 @@ final class SPDB_Operational_Projection_Validator {
 		'downloads',
 		'support',
 		'learning',
+		'ai_teacher',
 	);
 	private const PRIVACY = array( 'public', 'restricted', 'private', 'clinical_sensitive' );
 
@@ -131,7 +132,7 @@ final class SPDB_Operational_Projection_Validator {
 			$unit_raw = trim( (string) ( $metric['unit'] ?? 'count' ) );
 			$unit = sanitize_key( $unit_raw );
 			$generated_at = self::timestamp( $metric['generated_at'] ?? gmdate( 'c' ) );
-			if ( $key !== $key_raw || $interval !== $interval_raw || $unit !== $unit_raw || 1 !== preg_match( '/^[a-z0-9][a-z0-9_.-]{0,95}$/', $key ) || ! self::bounded_text( $label, 160 ) || ! self::bounded_text( $definition, 500 ) || ! self::canonical_key( $unit ) || ! in_array( $interval, array( 'realtime', 'hourly', 'daily', 'weekly', 'monthly', 'custom' ), true ) || null === $generated_at ) { return self::error( 'spdb_metrics_invalid_item', 'The provider returned an invalid aggregate metric.' ); }
+			if ( $key !== $key_raw || $interval !== $interval_raw || $unit !== $unit_raw || 1 !== preg_match( '/^[a-z0-9][a-z0-9_.-]{0,95}$/', $key ) || ! self::bounded_text( $label, 160 ) || ! self::bounded_text( $definition, 500 ) || ! self::canonical_key( $unit ) || ! in_array( $interval, array( 'realtime', 'hourly', 'daily', 'weekly', 'monthly', 'custom' ), true ) || null === $generated_at ) { return self::error( 'spdb_metrics_invalid_item', 'The provider returned an invalid aggregate metric value.' ); }
 			$value = null;
 			$suppressed = $cohort < $threshold;
 			if ( ! $suppressed && isset( $metric['value'] ) && ( is_int( $metric['value'] ) || is_float( $metric['value'] ) ) && is_finite( (float) $metric['value'] ) ) { $value = $metric['value']; }
