@@ -20,6 +20,7 @@ define( 'SPDB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SPDB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-operational-mutation-guard.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-plugin.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-sensitive-session-guard.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-ai-teacher-oversight-rest.php';
 register_activation_hook( __FILE__, array( 'SPDB_Operational_Mutation_Guard', 'activate' ) );
 register_activation_hook( __FILE__, array( 'SPDB_Plugin', 'activate' ) );
@@ -41,7 +42,7 @@ function spdb_export_download_authorization_gate(): void {
 	if ( ! is_user_logged_in() ) {
 		return;
 	}
-	if ( SPDB_Capabilities::current_user_can( 'spdb_export_reports' ) ) {
+	if ( SPDB_Membership_Guard::current_user_has_sensitive_session() && SPDB_Capabilities::current_user_can( 'spdb_export_reports' ) ) {
 		return;
 	}
 	wp_die(
@@ -53,4 +54,5 @@ function spdb_export_download_authorization_gate(): void {
 add_action( 'admin_post_spdb_download_export', 'spdb_export_download_authorization_gate', 1 );
 SPDB_AI_Teacher_Oversight_REST::register();
 SPDB_Operational_Mutation_Guard::register();
+SPDB_Sensitive_Session_Guard::register();
 spdb()->boot();
