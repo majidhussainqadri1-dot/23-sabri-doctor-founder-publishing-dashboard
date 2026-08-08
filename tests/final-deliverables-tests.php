@@ -32,11 +32,12 @@ $deliverables = array(
 	'docs/DOCTOR-MANUAL.md'                                        => array( 'Doctor', 'submits for review', 'idempotency' ),
 	'docs/ADMIN-MANUAL.md'                                         => array( 'Administrator', 'Hostinger staging', 'rollback' ),
 	'docs/TEST-REPORT.md'                                          => array( 'Automated source gates', 'Hostinger staging', 'Defect policy' ),
-	'CHANGELOG.md'                                                  => array( '1.2.2' ),
+	'CHANGELOG.md'                                                  => array( '1.2.3' ),
 	'docs/KNOWN-LIMITATIONS.md'                                    => array( 'Residual-risk', 'LiteSpeed', 'F23-LIM-010' ),
-	'docs/RELEASE-SIGNOFF.md'                                      => array( 'Exact Git head', 'PENDING', 'Founder' ),
-	'docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md' => array( 'چالیس ادوار', 'دور 40', 'Hostinger staging' ),
-	'docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md' => array( 'Round 10', 'Version 1.2.2', 'Hostinger staging' ),
+	'docs/RELEASE-SIGNOFF.md'                                      => array( 'Exact Git head', 'PENDING', 'Founder', '1.2.3' ),
+	'docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md'     => array( 'چالیس ادوار', 'دور 40', 'Hostinger staging' ),
+	'docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md'     => array( 'Round 10', 'Version 1.2.2', 'Hostinger staging' ),
+	'docs/AUDIT-SECOND-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md' => array( 'Rounds with defects', '1, 2, 5, 6, 9, 10', 'Hostinger staging' ),
 );
 
 foreach ( $deliverables as $relative => $markers ) {
@@ -59,6 +60,7 @@ foreach ( array(
 	'FILE23-${version}-SOURCE-MANIFEST.sha256',
 	'git archive',
 	'sha256sum "$source_package"',
+	'version="1.2.3"',
 ) as $marker ) {
 	$assert( false !== strpos( $build, $marker ), "Release tooling is missing marker: {$marker}." );
 }
@@ -68,11 +70,13 @@ foreach ( array(
 	'php tests/final-deliverables-tests.php',
 	'php tests/forty-round-review-gate-tests.php',
 	'php tests/ten-round-corrective-review-tests.php',
-	'23-Doctor-Founder-Publishing-Dashboard-Source-1.2.2.zip',
-	'FILE23-1.2.2-SOURCE-MANIFEST.sha256',
+	'php tests/second-ten-round-review-tests.php',
+	'23-Doctor-Founder-Publishing-Dashboard-Source-1.2.3.zip',
+	'FILE23-1.2.3-SOURCE-MANIFEST.sha256',
 	'docs/RELEASE-SIGNOFF.md',
 	'docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md',
 	'docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md',
+	'docs/AUDIT-SECOND-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md',
 ) as $marker ) {
 	$assert( false !== strpos( $workflow, $marker ), "Final release workflow is missing marker: {$marker}." );
 }
