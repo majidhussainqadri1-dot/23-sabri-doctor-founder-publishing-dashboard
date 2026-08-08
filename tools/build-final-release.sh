@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-version="1.2.3"
+version="1.2.4"
 package_name="23-sabri-doctor-founder-publishing-dashboard-${version}.zip"
 manifest_name="FILE23-${version}-MANIFEST.sha256"
 source_root="23-Doctor-Founder-Publishing-Dashboard-Source-${version}"
@@ -18,7 +18,7 @@ build_package() {
   done
   find "$root" -type d -exec chmod 0755 {} +
   find "$root" -type f -exec chmod 0644 {} +
-  find "$root" -exec touch -h -t 202608082051.00 {} +
+  find "$root" -exec touch -h -t 202608082227.00 {} +
   (
     cd "$root"
     LC_ALL=C find sabri-publishing-dashboard -type f -print | LC_ALL=C sort > ../package-files.txt
@@ -35,8 +35,8 @@ cmp build-one.zip build-two.zip
 mv build-one.zip "$package_name"
 unzip -t "$package_name"
 test "$(unzip -Z1 "$package_name" | head -n1 | cut -d/ -f1)" = 'sabri-publishing-dashboard'
-unzip -p "$package_name" sabri-publishing-dashboard/sabri-publishing-dashboard.php | grep -Eq '^ \* Version:[[:space:]]+1\.2\.3$'
-unzip -p "$package_name" sabri-publishing-dashboard/readme.txt | grep -Fq 'Stable tag: 1.2.3'
+unzip -p "$package_name" sabri-publishing-dashboard/sabri-publishing-dashboard.php | grep -Eq '^ \* Version:[[:space:]]+1\.2\.4$'
+unzip -p "$package_name" sabri-publishing-dashboard/readme.txt | grep -Fq 'Stable tag: 1.2.4'
 sha256sum "$package_name" > "$package_name.sha256"
 (
   cd build-two/sabri-publishing-dashboard
@@ -47,7 +47,7 @@ sha256sum "$package_name" > "$package_name.sha256"
 git archive --format=zip --prefix="${source_root}/" -o "$source_package" HEAD
 unzip -t "$source_package"
 test "$(unzip -Z1 "$source_package" | head -n1 | cut -d/ -f1)" = "$source_root"
-unzip -p "$source_package" "${source_root}/sabri-publishing-dashboard.php" | grep -Eq '^ \* Version:[[:space:]]+1\.2\.3$'
+unzip -p "$source_package" "${source_root}/sabri-publishing-dashboard.php" | grep -Eq '^ \* Version:[[:space:]]+1\.2\.4$'
 unzip -p "$source_package" "${source_root}/docs/RELEASE-SIGNOFF.md" | grep -Fq 'PENDING — DO NOT MERGE OR DEPLOY'
 sha256sum "$source_package" > "$source_package.sha256"
 git ls-files -z | LC_ALL=C sort -z | xargs -0 sha256sum > "$source_manifest"
