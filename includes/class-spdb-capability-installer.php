@@ -12,16 +12,16 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Capability_Installer {
-	private const SCHEMA_VERSION     = '5';
+	private const SCHEMA_VERSION     = '6';
 	private const VERSION_OPTION     = 'spdb_capability_schema_version';
 	private const FINGERPRINT_OPTION = 'spdb_capability_role_fingerprint';
 
 	/**
 	 * Return the least-privilege capability matrix for existing roles.
 	 *
-	 * `sabri_doctor_verified` is the current canonical File 00 verified-doctor
-	 * role. `sabri_verified_doctor` is retained only as a migration-compatible
-	 * legacy alias and is never created by File 23.
+	 * Canonical File 00 keys are taken from its current role contract. Historic
+	 * File 23 aliases are retained only for non-destructive migration support and
+	 * are never created by File 23.
 	 *
 	 * @return array<string,string[]>
 	 */
@@ -39,21 +39,28 @@ final class SPDB_Capability_Installer {
 				'spdb_request_ai_assistance',
 			)
 		);
+		$reviewer = array(
+			'spdb_view_dashboard',
+			'spdb_view_own_content',
+			'spdb_view_review_queue',
+			'spdb_review_assigned_content',
+			'spdb_manage_tasks',
+		);
 
 		return array(
-			'administrator'           => SPDB_Capabilities::all(),
-			'sabri_pending'           => $restricted,
-			'sabri_doctor'            => $doctor,
-			'sabri_doctor_verified'   => $doctor,
-			'sabri_verified_doctor'   => $doctor,
-			'sabri_medical_reviewer'  => array(
-				'spdb_view_dashboard',
-				'spdb_view_own_content',
-				'spdb_view_review_queue',
-				'spdb_review_assigned_content',
-				'spdb_manage_tasks',
-			),
-			'sabri_moderator'         => array(
+			'administrator'                    => SPDB_Capabilities::all(),
+			/* Current File 00 doctor lifecycle roles. */
+			'sabri_doctor_pending'             => $restricted,
+			'sabri_doctor_verified'            => $doctor,
+			/* Current File 00 verification-review roles. */
+			'sabri_membership_reviewer'        => $reviewer,
+			'sabri_membership_senior_reviewer' => $reviewer,
+			/* Historical aliases kept only where an existing site still has them. */
+			'sabri_pending'                    => $restricted,
+			'sabri_doctor'                     => $doctor,
+			'sabri_verified_doctor'            => $doctor,
+			'sabri_medical_reviewer'           => $reviewer,
+			'sabri_moderator'                  => array(
 				'spdb_view_dashboard',
 				'spdb_manage_interactions',
 				'spdb_manage_tasks',
