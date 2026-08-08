@@ -25,12 +25,10 @@ final class SPDB_Membership_Guard {
 			&& version_compare( $version, self::MAXIMUM_CONTRACT_EXCLUSIVE, '<' );
 	}
 
-	/** Whether a canonical File 00 contract implementation is present at all. */
 	public static function canonical_contract_present(): bool {
 		return class_exists( 'SMC_Contracts' ) || defined( 'SMC_CONTRACT_VERSION' );
 	}
 
-	/** Canonical File 00 assertions are preferred and must be version-compatible. */
 	public static function has_canonical_assertions(): bool {
 		return class_exists( 'SMC_Contracts' )
 			&& is_callable( array( 'SMC_Contracts', 'assertions' ) )
@@ -163,7 +161,7 @@ final class SPDB_Membership_Guard {
 
 	public static function restricted_view_statuses(): array {
 		return array(
-			'draft', 'email_pending', 'phone_pending', '2fa_pending', 'documents_incomplete',
+			'draft', 'guardian_pending', 'email_pending', 'phone_pending', '2fa_pending', 'documents_incomplete',
 			'submitted', 'under_review', 'more_information', 'resubmitted', 'approval_pending',
 			'approved', 'verified', 'rejected', 'suspended', 'expired', 'expired_document',
 			'appeal_review', 'erasure_pending', 'invalid_application',
