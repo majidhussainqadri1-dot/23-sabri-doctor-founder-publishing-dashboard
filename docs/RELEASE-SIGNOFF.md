@@ -1,15 +1,15 @@
-# File 23 Release Sign-Off Form — Version 1.2.4
+# File 23 Release Sign-Off Form — Version 1.2.5
 
 This form must remain **Pending** until every required evidence field is complete. A green CI run alone is not release approval.
 
 ## Artifact identity
 
-- Release version: `1.2.4`
+- Release version: `1.2.5`
 - Exact Git head: ________________________________
 - Base/main head reviewed: _________________________
-- Installable ZIP: `23-sabri-doctor-founder-publishing-dashboard-1.2.4.zip`
+- Installable ZIP: `23-sabri-doctor-founder-publishing-dashboard-1.2.5.zip`
 - Installable ZIP SHA-256: _________________________
-- Complete-source ZIP: `23-Doctor-Founder-Publishing-Dashboard-Source-1.2.4.zip`
+- Complete-source ZIP: `23-Doctor-Founder-Publishing-Dashboard-Source-1.2.5.zip`
 - Complete-source ZIP SHA-256: _____________________
 - Source manifest SHA-256: _________________________
 - CI run ID and URL/reference: _____________________
@@ -80,7 +80,7 @@ This form must remain **Pending** until every required evidence field is complet
 
 ## Merge and deployment authorization
 
-- PR number: ___________________________
+- PR number: `25` (Draft)
 - Approved merge method: ___________________________
 - Expected head SHA: _______________________________
 - Deployment window: _______________________________
