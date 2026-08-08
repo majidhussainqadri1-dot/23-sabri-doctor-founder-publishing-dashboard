@@ -167,6 +167,8 @@ $list = $service->list_collections( array( 'scope' => 'own', 'page' => 1, 'per_p
 spdb_23o_assert( is_array( $list ) && 1 === count( $list['items'] ), 'Service reads must still return validated own-scope data.' );
 spdb_23o_assert( 1 === $repository->health_calls && 0 === $resolver->ready_calls, 'Service read authorization must consume one repository probe and remain resolver-independent.' );
 
+/* Positive write-readiness and resolver tests must use a current canonical publishing identity. */
+$GLOBALS['spdb_test_founder'] = true;
 $repository->health_calls = 0; $resolver->reset();
 $collection = $service->prepare_collection_create( spdb_23o_collection_input() );
 spdb_23o_assert( is_array( $collection ) && 7 === $collection['owner_user_id'], 'Collection preparation must pass the consumer-owned collection gate.' );
