@@ -37,16 +37,16 @@ jobs:
           node --check assets/js/dashboard.js
           node --check assets/js/operations.js
           mapfile -t suites < <(find tests -maxdepth 1 -type f -name '*tests.php' | sort)
-          test "${#suites[@]}" -ge 24
+          test "${#suites[@]}" -ge 25
           for suite in "${suites[@]}"; do php -d display_errors=1 -d error_reporting=E_ALL "$suite"; done
           php tests/architecture-guard.php
       - name: Verify current full-plan release boundaries
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq "Version:     1.2.4" sabri-publishing-dashboard.php
-          grep -Fq "define( 'SPDB_VERSION', '1.2.4' )" sabri-publishing-dashboard.php
-          grep -Fq "Stable tag: 1.2.4" readme.txt
+          grep -Fq "Version:     1.2.5" sabri-publishing-dashboard.php
+          grep -Fq "define( 'SPDB_VERSION', '1.2.5' )" sabri-publishing-dashboard.php
+          grep -Fq "Stable tag: 1.2.5" readme.txt
           grep -Fq "'phase'                   => 'full_plan_candidate'" includes/class-spdb-system-state.php
           grep -Fq 'class-spdb-operations-service.php' includes/class-spdb-plugin.php
           grep -Fq 'class-spdb-background-jobs.php' includes/class-spdb-plugin.php
@@ -55,3 +55,4 @@ jobs:
           grep -Fq "global_safe_mode_owner' => 'file20" includes/class-spdb-local-repair.php
           php tests/second-ten-round-review-tests.php
           php tests/third-ten-round-review-tests.php
+          php tests/fourth-ten-round-review-tests.php
