@@ -10,9 +10,9 @@ permissions:
   contents: read
 
 env:
-  FILE00_SHA: 1831c7ed767ce8590a97dc8e2f2d38ad81661494
-  FILE21_SHA: 116deca6026d7fbfe2549570e74d4bee0b68ec93
-  FILE22_SHA: ce3dc881395cf22e5b33a538cbb7e104d1a51931
+  FILE00_SHA: 3a84c32a6ddad151f2ed09d244fa8aa536a58108
+  FILE21_SHA: d00f60ce0ca4d1c9860d724a2beb57e3d03e5d5b
+  FILE22_SHA: 4c5fa4946cca6d89e9d42e0df22659f222451398
 
 jobs:
   real-contracts:
