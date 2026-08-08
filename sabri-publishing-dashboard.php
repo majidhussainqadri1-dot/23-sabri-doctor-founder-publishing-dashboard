@@ -18,12 +18,15 @@ define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
 define( 'SPDB_PLUGIN_FILE', __FILE__ );
 define( 'SPDB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SPDB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-rest-rate-limiter.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-operational-mutation-guard.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-plugin.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-sensitive-session-guard.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-ai-teacher-oversight-rest.php';
+register_activation_hook( __FILE__, array( 'SPDB_REST_Rate_Limiter', 'activate' ) );
 register_activation_hook( __FILE__, array( 'SPDB_Operational_Mutation_Guard', 'activate' ) );
 register_activation_hook( __FILE__, array( 'SPDB_Plugin', 'activate' ) );
+register_deactivation_hook( __FILE__, array( 'SPDB_REST_Rate_Limiter', 'deactivate' ) );
 register_deactivation_hook( __FILE__, array( 'SPDB_Operational_Mutation_Guard', 'deactivate' ) );
 register_deactivation_hook( __FILE__, array( 'SPDB_Plugin', 'deactivate' ) );
 function spdb(): SPDB_Plugin { return SPDB_Plugin::instance(); }
@@ -53,6 +56,7 @@ function spdb_export_download_authorization_gate(): void {
 }
 add_action( 'admin_post_spdb_download_export', 'spdb_export_download_authorization_gate', 1 );
 SPDB_AI_Teacher_Oversight_REST::register();
+SPDB_REST_Rate_Limiter::register();
 SPDB_Operational_Mutation_Guard::register();
 SPDB_Sensitive_Session_Guard::register();
 spdb()->boot();
