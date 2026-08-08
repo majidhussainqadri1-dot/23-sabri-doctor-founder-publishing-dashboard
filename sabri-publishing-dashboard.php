@@ -3,7 +3,7 @@
  * Plugin Name: Sabri Doctor and Founder Publishing Dashboard
  * Plugin URI:  https://www.sabrihomeopathy.com/
  * Description: A private, role-aware, federated publishing operations dashboard for the Founder and verified doctors of the Sabri Social Homeopathy Platform.
- * Version:     1.2.3
+ * Version:     1.2.4
  * Author:      Dr. Allamah Majid Hussain Sabri Muhaddith Mursheed
  * Text Domain: sabri-publishing-dashboard
  * Domain Path: /languages
@@ -13,7 +13,7 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-define( 'SPDB_VERSION', '1.2.3' );
+define( 'SPDB_VERSION', '1.2.4' );
 define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
 define( 'SPDB_PLUGIN_FILE', __FILE__ );
 define( 'SPDB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
