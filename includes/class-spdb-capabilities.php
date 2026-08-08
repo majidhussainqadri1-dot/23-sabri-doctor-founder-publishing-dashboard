@@ -8,14 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Capabilities {
-	/**
-	 * Return the canonical File 23 capability keys.
-	 *
-	 * File 23 deliberately does not create WordPress roles. File 00 or an
-	 * administrator-approved integration grants these capabilities.
-	 *
-	 * @return string[]
-	 */
+	/** @return string[] */
 	public static function all(): array {
 		return array(
 			'spdb_view_dashboard',
@@ -41,39 +34,17 @@ final class SPDB_Capabilities {
 		);
 	}
 
-	/**
-	 * Capabilities previously created by File 23 that are no longer valid.
-	 *
-	 * Global Safe Mode is owned by File 20 and must not remain grantable through
-	 * File 23 after an upgrade.
-	 *
-	 * @return string[]
-	 */
+	/** @return string[] */
 	public static function retired(): array {
 		return array( 'spdb_manage_safe_mode' );
 	}
 
-	/**
-	 * Read-only capabilities permitted for the restricted pending/suspended view.
-	 *
-	 * @return string[]
-	 */
+	/** @return string[] */
 	public static function restricted_view_capabilities(): array {
-		return array(
-			'spdb_view_dashboard',
-			'spdb_view_own_content',
-		);
+		return array( 'spdb_view_dashboard', 'spdb_view_own_content' );
 	}
 
-	/**
-	 * Privileged File 23 capabilities require the current File 00 session to have
-	 * completed its MFA/step-up assertion. An approved account without a verified
-	 * current session may still use ordinary private dashboard views, but cannot
-	 * perform sensitive writes, privileged review/security reads, exports, or AI
-	 * provider requests.
-	 *
-	 * @return string[]
-	 */
+	/** @return string[] */
 	public static function verified_session_capabilities(): array {
 		return array(
 			'spdb_manage_own_content',
@@ -97,19 +68,22 @@ final class SPDB_Capabilities {
 	}
 
 	/**
-	 * Enforce canonical capability and current File 00 account state.
+	 * Capabilities that are semantically tied to the Founder/verified-doctor
+	 * publishing identity. A stale WordPress role or migrated capability must
+	 * not manufacture a Doctor authority that File 00 does not currently assert.
 	 *
-	 * Pending, rejected, expired-document, appeal-review, and suspended accounts
-	 * may use only explicitly assigned restricted-view capabilities. Every other
-	 * File 23 capability requires an approved or verified File 00 account. Sensitive
-	 * capabilities additionally require the current File 00 session MFA assertion.
+	 * @return string[]
 	 */
-	public static function current_user_can( string $capability, ...$args ): bool {
-		if ( ! in_array( $capability, self::all(), true ) ) {
-			return false;
-		}
+	public static function verified_publishing_identity_capabilities(): array {
+		return array(
+			'spdb_manage_own_content',
+			'spdb_manage_schedule',
+			'spdb_view_own_analytics',
+		);
+	}
 
-		if ( ! current_user_can( $capability, ...$args ) ) {
+	public static function current_user_can( string $capability, ...$args ): bool {
+		if ( ! in_array( $capability, self::all(), true ) || ! current_user_can( $capability, ...$args ) ) {
 			return false;
 		}
 
@@ -121,9 +95,15 @@ final class SPDB_Capabilities {
 			return false;
 		}
 
+		$user_id = get_current_user_id();
+		if ( in_array( $capability, self::verified_publishing_identity_capabilities(), true )
+			&& ! SPDB_Membership_Guard::is_user_founder( $user_id )
+			&& ! SPDB_Membership_Guard::is_user_verified_doctor( $user_id ) ) {
+			return false;
+		}
+
 		if ( in_array( $capability, self::verified_session_capabilities(), true ) ) {
-			$assertions = SPDB_Membership_Guard::assertions( get_current_user_id() );
-			return is_array( $assertions ) && true === ( $assertions['session_two_factor'] ?? false );
+			return SPDB_Membership_Guard::has_sensitive_session( $user_id );
 		}
 
 		return true;
