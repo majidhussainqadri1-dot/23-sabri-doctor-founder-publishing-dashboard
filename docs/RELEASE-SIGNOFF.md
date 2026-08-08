@@ -1,15 +1,15 @@
-# File 23 Release Sign-Off Form — Version 1.2.3
+# File 23 Release Sign-Off Form — Version 1.2.4
 
 This form must remain **Pending** until every required evidence field is complete. A green CI run alone is not release approval.
 
 ## Artifact identity
 
-- Release version: `1.2.3`
+- Release version: `1.2.4`
 - Exact Git head: ________________________________
 - Base/main head reviewed: _________________________
-- Installable ZIP: `23-sabri-doctor-founder-publishing-dashboard-1.2.3.zip`
+- Installable ZIP: `23-sabri-doctor-founder-publishing-dashboard-1.2.4.zip`
 - Installable ZIP SHA-256: _________________________
-- Complete-source ZIP: `23-Doctor-Founder-Publishing-Dashboard-Source-1.2.3.zip`
+- Complete-source ZIP: `23-Doctor-Founder-Publishing-Dashboard-Source-1.2.4.zip`
 - Complete-source ZIP SHA-256: _____________________
 - Source manifest SHA-256: _________________________
 - CI run ID and URL/reference: _____________________
@@ -22,6 +22,7 @@ This form must remain **Pending** until every required evidence field is complet
 - Database version: ________________________________
 - LiteSpeed version/config evidence: _______________
 - File 00 version/head: ____________________________
+- File 16 version/head: ____________________________
 - File 19 version/head: ____________________________
 - File 20 version/head: ____________________________
 - File 21 version/head: ____________________________
@@ -33,23 +34,25 @@ This form must remain **Pending** until every required evidence field is complet
 ## Acceptance evidence
 
 - [ ] Exact-head automated suites all pass with no unexplained skip.
-- [ ] Forty thematic review/fix rounds, the earlier ten-round corrective review, this second fresh ten-round review and their executable gates are complete; two fresh reviews after any later code change remain mandatory.
+- [ ] Forty thematic review/fix rounds, the earlier corrective ten-round cycles, this third fresh ten-round review and their executable gates are complete; fresh review is reopened after later code/evidence changes.
 - [ ] Database schema/capability/data-ownership/threat-model documents reviewed.
 - [ ] Fresh install and supported upgrades pass.
-- [ ] Founder/Doctor/Reviewer/Pending/Suspended journeys pass.
-- [ ] File 21/22 and required companion integrations pass with real plugins.
+- [ ] Founder/verified Doctor/Reviewer/Pending/Suspended and institutional-AI identity-boundary journeys pass.
+- [ ] File 16/21/22 and required companion integrations pass with real plugins.
 - [ ] IDOR/CSRF/replay/concurrency/export/privacy/security negative tests pass.
+- [ ] Institutional AI cannot self-authorize/self-oversee and cannot inherit doctor verification.
 - [ ] LiteSpeed cross-user cache isolation passes.
 - [ ] Mobile, RTL, keyboard, screen-reader, zoom, contrast and weak-connection tests pass.
 - [ ] Real 10,000+ object performance/SLO evidence is accepted.
 - [ ] Backup restore, migration and rollback rehearsal passes.
 - [ ] Cache purge and post-deployment smoke tests pass.
-- [ ] Zero unresolved blocker/critical defects; residual risks approved.
+- [ ] Zero known unresolved blocker/critical defects; residual risks approved.
 
 ## Evidence references
 
 - Role matrix: ____________________________________
 - Provider/contracts: ______________________________
+- AI Teacher oversight boundary: ___________________
 - Cache/privacy: __________________________________
 - Accessibility/browser/device: ____________________
 - Performance/load: _______________________________
@@ -60,6 +63,7 @@ This form must remain **Pending** until every required evidence field is complet
 - Forty-round audit: `docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md`
 - First ten-round corrective audit: `docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md`
 - Second ten-round corrective audit: `docs/AUDIT-SECOND-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md`
+- Third ten-round corrective audit: `docs/AUDIT-THIRD-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md`
 
 ## Approvals
 
