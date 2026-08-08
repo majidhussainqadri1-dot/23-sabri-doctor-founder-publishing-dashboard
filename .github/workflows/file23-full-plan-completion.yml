@@ -52,13 +52,15 @@ jobs:
           php tests/forty-round-review-gate-tests.php
           php tests/ten-round-corrective-review-tests.php
           php tests/second-ten-round-review-tests.php
+          php tests/third-ten-round-review-tests.php
           php tests/architecture-guard.php
       - name: Verify final-plan boundaries
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq "Version:     1.2.3" sabri-publishing-dashboard.php
-          grep -Fq "Stable tag: 1.2.3" readme.txt
+          grep -Fq "Version:     1.2.4" sabri-publishing-dashboard.php
+          grep -Fq "Stable tag: 1.2.4" readme.txt
+          grep -Fq 'class-spdb-ai-teacher-oversight-rest.php' sabri-publishing-dashboard.php
           grep -Fq 'spdb/file24_assurance_evidence' includes/class-spdb-plugin.php
           grep -Fq "global_safe_mode_owner' => 'file20" includes/class-spdb-local-repair.php
           grep -Fq "mutation_supported'         => false" includes/class-spdb-legacy-migration-diagnostics.php
@@ -111,6 +113,7 @@ jobs:
           grep -Fq 'SMC_Contracts::assertions( $user_id )' file23/includes/class-spdb-membership-guard.php
           grep -Fq "MINIMUM_CONTRACT_VERSION" file23/includes/class-spdb-membership-guard.php
           grep -Fq "'session_two_factor'" file00/source/sabri-membership-core/includes/class-smc-contracts.php
+          grep -Fq "'institutional_ai'" file00/source/sabri-membership-core/includes/class-smc-contracts.php
       - name: Prepare current File 22 autoload boundary
         shell: bash
         run: |
@@ -173,25 +176,28 @@ jobs:
           test -s docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md
           php tests/second-ten-round-review-tests.php
           test -s docs/AUDIT-SECOND-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
-      - name: Build deterministic 1.2.3 package
+          php tests/third-ten-round-review-tests.php
+          test -s docs/AUDIT-THIRD-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
+      - name: Build deterministic 1.2.4 package
         run: bash tools/build-final-release.sh
       - name: Record exact source evidence
         shell: bash
         run: |
-          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.3\n' \
+          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.4\n' \
             "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" \
-            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.3-RELEASE-EVIDENCE.txt
+            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.4-RELEASE-EVIDENCE.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: file23-1.2.3-full-plan-candidate
+          name: file23-1.2.4-full-plan-candidate
           path: |
-            23-sabri-doctor-founder-publishing-dashboard-1.2.3.zip
-            23-sabri-doctor-founder-publishing-dashboard-1.2.3.zip.sha256
-            FILE23-1.2.3-MANIFEST.sha256
-            FILE23-1.2.3-RELEASE-EVIDENCE.txt
+            23-sabri-doctor-founder-publishing-dashboard-1.2.4.zip
+            23-sabri-doctor-founder-publishing-dashboard-1.2.4.zip.sha256
+            FILE23-1.2.4-MANIFEST.sha256
+            FILE23-1.2.4-RELEASE-EVIDENCE.txt
             docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md
             docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md
             docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md
             docs/AUDIT-SECOND-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
+            docs/AUDIT-THIRD-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
           if-no-files-found: error
           retention-days: 90
