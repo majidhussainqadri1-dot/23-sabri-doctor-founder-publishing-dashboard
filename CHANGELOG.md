@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.3 — 2026-08-08
+
+- Completed a second fresh ten-round review of the full File 23 source after Version 1.2.2.
+- Corrected File 00–26 dependency coverage by adding File 26 Search/Discovery/Ranking to the discovery manifest without duplicating its canonical ownership.
+- Added current File 00 `session_two_factor` enforcement for privileged interactive File 23 capabilities.
+- Added a download-boundary authorization recheck so suspension, capability revocation or loss of current session step-up blocks previously issued export links.
+- Revalidated background automation owner approval, capability and job/rule owner binding before native-provider dispatch.
+- Refreshed final-release real-contract pins to File 00 `3a84c32a6ddad151f2ed09d244fa8aa536a58108`, File 21 `d00f60ce0ca4d1c9860d724a2beb57e3d03e5d5b`, and plan-complete File 22 core `4c5fa4946cca6d89e9d42e0df22659f222451398`.
+- Added the permanent second-ten-round regression gate and audit record.
+- Bumped deterministic installable/source package identity and release evidence from 1.2.2 to 1.2.3; Hostinger staging/live/operational gates remain separate.
+
 ## 1.2.2 — 2026-08-05
 
 - Converged the complete Version 1.2.1 File 21/File 22 provider-consumption branch before further review.
