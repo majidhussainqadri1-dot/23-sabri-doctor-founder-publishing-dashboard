@@ -29,7 +29,7 @@ function spdb(): SPDB_Plugin { return SPDB_Plugin::instance(); }
 function spdb_get_capabilities(): array { return SPDB_Capabilities::all(); }
 /** @return array<string,mixed> Sanitized File 24 assurance evidence. */
 function spdb_get_assurance_manifest(): array { return spdb()->assurance_manifest(); }
-/** @return array<int,array<string,mixed>> Complete File 00–25 discovery manifest. */
+/** @return array<int,array<string,mixed>> Complete File 00–26 discovery manifest. */
 function spdb_get_dependency_manifest(): array { return spdb()->dependency_manifest(); }
 SPDB_Operational_Mutation_Guard::register();
 spdb()->boot();
