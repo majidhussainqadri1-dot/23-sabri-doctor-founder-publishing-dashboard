@@ -25,10 +25,35 @@ final class SPDB_Workspace_Resolver {
 		if ( SPDB_Membership_Guard::is_user_founder( $user_id ) ) {
 			return $this->workspace( 'founder', __( 'Founder Publishing Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
 		}
-		if ( SPDB_Membership_Guard::is_user_trusted_publisher( $user_id ) ) {
-			return $this->workspace( 'trusted_doctor', __( 'Trusted Doctor Publishing Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
+
+		/*
+		 * Institutional AI is never rendered as a human doctor. File 23 provides
+		 * oversight evidence only; generation/publication remains with Files
+		 * 16/22/21 and the authoritative File 00 publishing policy.
+		 */
+		if ( SPDB_Membership_Guard::is_user_institutional_ai( $user_id ) ) {
+			return $this->workspace( 'institutional_ai', __( 'Institutional AI Oversight', 'sabri-publishing-dashboard' ), true, $status, $user_id );
 		}
-		return $this->workspace( 'doctor', __( 'Doctor Publishing Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
+
+		$is_doctor  = SPDB_Membership_Guard::is_user_verified_doctor( $user_id );
+		$is_trusted = SPDB_Membership_Guard::is_user_trusted_publisher( $user_id );
+		if ( $is_doctor ) {
+			if ( $is_trusted ) {
+				return $this->workspace( 'trusted_doctor', __( 'Trusted Doctor Publishing Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
+			}
+			return $this->workspace( 'doctor', __( 'Doctor Publishing Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
+		}
+
+		/* Review/moderation workspaces are capability-derived, never doctor-labelled. */
+		if ( SPDB_Capabilities::current_user_can( 'spdb_view_review_queue' ) || SPDB_Capabilities::current_user_can( 'spdb_review_assigned_content' ) ) {
+			return $this->workspace( 'reviewer', __( 'Reviewer Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
+		}
+		if ( SPDB_Capabilities::current_user_can( 'spdb_manage_interactions' ) ) {
+			return $this->workspace( 'moderator', __( 'Moderation Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
+		}
+
+		/* Approved non-doctor accounts must not inherit a Doctor identity by default. */
+		return $this->workspace( 'restricted', __( 'Restricted Read-Only Workspace', 'sabri-publishing-dashboard' ), true, $status, $user_id );
 	}
 
 	/** @param array<string,mixed> $workspace @return array<string,array<string,string>> */
@@ -39,9 +64,12 @@ final class SPDB_Workspace_Resolver {
 		$workspace_label = __( 'Publishing Workspace', 'sabri-publishing-dashboard' );
 		if ( 'founder' === $key ) { $workspace_label = __( 'Founder Workspace', 'sabri-publishing-dashboard' ); }
 		elseif ( in_array( $key, array( 'doctor', 'trusted_doctor' ), true ) ) { $workspace_label = __( 'Doctor Workspace', 'sabri-publishing-dashboard' ); }
+		elseif ( 'reviewer' === $key ) { $workspace_label = __( 'Reviewer Workspace', 'sabri-publishing-dashboard' ); }
+		elseif ( 'moderator' === $key ) { $workspace_label = __( 'Moderation Workspace', 'sabri-publishing-dashboard' ); }
+		elseif ( 'institutional_ai' === $key ) { $workspace_label = __( 'AI Oversight', 'sabri-publishing-dashboard' ); }
 		elseif ( 'restricted' === $key ) { $workspace_label = __( 'Publishing Status', 'sabri-publishing-dashboard' ); }
 		$items['workspace'] = $this->item( 'workspace', $workspace_label );
-		if ( SPDB_Capabilities::current_user_can( 'spdb_manage_own_content' ) ) { $items['create'] = $this->item( 'create', __( 'Create', 'sabri-publishing-dashboard' ) ); }
+		if ( SPDB_Capabilities::current_user_can( 'spdb_manage_own_content' ) && false === (bool) ( $workspace['read_only'] ?? true ) ) { $items['create'] = $this->item( 'create', __( 'Create', 'sabri-publishing-dashboard' ) ); }
 		if ( SPDB_Capabilities::current_user_can( 'spdb_view_own_content' ) ) { $items['inventory'] = $this->item( 'inventory', __( 'My Content', 'sabri-publishing-dashboard' ) ); }
 		if ( SPDB_Capabilities::current_user_can( 'spdb_view_review_queue' ) ) { $items['review'] = $this->item( 'review', __( 'Review', 'sabri-publishing-dashboard' ) ); }
 		if ( SPDB_Capabilities::current_user_can( 'spdb_view_own_content' ) ) {
