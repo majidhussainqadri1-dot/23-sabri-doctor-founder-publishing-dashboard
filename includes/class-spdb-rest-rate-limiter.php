@@ -26,14 +26,17 @@ final class SPDB_REST_Rate_Limiter {
 		add_action( self::CLEANUP_HOOK, array( self::class, 'cleanup' ) );
 	}
 
-	/** @return true|WP_Error */
-	public static function activate() {
+	/** Fail activation closed if the limiter cannot persist atomic evidence. */
+	public static function activate(): void {
 		$installed = self::install();
 		if ( is_wp_error( $installed ) ) {
-			return $installed;
+			wp_die(
+				esc_html( $installed->get_error_message() ),
+				esc_html__( 'Sabri Publishing Dashboard rate-limit activation failed', 'sabri-publishing-dashboard' ),
+				array( 'response' => 500 )
+			);
 		}
 		self::schedule_cleanup();
-		return true;
 	}
 
 	public static function deactivate(): void {
@@ -136,7 +139,7 @@ final class SPDB_REST_Rate_Limiter {
 		if ( 1 === preg_match( '#^/spdb/v1/exports$#', $route ) ) {
 			return array( 'key' => 'export', 'limit' => 10, 'window' => MINUTE_IN_SECONDS );
 		}
-		if ( 1 === preg_match( '#^/spdb/v1/(?:settings|activation|provider-acceptance/|system-check/repair)#', $route ) ) {
+		if ( 1 === preg_match( '#^/spdb/v1/(?:settings|activation|system-check/repair|provider-acceptance/[a-z0-9][a-z0-9_-]{1,63})$#', $route ) ) {
 			return array( 'key' => 'privileged', 'limit' => 20, 'window' => MINUTE_IN_SECONDS );
 		}
 		if ( 1 === preg_match( '#^/spdb/v1/(?:review|calendar)/#', $route ) ) {
@@ -210,9 +213,9 @@ final class SPDB_REST_Rate_Limiter {
 			return self::error( 'spdb_rate_limit_invalid_state', __( 'The dashboard rate-limit policy is invalid.', 'sabri-publishing-dashboard' ), 503 );
 		}
 
-		$now        = time();
-		$started    = gmdate( 'Y-m-d H:i:s', $now );
-		$reset      = gmdate( 'Y-m-d H:i:s', $now + $window );
+		$now     = time();
+		$started = gmdate( 'Y-m-d H:i:s', $now );
+		$reset   = gmdate( 'Y-m-d H:i:s', $now + $window );
 		$sql = $wpdb->prepare(
 			"INSERT INTO {$table} (bucket_hash, actor_user_id, policy_key, request_count, window_started_at_gmt, reset_at_gmt, updated_at_gmt)
 			 VALUES (%s, %d, %s, 1, %s, %s, %s)
