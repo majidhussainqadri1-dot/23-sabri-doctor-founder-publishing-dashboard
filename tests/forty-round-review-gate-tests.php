@@ -59,7 +59,7 @@ $files = array(
 /* Version identity is checked separately below so later corrective releases can advance. */
 $gates = array(
 	array( 'caps', array( "return array( 'spdb_manage_safe_mode' )" ) ),
-	array( 'installer', array( 'private const SCHEMA_VERSION', "= '4';", 'remove_cap' ) ),
+	array( 'installer', array( 'private const SCHEMA_VERSION', 'remove_cap' ) ),
 	array( 'membership', array( 'canonical_contract_present', 'is_user_founder', 'is_user_trusted_publisher', 'true === $assertions[\'approved\']' ) ),
 	array( 'governance', array( 'spdb_task_assignee_invalid', 'spdb_delegation_provider_forbidden', 'spdb_delegation_capability_invalid' ) ),
 	array( 'acceptance', array( 'ACCEPTANCE_PRODUCTION_ACCEPTED', 'evidence_hash', 'provider_acceptance_changed', 'return $audit' ) ),
@@ -91,6 +91,12 @@ foreach ( $gates as $index => $gate ) {
 		$assert( false !== strpos( $files[ $gate[0] ], $marker ), sprintf( 'Review gate %02d is missing marker %s.', $index + 1, $marker ) );
 	}
 }
+
+$capability_schema = 0;
+if ( preg_match( "/private const SCHEMA_VERSION\s*=\s*'([0-9]+)'/", $files['installer'], $schema_match ) ) {
+	$capability_schema = (int) $schema_match[1];
+}
+$assert( $capability_schema >= 4, 'Later capability reconciliations must preserve or advance the forty-round schema-4 baseline.' );
 
 $current_version = '';
 if ( preg_match( "/define\( 'SPDB_VERSION', '([^']+)' \)/", $files['main'], $version_match ) ) {
