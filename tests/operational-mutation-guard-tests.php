@@ -23,6 +23,8 @@ $assert( null !== SPDB_Operational_Mutation_Guard::route_policy( '/spdb/v1/tasks
 $assert( null !== SPDB_Operational_Mutation_Guard::route_policy( '/spdb/v1/delegations/delegation_0123456789abcdef0123456789abcdef/revoke', 'POST' ), 'Delegation revocation must be guarded.' );
 $assert( null !== SPDB_Operational_Mutation_Guard::route_policy( '/spdb/v1/automation-rules/rule_0123456789abcdef0123456789abcdef/status', 'POST' ), 'Automation status mutation must be guarded.' );
 $assert( null !== SPDB_Operational_Mutation_Guard::route_policy( '/spdb/v1/system-check/repair', 'POST' ), 'Repair mutation must be guarded.' );
+$assert( null !== SPDB_Operational_Mutation_Guard::route_policy( '/spdb/v1/saved-views', 'POST' ), 'Saved-view creation must use the cross-cutting mutation guard.' );
+$assert( null !== SPDB_Operational_Mutation_Guard::route_policy( '/spdb/v1/saved-views/view_0123456789abcdef0123456789abcdef', 'DELETE' ), 'Saved-view deletion must use the cross-cutting mutation guard.' );
 $assert( null === SPDB_Operational_Mutation_Guard::route_policy( '/spdb/v1/tasks', 'GET' ), 'Read-only operations must not open mutation transactions.' );
 $assert( null === SPDB_Operational_Mutation_Guard::route_policy( '/spdb/v1/review/provider/type/id/approve', 'POST' ), 'Native review operations remain under their dedicated broker guard.' );
 $assert( null === SPDB_Operational_Mutation_Guard::route_policy( '/wp/v2/posts/1', 'POST' ), 'The guard must not acquire another module route.' );
@@ -81,6 +83,7 @@ $assert( is_string( $source ) && false !== strpos( $source, 'START TRANSACTION' 
 $assert( is_string( $source ) && false !== strpos( $source, 'ROLLBACK' ) && false !== strpos( $source, 'COMMIT' ), 'Guard must contain explicit rollback and commit paths.' );
 $assert( is_string( $source ) && false !== strpos( $source, 'mutation_requested' ) && false !== strpos( $source, 'append_audit' ), 'Guard must append request and outcome audit evidence.' );
 $assert( is_string( $source ) && false !== strpos( $source, 'Idempotency-Key' ) && false !== strpos( $source, 'X-WP-Nonce' ), 'Guard must enforce idempotency and REST nonce headers.' );
+$assert( is_string( $source ) && false !== strpos( $source, 'spdb_mutation_idempotency_mismatch' ) && false !== strpos( $source, 'hash_equals( $header, $body )' ), 'Conflicting header and body idempotency keys must fail before a receipt is claimed.' );
 $assert( is_string( $source ) && false === strpos( $source, 'CREATE TABLE' ), 'Mutation guard must not create an alternate schema.' );
 $assert( is_string( $source ) && false !== strpos( $source, 'SPDB_Operations_Repository' ), 'Mutation audit must use the canonical hash-chained File 23 audit repository.' );
 

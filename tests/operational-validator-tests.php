@@ -12,6 +12,8 @@ function wp_strip_all_tags( string $value ): string { return strip_tags( $value 
 function esc_url_raw( string $url, array $protocols = array() ): string { return filter_var( $url, FILTER_VALIDATE_URL ) ? $url : ''; }
 function wp_parse_url( string $url ) { return parse_url( $url ); }
 function home_url( string $path = '' ): string { return 'https://example.test/' . ltrim( $path, '/' ); }
+require_once dirname( __DIR__ ) . '/includes/class-spdb-projection-validator.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-safe-destination.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-operational-projection-validator.php';
 
 $tests = 0; $failed = 0;
@@ -29,6 +31,33 @@ $assert( isset( $validated['metadata']['license'] ) && ! isset( $validated['meta
 $item['destination_url'] = 'https://attacker.example/steal';
 $unsafe = SPDB_Operational_Projection_Validator::projection_item( $item, 'file21', 'sources' );
 $assert( is_array( $unsafe ) && '' === $unsafe['destination_url'], 'Cross-origin destination must be removed.' );
+$item['destination_url'] = 'http://example.test/native/source/abc-1';
+$downgrade = SPDB_Operational_Projection_Validator::projection_item( $item, 'file21', 'sources' );
+$assert( is_array( $downgrade ) && '' === $downgrade['destination_url'], 'Scheme-downgrade destination must be removed.' );
+$item['destination_url'] = 'https://example.test/native/source/abc-1?token=patient-secret';
+$secret_destination = SPDB_Operational_Projection_Validator::projection_item( $item, 'file21', 'sources' );
+$assert( is_array( $secret_destination ) && '' === $secret_destination['destination_url'], 'Secret-bearing same-origin destination must be removed.' );
+$item['destination_url'] = 'https://example.test/native/source/abc-1?redirect=https%3A%2F%2Fevil.example';
+$redirect_destination = SPDB_Operational_Projection_Validator::projection_item( $item, 'file21', 'sources' );
+$assert( is_array( $redirect_destination ) && '' === $redirect_destination['destination_url'], 'Nested redirect destination must be removed.' );
+
+$invalid_id = $item;
+$invalid_id['object_id'] = "abc\npatient";
+$assert( is_wp_error( SPDB_Operational_Projection_Validator::projection_item( $invalid_id, 'file21', 'sources' ) ), 'Control characters in native object IDs must fail closed.' );
+$noncanonical = $item;
+$noncanonical['object_type'] = 'Source Record';
+$assert( is_wp_error( SPDB_Operational_Projection_Validator::projection_item( $noncanonical, 'file21', 'sources' ) ), 'Malformed provider identity keys must be rejected rather than silently normalized.' );
+$invalid_time = $item;
+$invalid_time['updated_at'] = 'tomorrow';
+$assert( is_wp_error( SPDB_Operational_Projection_Validator::projection_item( $invalid_time, 'file21', 'sources' ) ), 'Relative or malformed provider timestamps must fail instead of fabricating the current time.' );
+$invalid_time['updated_at'] = '2026-02-30T10:00:00Z';
+$assert( is_wp_error( SPDB_Operational_Projection_Validator::projection_item( $invalid_time, 'file21', 'sources' ) ), 'Impossible calendar dates must fail instead of being normalized silently.' );
+$invalid_page = SPDB_Operational_Projection_Validator::projection_page(
+	array( 'items' => array( $item, $invalid_id ), 'total' => 999, 'has_more' => true, 'generated_at' => '2026-08-04T00:00:00Z' ),
+	'file21',
+	'sources'
+);
+$assert( is_wp_error( $invalid_page ), 'A page containing an invalid item must fail as a unit and must not leak an unvalidated total.' );
 
 $metrics = SPDB_Operational_Projection_Validator::metrics(
 	array( 'metrics' => array(
@@ -41,6 +70,12 @@ $metrics = SPDB_Operational_Projection_Validator::metrics(
 $assert( is_array( $metrics ) && 2 === count( $metrics['metrics'] ), 'Valid aggregate metrics must be accepted.' );
 $assert( true === $metrics['metrics'][0]['suppressed'] && null === $metrics['metrics'][0]['value'], 'Small cohorts must be suppressed.' );
 $assert( false === $metrics['metrics'][1]['suppressed'] && 8 === $metrics['metrics'][1]['value'], 'Eligible aggregate must remain visible.' );
+$invalid_metrics = SPDB_Operational_Projection_Validator::metrics(
+	array( 'metrics' => array( array( 'metric_key' => 'views', 'label' => 'Views', 'definition' => 'Eligible aggregate views.', 'unit' => 'count', 'interval' => 'daily', 'cohort_count' => 8, 'privacy_threshold' => 5, 'generated_at' => 'not-a-time' ) ) ),
+	'file21',
+	5
+);
+$assert( is_wp_error( $invalid_metrics ), 'Invalid analytics timestamps and missing unsuppressed values must fail closed.' );
 
 if ( $failed ) { fwrite( STDERR, "{$failed} of {$tests} validator tests failed.\n" ); exit( 1 ); }
 echo "All {$tests} operational validator tests passed.\n";

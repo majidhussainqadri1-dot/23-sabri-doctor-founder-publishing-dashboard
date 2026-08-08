@@ -3,6 +3,9 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Native_Reference_Registry implements SPDB_Native_Reference_Resolver {
+	private const MAX_ERROR_PROVIDERS = 32;
+	private const MAX_ERRORS_PER_PROVIDER = 8;
+	private const MAX_TOTAL_ERRORS = 64;
 	public const ACCEPTANCE_UNREVIEWED          = 'unreviewed';
 	public const ACCEPTANCE_STAGING_ACCEPTED    = 'staging_accepted';
 	public const ACCEPTANCE_PRODUCTION_ACCEPTED = 'production_accepted';
@@ -17,6 +20,7 @@ final class SPDB_Native_Reference_Registry implements SPDB_Native_Reference_Reso
 	private array $acceptance = array();
 	/** @var array<string,WP_Error[]> */
 	private array $registration_errors = array();
+	private int $registration_error_count = 0;
 	/** @var array<string,array{healthy:bool,code:string}> */
 	private array $health_cache = array();
 
@@ -126,9 +130,22 @@ final class SPDB_Native_Reference_Registry implements SPDB_Native_Reference_Reso
 	/** Store only a bounded generic registration error; never retain provider text or data. */
 	public function record_error( string $provider_key, WP_Error $error ): void {
 		$key = SPDB_Adapter_Registry::is_canonical_key( $provider_key ) ? $provider_key : 'system';
-		$code = $error->get_error_code();
+		if ( $this->registration_error_count >= self::MAX_TOTAL_ERRORS ) {
+			return;
+		}
+		if ( ! isset( $this->registration_errors[ $key ] ) && count( $this->registration_errors ) >= self::MAX_ERROR_PROVIDERS ) {
+			if ( ! isset( $this->registration_errors['system'] ) ) {
+				return;
+			}
+			$key = 'system';
+		}
+		if ( count( $this->registration_errors[ $key ] ?? array() ) >= self::MAX_ERRORS_PER_PROVIDER ) {
+			return;
+		}
+		$code = (string) $error->get_error_code();
 		if ( ! SPDB_Adapter_Registry::is_canonical_key( $code ) ) { $code = 'spdb_native_resolver_registration_error'; }
-		$this->registration_errors[ $key ][] = new WP_Error( $code, __( 'A native resolver registration error was recorded.', 'sabri-publishing-dashboard' ) );
+		$this->registration_errors[ $key ][] = new WP_Error( $code, __( 'A bounded native resolver integration error was isolated.', 'sabri-publishing-dashboard' ) );
+		++$this->registration_error_count;
 	}
 
 	/** @return array<string,mixed>|WP_Error */

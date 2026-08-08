@@ -57,7 +57,12 @@ final class SPDB_Operations_Service {
 				$errors[ $provider_key ] = 'provider_exception';
 				continue;
 			}
-			if ( ! is_array( $domains ) || ! in_array( $domain, array_map( 'sanitize_key', $domains ), true ) ) {
+			$domains = self::provider_domains( $domains );
+			if ( is_wp_error( $domains ) ) {
+				$errors[ $provider_key ] = $domains->get_error_code();
+				continue;
+			}
+			if ( ! in_array( $domain, $domains, true ) ) {
 				continue;
 			}
 
@@ -164,9 +169,13 @@ final class SPDB_Operations_Service {
 		if ( empty( $metrics ) ) {
 			$cached = $this->repository->list_metric_snapshots( get_current_user_id(), 'institution' === $scope, 500 );
 			if ( ! is_wp_error( $cached ) && ! empty( $cached ) ) {
-				$source = 'bounded_cached_snapshot';
+				$cached_metrics = array();
 				foreach ( $cached as $snapshot ) {
-					$metrics[] = array(
+					$generated = strtotime( (string) $snapshot['generated_at_gmt'] );
+					if ( false === $generated ) {
+						continue;
+					}
+					$cached_metrics[] = array(
 						'provider_key'     => (string) $snapshot['provider_key'],
 						'metric_key'       => (string) $snapshot['metric_key'],
 						'label'            => (string) $snapshot['label'],
@@ -177,9 +186,13 @@ final class SPDB_Operations_Service {
 						'cohort_count'     => (int) $snapshot['cohort_count'],
 						'privacy_threshold'=> (int) $snapshot['privacy_threshold'],
 						'suppressed'       => (int) $snapshot['cohort_count'] < (int) $snapshot['privacy_threshold'],
-						'generated_at'     => gmdate( 'c', strtotime( (string) $snapshot['generated_at_gmt'] ) ?: time() ),
+						'generated_at'     => gmdate( 'c', $generated ),
 						'cached'           => true,
 					);
+				}
+				if ( $cached_metrics ) {
+					$source = 'bounded_cached_snapshot';
+					$metrics = $cached_metrics;
 				}
 			}
 		}
@@ -347,8 +360,18 @@ final class SPDB_Operations_Service {
 
 	/** File 22 remains the sole create/edit orchestration surface. */
 	public function composer_url(): string {
-		$url = apply_filters( 'spdb/file22_composer_url', home_url( '/create/' ) );
-		if ( ! is_string( $url ) ) {
+		$url = '';
+		$resolver = array( '\\Sabri\\UniversalComposer\\Core\\Page_Resolver', 'url' );
+		$ready    = array( '\\Sabri\\UniversalComposer\\Core\\Page_Resolver', 'is_ready' );
+		if ( is_callable( $resolver ) && is_callable( $ready ) ) {
+			try {
+				$url = call_user_func( $ready ) ? (string) call_user_func( $resolver ) : '';
+			} catch ( Throwable $exception ) {
+				$url = '';
+			}
+		}
+		$url = apply_filters( 'spdb/file22_composer_url', $url );
+		if ( ! is_string( $url ) || '' === trim( $url ) ) {
 			return '';
 		}
 		$normalized = SPDB_Safe_Destination::normalize( $url );
@@ -422,6 +445,21 @@ final class SPDB_Operations_Service {
 			'/(?:\b\d{5}-\d{7}-\d\b|\b(?:\+?92|0)3\d{9}\b|[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|password|one[- ]?time password|patient id|passport|national id|cnic)/i',
 			$value
 		);
+	}
+
+	/** @param mixed $raw @return string[]|WP_Error */
+	private static function provider_domains( $raw ) {
+		if ( ! is_array( $raw ) || count( $raw ) > count( SPDB_Operational_Projection_Validator::domains() ) ) {
+			return self::error( 'spdb_projection_provider_domains_invalid', __( 'The provider declared invalid operational domains.', 'sabri-publishing-dashboard' ), 502 );
+		}
+		$domains = array();
+		foreach ( $raw as $domain ) {
+			if ( ! is_string( $domain ) || ! SPDB_Operational_Projection_Validator::is_domain( $domain ) || in_array( $domain, $domains, true ) ) {
+				return self::error( 'spdb_projection_provider_domains_invalid', __( 'The provider declared invalid operational domains.', 'sabri-publishing-dashboard' ), 502 );
+			}
+			$domains[] = $domain;
+		}
+		return $domains;
 	}
 
 	private static function is_institutional( int $user_id ): bool {

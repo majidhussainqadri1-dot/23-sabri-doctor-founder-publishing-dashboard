@@ -53,13 +53,8 @@
 
 	function randomHex( length ) {
 		var bytes = new Uint8Array( Math.ceil( length / 2 ) );
-		if ( window.crypto && window.crypto.getRandomValues ) {
-			window.crypto.getRandomValues( bytes );
-		} else {
-			for ( var i = 0; i < bytes.length; i++ ) {
-				bytes[ i ] = Math.floor( Math.random() * 256 );
-			}
-		}
+		if ( ! window.crypto || 'function' !== typeof window.crypto.getRandomValues ) { return ''; }
+		window.crypto.getRandomValues( bytes );
 		return Array.prototype.map.call( bytes, function ( byte ) {
 			return byte.toString( 16 ).padStart( 2, '0' );
 		} ).join( '' ).slice( 0, length );
@@ -84,7 +79,13 @@
 
 		form.addEventListener( 'submit', function ( event ) {
 			event.preventDefault();
+			if ( 'true' === form.getAttribute( 'data-spdb-submitting' ) ) { return; }
 			if ( 'true' === form.getAttribute( 'data-confirm' ) && ! window.confirm( config.strings.confirm ) ) {
+				return;
+			}
+			var requestKey = idempotencyKey( form );
+			if ( ! requestKey ) {
+				announce( form, config.strings.failed, true );
 				return;
 			}
 			var submit = form.querySelector( 'button[type="submit"]' );
@@ -92,7 +93,6 @@
 			form.setAttribute( 'data-spdb-submitting', 'true' );
 			announce( form, config.strings.working, false );
 
-			var requestKey = idempotencyKey( form );
 			apiFetch( {
 				path: endpoint( form ),
 				method: form.getAttribute( 'data-method' ) || 'POST',

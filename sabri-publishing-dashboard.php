@@ -3,7 +3,7 @@
  * Plugin Name: Sabri Doctor and Founder Publishing Dashboard
  * Plugin URI:  https://www.sabrihomeopathy.com/
  * Description: A private, role-aware, federated publishing operations dashboard for the Founder and verified doctors of the Sabri Social Homeopathy Platform.
- * Version:     1.2.0
+ * Version:     1.2.3
  * Author:      Dr. Allamah Majid Hussain Sabri Muhaddith Mursheed
  * Text Domain: sabri-publishing-dashboard
  * Domain Path: /languages
@@ -13,7 +13,7 @@
  */
 
 defined( 'ABSPATH' ) || exit;
-define( 'SPDB_VERSION', '1.2.0' );
+define( 'SPDB_VERSION', '1.2.3' );
 define( 'SPDB_CONTRACT_VERSION', '2.0.0' );
 define( 'SPDB_PLUGIN_FILE', __FILE__ );
 define( 'SPDB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -29,7 +29,26 @@ function spdb(): SPDB_Plugin { return SPDB_Plugin::instance(); }
 function spdb_get_capabilities(): array { return SPDB_Capabilities::all(); }
 /** @return array<string,mixed> Sanitized File 24 assurance evidence. */
 function spdb_get_assurance_manifest(): array { return spdb()->assurance_manifest(); }
-/** @return array<int,array<string,mixed>> Complete File 00–25 discovery manifest. */
+/** @return array<int,array<string,mixed>> Complete File 00–26 discovery manifest. */
 function spdb_get_dependency_manifest(): array { return spdb()->dependency_manifest(); }
+/**
+ * Revalidate the current File 00 state and File 23 report capability immediately
+ * before an already-generated export is served. The export service still verifies
+ * its owner-bound expiring HMAC, job ownership, expiry, hash and encrypted envelope.
+ */
+function spdb_export_download_authorization_gate(): void {
+	if ( ! is_user_logged_in() ) {
+		return;
+	}
+	if ( SPDB_Capabilities::current_user_can( 'spdb_export_reports' ) ) {
+		return;
+	}
+	wp_die(
+		esc_html__( 'The export is no longer authorized for the current account or session.', 'sabri-publishing-dashboard' ),
+		esc_html__( 'Export unavailable', 'sabri-publishing-dashboard' ),
+		array( 'response' => 403 )
+	);
+}
+add_action( 'admin_post_spdb_download_export', 'spdb_export_download_authorization_gate', 1 );
 SPDB_Operational_Mutation_Guard::register();
 spdb()->boot();

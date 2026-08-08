@@ -61,6 +61,10 @@ final class SPDB_Automation_Engine {
 		if ( empty( SPDB_Admin_Settings::get()['automation_enabled'] ) ) {
 			return $this->error( 'spdb_automation_disabled', __( 'Automation is disabled.', 'sabri-publishing-dashboard' ), 503 );
 		}
+		$owner_user_id = max( 0, (int) ( $job['owner_user_id'] ?? 0 ) );
+		if ( $owner_user_id < 1 || ! SPDB_Membership_Guard::is_user_approved( $owner_user_id ) || ! user_can( $owner_user_id, 'spdb_manage_automation_rules' ) ) {
+			return $this->error( 'spdb_automation_owner_not_authorized', __( 'The automation owner is no longer authorized.', 'sabri-publishing-dashboard' ), 403 );
+		}
 		$payload = is_array( $job['payload'] ?? null ) ? $job['payload'] : array();
 		$rule_id = sanitize_key( (string) ( $payload['rule_id'] ?? '' ) );
 		$expected_version = max( 1, (int) ( $payload['rule_version'] ?? 0 ) );
@@ -70,6 +74,9 @@ final class SPDB_Automation_Engine {
 		$rule = $this->repository->get_rule( $rule_id, 0, true );
 		if ( is_wp_error( $rule ) ) {
 			return $rule;
+		}
+		if ( (int) ( $rule['owner_user_id'] ?? 0 ) !== $owner_user_id ) {
+			return $this->error( 'spdb_automation_owner_mismatch', __( 'The automation job owner does not match the current rule owner.', 'sabri-publishing-dashboard' ), 409 );
 		}
 		if ( 'enabled' !== ( $rule['status'] ?? '' ) || (int) $rule['version'] !== $expected_version ) {
 			return $this->error( 'spdb_automation_rule_stale', __( 'The automation rule changed or was disabled before execution.', 'sabri-publishing-dashboard' ), 409 );

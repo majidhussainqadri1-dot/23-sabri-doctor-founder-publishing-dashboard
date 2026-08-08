@@ -1,6 +1,10 @@
 <?php
 /**
  * Executable gate for the forty independent File 23 review/fix rounds.
+ *
+ * The forty-round audit established Version 1.2.2-era security and architecture
+ * properties. This permanent regression gate preserves those properties without
+ * freezing every later corrected release to the old package identity.
  */
 
 $root   = dirname( __DIR__ );
@@ -52,8 +56,8 @@ $files = array(
 	'main'        => $read( $root . '/sabri-publishing-dashboard.php' ),
 );
 
+/* Version identity is checked separately below so later corrective releases can advance. */
 $gates = array(
-	array( 'main', array( 'Version:     1.2.0', "SPDB_VERSION', '1.2.0" ) ),
 	array( 'caps', array( "return array( 'spdb_manage_safe_mode' )" ) ),
 	array( 'installer', array( 'private const SCHEMA_VERSION', "= '4';", 'remove_cap' ) ),
 	array( 'membership', array( 'canonical_contract_present', 'is_user_founder', 'is_user_trusted_publisher', 'true === $assertions[\'approved\']' ) ),
@@ -79,14 +83,23 @@ $gates = array(
 	array( 'rest', array( '/provider-acceptance/', 'record_provider_acceptance', 'write_permission' ) ),
 	array( 'migration', array( 'canonical_owner', 'migration' ) ),
 	array( 'activation', array( 'backup_restore_evidence', 'rollback_evidence', 'source_commit' ) ),
-	array( 'build', array( 'version="1.2.0"', 'git archive', 'SOURCE-MANIFEST' ) ),
-	array( 'workflow', array( 'forty-round-review-gate-tests.php', 'AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS', 'file23-1.2.0' ) ),
+	array( 'build', array( 'git archive', 'SOURCE-MANIFEST' ) ),
+	array( 'workflow', array( 'forty-round-review-gate-tests.php', 'AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS' ) ),
 );
 foreach ( $gates as $index => $gate ) {
 	foreach ( $gate[1] as $marker ) {
 		$assert( false !== strpos( $files[ $gate[0] ], $marker ), sprintf( 'Review gate %02d is missing marker %s.', $index + 1, $marker ) );
 	}
 }
+
+$current_version = '';
+if ( preg_match( "/define\( 'SPDB_VERSION', '([^']+)' \)/", $files['main'], $version_match ) ) {
+	$current_version = (string) $version_match[1];
+}
+$assert( '' !== $current_version && version_compare( $current_version, '1.2.2', '>=' ), 'Current corrected release must not regress below the forty-round Version 1.2.2 baseline.' );
+$assert( false !== strpos( $files['main'], 'Version:     ' . $current_version ), 'Plugin header and runtime version must match.' );
+$assert( false !== strpos( $files['build'], 'version="' . $current_version . '"' ), 'Deterministic build must match the current runtime version.' );
+$assert( false !== strpos( $files['workflow'], 'file23-' . $current_version ), 'Release workflow artifacts must match the current runtime version.' );
 
 $all_source = implode( "\n", array_map( $read, glob( $root . '/includes/*.php' ) ?: array() ) );
 foreach ( array( 'wp_insert_post(', 'wp_update_post(', 'wp_delete_post(', 'update_post_meta(', 'delete_post_meta(' ) as $forbidden ) {

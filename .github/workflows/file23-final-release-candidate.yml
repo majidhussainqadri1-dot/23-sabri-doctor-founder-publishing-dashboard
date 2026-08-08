@@ -10,9 +10,9 @@ permissions:
   contents: read
 
 env:
-  FILE00_SHA: 1831c7ed767ce8590a97dc8e2f2d38ad81661494
-  FILE21_SHA: e1bbfb514b859a51b9731a43d6a15fb824124507
-  FILE22_SHA: 1274e380268c2ab235c66fd21906cf4b1bcadf9a
+  FILE00_SHA: 3a84c32a6ddad151f2ed09d244fa8aa536a58108
+  FILE21_SHA: d00f60ce0ca4d1c9860d724a2beb57e3d03e5d5b
+  FILE22_SHA: 4c5fa4946cca6d89e9d42e0df22659f222451398
 
 jobs:
   real-contracts:
@@ -56,11 +56,18 @@ jobs:
           php -l file00/source/sabri-membership-core/includes/class-smc-contracts.php
           grep -Fq 'SMC_Contracts::assertions( $user_id )' file23/includes/class-spdb-membership-guard.php
           grep -Fq "MINIMUM_CONTRACT_VERSION  = '1.1.2'" file23/includes/class-spdb-membership-guard.php
+          grep -Fq "'session_two_factor'" file00/source/sabri-membership-core/includes/class-smc-contracts.php
       - name: Prepare current File 22 autoload boundary
         shell: bash
         run: |
           cat > file22-autoload.php <<'PHP'
           <?php
+          if ( ! function_exists( 'apply_filters' ) ) {
+              function apply_filters( string $hook, mixed $value, mixed ...$args ): mixed {
+                  unset( $hook, $args );
+                  return $value;
+              }
+          }
           $root = getenv( 'FILE22_ROOT' );
           spl_autoload_register(
               static function ( string $class ) use ( $root ): void {
@@ -96,7 +103,13 @@ jobs:
           find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
           node --check assets/js/dashboard.js
           node --check assets/js/operations.js
-          for suite in tests/*-tests.php; do php -d display_errors=1 -d error_reporting=E_ALL "$suite"; done
+          for suite in tests/*-tests.php; do
+            echo "Running ${suite}"
+            if ! php -d display_errors=1 -d error_reporting=E_ALL "$suite"; then
+              echo "::error file=${suite}::File 23 source regression failed: ${suite}"
+              exit 1
+            fi
+          done
           php tests/architecture-guard.php
       - name: Verify accessibility and private-cache boundaries
         shell: bash
@@ -133,6 +146,8 @@ jobs:
           php tests/legacy-migration-diagnostics-tests.php
           php tests/final-deliverables-tests.php
           php tests/forty-round-review-gate-tests.php
+          php tests/ten-round-corrective-review-tests.php
+          php tests/second-ten-round-review-tests.php
           php tests/architecture-guard.php
           test -s docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md
           test -s docs/CAPABILITY-MATRIX.md
@@ -144,29 +159,33 @@ jobs:
           test -s docs/KNOWN-LIMITATIONS.md
           test -s docs/RELEASE-SIGNOFF.md
           test -s docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md
+          test -s docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md
+          test -s docs/AUDIT-SECOND-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
       - name: Build deterministic installable and complete-source packages
         run: bash tools/build-final-release.sh
       - name: Record exact release evidence
         shell: bash
         run: |
-          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.0\n' \
+          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.3\n' \
             "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" \
-            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.0-RELEASE-EVIDENCE.txt
+            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.3-RELEASE-EVIDENCE.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: file23-1.2.0-canonical-release-evidence
+          name: file23-1.2.3-canonical-release-evidence
           path: |
-            23-sabri-doctor-founder-publishing-dashboard-1.2.0.zip
-            23-sabri-doctor-founder-publishing-dashboard-1.2.0.zip.sha256
-            FILE23-1.2.0-MANIFEST.sha256
-            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.0.zip
-            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.0.zip.sha256
-            FILE23-1.2.0-SOURCE-MANIFEST.sha256
-            FILE23-1.2.0-RELEASE-EVIDENCE.txt
+            23-sabri-doctor-founder-publishing-dashboard-1.2.3.zip
+            23-sabri-doctor-founder-publishing-dashboard-1.2.3.zip.sha256
+            FILE23-1.2.3-MANIFEST.sha256
+            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.3.zip
+            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.3.zip.sha256
+            FILE23-1.2.3-SOURCE-MANIFEST.sha256
+            FILE23-1.2.3-RELEASE-EVIDENCE.txt
             docs/STAGING-CHECKLIST.md
             docs/RELEASE-SIGNOFF.md
             docs/KNOWN-LIMITATIONS.md
             docs/TEST-REPORT.md
             docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md
+            docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md
+            docs/AUDIT-SECOND-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
           if-no-files-found: error
           retention-days: 90
