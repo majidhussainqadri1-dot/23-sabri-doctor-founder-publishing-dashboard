@@ -103,7 +103,13 @@ jobs:
           find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
           node --check assets/js/dashboard.js
           node --check assets/js/operations.js
-          for suite in tests/*-tests.php; do php -d display_errors=1 -d error_reporting=E_ALL "$suite"; done
+          for suite in tests/*-tests.php; do
+            echo "Running ${suite}"
+            if ! php -d display_errors=1 -d error_reporting=E_ALL "$suite"; then
+              echo "::error file=${suite}::File 23 source regression failed: ${suite}"
+              exit 1
+            fi
+          done
           php tests/architecture-guard.php
       - name: Verify accessibility and private-cache boundaries
         shell: bash
