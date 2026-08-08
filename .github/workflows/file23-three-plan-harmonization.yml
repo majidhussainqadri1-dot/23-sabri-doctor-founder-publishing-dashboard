@@ -32,6 +32,7 @@ jobs:
           php -l includes/class-spdb-capabilities.php
           php -l includes/class-spdb-membership-guard.php
           php -l includes/class-spdb-capability-installer.php
+          php -l includes/class-spdb-sensitive-session-guard.php
           php -l includes/class-spdb-ai-teacher-oversight-rest.php
           php -l includes/class-spdb-automation-engine.php
 
@@ -41,6 +42,7 @@ jobs:
           php -l tests/ten-round-corrective-review-tests.php
           php -l tests/second-ten-round-review-tests.php
           php -l tests/third-ten-round-review-tests.php
+          php -l tests/fourth-ten-round-review-tests.php
           php -l tests/final-deliverables-tests.php
 
       - name: JavaScript syntax
@@ -57,8 +59,11 @@ jobs:
       - name: Second ten-round gate
         run: php tests/second-ten-round-review-tests.php
 
-      - name: Current third ten-round gate
+      - name: Third ten-round gate
         run: php tests/third-ten-round-review-tests.php
+
+      - name: Current fourth ten-round gate
+        run: php tests/fourth-ten-round-review-tests.php
 
       - name: Operational projection gate
         run: php tests/operational-validator-tests.php
