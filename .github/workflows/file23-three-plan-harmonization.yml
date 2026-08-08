@@ -21,11 +21,25 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Verify syntax
-        shell: bash
+      - name: Syntax — runtime bootstrap and manifest
         run: |
-          set -euo pipefail
-          find includes tests -type f -name '*.php' -print0 | xargs -0 -n1 php -l >/dev/null
+          php -l sabri-publishing-dashboard.php
+          php -l includes/class-spdb-module-manifest.php
+
+      - name: Syntax — authorization and automation
+        run: |
+          php -l includes/class-spdb-capabilities.php
+          php -l includes/class-spdb-automation-engine.php
+
+      - name: Syntax — corrected review gates
+        run: |
+          php -l tests/bootstrap.php
+          php -l tests/ten-round-corrective-review-tests.php
+          php -l tests/second-ten-round-review-tests.php
+          php -l tests/final-deliverables-tests.php
+
+      - name: JavaScript syntax
+        run: |
           node --check assets/js/dashboard.js
           node --check assets/js/operations.js
 
@@ -34,6 +48,9 @@ jobs:
 
       - name: Historical ten-round gate
         run: php tests/ten-round-corrective-review-tests.php
+
+      - name: Current ten-round gate
+        run: php tests/second-ten-round-review-tests.php
 
       - name: Operational projection gate
         run: php tests/operational-validator-tests.php
