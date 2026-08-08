@@ -1,6 +1,6 @@
 <?php
 /**
- * Complete File 00–25 dependency and assurance manifest for File 23.
+ * Complete File 00–26 dependency and assurance manifest for File 23.
  *
  * The manifest is discovery evidence only. It never grants authorization,
  * accepts an adapter, or treats availability as permission.
@@ -41,7 +41,6 @@ final class SPDB_Module_Manifest {
 						$state    = $provider['effective_state'];
 						break 2;
 					}
-				}
 			}
 			if ( '00' === $file_number ) {
 				$detected = SPDB_Membership_Guard::is_available();
@@ -127,6 +126,7 @@ final class SPDB_Module_Manifest {
 			'23'   => self::definition( 'Publishing Dashboard', 'federated operational metadata and UI', 'native', 'file23', array( 'file23', 'spdb' ) ),
 			'24'   => self::definition( 'Security, Privacy, Compliance and Resilience', 'sanitized assurance evidence', 'full', 'file24', array( 'file24', 'security' ) ),
 			'25'   => self::definition( 'Global Visual Experience', 'public visual and timeline destinations', 'full', 'file25', array( 'file25', 'visual' ) ),
+			'26'   => self::definition( 'Search, Discovery and Ranking', 'federated search/ranking destinations and index-contract discovery', 'domain', 'file26', array( 'file26', 'search', 'discovery', 'ranking' ) ),
 		);
 	}
 
