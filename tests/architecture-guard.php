@@ -2,10 +2,11 @@
 /**
  * Static architectural boundary guard for File 23 production PHP.
  *
- * This guard permits only File 23-owned bounded metadata schemas and rejects
- * direct ownership or mutation of native publication, profile, source, media,
- * interaction, notification-delivery, clinical, payment, or analytics-event
- * domains.
+ * File 23 may own only bounded dashboard-operational metadata. Native
+ * publication/profile/source/media/interaction/notification/clinical/payment
+ * domains remain with their canonical modules. This guard also recognizes the
+ * dedicated, privacy-minimized REST rate-limit counter schema required by the
+ * final File 23 plan.
  */
 
 $root       = dirname( __DIR__ );
@@ -25,26 +26,25 @@ $patterns = array(
 );
 
 $allowed_schema_files = array(
-	'includes' . DIRECTORY_SEPARATOR . 'class-spdb-collections-schema.php',
-	'includes' . DIRECTORY_SEPARATOR . 'class-spdb-operations-schema.php',
+	'includes/class-spdb-collections-schema.php',
+	'includes/class-spdb-operations-schema.php',
+	'includes/class-spdb-rest-rate-limiter.php',
 );
 $broker_execution_files = array(
-	'includes' . DIRECTORY_SEPARATOR . 'class-spdb-operation-broker.php',
-	'includes' . DIRECTORY_SEPARATOR . 'class-spdb-review-calendar-rest-controller.php',
+	'includes/class-spdb-operation-broker.php',
+	'includes/class-spdb-review-calendar-rest-controller.php',
 );
 
 foreach ( $iterator as $file ) {
 	if ( ! $file->isFile() || 'php' !== strtolower( $file->getExtension() ) ) {
 		continue;
 	}
-
 	$path                = $file->getPathname();
 	$relative            = ltrim( str_replace( $root, '', $path ), DIRECTORY_SEPARATOR );
 	$relative_normalized = str_replace( DIRECTORY_SEPARATOR, '/', $relative );
 	if ( str_starts_with( $relative_normalized, 'tests/' ) || str_starts_with( $relative_normalized, 'vendor/' ) ) {
 		continue;
 	}
-
 	$content = file_get_contents( $path );
 	if ( false === $content ) {
 		$violations[] = "Unable to read {$relative}";
@@ -56,21 +56,16 @@ foreach ( $iterator as $file ) {
 			$violations[] = "{$relative}: {$label}";
 		}
 	}
-
-	if ( ! in_array( $relative_normalized, array_map( static fn( string $candidate ): string => str_replace( DIRECTORY_SEPARATOR, '/', $candidate ), $broker_execution_files ), true ) && preg_match( '/->\s*execute_operation\s*\(/i', $content ) ) {
+	if ( ! in_array( $relative_normalized, $broker_execution_files, true ) && preg_match( '/->\s*execute_operation\s*\(/i', $content ) ) {
 		$violations[] = "{$relative}: provider mutation bypasses the operation broker";
 	}
 
-	$normalized_allowed_schema_files = array_map( static fn( string $candidate ): string => str_replace( DIRECTORY_SEPARATOR, '/', $candidate ), $allowed_schema_files );
-	$is_allowed_schema = in_array( $relative_normalized, $normalized_allowed_schema_files, true )
-		|| str_ends_with( $relative_normalized, '/class-spdb-collections-schema.php' )
-		|| str_ends_with( $relative_normalized, '/class-spdb-operations-schema.php' );
+	$is_allowed_schema = in_array( $relative_normalized, $allowed_schema_files, true );
 	if ( ! $is_allowed_schema && preg_match( '/CREATE\s+TABLE/i', $content ) ) {
 		$violations[] = "{$relative}: unauthorized table ownership";
 	}
-
 	$normalized = preg_replace( '/\s+/', ' ', $content ) ?? $content;
-	if ( ! $is_allowed_schema && preg_match( '/CREATE\s+TABLE[^;]*(publication|draft|review|schedule|calendar|reviewer|comment|correction|retraction|source|media|notification|appointment|clinical|prescription|analytics_event|profile|knowledge)/i', $normalized ) ) {
+	if ( preg_match( '/CREATE\s+TABLE[^;]*(publication|draft|review|schedule|calendar|reviewer|comment|correction|retraction|source|media|notification|appointment|clinical|prescription|analytics_event|profile|knowledge)/i', $normalized ) ) {
 		$violations[] = "{$relative}: forbidden native-domain table ownership";
 	}
 }
@@ -95,20 +90,12 @@ $require_markers = static function ( string $relative, array $markers, string $l
 	return $content;
 };
 
-$inventory_controller = $require_markers(
-	'includes/class-spdb-inventory-rest-controller.php',
-	array( 'WP_REST_Server::READABLE', 'permission_callback' ),
-	'inventory control'
-);
+$inventory_controller = $require_markers( 'includes/class-spdb-inventory-rest-controller.php', array( 'WP_REST_Server::READABLE', 'permission_callback' ), 'inventory control' );
 if ( '' !== $inventory_controller && ( preg_match( '/WP_REST_Server::(?:CREATABLE|EDITABLE|DELETABLE)/', $inventory_controller ) || preg_match( '/\b(?:POST|PUT|PATCH|DELETE)\b/i', $inventory_controller ) ) ) {
 	$violations[] = 'includes/class-spdb-inventory-rest-controller.php: inventory endpoints must remain read-only';
 }
 
-$inventory_service = $require_markers(
-	'includes/class-spdb-federated-inventory.php',
-	array( 'execution_exposed', 'false' ),
-	'inventory boundary'
-);
+$inventory_service = $require_markers( 'includes/class-spdb-federated-inventory.php', array( 'execution_exposed', 'false' ), 'inventory boundary' );
 foreach ( array( 'execute_operation', 'wp_insert_post', 'wp_update_post', 'wp_delete_post' ) as $call ) {
 	if ( '' !== $inventory_service && preg_match( '/\b' . preg_quote( $call, '/' ) . '\s*\(/', $inventory_service ) ) {
 		$violations[] = "includes/class-spdb-federated-inventory.php: forbidden mutation call {$call}";
@@ -137,12 +124,11 @@ foreach ( array( 'execute_operation', 'wp_insert_post', 'wp_update_post', 'wp_de
 	}
 }
 
-$review_controller = $require_markers(
+$require_markers(
 	'includes/class-spdb-review-calendar-rest-controller.php',
 	array( '/approve', '/request-changes', '/reject', '/assign-reviewer', '/schedule', '/reschedule', '/unschedule', 'valid_rest_nonce', 'authorize_operation', 'spdb_operation_payload_field_invalid', 'object_version', 'idempotency_key', 'audit_reason', 'spdb_native_confirmation_invalid', 'native_refetched', '$this->broker->execute' ),
 	'explicit operation control'
 );
-
 $require_markers(
 	'includes/class-spdb-workspace-projection-validator.php',
 	array( 'action_contract', 'spdb_workspace_action_contract_mismatch', 'supported_capabilities', 'profile_timestamp_invalid', 'knowledge_timestamp_invalid' ),
@@ -182,6 +168,20 @@ if ( '' !== $operations_schema ) {
 	}
 }
 
+$rate_schema = $require_markers(
+	'includes/class-spdb-rest-rate-limiter.php',
+	array( 'spdb_rest_rate_limits', 'CREATE TABLE', 'ENGINE=InnoDB', 'ON DUPLICATE KEY UPDATE', 'rest_pre_dispatch', 'spdb_rate_limit_exceeded', "'REMOTE_ADDR'" ),
+	'REST rate-limit boundary'
+);
+if ( '' !== $rate_schema ) {
+	if ( 1 !== substr_count( $rate_schema, 'CREATE TABLE' ) ) {
+		$violations[] = 'REST rate limiter must own exactly one bounded counter table';
+	}
+	if ( str_contains( $rate_schema, 'HTTP_X_FORWARDED_FOR' ) || preg_match( '/\b(?:raw_ip|request_body|query_string|cookie|nonce_value|auth_token|patient_id|message_body)\b/i', $rate_schema ) ) {
+		$violations[] = 'REST rate-limit schema/source contains unapproved request or sensitive data storage';
+	}
+}
+
 $require_markers(
 	'includes/class-spdb-collections-policy.php',
 	array( 'validate_collection', 'validate_knowledge_link', 'mutation_authority', 'spdb_manage_campaigns', 'spdb_manage_own_content', 'text_length', 'scope', 'idempotency_key', 'audit_reason', 'spdb_campaign_ethics_invalid', 'spdb_knowledge_self_link_invalid' ),
@@ -196,22 +196,18 @@ if ( '' !== $collections_service && preg_match( '/register_rest_route\s*\(/i', $
 	$violations[] = 'Collections service must not expose mutation REST routes directly';
 }
 
-$plugin = $require_markers(
+$require_markers(
 	'includes/class-spdb-plugin.php',
 	array( 'class-spdb-operations-service.php', 'class-spdb-background-jobs.php', 'class-spdb-privacy-integration.php', 'class-spdb-module-manifest.php', 'spdb/file24_assurance_evidence', 'SPDB_Operations_REST_Controller', 'SPDB_Activation_Wizard' ),
 	'full-plan composition marker'
 );
-$require_markers(
-	'includes/class-spdb-local-repair.php',
-	array( "global_safe_mode_owner' => 'file20", 'local_repair', 'reconcile' ),
-	'local repair boundary'
-);
+$require_markers( 'includes/class-spdb-local-repair.php', array( "global_safe_mode_owner' => 'file20", 'local_repair', 'reconcile' ), 'local repair boundary' );
 $require_markers(
 	'includes/class-spdb-activation-wizard.php',
 	array( 'source_commit', 'package_sha256', 'role_matrix_evidence', 'provider_contract_evidence', 'cache_privacy_evidence', 'accessibility_evidence', 'backup_restore_evidence', 'rollback_evidence', 'acceptance_version_valid' ),
 	'staging acceptance evidence'
 );
-$manifest = $require_markers(
+$require_markers(
 	'includes/class-spdb-module-manifest.php',
 	array( "'00'", "'01-a'", "'01-b'", "'02'", "'03'", "'04'", "'05'", "'06'", "'07'", "'08'", "'09'", "'10'", "'11'", "'12'", "'13'", "'14'", "'15'", "'16'", "'17'", "'18'", "'19'", "'20'", "'21'", "'22'", "'23'", "'24'", "'25'" ),
 	'module manifest entry'
@@ -219,9 +215,7 @@ $manifest = $require_markers(
 
 foreach ( array( 'workspace.php', 'review.php', 'calendar.php' ) as $template_name ) {
 	$template = $root . '/templates/' . $template_name;
-	if ( ! is_file( $template ) ) {
-		continue;
-	}
+	if ( ! is_file( $template ) ) { continue; }
 	$content = file_get_contents( $template );
 	if ( false === $content ) {
 		$violations[] = "Unable to read templates/{$template_name}";
