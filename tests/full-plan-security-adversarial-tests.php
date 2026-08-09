@@ -23,7 +23,8 @@ $client     = $read( 'assets/js/operations.js' );
 foreach ( array( 'patient', 'diagnos', 'prescription', 'potency', 'dosage', 'auto[_-]?publish', 'delete', 'impersonat', 'mass[_-]?publish', 'cure[_-]?claim', 'change[_-]?author', 'export[_-]?patient' ) as $pattern ) {
 	$assert( str_contains( $governance, $pattern ), "Automation guard must reject {$pattern}." );
 }
-$assert( str_contains( $governance, "'can_publish'             => false" ) && str_contains( $governance, "'can_export'              => false" ) && str_contains( $governance, "'can_access_patient_data' => false" ), 'Delegations must never silently grant publish, export, or patient access.' );
+$delegation_denials = preg_match_all( "/'(?:can_publish|can_export|can_access_patient_data)'\s*=>\s*false/", $governance );
+$assert( 3 === $delegation_denials, 'Delegations must never silently grant publish, export, or patient access.' );
 $assert( str_contains( $governance, 'session_two_factor' ) && str_contains( $governance, '90 * DAY_IN_SECONDS' ), 'Delegation creation must require current MFA and bounded expiry.' );
 $assert( str_contains( $automation, 'human_confirmation' ) && str_contains( $automation, 'idempotent' ) && str_contains( $automation, 'spdb/automation_action_result' ), 'Automation execution must be human-governed, idempotent, and native-provider mediated.' );
 $assert( preg_match( '/patient\|message\|email\|phone\|address\|token\|secret\|password\|consent\|document\|ip/', $automation ) === 1, 'Automation event payload must suppress sensitive fields.' );
