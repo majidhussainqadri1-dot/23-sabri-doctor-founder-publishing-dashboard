@@ -111,6 +111,7 @@ jobs:
               exit 1
             fi
           done
+          php tests/eighty-round-review-regression-test.php
           php tests/architecture-guard.php
       - name: Verify accessibility and private-cache boundaries
         shell: bash
@@ -151,6 +152,7 @@ jobs:
           php tests/second-ten-round-review-tests.php
           php tests/third-ten-round-review-tests.php
           php tests/fourth-ten-round-review-tests.php
+          php tests/eighty-round-review-regression-test.php
           php tests/architecture-guard.php
           test -s docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md
           test -s docs/CAPABILITY-MATRIX.md
@@ -166,25 +168,26 @@ jobs:
           test -s docs/AUDIT-SECOND-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
           test -s docs/AUDIT-THIRD-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
           test -s docs/AUDIT-FOURTH-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md
+          test -s docs/AUDIT-EIGHTY-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md
       - name: Build deterministic installable and complete-source packages
         run: bash tools/build-final-release.sh
       - name: Record exact release evidence
         shell: bash
         run: |
-          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.5\n' \
+          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.6\n' \
             "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" \
-            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.5-RELEASE-EVIDENCE.txt
+            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.6-RELEASE-EVIDENCE.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: file23-1.2.5-canonical-release-evidence
+          name: file23-1.2.6-canonical-release-evidence
           path: |
-            23-sabri-doctor-founder-publishing-dashboard-1.2.5.zip
-            23-sabri-doctor-founder-publishing-dashboard-1.2.5.zip.sha256
-            FILE23-1.2.5-MANIFEST.sha256
-            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.5.zip
-            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.5.zip.sha256
-            FILE23-1.2.5-SOURCE-MANIFEST.sha256
-            FILE23-1.2.5-RELEASE-EVIDENCE.txt
+            23-sabri-doctor-founder-publishing-dashboard-1.2.6.zip
+            23-sabri-doctor-founder-publishing-dashboard-1.2.6.zip.sha256
+            FILE23-1.2.6-MANIFEST.sha256
+            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.6.zip
+            23-Doctor-Founder-Publishing-Dashboard-Source-1.2.6.zip.sha256
+            FILE23-1.2.6-SOURCE-MANIFEST.sha256
+            FILE23-1.2.6-RELEASE-EVIDENCE.txt
             docs/STAGING-CHECKLIST.md
             docs/RELEASE-SIGNOFF.md
             docs/KNOWN-LIMITATIONS.md
@@ -194,5 +197,6 @@ jobs:
             docs/AUDIT-SECOND-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
             docs/AUDIT-THIRD-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
             docs/AUDIT-FOURTH-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md
+            docs/AUDIT-EIGHTY-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md
           if-no-files-found: error
           retention-days: 90
