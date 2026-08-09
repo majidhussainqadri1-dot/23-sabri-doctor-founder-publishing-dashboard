@@ -44,9 +44,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq "Version:     1.2.5" sabri-publishing-dashboard.php
-          grep -Fq "define( 'SPDB_VERSION', '1.2.5' )" sabri-publishing-dashboard.php
-          grep -Fq "Stable tag: 1.2.5" readme.txt
+          version="$(php -r '$s=file_get_contents("sabri-publishing-dashboard.php"); if (!preg_match("/define\\( \\'SPDB_VERSION\\', \\'([^\\']+)\\' \\)/", $s, $m)) { exit(1); } echo $m[1];')"
+          test -n "$version"
+          grep -Fq "Version:     ${version}" sabri-publishing-dashboard.php
+          grep -Fq "Stable tag: ${version}" readme.txt
+          grep -Fq "version=\"${version}\"" tools/build-final-release.sh
           grep -Fq "'phase'                   => 'full_plan_candidate'" includes/class-spdb-system-state.php
           grep -Fq 'class-spdb-operations-service.php' includes/class-spdb-plugin.php
           grep -Fq 'class-spdb-background-jobs.php' includes/class-spdb-plugin.php
@@ -56,3 +58,5 @@ jobs:
           php tests/second-ten-round-review-tests.php
           php tests/third-ten-round-review-tests.php
           php tests/fourth-ten-round-review-tests.php
+          php tests/eighty-round-review-regression-test.php
+          php tests/second-eighty-round-review-regression-test.php
