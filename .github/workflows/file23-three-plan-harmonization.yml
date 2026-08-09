@@ -44,6 +44,7 @@ jobs:
           php -l tests/third-ten-round-review-tests.php
           php -l tests/fourth-ten-round-review-tests.php
           php -l tests/eighty-round-review-regression-test.php
+          php -l tests/second-eighty-round-review-regression-test.php
           php -l tests/final-deliverables-tests.php
 
       - name: JavaScript syntax
@@ -66,8 +67,11 @@ jobs:
       - name: Fourth ten-round gate
         run: php tests/fourth-ten-round-review-tests.php
 
-      - name: Eighty-round closure gate
+      - name: First eighty-round historical gate
         run: php tests/eighty-round-review-regression-test.php
+
+      - name: Second eighty-round closure gate
+        run: php tests/second-eighty-round-review-regression-test.php
 
       - name: Operational projection gate
         run: php tests/operational-validator-tests.php
