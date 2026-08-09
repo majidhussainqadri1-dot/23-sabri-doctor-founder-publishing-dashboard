@@ -27,12 +27,13 @@ $deliverables = array(
 	'docs/TEST-REPORT.md'                                          => array( 'Automated source gates', 'Hostinger staging', 'Defect policy' ),
 	'CHANGELOG.md'                                                  => array( '1.2.5' ),
 	'docs/KNOWN-LIMITATIONS.md'                                    => array( 'Residual-Risk', 'LiteSpeed', 'F23-LIM-011' ),
-	'docs/RELEASE-SIGNOFF.md'                                      => array( 'Exact Git head', 'PENDING', 'Founder', '1.2.5' ),
+	'docs/RELEASE-SIGNOFF.md'                                      => array( 'Exact Git head', 'PENDING', 'Founder', '1.2.6' ),
 	'docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md'     => array( 'چالیس ادوار', 'دور 40', 'Hostinger staging' ),
 	'docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md'     => array( 'Round 10', 'Version 1.2.2', 'Hostinger staging' ),
 	'docs/AUDIT-SECOND-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md' => array( 'Rounds with defects', '1, 2, 5, 6, 9, 10', 'Hostinger staging' ),
 	'docs/AUDIT-THIRD-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md' => array( 'Rounds with defects', '1, 2, 3, 4, 9, 10', 'Hostinger' ),
 	'docs/AUDIT-FOURTH-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md' => array( 'Rounds with defects', '1, 2, 3, 4, 5, 6, 7, 8, 9, 10', 'File 00' ),
+	'docs/AUDIT-EIGHTY-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md' => array( '80 of 80', 'Defect-bearing rounds: **20**', 'Version 1.2.6' ),
 );
 
 foreach ( $deliverables as $relative => $markers ) {
@@ -46,6 +47,10 @@ foreach ( $deliverables as $relative => $markers ) {
 	}
 }
 
+$main = (string) file_get_contents( $root . '/sabri-publishing-dashboard.php' );
+$current = '';
+if ( preg_match( "/define\( 'SPDB_VERSION', '([^']+)' \)/", $main, $match ) ) { $current = (string) $match[1]; }
+$assert( '1.2.6' === $current, 'Current closure runtime must be Version 1.2.6.' );
 $build = (string) file_get_contents( $root . '/tools/build-final-release.sh' );
 foreach ( array(
 	'23-sabri-doctor-founder-publishing-dashboard-${version}.zip',
@@ -53,7 +58,7 @@ foreach ( array(
 	'FILE23-${version}-SOURCE-MANIFEST.sha256',
 	'git archive',
 	'sha256sum "$source_package"',
-	'version="1.2.5"',
+	'version="1.2.6"',
 ) as $marker ) {
 	$assert( false !== strpos( $build, $marker ), "Release tooling is missing marker: {$marker}." );
 }
@@ -66,14 +71,16 @@ foreach ( array(
 	'php tests/second-ten-round-review-tests.php',
 	'php tests/third-ten-round-review-tests.php',
 	'php tests/fourth-ten-round-review-tests.php',
-	'23-Doctor-Founder-Publishing-Dashboard-Source-1.2.5.zip',
-	'FILE23-1.2.5-SOURCE-MANIFEST.sha256',
+	'php tests/eighty-round-review-regression-test.php',
+	'23-Doctor-Founder-Publishing-Dashboard-Source-1.2.6.zip',
+	'FILE23-1.2.6-SOURCE-MANIFEST.sha256',
 	'docs/RELEASE-SIGNOFF.md',
 	'docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md',
 	'docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md',
 	'docs/AUDIT-SECOND-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md',
 	'docs/AUDIT-THIRD-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md',
 	'docs/AUDIT-FOURTH-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md',
+	'docs/AUDIT-EIGHTY-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md',
 ) as $marker ) {
 	$assert( false !== strpos( $workflow, $marker ), "Final release workflow is missing marker: {$marker}." );
 }
