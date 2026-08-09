@@ -25,7 +25,7 @@ $assert( str_contains( $matrix, 'Public timeline and visual presentation' ), 'Fi
 $assert( str_contains( $audit, 'File 19 single notification center' ), 'File 19 notification ownership review must remain recorded.' );
 $assert( str_contains( $audit, 'File 20 official shell mounting' ), 'File 20 shell ownership review must remain recorded.' );
 $assert( str_contains( $audit, 'Legacy diagnostics are read-only' ), 'File 04 legacy non-mutation boundary must remain recorded.' );
-$assert( str_contains( $audit, 'current strong-session + export capability recheck' ), 'Export delivery reauthorization must remain recorded.' );
+$assert( str_contains( $audit, 'Current strong-session + export capability recheck' ), 'Export delivery reauthorization must remain recorded.' );
 $assert( str_contains( $audit, 'File 00 dependency has a separate engineering audit' ), 'Upstream File 00 production blocker truth must remain explicit.' );
 $assert( str_contains( $audit, 'Hostinger staging acceptance' ), 'Source completion must remain distinct from staging acceptance.' );
 
