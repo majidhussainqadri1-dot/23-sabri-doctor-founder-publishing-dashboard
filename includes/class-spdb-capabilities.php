@@ -40,13 +40,27 @@ final class SPDB_Capabilities {
 		return array( 'spdb_manage_own_content', 'spdb_manage_schedule', 'spdb_view_own_analytics' );
 	}
 
+	/**
+	 * Validate the actual current browser/request principal. WordPress' native
+	 * `current_user_can()` remains the assigned-capability source so current-user
+	 * meta-cap arguments are preserved; File 00 identity/session assertions are
+	 * then applied as an additional fail-closed policy layer.
+	 */
 	public static function current_user_can( string $capability, ...$args ): bool {
 		$user_id = get_current_user_id();
-		if ( $user_id < 1 || ! self::user_can_assigned_capability( $user_id, $capability, ...$args ) ) {
+		if ( $user_id < 1 || ! in_array( $capability, self::all(), true ) || ! current_user_can( $capability, ...$args ) ) {
 			return false;
 		}
 		if ( in_array( $capability, self::restricted_view_capabilities(), true ) ) {
 			return SPDB_Membership_Guard::current_user_can_view_restricted_dashboard();
+		}
+		if ( ! SPDB_Membership_Guard::current_user_is_approved() ) {
+			return false;
+		}
+		if ( in_array( $capability, self::verified_publishing_identity_capabilities(), true )
+			&& ! SPDB_Membership_Guard::is_user_founder( $user_id )
+			&& ! SPDB_Membership_Guard::is_user_verified_doctor( $user_id ) ) {
+			return false;
 		}
 		if ( in_array( $capability, self::verified_session_capabilities(), true ) ) {
 			return SPDB_Membership_Guard::has_sensitive_session( $user_id );
@@ -55,11 +69,10 @@ final class SPDB_Capabilities {
 	}
 
 	/**
-	 * Validate a capability assigned to an arbitrary account without pretending
-	 * that account has the caller's current browser/session assurance. This is
-	 * used only for eligibility checks such as task assignment/delegation. The
-	 * eventual actor must still pass `current_user_can()` and its live session
-	 * gate when executing the delegated action.
+	 * Validate an assigned capability for an arbitrary account without pretending
+	 * that account has the caller's current browser/session assurance. Used only
+	 * for eligibility checks such as task assignment/delegation. When that person
+	 * later acts, `current_user_can()` repeats current identity/session checks.
 	 */
 	public static function user_can_assigned_capability( int $user_id, string $capability, ...$args ): bool {
 		if ( $user_id < 1 || ! in_array( $capability, self::all(), true ) || ! user_can( $user_id, $capability, ...$args ) ) {
