@@ -19,6 +19,7 @@ define( 'SPDB_PLUGIN_FILE', __FILE__ );
 define( 'SPDB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SPDB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-rest-rate-limiter.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-rate-limit-privacy.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-operational-mutation-guard.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-plugin.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-operations-schema-integrity.php';
@@ -38,11 +39,7 @@ function spdb_get_capabilities(): array { return SPDB_Capabilities::all(); }
 function spdb_get_assurance_manifest(): array { return spdb()->assurance_manifest(); }
 /** @return array<int,array<string,mixed>> Complete File 00–26 discovery manifest. */
 function spdb_get_dependency_manifest(): array { return spdb()->dependency_manifest(); }
-/**
- * Revalidate the current File 00 state and File 23 report capability immediately
- * before an already-generated export is served. The export service still verifies
- * its owner-bound expiring HMAC, job ownership, expiry, hash and encrypted envelope.
- */
+/** Revalidate File 00/session authority immediately before an export is served. */
 function spdb_export_download_authorization_gate(): void {
 	if ( ! is_user_logged_in() ) { return; }
 	if ( SPDB_Membership_Guard::current_user_has_sensitive_session() && SPDB_Capabilities::current_user_can( 'spdb_export_reports' ) ) { return; }
