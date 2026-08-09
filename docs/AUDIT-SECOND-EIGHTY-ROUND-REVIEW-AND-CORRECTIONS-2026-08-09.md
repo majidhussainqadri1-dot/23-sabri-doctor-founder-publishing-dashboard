@@ -19,8 +19,8 @@ Fresh review after Version 1.2.6 under the consolidated governing plan and File 
 | 9 | Permanent second-cycle evidence | DEFECT | Added dedicated audit/regression gate and CI wiring. |
 | 10 | Immutable release identity | DEFECT | Advanced runtime/readme/build/package identity to Version 1.2.7. |
 | 11 | Baseline version extraction | DEFECT | Exact-head CI exposed shell quoting failure in dynamic version extraction; replaced it with robust `awk` extraction and reran CI. |
-| 12 | Governing precedence + File 00 authority | CLEAN | Central plan remains parent; privileged writes remain File 00-assertion dependent and fail closed. |
-| 13 | File 02 authentication boundary | CLEAN | Authentication never substitutes for File 00 authorization. |
+| 12 | Pull-request release truth | DEFECT | Draft PR title/body still said the review was “in progress”; updated it to completed Version 1.2.7 second-cycle truth while retaining Draft/unmerged/undeployed status. |
+| 13 | Governing precedence + File 00/File 02 boundary | CLEAN | Central plan remains parent; File 00 owns authority and File 02 authentication never substitutes for authorization. |
 | 14 | Founder authority | CLEAN | Canonical authority does not bypass session/security gates. |
 | 15 | Verified Doctor identity | CLEAN | No permissive role/membership fallback. |
 | 16 | Reviewer/Moderator classification | CLEAN | Non-Doctor identities cannot inherit Doctor workspace authority. |
@@ -92,16 +92,16 @@ Fresh review after Version 1.2.6 under the consolidated governing plan and File 
 ## Result
 
 - Rounds completed: **80 of 80**.
-- Defect-bearing rounds: **1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11**.
-- Defect-bearing rounds: **11**.
-- Clean rounds: **69**.
+- Defect-bearing rounds: **1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12**.
+- Defect-bearing rounds: **12**.
+- Clean rounds: **68**.
 - Every discovered defect was corrected before progression.
 - Corrected runtime/package identity: **Version 1.2.7**.
 - Known unresolved File 23 source/release-engineering defects in this reviewed scope after correction: **0**.
 
 ## Exact-head QA closure
 
-The corrected Version 1.2.7 head passed the four release workflows used for this closure: **Baseline Integrity**, **File 23 Three-Plan Harmonization**, **File 23 Full Plan Completion**, and **File 23 Final Release Candidate**. This closes source/automated-QA review only.
+The corrected Version 1.2.7 head passed the four release workflows used for this closure: **Baseline Integrity**, **File 23 Three-Plan Harmonization**, **File 23 Full Plan Completion**, and **File 23 Final Release Candidate**. The PR metadata was then corrected without altering the source head. This closes source/automated-QA review only.
 
 ## Production boundary
 
