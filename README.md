@@ -18,9 +18,9 @@ The governing File 23 source is the Final Central-Plan-Harmonized Specification 
 
 ## Current review candidate
 
-Version **1.2.6** is the corrected immutable identity for the fresh **80-round review/fix cycle**. The permanent ledger is `docs/AUDIT-EIGHTY-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md`. Every evidence-backed defect found during the cycle was corrected before the following round.
+Version **1.2.7** is the corrected immutable identity for the **second fresh 80-round review/fix cycle** performed after the first 1.2.6 eighty-round closure. The second-cycle permanent ledger is `docs/AUDIT-SECOND-EIGHTY-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md`.
 
-The eighty-round cycle retained earlier hardening and additionally corrected runtime rate limiting, read-only request semantics, system-principal job isolation, schema/readiness evidence, privacy lifecycle, sensitive projection minimization, reviewed companion pins, visual ownership, release-signoff truth, File 24/File 25 responsibility mapping and release identity.
+The second cycle reopened release truth because the 1.2.6 exact-head workflows exposed stale release-engineering assertions: Baseline Integrity and Full Plan Completion still required Version 1.2.5, and the File 21 real-contract pin referenced an unreachable commit. Those defects and related release-evidence drift were corrected before the remaining review rounds proceeded.
 
 ## Operational mutation integrity
 
@@ -29,8 +29,8 @@ File 23-owned operational writes require current membership/capability assertion
 ## Truthful status
 
 - Specified: complete for current File 23 governing scope.
-- Coded: corrected Version 1.2.6 candidate.
-- Packaged / Automated-QA: subject to final exact-head closure workflows for Version 1.2.6.
+- Coded: corrected Version 1.2.7 candidate.
+- Packaged / Automated-QA: candidate until the final exact-head Version 1.2.7 workflows are green.
 - Hostinger staging accepted: pending.
 - Live deployed: pending.
 - Operational: pending.
