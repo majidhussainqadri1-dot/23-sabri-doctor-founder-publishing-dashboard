@@ -1,8 +1,10 @@
 :root {
-	/* Platform identity: green is canonical; semantic status colors remain distinct. */
-	--spdb-accent: #16843f;
-	--spdb-accent-strong: #0b5f2b;
-	--spdb-focus: #0b5f2b;
+	/* File 25 owns the platform design system. Keep File 23 fallback overrides
+	 * aligned with the approved bright-orange identity and accessible action tones. */
+	--spdb-brand: var(--sabri-platform-primary, #f58220);
+	--spdb-accent: var(--sabri-platform-action, #9a3e00);
+	--spdb-accent-strong: var(--sabri-platform-action-strong, #713000);
+	--spdb-focus: #7a3300;
 }
 
 .spdb-main:focus {
