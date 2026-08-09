@@ -8,6 +8,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Privacy_Integration {
+	private const LEGACY_SAVED_VIEWS_META = 'spdb_saved_views_v1';
 	private SPDB_Operations_Repository $repository;
 	private SPDB_Export_Service $exports;
 
@@ -52,11 +53,22 @@ final class SPDB_Privacy_Integration {
 		$done      = true === ( $data['_done'] ?? false ) && count( $receipts ) < $per_page;
 		unset( $data['_done'] );
 		$data['mutation_receipts'] = $receipts;
+
+		/*
+		 * Legacy saved views are no longer migrated as a side effect of GET.
+		 * They therefore remain File 23-owned personal data until an explicit
+		 * migration or erasure occurs and must be disclosed to the owner.
+		 */
+		if ( 1 === $page ) {
+			$legacy_saved_views = get_user_meta( (int) $user->ID, self::LEGACY_SAVED_VIEWS_META, true );
+			if ( is_array( $legacy_saved_views ) && ! empty( $legacy_saved_views ) ) {
+				$data['legacy_saved_views'] = array_slice( $legacy_saved_views, 0, 25 );
+			}
+		}
+
 		$items = array();
 		foreach ( $data as $group => $value ) {
-			if ( array() === $value ) {
-				continue;
-			}
+			if ( array() === $value ) { continue; }
 			$items[] = array(
 				'group_id'    => 'spdb-file23',
 				'group_label' => __( 'Publishing Dashboard', 'sabri-publishing-dashboard' ),
@@ -81,19 +93,25 @@ final class SPDB_Privacy_Integration {
 		if ( ! $user instanceof WP_User ) {
 			return array( 'items_removed' => false, 'items_retained' => false, 'messages' => array(), 'done' => true );
 		}
-		$files    = $this->exports->erase_user_files( (int) $user->ID );
-		$result   = $this->repository->privacy_erase( (int) $user->ID );
+		$files  = $this->exports->erase_user_files( (int) $user->ID );
+		$result = $this->repository->privacy_erase( (int) $user->ID );
 		if ( is_wp_error( $result ) ) {
 			return array(
-				'items_removed'  => false,
+				'items_removed'  => $files > 0,
 				'items_retained' => true,
 				'messages'       => array( $result->get_error_message() ),
 				'done'           => true,
 			);
 		}
+
+		$legacy_raw     = get_user_meta( (int) $user->ID, self::LEGACY_SAVED_VIEWS_META, true );
+		$legacy_removed = false;
+		if ( is_array( $legacy_raw ) && ! empty( $legacy_raw ) ) {
+			$legacy_removed = delete_user_meta( (int) $user->ID, self::LEGACY_SAVED_VIEWS_META );
+		}
 		$receipts = SPDB_Operational_Mutation_Guard::erase_user_receipts( (int) $user->ID );
 		return array(
-			'items_removed'  => (int) $result['items_removed'] > 0 || $files > 0 || $receipts > 0,
+			'items_removed'  => (int) $result['items_removed'] > 0 || $files > 0 || $receipts > 0 || $legacy_removed,
 			'items_retained' => true === $result['items_retained'],
 			'messages'       => array( __( 'Institutional task and append-only audit evidence may be retained under the approved retention policy.', 'sabri-publishing-dashboard' ) ),
 			'done'           => true,
