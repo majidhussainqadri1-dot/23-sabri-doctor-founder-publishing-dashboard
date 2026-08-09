@@ -42,7 +42,7 @@ spdb_three_plan_assert( str_contains( $provider_contract, 'same scheme, host and
 spdb_three_plan_assert( ! str_contains( $resolver, "home_url( '/appointments/'" ), 'File 23 must not guess or invent native routes.' );
 spdb_three_plan_assert( str_contains( $validator, 'message_text' ) && str_contains( $validator, 'national_id' ) && str_contains( $validator, 'prescription' ), 'Projection metadata filtering must cover messaging, identity and clinical secrets.' );
 spdb_three_plan_assert( str_contains( $provider_contract, 'must not include patient information' ) && str_contains( $provider_contract, 'payment data' ), 'Provider documentation must prohibit sensitive contract payloads.' );
-spdb_three_plan_assert( str_contains( $css, '--spdb-accent: #16843f' ) && str_contains( $css, '--spdb-accent-strong: #0b5f2b' ), 'The current visual constitution must use green identity tokens.' );
+spdb_three_plan_assert( str_contains( $css, '--sabri-platform-primary, #f58220' ) && str_contains( $css, '--sabri-platform-action, #9a3e00' ), 'File 23 fallback visual tokens must remain aligned with File 25 and the approved bright-orange platform identity.' );
 spdb_three_plan_assert( str_contains( $harmonized, 'All-Chats Recovered Directives' ), 'The recovered-directives plan must be named as a governing source.' );
 spdb_three_plan_assert( str_contains( $harmonized, 'does not duplicate native' ), 'The harmonization record must preserve canonical native ownership.' );
 spdb_three_plan_assert( str_contains( $harmonized, 'Hostinger staging' ), 'The source record must not misclassify staging acceptance as complete.' );
