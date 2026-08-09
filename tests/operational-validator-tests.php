@@ -48,12 +48,15 @@ $assert( is_wp_error( SPDB_Operational_Projection_Validator::projection_item( $i
 
 $message_item = array(
 	'object_type' => 'conversation_alert', 'object_id' => 'msg-1', 'native_version' => 'v1',
-	'title' => 'Private correspondent name', 'summary' => 'This private message body must not cross the File 23 boundary.',
+	'title' => 'Unread conversation', 'summary' => 'One unread item.',
 	'status' => 'unread', 'updated_at' => '2026-08-04T00:00:00Z', 'privacy_class' => 'private',
-	'destination_url' => 'https://example.test/messages/msg-1', 'metadata' => array( 'thread_label' => 'private thread' ),
+	'destination_url' => 'https://example.test/messages/msg-1', 'metadata' => array( 'thread_label' => 'unread' ),
 );
 $message_projection = SPDB_Operational_Projection_Validator::projection_item( $message_item, 'file17', 'messages' );
 $assert( is_array( $message_projection ) && 'Native message' === $message_projection['title'] && '' === $message_projection['summary'] && '' === $message_projection['destination_url'] && array() === $message_projection['metadata'], 'Messages must be reduced to a non-identifying status envelope.' );
+$leaking_message = $message_item;
+$leaking_message['summary'] = 'Private message body with patient id must not cross this boundary.';
+$assert( is_wp_error( SPDB_Operational_Projection_Validator::projection_item( $leaking_message, 'file17', 'messages' ) ), 'A provider that attempts to send a private message body or patient identifier must fail closed.' );
 
 $appointment_item = $message_item;
 $appointment_item['object_type'] = 'appointment_alert';
