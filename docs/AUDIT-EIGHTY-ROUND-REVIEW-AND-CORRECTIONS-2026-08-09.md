@@ -86,7 +86,7 @@ This eighty-round review applies the current consolidated central governing plan
 | 76 | File 02 authentication vs File 00 authorization | CLEAN | Authentication state is not treated as publishing authorization; File 00 current assertions remain authoritative. |
 | 77 | Legacy publication migration | CLEAN | Legacy diagnostics are read-only and do not mutate File 04/File 21 records. |
 | 78 | Reports/exports adversarial review | CLEAN | Current reauthorization, bounded generation, formula safety and private delivery controls retained. |
-| 79 | Immutable corrected release identity | DEFECT | Advanced runtime identity from 1.2.5 to 1.2.6 after cumulative code/security/document corrections. |
+| 79 | Immutable corrected release identity | DEFECT | Advanced runtime identity from 1.2.5 to Version 1.2.6 after cumulative code/security/document corrections; aligned build, release metadata and historical regression gates to permit later corrected releases without rewriting historical evidence. |
 | 80 | Final cross-file/release-truth audit | CLEAN | File 23 source outcome remains distinct from upstream File 00 blockers and Hostinger staging/live/operational acceptance. |
 
 ## Result
@@ -96,7 +96,7 @@ This eighty-round review applies the current consolidated central governing plan
 - Defect-bearing rounds: **20**.
 - Clean rounds: **60**.
 - Every discovered defect was corrected before the following round.
-- Corrected runtime identity: **1.2.6**.
+- Corrected runtime identity: **Version 1.2.6**.
 - Known unresolved File 23 source defects within this eighty-round reviewed scope after correction: **0**, subject to final exact-head CI on the closure commits.
 
 ## Production boundary
