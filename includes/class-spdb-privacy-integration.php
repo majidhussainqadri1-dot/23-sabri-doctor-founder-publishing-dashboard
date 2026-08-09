@@ -64,6 +64,10 @@ final class SPDB_Privacy_Integration {
 			if ( is_array( $legacy_saved_views ) && ! empty( $legacy_saved_views ) ) {
 				$data['legacy_saved_views'] = array_slice( $legacy_saved_views, 0, 25 );
 			}
+			$rate_limit_counters = SPDB_Rate_Limit_Privacy::export_for_user( (int) $user->ID );
+			if ( ! empty( $rate_limit_counters ) ) {
+				$data['rate_limit_counters'] = $rate_limit_counters;
+			}
 		}
 
 		$items = array();
@@ -109,9 +113,20 @@ final class SPDB_Privacy_Integration {
 		if ( is_array( $legacy_raw ) && ! empty( $legacy_raw ) ) {
 			$legacy_removed = delete_user_meta( (int) $user->ID, self::LEGACY_SAVED_VIEWS_META );
 		}
+
+		$rate_deleted = SPDB_Rate_Limit_Privacy::erase_for_user( (int) $user->ID );
+		if ( is_wp_error( $rate_deleted ) ) {
+			return array(
+				'items_removed'  => (int) $result['items_removed'] > 0 || $files > 0 || $legacy_removed,
+				'items_retained' => true,
+				'messages'       => array( $rate_deleted->get_error_message() ),
+				'done'           => true,
+			);
+		}
+
 		$receipts = SPDB_Operational_Mutation_Guard::erase_user_receipts( (int) $user->ID );
 		return array(
-			'items_removed'  => (int) $result['items_removed'] > 0 || $files > 0 || $receipts > 0 || $legacy_removed,
+			'items_removed'  => (int) $result['items_removed'] > 0 || $files > 0 || $receipts > 0 || $legacy_removed || $rate_deleted > 0,
 			'items_retained' => true === $result['items_retained'],
 			'messages'       => array( __( 'Institutional task and append-only audit evidence may be retained under the approved retention policy.', 'sabri-publishing-dashboard' ) ),
 			'done'           => true,
