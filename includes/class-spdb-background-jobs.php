@@ -66,10 +66,7 @@ final class SPDB_Background_Jobs {
 		}
 	}
 
-	/**
-	 * Run one bounded batch. A real server cron may invoke the same hook; WP-Cron
-	 * remains only the documented fallback.
-	 */
+	/** Run one bounded batch. A real server cron may invoke the same hook; WP-Cron remains only the documented fallback. */
 	public function run(): void {
 		$this->enqueue_maintenance_jobs();
 		$settings = SPDB_Admin_Settings::get();
@@ -108,12 +105,7 @@ final class SPDB_Background_Jobs {
 		}
 	}
 
-	/**
-	 * Queue a job through the same bounded contract used by the REST layer.
-	 *
-	 * @param array<string,mixed> $payload Bounded payload.
-	 * @return array<string,mixed>|WP_Error
-	 */
+	/** @param array<string,mixed> $payload Bounded payload. @return array<string,mixed>|WP_Error */
 	public function enqueue( string $job_type, int $owner_user_id, array $payload, string $idempotency_key ) {
 		return $this->repository->enqueue_job(
 			$job_type,
@@ -124,11 +116,19 @@ final class SPDB_Background_Jobs {
 		);
 	}
 
-	/** @param array<string,mixed> $job @return true|WP_Error */
+	/**
+	 * Execute under an explicit principal. User-owned jobs impersonate only
+	 * their recorded owner; owner 0 is always the unauthenticated system
+	 * principal. This prevents a WP-Cron request triggered by a logged-in browser
+	 * from leaking that browser user's authority into maintenance/system work.
+	 *
+	 * @param array<string,mixed> $job
+	 * @return true|WP_Error
+	 */
 	private function execute( array $job ) {
 		$previous_user = get_current_user_id();
 		$owner_user    = max( 0, (int) $job['owner_user_id'] );
-		if ( $owner_user > 0 && function_exists( 'wp_set_current_user' ) ) {
+		if ( function_exists( 'wp_set_current_user' ) ) {
 			wp_set_current_user( $owner_user );
 		}
 
@@ -181,9 +181,7 @@ final class SPDB_Background_Jobs {
 		$end   = isset( $query['date_to'] ) && preg_match( '/^\d{4}-\d{2}-\d{2}$/', (string) $query['date_to'] ) ? $query['date_to'] . ' 23:59:59' : gmdate( 'Y-m-d 23:59:59' );
 		$owner = 'own' === $scope ? max( 0, (int) $job['owner_user_id'] ) : 0;
 		foreach ( $result['metrics'] as $metric ) {
-			if ( ! empty( $metric['suppressed'] ) ) {
-				continue;
-			}
+			if ( ! empty( $metric['suppressed'] ) ) { continue; }
 			$generated = strtotime( (string) $metric['generated_at'] );
 			$stored = $this->repository->store_metric_snapshot(
 				array(
@@ -204,9 +202,7 @@ final class SPDB_Background_Jobs {
 					'expires_at_gmt'    => gmdate( 'Y-m-d H:i:s', time() + 25 * MONTH_IN_SECONDS ),
 				)
 			);
-			if ( is_wp_error( $stored ) ) {
-				return $stored;
-			}
+			if ( is_wp_error( $stored ) ) { return $stored; }
 		}
 		return true;
 	}
@@ -221,9 +217,7 @@ final class SPDB_Background_Jobs {
 			}
 			$health = $this->sanitize_health( $raw );
 			$result = $this->repository->store_adapter_health( $provider_key, $this->registry->get_effective_state( $provider_key ), $health );
-			if ( is_wp_error( $result ) ) {
-				return $result;
-			}
+			if ( is_wp_error( $result ) ) { return $result; }
 		}
 		return true;
 	}
@@ -231,12 +225,8 @@ final class SPDB_Background_Jobs {
 	/** @param array<string,mixed> $job @return true|WP_Error */
 	private function external_handler( array $job ) {
 		$result = apply_filters( 'spdb/background_job_result', null, $job['job_type'], $job['payload'], $job );
-		if ( true === $result ) {
-			return true;
-		}
-		if ( is_wp_error( $result ) ) {
-			return $result;
-		}
+		if ( true === $result ) { return true; }
+		if ( is_wp_error( $result ) ) { return $result; }
 		return self::error( 'spdb_job_handler_unavailable', __( 'No compatible provider accepted this background job.', 'sabri-publishing-dashboard' ) );
 	}
 
@@ -255,17 +245,13 @@ final class SPDB_Background_Jobs {
 
 	/** @param mixed $raw @return array<string,mixed> */
 	private function sanitize_health( $raw ): array {
-		if ( ! is_array( $raw ) ) {
-			return array( 'healthy' => false, 'code' => 'invalid_health' );
-		}
+		if ( ! is_array( $raw ) ) { return array( 'healthy' => false, 'code' => 'invalid_health' ); }
 		$out = array(
 			'healthy' => true === ( $raw['healthy'] ?? false ),
 			'code'    => sanitize_key( (string) ( $raw['code'] ?? 'unknown' ) ),
 		);
 		foreach ( array( 'available', 'ready', 'degraded' ) as $key ) {
-			if ( array_key_exists( $key, $raw ) && is_bool( $raw[ $key ] ) ) {
-				$out[ $key ] = $raw[ $key ];
-			}
+			if ( array_key_exists( $key, $raw ) && is_bool( $raw[ $key ] ) ) { $out[ $key ] = $raw[ $key ]; }
 		}
 		return $out;
 	}

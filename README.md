@@ -4,48 +4,37 @@ Private, role-aware, federated publishing operations for the Sabri Social Homeop
 
 ## Governing boundary
 
-File 23 is the operational command center. It does not own native publication bodies, Composer drafts, profile identities, review decisions, schedules, sources, media binaries, comments, corrections, notification delivery, clinical records, or raw analytics events.
+File 23 is the operational command center. It does not own native publication bodies, Composer drafts, profile identities, review decisions, native schedules, source bodies, media binaries/private URLs, comments/messages, corrections, notification delivery, clinical records, payments or raw analytics events.
 
-- File 00: identity, capabilities, verification, suspension and MFA assertions.
-- File 20: shell, global Safe Mode, platform repair and rollback.
+- File 00: canonical identity, approval/verification/suspension, publishing authority and sensitive-session assertions.
+- File 19: unified notification entity, bell/center, preferences and delivery adapters.
+- File 20: structural shell, global navigation, global Safe Mode, platform repair and rollback.
 - File 21: canonical social/news publication, review, interactions, corrections and sources.
-- File 22: sole create/edit/draft/preview/submit orchestration.
-- File 24: security/privacy/compliance assurance evidence.
-- File 25: public visual/profile/timeline presentation.
+- File 22: sole create/edit/draft/autosave/preview/validate/submit orchestration.
+- File 24: security/privacy/compliance/resilience assurance and sanitized evidence coordination.
+- File 25: public visual/profile/timeline presentation, design tokens/components and visual regression.
 
-## 1.2.2 ten-round corrective candidate
+The governing File 23 source is the Final Central-Plan-Harmonized Specification under the current consolidated central governing plan. Older draft wording is historical only where it does not conflict with the current governing assignment.
 
-Version 1.2.2 combines the exact File 21/File 22 provider discovery and canonical File 22 Composer routing from Version 1.2.1 with ten additional review/fix rounds. The corrections strengthen REST least privilege, provider isolation, URL safety, projection truth, replay integrity, browser submissions, lifecycle cleanup, and complete operational-domain routing without weakening the Version 1.2.0 forty-round security boundary.
+## Current review candidate
 
-## 1.2.0 forty-round hardened candidate
+Version **1.2.7** is the corrected immutable identity for the **second fresh 80-round review/fix cycle** performed after the first 1.2.6 eighty-round closure. The second-cycle permanent ledger is `docs/AUDIT-SECOND-EIGHTY-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md`.
 
-The source has passed forty independent thematic review/fix rounds and includes the remaining File 23-owned runtime domains:
-
-- Sources/evidence, asset usage, interactions, content gaps, revisions and publishing notifications as strict native projections.
-- Provider-owned privacy-thresholded analytics and bounded rebuildable snapshots.
-- Doctor/Founder reports and queued CSV, JSON, printable HTML, PDF and private-calendar exports encrypted at rest and delivered through owner-bound expiring signatures.
-- Cross-module tasks, scoped MFA-bound delegation, bounded automation rules and a reviewed native-action execution boundary.
-- Background jobs with idempotency, locks, retries, exponential backoff, dead-letter state and privacy-safe File 19 notifications.
-- WordPress privacy export/erasure for File 23-owned data, retention cleanup, append-only audit integrity, local reversible repair and explicit staging acceptance evidence.
-- Complete File 00–25 dependency manifest, File 24 sanitized assurance manifest and read-only File 04 migration diagnostics.
-- Full private navigation and responsive, RTL and accessibility treatment.
-
-## Forty-round hardening
-
-Capability schema 4 removes stale grants, File 20 remains the sole global Safe Mode owner, all 13 File 23-owned tables require verified InnoDB, provider maturity acceptance is evidence/version bound, audit-chain writes are serialized, background jobs verify lock ownership and transition results, and privacy export/erasure covers receipts, exports, collections and institutional pseudonymization.
+The second cycle reopened release truth because the 1.2.6 exact-head workflows exposed stale release-engineering assertions: Baseline Integrity and Full Plan Completion still required Version 1.2.5, and the File 21 real-contract pin referenced an unreachable commit. Those defects and related release-evidence drift were corrected before the remaining review rounds proceeded.
 
 ## Operational mutation integrity
 
-Every File 23-owned operational write is protected by an explicit mutation guard requiring an approved dashboard account, REST nonce, same-origin browser context and a payload-bound idempotency key. Local writes use transaction commit/rollback with request/outcome evidence in the canonical hash-chained dashboard audit. Bounded non-autoload replay receipts are private, no-store, time-limited and remove credential-, secret-, patient-, clinical- and message-shaped fields. The browser retains one high-entropy key for one logical submission and retry.
-
-Native review/calendar commands remain under their separate object-version, idempotency, audit-reason and provider-confirmation broker; File 23 does not replace their canonical owners.
+File 23-owned operational writes require current membership/capability assertions, current sensitive-session assurance where required, REST nonce, same-origin browser context, bounded payloads, payload-bound idempotency, replay evidence and auditable state transition evidence. Native publication/review/calendar operations remain under provider-owned authorization and object/version rules.
 
 ## Truthful status
 
-- Specified: complete.
-- Coded: full File 23-owned 1.2.2 corrective candidate.
-- Automated QA: exact-head GitHub Actions required.
-- Staging accepted: pending Hostinger execution.
-- Live deployed/operational: pending.
+- Specified: complete for current File 23 governing scope.
+- Coded: corrected Version 1.2.7 candidate.
+- Packaged / Automated-QA: candidate until the final exact-head Version 1.2.7 workflows are green.
+- Hostinger staging accepted: pending.
+- Live deployed: pending.
+- Operational: pending.
 
-Production writes remain fail-closed until real providers independently attain the required acceptance maturity and the Hostinger staging matrix is recorded.
+Production promotion remains blocked by required Hostinger evidence and by the currently documented unresolved Critical/High production-safety findings in the pinned File 00 dependency. A green File 23 contract test does not convert that dependency into production-safe status.
+
+**Do not merge or deploy the current review branch without explicit Founder authorization.**

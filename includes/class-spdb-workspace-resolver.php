@@ -22,14 +22,16 @@ final class SPDB_Workspace_Resolver {
 		if ( ! SPDB_Membership_Guard::is_user_approved( $user_id ) ) {
 			return $this->workspace( 'restricted', __( 'Restricted Read-Only Workspace', 'sabri-publishing-dashboard' ), true, $status, $user_id );
 		}
+
+		$read_only = ! SPDB_Membership_Guard::has_sensitive_session( $user_id );
 		if ( SPDB_Membership_Guard::is_user_founder( $user_id ) ) {
-			return $this->workspace( 'founder', __( 'Founder Publishing Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
+			return $this->workspace( 'founder', __( 'Founder Publishing Workspace', 'sabri-publishing-dashboard' ), $read_only, $status, $user_id );
 		}
 
 		/*
-		 * Institutional AI is never rendered as a human doctor. File 23 provides
-		 * oversight evidence only; generation/publication remains with Files
-		 * 16/22/21 and the authoritative File 00 publishing policy.
+		 * Institutional AI is never rendered as a human doctor and never receives
+		 * a writable human workspace. File 23 provides oversight evidence only;
+		 * generation/publication remains with Files 16/22/21 and File 00 policy.
 		 */
 		if ( SPDB_Membership_Guard::is_user_institutional_ai( $user_id ) ) {
 			return $this->workspace( 'institutional_ai', __( 'Institutional AI Oversight', 'sabri-publishing-dashboard' ), true, $status, $user_id );
@@ -39,17 +41,17 @@ final class SPDB_Workspace_Resolver {
 		$is_trusted = SPDB_Membership_Guard::is_user_trusted_publisher( $user_id );
 		if ( $is_doctor ) {
 			if ( $is_trusted ) {
-				return $this->workspace( 'trusted_doctor', __( 'Trusted Doctor Publishing Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
+				return $this->workspace( 'trusted_doctor', __( 'Trusted Doctor Publishing Workspace', 'sabri-publishing-dashboard' ), $read_only, $status, $user_id );
 			}
-			return $this->workspace( 'doctor', __( 'Doctor Publishing Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
+			return $this->workspace( 'doctor', __( 'Doctor Publishing Workspace', 'sabri-publishing-dashboard' ), $read_only, $status, $user_id );
 		}
 
 		/* Review/moderation workspaces are capability-derived, never doctor-labelled. */
 		if ( SPDB_Capabilities::current_user_can( 'spdb_view_review_queue' ) || SPDB_Capabilities::current_user_can( 'spdb_review_assigned_content' ) ) {
-			return $this->workspace( 'reviewer', __( 'Reviewer Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
+			return $this->workspace( 'reviewer', __( 'Reviewer Workspace', 'sabri-publishing-dashboard' ), $read_only, $status, $user_id );
 		}
 		if ( SPDB_Capabilities::current_user_can( 'spdb_manage_interactions' ) ) {
-			return $this->workspace( 'moderator', __( 'Moderation Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
+			return $this->workspace( 'moderator', __( 'Moderation Workspace', 'sabri-publishing-dashboard' ), $read_only, $status, $user_id );
 		}
 
 		/* Approved non-doctor accounts must not inherit a Doctor identity by default. */
@@ -69,12 +71,14 @@ final class SPDB_Workspace_Resolver {
 		elseif ( 'institutional_ai' === $key ) { $workspace_label = __( 'AI Oversight', 'sabri-publishing-dashboard' ); }
 		elseif ( 'restricted' === $key ) { $workspace_label = __( 'Publishing Status', 'sabri-publishing-dashboard' ); }
 		$items['workspace'] = $this->item( 'workspace', $workspace_label );
-		if ( SPDB_Capabilities::current_user_can( 'spdb_manage_own_content' ) && false === (bool) ( $workspace['read_only'] ?? true ) ) { $items['create'] = $this->item( 'create', __( 'Create', 'sabri-publishing-dashboard' ) ); }
+		if ( SPDB_Capabilities::current_user_can( 'spdb_manage_own_content' ) && false === (bool) ( $workspace['read_only'] ?? true ) && SPDB_Membership_Guard::current_user_can_open_composer() ) {
+			$items['create'] = $this->item( 'create', __( 'Create', 'sabri-publishing-dashboard' ) );
+		}
 		if ( SPDB_Capabilities::current_user_can( 'spdb_view_own_content' ) ) { $items['inventory'] = $this->item( 'inventory', __( 'My Content', 'sabri-publishing-dashboard' ) ); }
 		if ( SPDB_Capabilities::current_user_can( 'spdb_view_review_queue' ) ) { $items['review'] = $this->item( 'review', __( 'Review', 'sabri-publishing-dashboard' ) ); }
 		if ( SPDB_Capabilities::current_user_can( 'spdb_view_own_content' ) ) {
 			$items['calendar'] = $this->item( 'calendar', __( 'Calendar', 'sabri-publishing-dashboard' ) );
-			if ( SPDB_Membership_Guard::current_user_is_approved() ) {
+			if ( SPDB_Membership_Guard::current_user_has_sensitive_session() ) {
 				$items['collections'] = $this->item( 'collections', __( 'Series & Collections', 'sabri-publishing-dashboard' ) );
 				$items['knowledge'] = $this->item( 'knowledge', __( 'Knowledge', 'sabri-publishing-dashboard' ) );
 				$items['sources'] = $this->item( 'sources', __( 'Sources & Evidence', 'sabri-publishing-dashboard' ) );
@@ -88,10 +92,10 @@ final class SPDB_Workspace_Resolver {
 			$items['notifications'] = $this->item( 'notifications', __( 'Notifications', 'sabri-publishing-dashboard' ) );
 			$this->append_native_professional_surfaces( $items );
 		}
-		if ( SPDB_Capabilities::current_user_can( 'spdb_manage_tasks' ) || SPDB_Capabilities::current_user_can( 'spdb_manage_delegations' ) ) { $items['tasks'] = $this->item( 'tasks', __( 'Team & Tasks', 'sabri-publishing-dashboard' ) ); }
+		if ( SPDB_Membership_Guard::current_user_has_sensitive_session() && ( SPDB_Capabilities::current_user_can( 'spdb_manage_tasks' ) || SPDB_Capabilities::current_user_can( 'spdb_manage_delegations' ) ) ) { $items['tasks'] = $this->item( 'tasks', __( 'Team & Tasks', 'sabri-publishing-dashboard' ) ); }
 		if ( SPDB_Capabilities::current_user_can( 'spdb_export_reports' ) ) { $items['reports'] = $this->item( 'reports', __( 'Reports', 'sabri-publishing-dashboard' ) ); }
 		$items['saved-views'] = $this->item( 'saved-views', __( 'Saved Views', 'sabri-publishing-dashboard' ) );
-		if ( SPDB_Capabilities::current_user_can( 'spdb_manage_dashboard_settings' ) ) { $items['settings'] = $this->item( 'settings', __( 'Settings', 'sabri-publishing-dashboard' ) ); }
+		if ( SPDB_Membership_Guard::current_user_has_sensitive_session() && SPDB_Capabilities::current_user_can( 'spdb_manage_dashboard_settings' ) ) { $items['settings'] = $this->item( 'settings', __( 'Settings', 'sabri-publishing-dashboard' ) ); }
 		if ( SPDB_Capabilities::current_user_can( 'spdb_run_system_check' ) ) { $items['system-status'] = $this->item( 'system-status', __( 'System Status', 'sabri-publishing-dashboard' ) ); }
 		return $items;
 	}

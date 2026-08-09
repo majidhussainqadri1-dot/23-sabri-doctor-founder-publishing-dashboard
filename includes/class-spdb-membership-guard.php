@@ -97,7 +97,11 @@ final class SPDB_Membership_Guard {
 			}
 
 			$institutional = true === $assertions['institutional_account'];
-			$founder       = $institutional && function_exists( 'smc_is_founder' ) && true === smc_is_founder( $user_id );
+			$authority     = sanitize_key( (string) ( $publishing['authority_class'] ?? '' ) );
+			$founder       = $institutional && (
+				'founder' === $authority
+				|| ( function_exists( 'smc_is_founder' ) && true === smc_is_founder( $user_id ) )
+			);
 			return array(
 				'contract_version'      => $assertions['contract_version'],
 				'user_id'               => $user_id,
@@ -207,22 +211,17 @@ final class SPDB_Membership_Guard {
 			return false;
 		}
 		$publishing = is_array( $assertions['publishing'] ?? null ) ? $assertions['publishing'] : array();
-		if ( true === ( $publishing['doctor_verification_claim'] ?? false ) || 'verified_doctor' === sanitize_key( (string) ( $publishing['authority_class'] ?? '' ) ) ) {
-			return true;
-		}
-		return 'doctor' === sanitize_key( (string) ( $assertions['membership_type'] ?? '' ) );
+		return true === ( $publishing['doctor_verification_claim'] ?? false )
+			|| 'verified_doctor' === sanitize_key( (string) ( $publishing['authority_class'] ?? '' ) );
 	}
 
 	public static function is_user_trusted_publisher( int $user_id ): bool {
 		$assertions = self::assertions( $user_id );
-		return is_array( $assertions )
-			&& true === $assertions['approved']
-			&& true === $assertions['eligible']
-			&& false === $assertions['suspended']
-			&& true === $assertions['can_publish']
-			&& false === ( $assertions['founder'] ?? false )
-			&& function_exists( 'smc_is_trusted_publisher' )
-			&& true === smc_is_trusted_publisher( $user_id );
+		if ( ! is_array( $assertions ) || true !== $assertions['approved'] || true !== $assertions['eligible'] || true === $assertions['suspended'] || true === ( $assertions['founder'] ?? false ) || true === ( $assertions['institutional_ai'] ?? false ) ) {
+			return false;
+		}
+		$publishing = is_array( $assertions['publishing'] ?? null ) ? $assertions['publishing'] : array();
+		return 'trusted_publisher' === sanitize_key( (string) ( $publishing['authority_class'] ?? '' ) );
 	}
 
 	public static function is_user_approved( int $user_id ): bool {
@@ -233,6 +232,23 @@ final class SPDB_Membership_Guard {
 			&& false === $assertions['suspended'];
 	}
 
+	public static function has_sensitive_session( int $user_id ): bool {
+		$assertions = self::assertions( $user_id );
+		return is_array( $assertions )
+			&& true === $assertions['approved']
+			&& true === $assertions['eligible']
+			&& false === $assertions['suspended']
+			&& true === $assertions['session_two_factor']
+			&& false === ( $assertions['institutional_ai'] ?? false );
+	}
+
+	public static function can_user_open_composer( int $user_id ): bool {
+		$assertions = self::assertions( $user_id );
+		$publishing = is_array( $assertions['publishing'] ?? null ) ? $assertions['publishing'] : array();
+		return self::has_sensitive_session( $user_id )
+			&& true === ( $publishing['can_open_composer'] ?? false );
+	}
+
 	public static function can_user_publish( int $user_id ): bool {
 		$assertions = self::assertions( $user_id );
 		return is_array( $assertions )
@@ -240,7 +256,8 @@ final class SPDB_Membership_Guard {
 			&& false === $assertions['suspended']
 			&& true === $assertions['eligible']
 			&& true === $assertions['session_two_factor']
-			&& true === $assertions['can_publish'];
+			&& true === $assertions['can_publish']
+			&& false === ( $assertions['institutional_ai'] ?? false );
 	}
 
 	public static function can_user_view_restricted_dashboard( int $user_id ): bool {
@@ -254,6 +271,14 @@ final class SPDB_Membership_Guard {
 
 	public static function current_user_is_approved(): bool {
 		return is_user_logged_in() && self::is_user_approved( get_current_user_id() );
+	}
+
+	public static function current_user_has_sensitive_session(): bool {
+		return is_user_logged_in() && self::has_sensitive_session( get_current_user_id() );
+	}
+
+	public static function current_user_can_open_composer(): bool {
+		return is_user_logged_in() && self::can_user_open_composer( get_current_user_id() );
 	}
 
 	public static function current_user_can_publish(): bool {

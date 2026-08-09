@@ -38,9 +38,12 @@ $assert( str_contains( $membership, "'guardian_pending'" ), 'Round 4: current Fi
 $assert( str_contains( $workflow, 'FILE22_SHA: 4008521f9860e6181560ac07ff1c7e75868f1982' ), 'Round 9: File 22 exact integration pin must match the latest reviewed candidate used by this audit.' );
 
 $assert( str_contains( $history, "version_compare( \$current_version, '1.2.3', '>=' )" ), 'Round 10: the prior review gate must preserve history without freezing future corrected versions.' );
-$assert( str_contains( $main, 'Version:     1.2.4' ) && str_contains( $main, "define( 'SPDB_VERSION', '1.2.4' )" ), 'Round 10: runtime identity must be Version 1.2.4.' );
-$assert( str_contains( $readme, 'Stable tag: 1.2.4' ), 'Round 10: readme stable tag must match Version 1.2.4.' );
-$assert( str_contains( $build, 'version="1.2.4"' ) && str_contains( $build, '1\\.2\\.4' ), 'Round 10: deterministic packaging must build and verify Version 1.2.4.' );
+$current_version = '';
+if ( preg_match( "/define\( 'SPDB_VERSION', '([^']+)' \)/", $main, $match ) ) { $current_version = (string) $match[1]; }
+$assert( '' !== $current_version && version_compare( $current_version, '1.2.4', '>=' ), 'Later corrected releases must not regress below the third-review Version 1.2.4 baseline.' );
+$assert( str_contains( $main, 'Version:     ' . $current_version ), 'Plugin header must match the current corrected runtime version.' );
+$assert( str_contains( $readme, 'Stable tag: ' . $current_version ), 'Readme stable tag must match the current corrected runtime version.' );
+$assert( str_contains( $build, 'version="' . $current_version . '"' ), 'Deterministic packaging must match the current corrected runtime version.' );
 
 if ( $failed ) { fwrite( STDERR, "{$failed} of {$tests} third-ten-round review tests failed.\n" ); exit( 1 ); }
 echo "All {$tests} third-ten-round review tests passed.\n";

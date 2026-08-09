@@ -29,6 +29,7 @@ eval( 'function smc_is_trusted_publisher( $user_id ) { return (bool) $GLOBALS["s
 
 $GLOBALS['spdb_test_member_status'] = 'approved';
 $GLOBALS['spdb_test_founder']       = false;
+$GLOBALS['spdb_test_trusted']       = false;
 $GLOBALS['spdb_test_capabilities']  = array(
 	'spdb_view_dashboard'     => true,
 	'spdb_view_own_content'   => true,
@@ -40,9 +41,9 @@ $valid_two = SPDB_Test_Adapter::projection(
 	'publication',
 	'item-2',
 	array(
-		'title'             => 'Later item',
-		'modified_at'       => '2026-07-30T03:00:00Z',
-		'lifecycle_state'   => 'native_unmapped_state',
+		'title'           => 'Later item',
+		'modified_at'     => '2026-07-30T03:00:00Z',
+		'lifecycle_state' => 'native_unmapped_state',
 	)
 );
 $invalid_privacy = SPDB_Test_Adapter::projection( 'publication', 'item-3', array( 'privacy_class' => 'clinical_sensitive' ) );
@@ -84,8 +85,7 @@ spdb_inventory_assert( is_array( $inspected ), 'A matching owned native item mus
 spdb_inventory_assert( 7 === $inspected['owner_user_id'], 'Inspector must project the canonical native owner.' );
 spdb_inventory_assert( 'https://example.test/composer/?object=item-1' === $inspected['destinations']['edit'], 'Safe same-origin Composer destination must be retained.' );
 spdb_inventory_assert( false === $inspected['execution_exposed'], 'Phase 23C must not expose mutation execution.' );
-spdb_inventory_assert( 1 === count( $inspected['allowed_operations'] ), 'Declared capability-authorized operation metadata may be projected.' );
-spdb_inventory_assert( false === $inspected['allowed_operations'][0]['environment_eligible'], 'Unreviewed provider must remain ineligible for writes.' );
+spdb_inventory_assert( 0 === count( $inspected['allowed_operations'] ), 'A generic approved non-doctor must not receive operation metadata solely from a stale WordPress publishing capability.' );
 $noncanonical_reference = $inventory->inspect_item( 'Provider_One', 'publication', 'item-1' );
 spdb_inventory_assert( 'spdb_inventory_reference_invalid' === spdb_inventory_error_code( $noncanonical_reference ), 'Inspector references must already be canonical.' );
 
@@ -160,8 +160,10 @@ spdb_inventory_assert( 'spdb_projection_timestamp_invalid' === spdb_inventory_er
 
 $operation_registry = new SPDB_Adapter_Registry();
 $operation_registry->register( new SPDB_Test_Adapter( array( 'item' => $valid_one, 'allowed_operations' => array( array( 'bad' ), 'Submit_Item', 'submit_item', 'submit_item' ) ) ) );
+$GLOBALS['spdb_test_founder'] = true;
 $operation_item = ( new SPDB_Federated_Inventory( $operation_registry ) )->inspect_item( 'provider_one', 'publication', 'item-1' );
-spdb_inventory_assert( 1 === count( $operation_item['allowed_operations'] ), 'Malformed, noncanonical, and duplicate operation keys must be ignored safely.' );
+spdb_inventory_assert( 1 === count( $operation_item['allowed_operations'] ), 'A current Founder with explicit capability receives only the one canonical, deduplicated operation key.' );
+$GLOBALS['spdb_test_founder'] = false;
 
 $throwing_registry = new SPDB_Adapter_Registry();
 $throwing_registry->register( new SPDB_Test_Adapter( array( 'list_exception' => true ) ) );

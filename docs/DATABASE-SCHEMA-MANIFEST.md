@@ -1,4 +1,4 @@
-# File 23 Database Schema Manifest — Version 1.2.0
+# File 23 Database Schema Manifest — Current Source Candidate
 
 ## Scope law
 
@@ -10,6 +10,7 @@ File 23 owns bounded dashboard-operational metadata only. It does not own public
 |---|---:|---|
 | Operational metadata | `1.1.0` | `SPDB_Operations_Schema` |
 | Collections and knowledge pointers | `4` | `SPDB_Collections_Schema` |
+| REST rate-limit counters | `1` | `SPDB_REST_Rate_Limiter` |
 
 ## Operational metadata tables
 
@@ -27,6 +28,7 @@ WordPress prefix is represented as `{prefix}`.
 | `{prefix}spdb_adapter_health` | Bounded provider health cache | Non-sensitive status only, short-lived. |
 | `{prefix}spdb_background_jobs` | Retryable internal jobs | Idempotency key, lock token, attempt/dead-letter state. |
 | `{prefix}spdb_dashboard_audit` | Hash-chained File 23 audit evidence | Hashed object reference, bounded redacted payload, previous/event hash. |
+| `{prefix}spdb_rest_rate_limits` | Fixed-window REST admission counters | Hashed bucket, numeric actor ID when authenticated, bounded policy/count/timestamps only; no raw IP/request data. |
 
 ## Collections and knowledge-pointer tables
 
@@ -38,13 +40,18 @@ WordPress prefix is represented as `{prefix}`.
 
 ## Installation and verification
 
-- Installation uses WordPress `dbDelta()` and is idempotent.
-- All 13 File 23-owned tables must use transactional `InnoDB`; verification inspects the actual engine and performs a controlled upgrade when required.
-- Required tables, columns and indexes are verified after installation.
-- Schema versions are recorded only after verification succeeds.
-- Missing database/upgrade APIs fail closed with bounded `WP_Error` responses.
+- Operational and collection installation uses WordPress `dbDelta()` and is idempotent.
+- The REST rate-limit table is separately installed/verified by `SPDB_REST_Rate_Limiter` so rate admission can fail closed independently of higher-level operational services.
+- All **14 File 23-owned tables** must use transactional `InnoDB`.
+- Required tables, columns and indexes are verified after installation; the rate-limit table also verifies its actual storage engine before its schema marker is accepted.
+- Schema versions are recorded only after the relevant verification succeeds.
+- Missing database/upgrade APIs fail closed with bounded errors; a File 23 REST request is not silently admitted if rate-limit persistence cannot be established.
 - Upgrade and reactivation must not destroy native or File 23 metadata.
 - Uninstall does not purge records by default; destructive removal requires a separate authenticated, retention-aware process.
+
+## Rate-limit data minimization
+
+`spdb_rest_rate_limits` stores only `bucket_hash`, optional authenticated `actor_user_id`, `policy_key`, bounded request count and UTC window timestamps. Anonymous network pressure is converted to a keyed pseudonymous subject before the bucket hash is calculated. Raw IP addresses, forwarding headers, cookies, nonces, tokens, query strings and request bodies are not persisted. Expired counters are cleanup-eligible and are not permanent audit records.
 
 ## Prohibited columns and domains
 
@@ -54,5 +61,7 @@ Architecture tests reject native-domain or sensitive storage such as publication
 
 - `includes/class-spdb-operations-schema.php`
 - `includes/class-spdb-collections-schema.php`
+- `includes/class-spdb-rest-rate-limiter.php`
 - `tests/architecture-guard.php`
 - `tests/full-plan-completion-tests.php`
+- `tests/rest-rate-limit-tests.php`

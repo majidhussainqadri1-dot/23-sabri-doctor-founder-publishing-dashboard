@@ -56,18 +56,12 @@ final class SPDB_Saved_Views {
 		);
 	}
 
-	/**
-	 * @param mixed $value Candidate route value.
-	 */
+	/** @param mixed $value Candidate route value. */
 	public function validate_view_id( $value ): bool {
 		return is_string( $value ) && 1 === preg_match( '/^view_[a-z0-9]{32}$/', $value );
 	}
 
-	/**
-	 * Restricted accounts may list their existing personal preferences.
-	 *
-	 * @return true|WP_Error
-	 */
+	/** Restricted accounts may list their existing personal preferences. @return true|WP_Error */
 	public function read_permission_check() {
 		$user_id = get_current_user_id();
 		if (
@@ -81,21 +75,15 @@ final class SPDB_Saved_Views {
 				array( 'status' => 403 )
 			);
 		}
-
 		return true;
 	}
 
-	/**
-	 * Personal preference mutation requires an approved or verified account.
-	 *
-	 * @return true|WP_Error
-	 */
+	/** Personal preference mutation requires an approved or verified account. @return true|WP_Error */
 	public function write_permission_check() {
 		$read_permission = $this->read_permission_check();
 		if ( is_wp_error( $read_permission ) ) {
 			return $read_permission;
 		}
-
 		if ( ! SPDB_Membership_Guard::current_user_is_approved() ) {
 			return new WP_Error(
 				'spdb_saved_views_read_only',
@@ -103,7 +91,6 @@ final class SPDB_Saved_Views {
 				array( 'status' => 403 )
 			);
 		}
-
 		return true;
 	}
 
@@ -157,6 +144,12 @@ final class SPDB_Saved_Views {
 	}
 
 	/**
+	 * Return saved views without causing persistent side effects.
+	 *
+	 * Legacy user-meta views remain readable until an explicit authenticated
+	 * migration/repair path handles them. A GET request must never create rows
+	 * or delete metadata, especially for restricted/read-only accounts.
+	 *
 	 * @return array<int,array<string,mixed>>
 	 */
 	public function get_for_user( int $user_id ): array {
@@ -168,29 +161,14 @@ final class SPDB_Saved_Views {
 		}
 
 		$rows = $this->repository->list_saved_views( $user_id );
-		if ( ! empty( $rows ) ) {
+		if ( is_array( $rows ) && ! empty( $rows ) ) {
 			return $rows;
 		}
 
-		$legacy = $this->normalize_stored_views( get_user_meta( $user_id, self::META_KEY, true ) );
-		if ( empty( $legacy ) ) {
-			return array();
-		}
-		$migrated = array();
-		foreach ( $legacy as $view ) {
-			$result = $this->repository->create_saved_view( $user_id, $view['label'], $view['filters'] );
-			if ( is_array( $result ) ) { $migrated[] = $result; }
-		}
-		if ( count( $migrated ) === count( $legacy ) ) {
-			delete_user_meta( $user_id, self::META_KEY );
-		}
-		return $migrated;
+		return $this->normalize_stored_views( get_user_meta( $user_id, self::META_KEY, true ) );
 	}
 
-	/**
-	 * @param mixed $raw Stored user-meta value.
-	 * @return array<int,array<string,mixed>>
-	 */
+	/** @param mixed $raw Stored user-meta value. @return array<int,array<string,mixed>> */
 	private function normalize_stored_views( $raw ): array {
 		if ( ! is_array( $raw ) ) {
 			return array();
@@ -201,22 +179,14 @@ final class SPDB_Saved_Views {
 			if ( ! is_array( $view ) || empty( $view['id'] ) || empty( $view['label'] ) || ! isset( $view['filters'] ) || ! is_array( $view['filters'] ) ) {
 				continue;
 			}
-
 			$id = sanitize_key( (string) $view['id'] );
 			if ( ! $this->validate_view_id( $id ) ) {
 				continue;
 			}
-
-			$definition = self::normalize_definition(
-				array(
-					'label'   => $view['label'],
-					'filters' => $view['filters'],
-				)
-			);
+			$definition = self::normalize_definition( array( 'label' => $view['label'], 'filters' => $view['filters'] ) );
 			if ( is_wp_error( $definition ) ) {
 				continue;
 			}
-
 			$validated[] = array(
 				'id'         => $id,
 				'label'      => $definition['label'],
@@ -225,23 +195,14 @@ final class SPDB_Saved_Views {
 				'version'    => isset( $view['version'] ) ? min( 2147483647, max( 1, (int) $view['version'] ) ) : 1,
 			);
 		}
-
 		return $validated;
 	}
 
-	/**
-	 * Compare-and-store prevents concurrent requests from silently overwriting
-	 * one another's saved-view changes.
-	 *
-	 * @param mixed                            $previous_raw Exact prior meta value.
-	 * @param array<int,array<string,mixed>> $new_value    Validated replacement.
-	 * @return true|WP_Error
-	 */
+	/** Compare-and-store prevents concurrent requests from silently overwriting one another's saved-view changes. @return true|WP_Error */
 	private function compare_and_store( int $user_id, $previous_raw, array $new_value ) {
 		if ( update_user_meta( $user_id, self::META_KEY, $new_value, $previous_raw ) ) {
 			return true;
 		}
-
 		$current = get_user_meta( $user_id, self::META_KEY, true );
 		if ( $current !== $previous_raw ) {
 			return new WP_Error(
@@ -250,7 +211,6 @@ final class SPDB_Saved_Views {
 				array( 'status' => 409 )
 			);
 		}
-
 		return new WP_Error(
 			'spdb_saved_view_write_failed',
 			__( 'The saved-view change could not be stored.', 'sabri-publishing-dashboard' ),
@@ -258,31 +218,22 @@ final class SPDB_Saved_Views {
 		);
 	}
 
-	/**
-	 * Normalize a deliberately narrow, non-clinical filter definition.
-	 *
-	 * @param mixed $input Raw request input.
-	 * @return array<string,mixed>|WP_Error
-	 */
+	/** Normalize a deliberately narrow, non-clinical filter definition. @param mixed $input @return array<string,mixed>|WP_Error */
 	public static function normalize_definition( $input ) {
 		if ( ! is_array( $input ) ) {
 			return new WP_Error( 'spdb_invalid_saved_view', __( 'The saved-view payload is invalid.', 'sabri-publishing-dashboard' ) );
 		}
-
 		if ( isset( $input['label'] ) && ! is_scalar( $input['label'] ) ) {
 			return new WP_Error( 'spdb_invalid_saved_view_label', __( 'The saved-view label is invalid.', 'sabri-publishing-dashboard' ) );
 		}
-
 		$label        = isset( $input['label'] ) ? trim( sanitize_text_field( (string) $input['label'] ) ) : '';
 		$label_length = function_exists( 'mb_strlen' ) ? mb_strlen( $label ) : strlen( $label );
 		if ( '' === $label || $label_length > 80 ) {
 			return new WP_Error( 'spdb_invalid_saved_view_label', __( 'The saved-view label must contain 1 to 80 characters.', 'sabri-publishing-dashboard' ) );
 		}
-
 		if ( self::contains_sensitive_pattern( $label ) ) {
 			return new WP_Error( 'spdb_sensitive_saved_view_label', __( 'Saved-view labels must not contain contact details, URLs, or sensitive identifiers.', 'sabri-publishing-dashboard' ) );
 		}
-
 		if ( isset( $input['filters'] ) && ! is_array( $input['filters'] ) ) {
 			return new WP_Error( 'spdb_invalid_saved_view_filter', __( 'Saved-view filters must be an object.', 'sabri-publishing-dashboard' ) );
 		}
@@ -291,73 +242,51 @@ final class SPDB_Saved_Views {
 		$allowed = array( 'status', 'type', 'provider', 'language', 'sort', 'direction', 'date_from', 'date_to' );
 		$multi   = array( 'status', 'type', 'provider', 'language' );
 		$clean   = array();
-
 		foreach ( $filters as $key => $value ) {
 			$key = sanitize_key( (string) $key );
 			if ( ! in_array( $key, $allowed, true ) ) {
 				continue;
 			}
-
 			if ( is_array( $value ) ) {
 				if ( ! in_array( $key, $multi, true ) || count( $value ) > 20 ) {
 					return new WP_Error( 'spdb_invalid_saved_view_filter', __( 'A saved-view filter has an invalid value shape.', 'sabri-publishing-dashboard' ) );
 				}
-
 				$values = array();
 				foreach ( $value as $entry ) {
 					if ( ! is_scalar( $entry ) && null !== $entry ) {
 						return new WP_Error( 'spdb_invalid_saved_view_filter', __( 'A saved-view filter contains a non-scalar value.', 'sabri-publishing-dashboard' ) );
 					}
 					$normalized = self::normalize_filter_value( $key, $entry );
-					if ( is_wp_error( $normalized ) ) {
-						return $normalized;
-					}
+					if ( is_wp_error( $normalized ) ) { return $normalized; }
 					$values[] = $normalized;
 				}
 				$values = array_values( array_unique( array_filter( $values, 'strlen' ) ) );
-				if ( array() !== $values ) {
-					$clean[ $key ] = $values;
-				}
+				if ( array() !== $values ) { $clean[ $key ] = $values; }
 				continue;
 			}
-
 			if ( ! is_scalar( $value ) && null !== $value ) {
 				return new WP_Error( 'spdb_invalid_saved_view_filter', __( 'A saved-view filter contains a non-scalar value.', 'sabri-publishing-dashboard' ) );
 			}
-
 			$normalized = self::normalize_filter_value( $key, $value );
-			if ( is_wp_error( $normalized ) ) {
-				return $normalized;
-			}
-			if ( '' !== $normalized ) {
-				$clean[ $key ] = $normalized;
-			}
+			if ( is_wp_error( $normalized ) ) { return $normalized; }
+			if ( '' !== $normalized ) { $clean[ $key ] = $normalized; }
 		}
-
 		return array( 'label' => $label, 'filters' => $clean );
 	}
 
-	/**
-	 * @param mixed $value Raw filter value.
-	 * @return string|WP_Error
-	 */
+	/** @param mixed $value Raw filter value. @return string|WP_Error */
 	private static function normalize_filter_value( string $key, $value ) {
 		$value = trim( sanitize_text_field( (string) $value ) );
-		if ( '' === $value ) {
-			return '';
-		}
-
+		if ( '' === $value ) { return ''; }
 		if ( in_array( $key, array( 'date_from', 'date_to' ), true ) ) {
 			if ( 1 !== preg_match( '/^(\d{4})-(\d{2})-(\d{2})$/', $value, $parts ) || ! checkdate( (int) $parts[2], (int) $parts[3], (int) $parts[1] ) ) {
 				return new WP_Error( 'spdb_invalid_saved_view_date', __( 'The saved-view date must use a valid YYYY-MM-DD value.', 'sabri-publishing-dashboard' ) );
 			}
 			return $value;
 		}
-
 		if ( self::contains_sensitive_pattern( $value ) ) {
 			return new WP_Error( 'spdb_sensitive_saved_view_filter', __( 'Saved-view filters must not contain contact details, URLs, or sensitive identifiers.', 'sabri-publishing-dashboard' ) );
 		}
-
 		if ( in_array( $key, array( 'status', 'type', 'provider', 'language' ), true ) ) {
 			$value = sanitize_key( $value );
 			if ( 1 !== preg_match( '/^[a-z0-9][a-z0-9_-]{0,63}$/', $value ) ) {
@@ -365,21 +294,14 @@ final class SPDB_Saved_Views {
 			}
 			return $value;
 		}
-
 		if ( 'sort' === $key ) {
 			$value = sanitize_key( $value );
-			return in_array( $value, array( 'modified', 'created', 'title' ), true )
-				? $value
-				: new WP_Error( 'spdb_invalid_saved_view_sort', __( 'The saved-view sort value is invalid.', 'sabri-publishing-dashboard' ) );
+			return in_array( $value, array( 'modified', 'created', 'title' ), true ) ? $value : new WP_Error( 'spdb_invalid_saved_view_sort', __( 'The saved-view sort value is invalid.', 'sabri-publishing-dashboard' ) );
 		}
-
 		if ( 'direction' === $key ) {
 			$value = sanitize_key( $value );
-			return in_array( $value, array( 'asc', 'desc' ), true )
-				? $value
-				: new WP_Error( 'spdb_invalid_saved_view_direction', __( 'The saved-view direction is invalid.', 'sabri-publishing-dashboard' ) );
+			return in_array( $value, array( 'asc', 'desc' ), true ) ? $value : new WP_Error( 'spdb_invalid_saved_view_direction', __( 'The saved-view direction value is invalid.', 'sabri-publishing-dashboard' ) );
 		}
-
 		return new WP_Error( 'spdb_invalid_saved_view_filter', __( 'The saved-view filter is invalid.', 'sabri-publishing-dashboard' ) );
 	}
 

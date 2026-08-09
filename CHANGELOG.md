@@ -1,5 +1,39 @@
 # Changelog
 
+## 1.2.7 — 2026-08-09
+
+- Completed a second fresh eighty-round review/fix cycle after Version 1.2.6, with immediate correction and retest before progression.
+- Reopened the prior closure because exact-head CI showed that Baseline Integrity and Full Plan Completion still required stale Version 1.2.5 release strings.
+- Replaced the unreachable File 21 integration pin `449b3660d23f814f8a7b4feb289f43fe985d8199` with the reviewed merged main head `449b5faef8622ae0866a7faa6f4144cde5451d1b`.
+- Made the first eighty-round regression gate forward-compatible while preserving its immutable Version 1.2.6 historical evidence.
+- Realigned Baseline, Full Plan and Final Release workflows, deterministic package/source artifacts, sign-off and final-deliverables evidence to Version 1.2.7.
+- Added the second permanent eighty-round audit/regression gate and retained File 00/19/20/21/22/24/25 canonical ownership boundaries.
+- Preserved truthful release boundaries: the pinned File 00 dependency remains production-blocking until its documented Critical/High findings are corrected/accepted, and Hostinger staging/live/operational acceptance remains separate.
+
+## 1.2.6 — 2026-08-09
+
+- Completed the fresh eighty-round review/fix cycle, correcting and retesting every evidence-backed defect before proceeding to the next round.
+- Defects were found in rounds 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 26, 37, 61, 64, 68, 72, 73 and 79; the remaining 60 rounds were clean within their reviewed scopes.
+- Hardened fail-closed REST rate limiting, saved-view read semantics, system-principal background jobs, schema/readiness evidence, privacy lifecycle and sensitive operational projection minimization.
+- Reconciled current File 19 notification, File 20 shell, File 21 publishing, File 22 Composer, File 24 assurance and File 25 public visual ownership boundaries without creating duplicate backends.
+- Corrected responsibility/release documentation, reviewed companion evidence and historical regression gates so later corrected releases may advance without rewriting immutable historical baselines.
+- Added the permanent eighty-round audit and executable closure regression gate and wired it into harmonization/final release evidence.
+- Advanced immutable runtime/package identity from Version 1.2.5 to Version 1.2.6.
+- Preserved truthful release boundaries: Hostinger staging/live/operational acceptance remains separate, and the currently pinned File 00 head remains a production blocker until its documented Critical/High findings are superseded by accepted corrective evidence.
+
+## 1.2.5 — 2026-08-09
+
+- Completed a fourth fresh ten-round review of File 23, fixing every evidence-backed defect before continuing to the next round.
+- Removed `membership_type=doctor` as a verified-doctor fallback; current File 00 publishing authority and doctor-verification assertions are now canonical.
+- Bound writable role workspaces and sensitive operational mutations to current File 00 strong-session assurance and excluded institutional AI from human sensitive-session authority.
+- Corrected the independent role-workspace service so approved non-doctors, reviewers, moderators and institutional AI cannot fall through to a Doctor projection.
+- Added a centralized sensitive REST mutation gate and extended it to native review/calendar operations with same-origin enforcement.
+- Strengthened export download reauthorization to require current strong-session assurance as well as report-export capability.
+- Refreshed File 21 exact reviewed contract pin to `e9bf82f78fc7b4b327ac4c6be4ed7147ea155cd8`; retained File 00 `3a84c32a6ddad151f2ed09d244fa8aa536a58108` and File 22 `4008521f9860e6181560ac07ff1c7e75868f1982` reviewed pins.
+- Corrected the second-review regression gate so historical audit evidence stays immutable without freezing future File 21 reviewed heads.
+- Added explicit release-truth documentation that the currently pinned File 00 head has a separate engineering audit with unresolved Critical/High defects and therefore remains a production-promotion blocker until superseded by accepted corrective evidence.
+- Added the permanent fourth-ten-round audit/regression evidence and promoted deterministic installable/source package identity to Version 1.2.5; staging/live/operational acceptance remains separate.
+
 ## 1.2.4 — 2026-08-08
 
 - Completed a third fresh ten-round review of File 23 after Version 1.2.3, correcting every evidence-backed defect before continuing to the next round.
@@ -15,7 +49,7 @@
 ## 1.2.3 — 2026-08-08
 
 - Completed a second fresh ten-round review of the full File 23 source after Version 1.2.2.
-- Corrected File 00–26 dependency coverage by adding File 26 Search/Discovery/Ranking to the discovery manifest without duplicating its canonical ownership.
+- Corrected File 00–26 dependency coverage by adding File 26 Search/Discovery/Ranking to the discovery manifest without duplicating File 26 ownership.
 - Added current File 00 `session_two_factor` enforcement for privileged interactive File 23 capabilities.
 - Added a download-boundary authorization recheck so suspension, capability revocation or loss of current session step-up blocks previously issued export links.
 - Revalidated background automation owner approval, capability and job/rule owner binding before native-provider dispatch.

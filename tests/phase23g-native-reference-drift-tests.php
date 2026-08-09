@@ -20,7 +20,7 @@ function spdb_23g_drift_context(): array {
 	return array(
 		'user_id' => get_current_user_id(),
 		'scope' => 'own',
-		'is_founder' => false,
+		'is_founder' => SPDB_Membership_Guard::is_user_founder( get_current_user_id() ),
 		'environment' => wp_get_environment_type(),
 		'generated_at' => gmdate( 'c' ),
 	);
@@ -35,7 +35,8 @@ $GLOBALS['spdb_test_environment'] = 'staging';
 $GLOBALS['spdb_test_user_id'] = 7;
 $GLOBALS['spdb_test_member_status'] = 'approved';
 $GLOBALS['spdb_test_member_statuses'][7] = 'approved';
-$GLOBALS['spdb_test_founder'] = false;
+/* The drift test must reach provider-readiness evaluation under a current canonical publishing identity. */
+$GLOBALS['spdb_test_founder'] = true;
 $GLOBALS['spdb_test_capabilities']['spdb_manage_own_content'] = true;
 
 $version_provider = new SPDB_Test_Native_Reference_Provider();

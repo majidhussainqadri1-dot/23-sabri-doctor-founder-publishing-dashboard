@@ -32,15 +32,19 @@ jobs:
           php -l includes/class-spdb-capabilities.php
           php -l includes/class-spdb-membership-guard.php
           php -l includes/class-spdb-capability-installer.php
+          php -l includes/class-spdb-sensitive-session-guard.php
           php -l includes/class-spdb-ai-teacher-oversight-rest.php
           php -l includes/class-spdb-automation-engine.php
 
-      - name: Syntax — corrected review gates
+      - name: Syntax — cumulative review gates
         run: |
           php -l tests/bootstrap.php
           php -l tests/ten-round-corrective-review-tests.php
           php -l tests/second-ten-round-review-tests.php
           php -l tests/third-ten-round-review-tests.php
+          php -l tests/fourth-ten-round-review-tests.php
+          php -l tests/eighty-round-review-regression-test.php
+          php -l tests/second-eighty-round-review-regression-test.php
           php -l tests/final-deliverables-tests.php
 
       - name: JavaScript syntax
@@ -57,8 +61,17 @@ jobs:
       - name: Second ten-round gate
         run: php tests/second-ten-round-review-tests.php
 
-      - name: Current third ten-round gate
+      - name: Third ten-round gate
         run: php tests/third-ten-round-review-tests.php
+
+      - name: Fourth ten-round gate
+        run: php tests/fourth-ten-round-review-tests.php
+
+      - name: First eighty-round historical gate
+        run: php tests/eighty-round-review-regression-test.php
+
+      - name: Second eighty-round closure gate
+        run: php tests/second-eighty-round-review-regression-test.php
 
       - name: Operational projection gate
         run: php tests/operational-validator-tests.php

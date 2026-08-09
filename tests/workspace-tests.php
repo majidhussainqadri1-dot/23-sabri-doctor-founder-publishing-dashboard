@@ -5,16 +5,53 @@ require_once __DIR__ . '/fixtures/class-test-workspace-adapter.php';
 $tests = 0; $failed = 0;
 function spdb_workspace_assert( bool $condition, string $message ): void { global $tests, $failed; ++$tests; if ( ! $condition ) { ++$failed; fwrite( STDERR, "FAIL: {$message}\n" ); } }
 function spdb_workspace_error_code( $value ): string { return $value instanceof WP_Error ? $value->get_error_code() : ''; }
-if ( ! defined( 'SMC_VERSION' ) ) { define( 'SMC_VERSION', '1.0.1' ); }
-if ( ! function_exists( 'smc_user_status' ) ) { function smc_user_status( $user_id ) { return (string) $GLOBALS['spdb_test_member_status']; } }
-if ( ! function_exists( 'smc_is_founder' ) ) { function smc_is_founder( $user_id ) { return (bool) $GLOBALS['spdb_test_founder']; } }
-if ( ! function_exists( 'smc_is_trusted_publisher' ) ) { function smc_is_trusted_publisher( $user_id ) { return (bool) $GLOBALS['spdb_test_trusted']; } }
+
+if ( ! defined( 'SMC_VERSION' ) ) { define( 'SMC_VERSION', '1.2.18' ); }
+if ( ! defined( 'SMC_CONTRACT_VERSION' ) ) { define( 'SMC_CONTRACT_VERSION', '1.2.0' ); }
 $GLOBALS['spdb_test_member_status'] = 'approved';
+$GLOBALS['spdb_test_authority'] = 'verified_doctor';
 $GLOBALS['spdb_test_user_id'] = 7;
-$GLOBALS['spdb_test_founder'] = false;
-$GLOBALS['spdb_test_trusted'] = false;
 $GLOBALS['spdb_test_environment'] = 'production';
 $GLOBALS['spdb_test_capabilities'] = array( 'spdb_view_dashboard' => true, 'spdb_view_own_content' => true, 'spdb_manage_own_content' => true );
+
+if ( ! class_exists( 'SMC_Contracts' ) ) {
+	final class SMC_Contracts {
+		/** @return array<string,mixed> */
+		public static function assertions( int $user_id ): array {
+			$status = (string) $GLOBALS['spdb_test_member_status'];
+			$approved = 'approved' === $status || 'verified' === $status;
+			$authority = (string) $GLOBALS['spdb_test_authority'];
+			$founder = 'founder' === $authority;
+			$doctor = 'verified_doctor' === $authority;
+			return array(
+				'contract_version' => SMC_CONTRACT_VERSION,
+				'user_id' => $user_id,
+				'status' => $status,
+				'approved' => $approved,
+				'suspended' => in_array( $status, array( 'suspended', 'rejected', 'expired' ), true ),
+				'eligible' => $approved,
+				'session_two_factor' => $approved,
+				'can_publish' => $approved && ( $founder || $doctor || 'trusted_publisher' === $authority ),
+				'institutional_account' => $founder,
+				'institutional_ai' => false,
+				'account_class' => 'human',
+				'membership_type' => $doctor ? 'doctor' : 'member',
+				'publishing' => array(
+					'authority_class' => $authority,
+					'can_open_composer' => $approved && ( $founder || $doctor || 'trusted_publisher' === $authority ),
+					'can_submit_for_review' => $approved && ( $doctor || 'trusted_publisher' === $authority ),
+					'can_direct_publish' => $approved && $founder,
+					'requires_human_review' => $approved && $doctor,
+					'doctor_verification_claim' => $approved && $doctor,
+					'ai_generated_disclosure_required' => false,
+				),
+			);
+		}
+	}
+}
+if ( ! function_exists( 'smc_user_status' ) ) { function smc_user_status( $user_id ) { return (string) $GLOBALS['spdb_test_member_status']; } }
+if ( ! function_exists( 'smc_is_founder' ) ) { function smc_is_founder( $user_id ) { return 'founder' === (string) $GLOBALS['spdb_test_authority']; } }
+if ( ! function_exists( 'smc_is_trusted_publisher' ) ) { function smc_is_trusted_publisher( $user_id ) { return 'trusted_publisher' === (string) $GLOBALS['spdb_test_authority']; } }
 
 $valid_workspace = array(
 	'cards' => array( array( 'key' => 'drafts', 'label' => 'Drafts', 'value' => 4, 'note' => 'Native measured count', 'priority' => 'information', 'data_status' => 'measured', 'source_timestamp' => '2026-07-30T09:30:00Z', 'scope' => 'own', 'owner_user_id' => 7 ) ),
@@ -32,11 +69,11 @@ spdb_workspace_assert( true === $registry->register( new SPDB_Test_Workspace_Ada
 $service = new SPDB_Role_Workspace_Service( $registry );
 $input = array( 'key' => 'doctor', 'label' => 'Doctor Publishing Workspace', 'read_only' => false, 'account_status' => 'approved', 'user_id' => 7 );
 $projection = $service->build( $input );
-spdb_workspace_assert( 'doctor' === $projection['workspace_key'], 'File 00 must determine the Doctor workspace.' );
-spdb_workspace_assert( 'doctor_reviewed' === $projection['publishing_policy']['mode'], 'A regular doctor must receive reviewed publishing policy.' );
+spdb_workspace_assert( 'doctor' === $projection['workspace_key'], 'Canonical File 00 doctor verification must determine the Doctor workspace.' );
+spdb_workspace_assert( 'doctor_reviewed' === $projection['publishing_policy']['mode'], 'A verified doctor must receive reviewed publishing policy.' );
 spdb_workspace_assert( '4' === $projection['cards'][0]['value'], 'Measured values must remain truthful.' );
 spdb_workspace_assert( 4 === count( $projection['actions'] ), 'Doctor receives professional, profile, public-profile, and knowledge actions, not official action.' );
-spdb_workspace_assert( 1 === $projection['blocked_action_count'], 'Founder action must be gated.' );
+spdb_workspace_assert( 1 === $projection['blocked_action_count'], 'Founder-only action must be gated from a verified Doctor.' );
 spdb_workspace_assert( ! isset( $projection['profiles'][0]['edit_destination'], $projection['profiles'][0]['public_destination'] ), 'Profile destinations must not bypass the action gate.' );
 spdb_workspace_assert( ! isset( $projection['knowledge'][0]['destination'] ), 'Knowledge destination must not bypass the action gate.' );
 spdb_workspace_assert( array( 'own' ) === $GLOBALS['spdb_test_workspace_context']['allowed_scopes'], 'Doctor context is own-scope only.' );
@@ -47,14 +84,14 @@ $forged_projection = $service->build( $forged );
 spdb_workspace_assert( 'doctor' === $forged_projection['workspace_key'], 'Forged Founder workspace input must be ignored.' );
 spdb_workspace_assert( 'doctor_reviewed' === $forged_projection['publishing_policy']['mode'], 'Forged Founder input must not expose Founder policy.' );
 
-$GLOBALS['spdb_test_founder'] = true;
+$GLOBALS['spdb_test_authority'] = 'founder';
 $founder = $service->build( $input );
 spdb_workspace_assert( 'founder' === $founder['workspace_key'], 'Server-verified Founder must receive Founder workspace.' );
 spdb_workspace_assert( 'founder_official' === $founder['publishing_policy']['mode'], 'Founder must receive official policy.' );
 spdb_workspace_assert( 5 === count( $founder['actions'] ), 'Founder may receive all accepted actions.' );
 spdb_workspace_assert( array( 'own', 'institution' ) === $GLOBALS['spdb_test_workspace_context']['allowed_scopes'], 'Only Founder receives institution scope.' );
 
-$GLOBALS['spdb_test_founder'] = false; $GLOBALS['spdb_test_member_status'] = 'submitted';
+$GLOBALS['spdb_test_authority'] = 'verified_doctor'; $GLOBALS['spdb_test_member_status'] = 'submitted';
 $restricted = $service->build( $input );
 spdb_workspace_assert( 'restricted' === $restricted['workspace_key'] && true === $restricted['read_only'], 'Pending File 00 status must force restricted read-only mode.' );
 spdb_workspace_assert( 1 === count( $restricted['actions'] ) && 'view_public_profile' === $restricted['actions'][0]['action_type'], 'Restricted account may receive only safe non-mutating public-profile view.' );

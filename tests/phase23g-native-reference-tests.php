@@ -25,7 +25,7 @@ function spdb_23g_context( string $scope = 'own' ): array {
 	return array(
 		'user_id' => get_current_user_id(),
 		'scope' => $scope,
-		'is_founder' => (bool) $GLOBALS['spdb_test_founder'],
+		'is_founder' => SPDB_Membership_Guard::is_user_founder( get_current_user_id() ),
 		'environment' => wp_get_environment_type(),
 		'generated_at' => gmdate( 'c' ),
 	);
@@ -35,7 +35,8 @@ $GLOBALS['spdb_test_environment'] = 'staging';
 $GLOBALS['spdb_test_user_id'] = 7;
 $GLOBALS['spdb_test_member_status'] = 'approved';
 $GLOBALS['spdb_test_member_statuses'][7] = 'approved';
-$GLOBALS['spdb_test_founder'] = false;
+/* Positive resolver-routing assertions must reach provider governance under a current canonical publishing identity. */
+$GLOBALS['spdb_test_founder'] = true;
 $GLOBALS['spdb_test_capabilities']['spdb_manage_own_content'] = true;
 $GLOBALS['spdb_test_capabilities']['spdb_manage_campaigns'] = false;
 
@@ -76,7 +77,7 @@ spdb_23g_assert( 'spdb_native_resolver_context_invalid' === spdb_23g_code( $cont
 $extra_context = spdb_23g_context(); $extra_context['role'] = 'founder';
 spdb_23g_assert( 'spdb_native_resolver_context_invalid' === spdb_23g_code( $context_registry->resolve_reference( 'provider_one', 'publication', 'post-101', $extra_context ) ), 'Unknown context authority fields must be rejected.' );
 $institution_context = spdb_23g_context( 'institution' );
-spdb_23g_assert( 'spdb_native_resolver_context_forbidden' === spdb_23g_code( $context_registry->resolve_reference( 'provider_one', 'publication', 'post-101', $institution_context ) ), 'A non-Founder must not resolve institution-scope references.' );
+spdb_23g_assert( 'spdb_native_resolver_context_forbidden' === spdb_23g_code( $context_registry->resolve_reference( 'provider_one', 'publication', 'post-101', $institution_context ) ), 'Institution resolution still requires the distinct campaign capability even for Founder authority.' );
 
 $GLOBALS['spdb_test_environment'] = 'production';
 $production_adapters = spdb_23g_adapter_registry( 'production_accepted' );
