@@ -20,8 +20,9 @@ $status = $read( 'STATUS.md' );
 $signoff = $read( 'docs/RELEASE-SIGNOFF.md' );
 
 $assert( 80 === preg_match_all( '/^\| (?:[1-9]|[1-7][0-9]|80) \|/m', $audit ), 'Second eighty-round audit must contain exactly 80 ledger rows.' );
-$assert( str_contains( $audit, 'Defect-bearing rounds: **11**' ), 'Second audit must retain exact defect-bearing count.' );
-$assert( str_contains( $audit, '**1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11**' ), 'Second audit must retain exact defect-bearing rounds.' );
+$assert( str_contains( $audit, 'Defect-bearing rounds: **12**' ), 'Second audit must retain exact defect-bearing count.' );
+$assert( str_contains( $audit, '**1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12**' ), 'Second audit must retain exact defect-bearing rounds.' );
+$assert( str_contains( $audit, 'Pull-request release truth' ), 'Second audit must record the corrected stale PR metadata defect.' );
 $assert( str_contains( $main, "define( 'SPDB_VERSION', '1.2.7' )" ), 'Runtime identity must be Version 1.2.7.' );
 $assert( str_contains( $readme, 'Stable tag: 1.2.7' ), 'Stable tag must be Version 1.2.7.' );
 $assert( str_contains( $build, 'version="1.2.7"' ), 'Deterministic build must target Version 1.2.7.' );
