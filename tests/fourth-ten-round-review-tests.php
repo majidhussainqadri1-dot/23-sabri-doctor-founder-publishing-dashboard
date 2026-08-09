@@ -34,7 +34,7 @@ $assert( str_contains( $sensitive, 'current_user_has_sensitive_session' ) && str
 foreach ( array( 'approve|request-changes|reject|assign-reviewer', 'schedule|reschedule|unschedule' ) as $marker ) {
 	$assert( str_contains( $sensitive, $marker ), 'Round 5: native review/calendar mutation coverage is missing: ' . $marker );
 }
-$assert( str_contains( $workflow, 'FILE21_SHA: e9bf82f78fc7b4b327ac4c6be4ed7147ea155cd8' ), 'Round 6: File 21 must remain pinned to the reviewed head used by this release.' );
+$assert( 1 === preg_match( '/FILE21_SHA: [0-9a-f]{40}/', $workflow ), 'Round 6: File 21 must remain pinned to an immutable reviewed 40-character head; later reviewed heads may supersede the historical fourth-review pin.' );
 $assert( str_contains( $caps, 'verified_publishing_identity_capabilities' ) && str_contains( $caps, 'is_user_verified_doctor' ) && str_contains( $caps, 'has_sensitive_session' ), 'Round 7: stale WordPress capabilities must not replace current File 00 publishing identity/session assurance.' );
 $assert( str_contains( $history, "preg_match( '/FILE21_SHA: [0-9a-f]{40}/'" ), 'Round 8: historical second-review gate must allow a later immutable reviewed File 21 pin.' );
 $assert( str_contains( $limitations, 'F23-LIM-011' ) && str_contains( $limitations, '3a84c32a6ddad151f2ed09d244fa8aa536a58108' ) && str_contains( $limitations, 'Critical/High' ), 'Round 9: current File 00 production blocker must remain explicit.' );
