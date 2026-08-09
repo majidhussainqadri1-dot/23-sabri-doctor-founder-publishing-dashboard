@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version="$(php -r '$s=file_get_contents("sabri-publishing-dashboard.php"); if (!preg_match("/define\\( \\'SPDB_VERSION\\', \\'([^\\']+)\\' \\)/", $s, $m)) { exit(1); } echo $m[1];')"
+          version="$(awk -F"'" '/SPDB_VERSION/ { print $4; exit }' sabri-publishing-dashboard.php)"
           test -n "$version"
           grep -Fq "Version:     ${version}" sabri-publishing-dashboard.php
           grep -Fq "Stable tag: ${version}" readme.txt
