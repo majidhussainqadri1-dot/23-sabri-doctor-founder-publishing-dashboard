@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.6 — 2026-08-09
+
+- Completed the fresh eighty-round review/fix cycle, correcting and retesting every evidence-backed defect before proceeding to the next round.
+- Defects were found in rounds 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 26, 37, 61, 64, 68, 72, 73 and 79; the remaining 60 rounds were clean within their reviewed scopes.
+- Hardened fail-closed REST rate limiting, saved-view read semantics, system-principal background jobs, schema/readiness evidence, privacy lifecycle and sensitive operational projection minimization.
+- Reconciled current File 19 notification, File 20 shell, File 21 publishing, File 22 Composer, File 24 assurance and File 25 public visual ownership boundaries without creating duplicate backends.
+- Corrected responsibility/release documentation, reviewed companion evidence and historical regression gates so later corrected releases may advance without rewriting immutable historical baselines.
+- Added the permanent eighty-round audit and executable closure regression gate and wired it into harmonization/final release evidence.
+- Advanced immutable runtime/package identity from Version 1.2.5 to Version 1.2.6.
+- Preserved truthful release boundaries: Hostinger staging/live/operational acceptance remains separate, and the currently pinned File 00 head remains a production blocker until its documented Critical/High findings are superseded by accepted corrective evidence.
+
 ## 1.2.5 — 2026-08-09
 
 - Completed a fourth fresh ten-round review of File 23, fixing every evidence-backed defect before continuing to the next round.
