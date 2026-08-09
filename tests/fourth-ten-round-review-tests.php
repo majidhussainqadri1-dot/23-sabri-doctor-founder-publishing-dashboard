@@ -41,9 +41,11 @@ $assert( str_contains( $limitations, 'F23-LIM-011' ) && str_contains( $limitatio
 $assert( str_contains( $signoff, 'Current File 00 exact head has no unresolved production-blocking Critical/High' ), 'Round 9: File 00 corrective acceptance must remain an explicit release gate.' );
 $assert( substr_count( $audit, '**DEFECT**' ) === 10 && str_contains( $audit, '10 of 10' ), 'Round 10: fourth-review audit must truthfully record all ten defect-bearing rounds.' );
 $assert( str_contains( $prior, "version_compare( \$current_version, '1.2.4', '>=' )" ), 'Round 10: third-review evidence must be forward-compatible without losing the 1.2.4 baseline.' );
-$assert( str_contains( $main, 'Version:     1.2.5' ) && str_contains( $main, "define( 'SPDB_VERSION', '1.2.5' )" ), 'Round 10: runtime identity must be Version 1.2.5.' );
-$assert( str_contains( $readme, 'Stable tag: 1.2.5' ), 'Round 10: readme stable tag must match Version 1.2.5.' );
-$assert( str_contains( $build, 'version="1.2.5"' ) && str_contains( $build, '1\\.2\\.5' ), 'Round 10: deterministic packaging must build and verify Version 1.2.5.' );
+$current = '';
+if ( preg_match( "/define\( 'SPDB_VERSION', '([^']+)' \)/", $main, $m ) ) { $current = (string) $m[1]; }
+$assert( '' !== $current && version_compare( $current, '1.2.5', '>=' ), 'Round 10: later corrected runtime identities may advance but must not regress below Version 1.2.5.' );
+$assert( '' !== $current && str_contains( $readme, 'Stable tag: ' . $current ), 'Round 10: readme stable tag must match the current corrected runtime identity.' );
+$assert( '' !== $current && str_contains( $build, 'version="' . $current . '"' ), 'Round 10: deterministic packaging must follow the current corrected runtime identity.' );
 
 if ( $failed ) { fwrite( STDERR, "{$failed} of {$tests} fourth-ten-round review tests failed.\n" ); exit( 1 ); }
 echo "All {$tests} fourth-ten-round review tests passed.\n";
