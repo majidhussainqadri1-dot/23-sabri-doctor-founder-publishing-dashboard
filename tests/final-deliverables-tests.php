@@ -34,7 +34,7 @@ $deliverables = array(
 	'docs/AUDIT-THIRD-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md' => array( 'Rounds with defects', '1, 2, 3, 4, 9, 10', 'Hostinger' ),
 	'docs/AUDIT-FOURTH-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md' => array( 'Rounds with defects', '1, 2, 3, 4, 5, 6, 7, 8, 9, 10', 'File 00' ),
 	'docs/AUDIT-EIGHTY-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md' => array( '80 of 80', 'Defect-bearing rounds: **20**', 'Version 1.2.6' ),
-	'docs/AUDIT-SECOND-EIGHTY-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md' => array( '80 of 80', 'Defect-bearing rounds: **10**', 'Version 1.2.7' ),
+	'docs/AUDIT-SECOND-EIGHTY-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md' => array( '80 of 80', 'Defect-bearing rounds: **11**', 'Version 1.2.7' ),
 );
 
 foreach ( $deliverables as $relative => $markers ) {
