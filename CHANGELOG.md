@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.7 — 2026-08-09
+
+- Completed a second fresh eighty-round review/fix cycle after Version 1.2.6, with immediate correction and retest before progression.
+- Reopened the prior closure because exact-head CI showed that Baseline Integrity and Full Plan Completion still required stale Version 1.2.5 release strings.
+- Replaced the unreachable File 21 integration pin `449b3660d23f814f8a7b4feb289f43fe985d8199` with the reviewed merged main head `449b5faef8622ae0866a7faa6f4144cde5451d1b`.
+- Made the first eighty-round regression gate forward-compatible while preserving its immutable Version 1.2.6 historical evidence.
+- Realigned Baseline, Full Plan and Final Release workflows, deterministic package/source artifacts, sign-off and final-deliverables evidence to Version 1.2.7.
+- Added the second permanent eighty-round audit/regression gate and retained File 00/19/20/21/22/24/25 canonical ownership boundaries.
+- Preserved truthful release boundaries: the pinned File 00 dependency remains production-blocking until its documented Critical/High findings are corrected/accepted, and Hostinger staging/live/operational acceptance remains separate.
+
 ## 1.2.6 — 2026-08-09
 
 - Completed the fresh eighty-round review/fix cycle, correcting and retesting every evidence-backed defect before proceeding to the next round.
@@ -39,7 +49,7 @@
 ## 1.2.3 — 2026-08-08
 
 - Completed a second fresh ten-round review of the full File 23 source after Version 1.2.2.
-- Corrected File 00–26 dependency coverage by adding File 26 Search/Discovery/Ranking to the discovery manifest without duplicating its canonical ownership.
+- Corrected File 00–26 dependency coverage by adding File 26 Search/Discovery/Ranking to the discovery manifest without duplicating File 26 ownership.
 - Added current File 00 `session_two_factor` enforcement for privileged interactive File 23 capabilities.
 - Added a download-boundary authorization recheck so suspension, capability revocation or loss of current session step-up blocks previously issued export links.
 - Revalidated background automation owner approval, capability and job/rule owner binding before native-provider dispatch.
