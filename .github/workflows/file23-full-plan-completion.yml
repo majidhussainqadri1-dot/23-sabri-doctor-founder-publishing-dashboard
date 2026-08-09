@@ -14,8 +14,9 @@ concurrency:
 
 env:
   FILE00_SHA: 3a84c32a6ddad151f2ed09d244fa8aa536a58108
-  FILE21_SHA: 449b3660d23f814f8a7b4feb289f43fe985d8199
+  FILE21_SHA: 449b5faef8622ae0866a7faa6f4144cde5451d1b
   FILE22_SHA: 4008521f9860e6181560ac07ff1c7e75868f1982
+  SPDB_RELEASE_VERSION: 1.2.7
 
 jobs:
   php-matrix:
@@ -54,13 +55,17 @@ jobs:
           php tests/second-ten-round-review-tests.php
           php tests/third-ten-round-review-tests.php
           php tests/fourth-ten-round-review-tests.php
+          php tests/eighty-round-review-regression-test.php
+          php tests/second-eighty-round-review-regression-test.php
           php tests/architecture-guard.php
       - name: Verify final-plan boundaries
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq "Version:     1.2.5" sabri-publishing-dashboard.php
-          grep -Fq "Stable tag: 1.2.5" readme.txt
+          grep -Fq "Version:     ${SPDB_RELEASE_VERSION}" sabri-publishing-dashboard.php
+          grep -Fq "define( 'SPDB_VERSION', '${SPDB_RELEASE_VERSION}' )" sabri-publishing-dashboard.php
+          grep -Fq "Stable tag: ${SPDB_RELEASE_VERSION}" readme.txt
+          grep -Fq "version=\"${SPDB_RELEASE_VERSION}\"" tools/build-final-release.sh
           grep -Fq 'class-spdb-ai-teacher-oversight-rest.php' sabri-publishing-dashboard.php
           grep -Fq 'class-spdb-sensitive-session-guard.php' sabri-publishing-dashboard.php
           grep -Fq 'spdb/file24_assurance_evidence' includes/class-spdb-plugin.php
@@ -177,27 +182,33 @@ jobs:
           test -s docs/AUDIT-THIRD-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
           php tests/fourth-ten-round-review-tests.php
           test -s docs/AUDIT-FOURTH-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md
-      - name: Build deterministic 1.2.5 package
+          php tests/eighty-round-review-regression-test.php
+          test -s docs/AUDIT-EIGHTY-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md
+          php tests/second-eighty-round-review-regression-test.php
+          test -s docs/AUDIT-SECOND-EIGHTY-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md
+      - name: Build deterministic 1.2.7 package
         run: bash tools/build-final-release.sh
       - name: Record exact source evidence
         shell: bash
         run: |
-          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.2.5\n' \
+          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=%s\n' \
             "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" \
-            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.2.5-RELEASE-EVIDENCE.txt
+            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" "$SPDB_RELEASE_VERSION" > "FILE23-${SPDB_RELEASE_VERSION}-RELEASE-EVIDENCE.txt"
       - uses: actions/upload-artifact@v4
         with:
-          name: file23-1.2.5-full-plan-candidate
+          name: file23-1.2.7-full-plan-candidate
           path: |
-            23-sabri-doctor-founder-publishing-dashboard-1.2.5.zip
-            23-sabri-doctor-founder-publishing-dashboard-1.2.5.zip.sha256
-            FILE23-1.2.5-MANIFEST.sha256
-            FILE23-1.2.5-RELEASE-EVIDENCE.txt
+            23-sabri-doctor-founder-publishing-dashboard-1.2.7.zip
+            23-sabri-doctor-founder-publishing-dashboard-1.2.7.zip.sha256
+            FILE23-1.2.7-MANIFEST.sha256
+            FILE23-1.2.7-RELEASE-EVIDENCE.txt
             docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md
             docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md
             docs/AUDIT-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-05.md
             docs/AUDIT-SECOND-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
             docs/AUDIT-THIRD-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-08.md
             docs/AUDIT-FOURTH-10-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md
+            docs/AUDIT-EIGHTY-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md
+            docs/AUDIT-SECOND-EIGHTY-ROUND-REVIEW-AND-CORRECTIONS-2026-08-09.md
           if-no-files-found: error
           retention-days: 90
