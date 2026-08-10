@@ -24,6 +24,7 @@ jobs:
         run: |
           set -euo pipefail
           cat .file23-repair/chunk-* | base64 -d | tar -xzf -
+          sed -i 's/[[:space:]]\+$//' docs/AUDIT-80-ROUND-REVIEW-AND-CORRECTIONS-2026-08-10.md
           rm -rf .file23-repair
           rm -f .github/workflows/file23-apply-80-round-repair.yml
           git config user.name "github-actions[bot]"
