@@ -113,6 +113,13 @@ final class SPDB_Publishing_Intelligence {
 		if ( 'permission-simulator' === $feature && ! SPDB_Membership_Guard::is_user_founder( $user_id ) ) {
 			return false;
 		}
+		if (
+			'what-if-planner' === $feature
+			&& ! SPDB_Membership_Guard::is_user_founder( $user_id )
+			&& ( ! $can_global || ! self::is_institutional( $user_id ) )
+		) {
+			return false;
+		}
 		return true;
 	}
 
@@ -325,7 +332,8 @@ final class SPDB_Publishing_Intelligence {
 		$weight = array( 'critical' => 4, 'high' => 3, 'warning' => 2, 'normal' => 1, 'info' => 0 );
 		$items = array();
 		foreach ( $signals as $row ) {
-			$items[] = self::allowlist_row( $row, array( 'provider', 'object_type', 'object_id', 'label', 'title', 'severity', 'due_at', 'status', 'queue', 'reason_code', 'age_hours' ) );
+			$item = self::allowlist_row( $row, array( 'provider', 'object_type', 'object_id', 'label', 'title', 'severity', 'due_at', 'status', 'queue', 'reason_code', 'age_hours' ) );
+			$items[] = self::redact_sensitive_text_fields( $item, array( 'label', 'title' ) );
 		}
 		usort( $items, static function ( array $a, array $b ) use ( $weight ): int {
 			$aw = $weight[ self::key( (string) ( $a['severity'] ?? 'normal' ) ) ] ?? 1;
@@ -350,10 +358,19 @@ final class SPDB_Publishing_Intelligence {
 			$base['winner_advisory_only'] = true;
 			$base['manual_acceptance_required'] = true;
 			if ( ! $base['suppressed'] ) {
-				foreach ( array( 'winner', 'uplift', 'variant_metrics' ) as $field ) {
-					if ( array_key_exists( $field, $row ) ) {
-						$base[ $field ] = is_array( $row[ $field ] ) ? self::sanitize_array( $row[ $field ] ) : $row[ $field ];
+				if ( array_key_exists( 'winner', $row ) && is_scalar( $row['winner'] ) ) {
+					$winner = self::text( (string) $row['winner'], 120 );
+					if ( '' !== $winner && ! self::contains_sensitive_text( $winner ) ) {
+						$base['winner'] = $winner;
+					} else {
+						$base['winner_suppressed'] = true;
 					}
+				}
+				if ( isset( $row['uplift'] ) && is_numeric( $row['uplift'] ) ) {
+					$base['uplift'] = (float) $row['uplift'];
+				}
+				if ( isset( $row['variant_metrics'] ) && is_array( $row['variant_metrics'] ) ) {
+					$base['variant_metrics'] = self::privacy_safe_metric_tree( $row['variant_metrics'] );
 				}
 			}
 			$rows[] = $base;
@@ -384,15 +401,27 @@ final class SPDB_Publishing_Intelligence {
 	/** @return array<string,mixed> */
 	private static function opportunities( array $signals ): array {
 		$rows = array();
+		$suppressed = 0;
 		foreach ( $signals as $row ) {
-			$item = self::allowlist_row( $row, array( 'topic', 'language', 'demand', 'coverage', 'provider', 'source', 'source_date', 'provenance', 'generated_at', 'stale' ) );
+			$markers = array(
+				self::key( (string) ( $row['demand_provider'] ?? '' ) ),
+				self::key( (string) ( $row['provider'] ?? '' ) ),
+				self::key( (string) ( $row['provenance'] ?? '' ) ),
+			);
+			if ( ! in_array( 'file26', $markers, true ) ) {
+				++$suppressed;
+				continue;
+			}
+			$item = self::allowlist_row( $row, array( 'topic', 'language', 'demand', 'coverage', 'provider', 'demand_provider', 'source', 'source_date', 'provenance', 'generated_at', 'stale' ) );
+			$item = self::redact_sensitive_text_fields( $item, array( 'topic', 'source' ) );
 			$item['demand'] = round( (float) ( $row['demand'] ?? 0 ), 4 );
 			$item['coverage'] = round( (float) ( $row['coverage'] ?? 0 ), 4 );
 			$item['opportunity_score'] = round( max( 0.0, $item['demand'] - $item['coverage'] ), 4 );
+			$item['demand_owner_verified'] = true;
 			$rows[] = $item;
 		}
 		usort( $rows, static fn( array $a, array $b ): int => ( $b['opportunity_score'] ?? 0 ) <=> ( $a['opportunity_score'] ?? 0 ) );
-		return array( 'opportunities' => array_slice( $rows, 0, 50 ), 'ranking_owner' => 'file26', 'ranking_write_authority' => false, 'paid_or_donor_influence' => false, 'stale_signals_must_be_labeled' => true );
+		return array( 'opportunities' => array_slice( $rows, 0, 50 ), 'untrusted_demand_rows_suppressed' => $suppressed, 'ranking_owner' => 'file26', 'ranking_write_authority' => false, 'paid_or_donor_influence' => false, 'stale_signals_must_be_labeled' => true );
 	}
 
 	/** @return array<string,mixed> */
@@ -437,7 +466,7 @@ final class SPDB_Publishing_Intelligence {
 			$item['timezone'] = $timezone;
 			$item['escalation_candidate'] = in_array( $status, array( 'overdue', 'due_soon' ), true );
 			$item['realert_allowed'] = ! $is_resolved;
-			$item['escalation_key'] = $item['escalation_candidate'] ? hash( 'sha256', (string) ( $item['provider'] ?? '' ) . '|' . (string) ( $item['object_type'] ?? '' ) . '|' . (string) ( $item['object_id'] ?? '' ) . '|' . (string) ( $item['due_at'] ?? '' ) . '|' . $status ) : '';
+			$item['escalation_key'] = $item['escalation_candidate'] ? hash( 'sha256', (string) ( $item['provider'] ?? '' ) . '|' . (string) ( $item['object_type'] ?? '' ) . '|' . (string) ( $item['object_id'] ?? '' ) . '|' . (string) ( $item['due_at'] ?? '' ) . '|' . (string) ( $item['review_type'] ?? '' ) . '|' . (string) ( $item['policy'] ?? '' ) ) : '';
 			$items[] = $item;
 		}
 		return array( 'counts' => $counts, 'items' => $items, 'timezone' => $timezone, 'notification_owner' => 'file19', 'duplicate_escalation_requires_idempotency_key' => true );
@@ -460,6 +489,7 @@ final class SPDB_Publishing_Intelligence {
 		foreach ( $signals as $row ) {
 			$status = self::normalize_evidence_status( (string) ( $row['status'] ?? 'unknown' ) );
 			$item = self::allowlist_row( $row, array( 'provider', 'source_id', 'source_type', 'title', 'status', 'revision', 'expected_revision', 'expires_at', 'review_due_at', 'replacement_source_id', 'reason_code' ) );
+			$item = self::redact_sensitive_text_fields( $item, array( 'title' ) );
 			$item['freshness_status'] = $status;
 			$item['revision_mismatch'] = isset( $item['revision'], $item['expected_revision'] ) && (string) $item['revision'] !== (string) $item['expected_revision'];
 			++$counts[ $status ];
@@ -508,7 +538,7 @@ final class SPDB_Publishing_Intelligence {
 
 	/** @return array<string,mixed> */
 	private static function semantic_diff( array $signals ): array {
-		$classes = array( 'factual', 'clinical', 'legal', 'ethical', 'safety', 'citation', 'tone', 'translation', 'structural', 'unknown' );
+		$classes = array( 'claim', 'evidence', 'medical', 'rights', 'privacy', 'headline', 'factual', 'clinical', 'legal', 'ethical', 'safety', 'citation', 'tone', 'translation', 'structural', 'unknown' );
 		$items = array();
 		foreach ( $signals as $row ) {
 			$item = self::allowlist_row( $row, array( 'provider', 'object_type', 'object_id', 'from_version', 'to_version', 'classification', 'uncertainty', 'risk', 'summary', 'reason_code' ) );
@@ -709,8 +739,8 @@ final class SPDB_Publishing_Intelligence {
 	/** @return array<string,mixed> */
 	private static function accessibility( array $signals ): array {
 		$data = self::advisory_flags( $signals, 'authorized_human_or_native_owner', false );
-		$motion = self::signal_has_token( $signals, array( 'reduced-motion', 'motion' ) );
-		$reduced_data = self::signal_has_token( $signals, array( 'reduced-data', 'data-saver', 'low-bandwidth' ) );
+		$motion = self::signal_has_token( $signals, array( 'reduced-motion', 'prefers-reduced-motion', 'motion-reduction' ) );
+		$reduced_data = self::signal_has_token( $signals, array( 'reduced-data', 'prefers-reduced-data', 'data-saver', 'low-bandwidth' ) );
 		$data['readiness_only'] = true;
 		$data['certification_claim'] = false;
 		$data['wcag_readiness_traceable'] = ! empty( $data['flags'] );
@@ -884,7 +914,8 @@ final class SPDB_Publishing_Intelligence {
 	private static function safe_default_rows( array $signals ): array {
 		$rows = array();
 		foreach ( $signals as $row ) {
-			$rows[] = self::allowlist_row( $row, array( 'provider', 'object_type', 'object_id', 'label', 'title', 'status', 'state', 'severity', 'reason_code', 'updated_at' ) );
+			$item = self::allowlist_row( $row, array( 'provider', 'object_type', 'object_id', 'label', 'title', 'status', 'state', 'severity', 'reason_code', 'updated_at' ) );
+			$rows[] = self::redact_sensitive_text_fields( $item, array( 'label', 'title' ) );
 		}
 		return $rows;
 	}
@@ -904,6 +935,7 @@ final class SPDB_Publishing_Intelligence {
 		foreach ( array_slice( $rows, 0, 50 ) as $row ) {
 			if ( is_array( $row ) ) {
 				$item = self::allowlist_row( $row, array( 'provider', 'source_id', 'title', 'revision', 'url', 'retrieved_at', 'published_at' ) );
+				$item = self::redact_sensitive_text_fields( $item, array( 'title' ) );
 				if ( isset( $item['url'] ) ) {
 					$item['url'] = self::safe_public_url( (string) $item['url'] );
 					if ( '' === $item['url'] ) {
@@ -914,6 +946,35 @@ final class SPDB_Publishing_Intelligence {
 			}
 		}
 		return $out;
+	}
+
+	/** @return mixed */
+	private static function privacy_safe_metric_tree( $value, int $depth = 0 ) {
+		if ( $depth >= self::MAX_DEPTH ) {
+			return array();
+		}
+		if ( is_array( $value ) ) {
+			$out = array();
+			foreach ( array_slice( $value, 0, 100, true ) as $key => $item ) {
+				$clean_key = self::key( (string) $key );
+				if ( '' === $clean_key || self::is_sensitive_key( $clean_key ) ) {
+					continue;
+				}
+				$clean = self::privacy_safe_metric_tree( $item, $depth + 1 );
+				if ( null !== $clean ) {
+					$out[ $clean_key ] = $clean;
+				}
+			}
+			return $out;
+		}
+		if ( is_bool( $value ) || is_int( $value ) || is_float( $value ) ) {
+			return $value;
+		}
+		if ( is_scalar( $value ) ) {
+			$text = self::text( (string) $value, 160 );
+			return '' !== $text && ! self::contains_sensitive_text( $text ) ? $text : null;
+		}
+		return null;
 	}
 
 	/** @param array<string,mixed> $item @param string[] $fields @return array<string,mixed> */
@@ -1099,11 +1160,15 @@ final class SPDB_Publishing_Intelligence {
 
 	private static function parse_timestamp( string $value, string $timezone ): ?int {
 		$value = trim( $value );
-		if ( '' === $value ) {
+		if ( '' === $value || 1 !== preg_match( '/^(\d{4})-(\d{2})-(\d{2})(?:[ T]([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?(Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)?)?$/', $value, $matches ) ) {
+			return null;
+		}
+		if ( ! checkdate( (int) $matches[2], (int) $matches[3], (int) $matches[1] ) ) {
 			return null;
 		}
 		try {
-			$zone = new DateTimeZone( self::normalize_timezone( $timezone ) );
+			$has_offset = isset( $matches[7] ) && '' !== (string) $matches[7];
+			$zone = new DateTimeZone( $has_offset ? 'UTC' : self::normalize_timezone( $timezone ) );
 			$date = new DateTimeImmutable( $value, $zone );
 			return $date->getTimestamp();
 		} catch ( Exception $exception ) {

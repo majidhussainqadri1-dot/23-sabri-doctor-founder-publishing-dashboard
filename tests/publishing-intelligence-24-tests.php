@@ -43,8 +43,8 @@ $assert( 'Tuesday 09:00' === $best['data']['recommended_windows'][0]['window'], 
 $assert( false === $best['data']['auto_schedule'], 'Best-time intelligence must never auto-schedule.' );
 
 $GLOBALS['spdb_test_signals']['opportunity-radar'] = array(
-	array( 'topic' => 'A', 'demand' => 0.9, 'coverage' => 0.2 ),
-	array( 'topic' => 'B', 'demand' => 0.7, 'coverage' => 0.6 ),
+	array( 'topic' => 'A', 'demand' => 0.9, 'coverage' => 0.2, 'demand_provider' => 'file26' ),
+	array( 'topic' => 'B', 'demand' => 0.7, 'coverage' => 0.6, 'demand_provider' => 'file26' ),
 );
 $opportunities = SPDB_Publishing_Intelligence::snapshot( 'opportunity-radar' );
 $assert( 'A' === $opportunities['data']['opportunities'][0]['topic'], 'Opportunity Radar must rank larger demand-versus-coverage gaps first.' );

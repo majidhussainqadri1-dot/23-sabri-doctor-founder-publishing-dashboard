@@ -1,3 +1,10 @@
+## 2026-08-10 — fourth fresh 80-round hardening pass (candidate 1.3.0)
+- Enforce >=20 global analytics cohort floor and 24-72 hour secure-export retention window.
+- Require current File 00 two-factor assertion, explicit confirmation and audit reason for interactive secure exports; transaction-couple export request/audit and emit download links only to the owner.
+- Enforce current privacy threshold on stored/cached aggregates.
+- Harden FPI-24 What-if authorization, FPI value-level privacy, File26 demand provenance, SLA idempotency, strict timestamps, semantic classes and accessibility evidence matching.
+- Added fourth independent 80-round register (241–320) and regression evidence; staging/live remain unverified.
+
 ## 2026-08-10 — third fresh 80-round hardening pass (candidate 1.3.0)
 - Re-check export authorization against current File 00 account state/capability at request, listing, generation and download time.
 - Delete expired encrypted export artifacts before metadata retention purge, preserving retry evidence on cleanup failure.

@@ -67,3 +67,9 @@ Exact deployed code is currently unverified; repository-based conclusions must n
 - Defects found and corrected in rounds 161–169; rounds 170–240 found no new known repository defect after correction.
 - Hardening covers current-state export authorization/revocation, expired export artifact retention, Audience/Internal/External benchmark privacy and lawful-source rules, strict source dates, Evergreen evidence degradation and evidence-based accessibility readiness.
 - Hostinger staging/live, deployed artifact parity, DB/schema/migration and live smoke remain unverified.
+
+## 2026-08-10 — fourth fresh 80-round repository review
+- Independent cumulative rounds 241–320 completed against starting HEAD `63911d272bf18b36f8d9ef4ca7a01514b5e7c4a6`.
+- Defects found/corrected in rounds 241–255; rounds 256–320 found no new known repository defect after correction.
+- Hardening covers global cohort floor, export TTL/MFA/confirmation/atomic audit/owner downloads, current-threshold cache privacy, What-if authorization, FPI value privacy, File26 provenance, SLA idempotency, deterministic dates, semantic classes and accessibility evidence accuracy.
+- Hostinger staging/live, deployed artifact parity, DB/schema/migration and live smoke remain unverified.

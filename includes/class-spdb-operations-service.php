@@ -166,6 +166,7 @@ final class SPDB_Operations_Service {
 			if ( ! is_wp_error( $cached ) && ! empty( $cached ) ) {
 				$source = 'bounded_cached_snapshot';
 				foreach ( $cached as $snapshot ) {
+					$effective_threshold = max( 20, $threshold, (int) $snapshot['privacy_threshold'] );
 					$metrics[] = array(
 						'provider_key'     => (string) $snapshot['provider_key'],
 						'metric_key'       => (string) $snapshot['metric_key'],
@@ -175,8 +176,8 @@ final class SPDB_Operations_Service {
 						'unit'             => (string) $snapshot['unit'],
 						'interval'         => (string) $snapshot['interval'],
 						'cohort_count'     => (int) $snapshot['cohort_count'],
-						'privacy_threshold'=> (int) $snapshot['privacy_threshold'],
-						'suppressed'       => (int) $snapshot['cohort_count'] < (int) $snapshot['privacy_threshold'],
+						'privacy_threshold'=> $effective_threshold,
+						'suppressed'       => (int) $snapshot['cohort_count'] < $effective_threshold,
 						'generated_at'     => gmdate( 'c', strtotime( (string) $snapshot['generated_at_gmt'] ) ?: time() ),
 						'cached'           => true,
 					);

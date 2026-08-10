@@ -674,6 +674,8 @@ final class SPDB_Operations_Repository {
 		if ( is_wp_error( $value ) ) {
 			return $value;
 		}
+		$current_threshold = class_exists( 'SPDB_Admin_Settings' ) ? (int) SPDB_Admin_Settings::get()['analytics_min_cohort'] : 20;
+		$effective_threshold = max( 20, $current_threshold, (int) ( $metric['privacy_threshold'] ?? 0 ) );
 		$row = array(
 			'snapshot_id'      => self::id( 'metric' ),
 			'provider_key'     => (string) $metric['provider_key'],
@@ -685,7 +687,7 @@ final class SPDB_Operations_Repository {
 			'definition_hash'  => hash( 'sha256', (string) $metric['definition'] ),
 			'value_json'       => $value,
 			'cohort_count'     => (int) $metric['cohort_count'],
-			'privacy_threshold' => (int) $metric['privacy_threshold'],
+			'privacy_threshold' => $effective_threshold,
 			'generated_at_gmt' => (string) $metric['generated_at_gmt'],
 			'expires_at_gmt'   => (string) $metric['expires_at_gmt'],
 		);
@@ -735,28 +737,43 @@ final class SPDB_Operations_Repository {
 		if ( is_wp_error( $filters ) ) {
 			return $filters;
 		}
-		$row = array(
-			'export_id'       => $export_id,
-			'owner_user_id'   => (int) $data['owner_user_id'],
-			'report_key'      => (string) $data['report_key'],
-			'format'          => (string) $data['format'],
-			'scope'           => (string) $data['scope'],
-			'status'          => 'queued',
-			'filters_json'    => $filters,
-			'storage_ref'     => '',
-			'file_hash'       => '',
-			'row_count'       => 0,
-			'error_code'      => '',
-			'created_at_gmt'  => $now,
-			'updated_at_gmt'  => $now,
-			'expires_at_gmt'  => (string) $data['expires_at_gmt'],
-		);
-		if ( false === $wpdb->insert( $table, $row ) ) {
-			return self::error( 'spdb_export_create_failed', __( 'The export job could not be created.', 'sabri-publishing-dashboard' ), 500 );
+		$reason_hash = strtolower( trim( (string) ( $data['reason_hash'] ?? '' ) ) );
+		if ( 1 !== preg_match( '/^[a-f0-9]{64}$/', $reason_hash ) ) {
+			return self::error( 'spdb_export_reason_invalid', __( 'The secure export audit reason is invalid.', 'sabri-publishing-dashboard' ), 400 );
 		}
-		$audit = $this->append_audit( (int) $data['owner_user_id'], 'export_requested', $export_id, array( 'report_key' => $row['report_key'], 'format' => $row['format'], 'scope' => $row['scope'] ) );
-		if ( is_wp_error( $audit ) ) {
-			return $audit;
+		$result = $this->atomic(
+			function () use ( $wpdb, $table, $export_id, $now, $filters, $data, $reason_hash ) {
+				$row = array(
+					'export_id'       => $export_id,
+					'owner_user_id'   => (int) $data['owner_user_id'],
+					'report_key'      => (string) $data['report_key'],
+					'format'          => (string) $data['format'],
+					'scope'           => (string) $data['scope'],
+					'status'          => 'queued',
+					'filters_json'    => $filters,
+					'storage_ref'     => '',
+					'file_hash'       => '',
+					'row_count'       => 0,
+					'error_code'      => '',
+					'created_at_gmt'  => $now,
+					'updated_at_gmt'  => $now,
+					'expires_at_gmt'  => (string) $data['expires_at_gmt'],
+				);
+				if ( false === $wpdb->insert( $table, $row ) ) {
+					return self::error( 'spdb_export_create_failed', __( 'The export job could not be created.', 'sabri-publishing-dashboard' ), 500 );
+				}
+				$audit = $this->append_audit(
+					(int) $data['owner_user_id'],
+					'export_requested',
+					$export_id,
+					array( 'report_key' => $row['report_key'], 'format' => $row['format'], 'scope' => $row['scope'], 'reason_hash' => $reason_hash )
+				);
+				return is_wp_error( $audit ) ? $audit : true;
+			},
+			'export_request'
+		);
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
 		return $this->get_export_job( $export_id, (int) $data['owner_user_id'], true );
 	}

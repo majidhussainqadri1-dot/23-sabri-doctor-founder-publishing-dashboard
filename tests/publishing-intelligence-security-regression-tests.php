@@ -361,5 +361,60 @@ $GLOBALS['spdb_test_signals']['accessibility-lab'] = array(
 $a11y_evidence = SPDB_Publishing_Intelligence::snapshot( 'accessibility-lab' );
 $assert( true === $a11y_evidence['data']['wcag_readiness_traceable'] && true === $a11y_evidence['data']['reduced_motion_considered'] && true === $a11y_evidence['data']['reduced_data_considered'], 'Accessibility readiness flags must be derived from supplied evidence rather than hard-coded true values.' );
 
+
+// Fourth fresh 80-round pass: authorization, File26 provenance, deterministic time and value privacy.
+$GLOBALS['spdb_test_founder'] = false;
+$GLOBALS['spdb_test_institutional'] = false;
+$GLOBALS['spdb_test_caps']['spdb_view_global_analytics'] = false;
+$what_if_own = new SPDB_Test_Request( array( 'scope' => 'own', 'feature' => 'what-if-planner' ), '/spdb/v1/intelligence/simulate' );
+$assert( ! SPDB_Publishing_Intelligence::rest_can_view( $what_if_own ), 'What-if Planner must not be available to an ordinary own-analytics user.' );
+$GLOBALS['spdb_test_caps']['spdb_view_global_analytics'] = true;
+$GLOBALS['spdb_test_institutional'] = true;
+$assert( SPDB_Publishing_Intelligence::rest_can_view( $what_if_own ), 'An institutional operator with explicit global analytics authority may use the read-only What-if Planner.' );
+$GLOBALS['spdb_test_caps']['spdb_view_global_analytics'] = false;
+$GLOBALS['spdb_test_institutional'] = false;
+
+$GLOBALS['spdb_test_signals']['mission-control'] = array( array( 'label' => 'user@example.com', 'title' => 'Call +92 300 1234567', 'severity' => 'high' ) );
+$mission_private = SPDB_Publishing_Intelligence::snapshot( 'mission-control' );
+$assert( false === strpos( json_encode( $mission_private ), 'user@example.com' ) && false === strpos( json_encode( $mission_private ), '1234567' ), 'Mission Control labels/titles must suppress detected identifiers.' );
+$GLOBALS['spdb_test_signals']['evidence-freshness'] = array( array( 'source_id' => 's-private', 'title' => 'Patient email user@example.com', 'status' => 'fresh' ) );
+$evidence_private = SPDB_Publishing_Intelligence::snapshot( 'evidence-freshness' );
+$assert( ! isset( $evidence_private['data']['items'][0]['title'] ) && true === $evidence_private['data']['items'][0]['title_suppressed'], 'Evidence Freshness titles must be value-screened for identifiers.' );
+$GLOBALS['spdb_test_ask_response'] = array( 'answer' => 'Review source.', 'sources' => array( array( 'source_id' => 's1', 'title' => 'Patient email user@example.com' ) ) );
+$ask_source_private = SPDB_Publishing_Intelligence::ask( 'Which source needs review?' );
+$assert( ! isset( $ask_source_private['sources'][0]['title'] ) && true === $ask_source_private['sources'][0]['title_suppressed'], 'Ask source titles must suppress detected identifiers.' );
+
+$GLOBALS['spdb_test_signals']['experiment-lab'] = array( array( 'experiment_id' => 'e-private', 'cohort_count' => 40, 'winner' => 'user@example.com', 'variant_metrics' => array( 'a' => array( 'value' => 3, 'note' => 'Call +92 300 1234567' ) ) ) );
+$experiment_private = SPDB_Publishing_Intelligence::snapshot( 'experiment-lab' );
+$experiment_encoded = json_encode( $experiment_private );
+$assert( true === $experiment_private['data']['experiments'][0]['winner_suppressed'] && false === strpos( $experiment_encoded, 'user@example.com' ) && false === strpos( $experiment_encoded, '1234567' ), 'Experiment winner/nested metric values must suppress detected identifiers.' );
+
+$GLOBALS['spdb_test_signals']['opportunity-radar'] = array(
+	array( 'topic' => 'Trusted', 'demand' => 0.8, 'coverage' => 0.3, 'demand_provider' => 'file26' ),
+	array( 'topic' => 'Forged', 'demand' => 1.0, 'coverage' => 0.0, 'provider' => 'unknown-search' ),
+);
+$op_owner = SPDB_Publishing_Intelligence::snapshot( 'opportunity-radar' );
+$assert( 1 === count( $op_owner['data']['opportunities'] ) && 1 === $op_owner['data']['untrusted_demand_rows_suppressed'], 'Opportunity Radar must suppress demand not attributable to File 26.' );
+$assert( true === $op_owner['data']['opportunities'][0]['demand_owner_verified'], 'Accepted opportunity demand must carry verified File 26 ownership evidence.' );
+
+$GLOBALS['spdb_test_signals']['review-sla'] = array( array( 'provider' => 'file21', 'object_type' => 'post', 'object_id' => 'same', 'due_at' => '2026-08-10 12:00:00', 'status' => 'pending', 'review_type' => 'clinical', 'policy' => 'standard' ) );
+$sla_due = SPDB_Publishing_Intelligence::snapshot( 'review-sla', array( 'timezone' => 'UTC', 'now' => strtotime( '2026-08-10 10:00:00 UTC' ) ) );
+$sla_over = SPDB_Publishing_Intelligence::snapshot( 'review-sla', array( 'timezone' => 'UTC', 'now' => strtotime( '2026-08-10 13:00:00 UTC' ) ) );
+$assert( $sla_due['data']['items'][0]['escalation_key'] === $sla_over['data']['items'][0]['escalation_key'], 'SLA escalation idempotency key must remain stable as due-soon becomes overdue.' );
+$GLOBALS['spdb_test_signals']['review-sla'] = array( array( 'object_id' => 'relative', 'due_at' => 'tomorrow', 'status' => 'pending' ) );
+$sla_relative = SPDB_Publishing_Intelligence::snapshot( 'review-sla', array( 'timezone' => 'UTC', 'now' => strtotime( '2026-08-10 10:00:00 UTC' ) ) );
+$assert( 1 === $sla_relative['data']['counts']['invalid'], 'SLA must reject natural-language relative timestamps to preserve deterministic behavior.' );
+$relative_sim = SPDB_Publishing_Intelligence::simulate( array( 'timezone' => 'UTC', 'items' => array( array( 'scheduled_at' => 'tomorrow', 'reviewer' => 'r1' ) ) ) );
+$assert( empty( $relative_sim['reviewer_overload'] ) && empty( $relative_sim['calendar_collisions'] ), 'What-if calendar parsing must reject relative timestamps rather than depend on runtime clock interpretation.' );
+
+foreach ( array( 'claim', 'evidence', 'medical', 'rights', 'privacy', 'headline' ) as $semantic_class ) {
+	$GLOBALS['spdb_test_signals']['semantic-diff'] = array( array( 'classification' => $semantic_class, 'uncertainty' => 0.1 ) );
+	$semantic = SPDB_Publishing_Intelligence::snapshot( 'semantic-diff' );
+	$assert( $semantic_class === $semantic['data']['items'][0]['classification'], 'Semantic diff must support current-plan class: ' . $semantic_class );
+}
+$GLOBALS['spdb_test_signals']['accessibility-lab'] = array( array( 'code' => 'promotion-banner', 'severity' => 'info' ) );
+$a11y_no_false_motion = SPDB_Publishing_Intelligence::snapshot( 'accessibility-lab' );
+$assert( false === $a11y_no_false_motion['data']['reduced_motion_considered'], 'Unrelated words containing motion must not satisfy reduced-motion evidence.' );
+
 if ( $failed > 0 ) { fwrite( STDERR, "{$failed} of {$tests} publishing-intelligence security regressions failed.\n" ); exit( 1 ); }
 echo "All {$tests} File 23 Publishing Intelligence security/privacy regressions passed.\n";

@@ -40,6 +40,12 @@ final class SPDB_Export_Service {
 		$report_key = sanitize_key( (string) ( $input['report_key'] ?? '' ) );
 		$format     = sanitize_key( (string) ( $input['format'] ?? 'csv' ) );
 		$scope      = sanitize_key( (string) ( $input['scope'] ?? 'own' ) );
+		$confirmed  = true === ( $input['confirm_export'] ?? false );
+		$reason     = isset( $input['reason'] ) && is_scalar( $input['reason'] ) ? trim( sanitize_textarea_field( (string) $input['reason'] ) ) : '';
+		$reason_len = function_exists( 'mb_strlen' ) ? mb_strlen( $reason ) : strlen( $reason );
+		if ( ! $confirmed || $reason_len < 3 || $reason_len > 500 ) {
+			return self::error( 'spdb_export_confirmation_required', __( 'Secure export requires explicit confirmation and a brief audit reason.', 'sabri-publishing-dashboard' ), 400 );
+		}
 		$formats    = array( 'csv', 'json', 'html', 'pdf', 'ics' );
 		$reports    = array( 'publication_history', 'content_performance', 'review_history', 'knowledge_portfolio', 'comment_response', 'monthly_summary', 'institution_publishing', 'doctor_contributions', 'editorial_backlog', 'campaign_results', 'corrections_retractions', 'source_completeness', 'safety_incidents', 'content_gaps', 'calendar_health' );
 		if ( ! in_array( $report_key, $reports, true ) || ! in_array( $format, $formats, true ) || ! in_array( $scope, array( 'own', 'institution' ), true ) ) {
@@ -57,6 +63,7 @@ final class SPDB_Export_Service {
 				'format'        => $format,
 				'scope'         => $scope,
 				'filters'       => $filters,
+				'reason_hash'   => hash( 'sha256', $reason ),
 				'expires_at_gmt' => gmdate( 'Y-m-d H:i:s', time() + $ttl * HOUR_IN_SECONDS ),
 			)
 		);
@@ -325,8 +332,15 @@ final class SPDB_Export_Service {
 			'expires_at_gmt'  => $job['expires_at_gmt'],
 			'download_url'    => '',
 		);
-		if ( 'ready' === $job['status'] && '' !== $job['storage_ref'] && strtotime( $job['expires_at_gmt'] . ' UTC' ) > time() ) {
-			$out['download_url'] = $this->download_url( $job['export_id'], (int) $job['owner_user_id'] );
+		$viewer_user_id = function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0;
+		if (
+			'ready' === $job['status']
+			&& '' !== $job['storage_ref']
+			&& strtotime( $job['expires_at_gmt'] . ' UTC' ) > time()
+			&& $viewer_user_id > 0
+			&& $viewer_user_id === (int) $job['owner_user_id']
+		) {
+			$out['download_url'] = $this->download_url( $job['export_id'], $viewer_user_id );
 		}
 		return $out;
 	}
@@ -601,10 +615,10 @@ final class SPDB_Export_Service {
 		if ( ! function_exists( 'get_current_user_id' ) ) {
 			return false;
 		}
-		return $this->user_can_export( (int) get_current_user_id() );
+		return $this->user_can_export( (int) get_current_user_id(), true );
 	}
 
-	private function user_can_export( int $user_id ): bool {
+	private function user_can_export( int $user_id, bool $require_session_two_factor = false ): bool {
 		if ( $user_id < 1 || ! class_exists( 'SPDB_Membership_Guard' ) || ! class_exists( 'SPDB_Capabilities' ) ) {
 			return false;
 		}
@@ -614,6 +628,7 @@ final class SPDB_Export_Service {
 			|| true !== ( $assertions['approved'] ?? false )
 			|| true !== ( $assertions['eligible'] ?? false )
 			|| true === ( $assertions['suspended'] ?? true )
+			|| ( $require_session_two_factor && true !== ( $assertions['session_two_factor'] ?? false ) )
 		) {
 			return false;
 		}
