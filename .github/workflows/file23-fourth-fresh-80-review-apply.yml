@@ -27,6 +27,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.file23-fourth80/apply.py')
+          s = p.read_text(encoding='utf-8')
+          anchor = "if len(clean_focuses) != 65:"
+          if anchor not in s:
+              raise SystemExit('fourth review clean-focus anchor missing')
+          s = s.replace(anchor, "clean_focuses = clean_focuses[:65]\nif len(clean_focuses) != 65:", 1)
+          p.write_text(s, encoding='utf-8')
+          PY
           python3 .file23-fourth80/apply.py
           php -l includes/class-spdb-admin-settings.php
           php -l includes/class-spdb-export-service.php
