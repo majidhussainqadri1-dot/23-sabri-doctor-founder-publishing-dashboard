@@ -27,6 +27,8 @@ The final-release workflow must execute against the exact PR/head under review a
 | Final deliverables | Every required plan deliverable exists, including `docs/GOVERNING-PLAN-2026-TRACEABILITY.json`. |
 | Prior forty-round gate | Historical 40-round hardened baseline continues to pass; it is not a substitute for fresh 1.3.0 reviews. |
 | Fresh 1.3.0 review law | Two separate fresh post-change review/fix records and their executable gate must pass before repository release closure. |
+| Future Publishing Intelligence 24 | Exact F23-FPI-01–24 catalog, stable keys, no canonical write authority, File 19/26 ownership, privacy thresholds, sensitive-data minimization, Founder-only permission simulation and side-effect-free What-if behavior pass both FPI suites. |
+| Current eighty-round review law | `docs/AUDIT-80-ROUND-REVIEW-AND-CORRECTIONS-2026-08-10.md` and `tests/eighty-round-review-gate-tests.php` must prove 80 ordered review rounds, immediate correction evidence for each defect-bearing round, and a clean final corrected-tree closure. |
 
 ## Exact-head evidence law
 

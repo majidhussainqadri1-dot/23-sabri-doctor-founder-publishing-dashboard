@@ -14,7 +14,7 @@ A private, role-aware, federated publishing operations dashboard for the Sabri S
 
 File 23 provides one operational command center with Founder, Doctor, Teacher and Administrator studios, reviewer projections and restricted read-only account states while preserving every native module as its own source of truth.
 
-Version 1.3.0 reconciles the implementation with the 6–7 August 2026 governing central plan and the amended File 23 specification. It adds the current File 00–26 architecture, File 26 Search/Discovery/Ranking ownership, Sabri Green token consumption with File 25 ownership, explicit Teacher/Admin studio capability boundaries, and plan-to-code evidence for the inherited Continuous Value requirements and acceptance journeys.
+Version 1.3.0 reconciles the implementation with the 6–10 August 2026 governing central plan, the amended File 23 specification and the Founder-approved Future Publishing Intelligence 24 addendum. It adds the current File 00–26 architecture, File 26 Search/Discovery/Ranking ownership, Sabri Green token consumption with File 25 ownership, explicit Teacher/Admin studio capability boundaries, and plan-to-code evidence for the inherited Continuous Value requirements and acceptance journeys.
 
 The implementation includes:
 
@@ -26,6 +26,7 @@ The implementation includes:
 * guarded native operations plus strict Sources, Media Usage, Interactions, Knowledge Gaps, Revisions and Notifications projections through accepted, versioned provider adapters;
 * File 26 as the sole Search/Discovery/Ranking owner; File 23 consumes typed projections/destinations and does not create a search or ranking backend;
 * privacy-thresholded provider aggregate analytics, secure expiring CSV/JSON/HTML/PDF/iCalendar exports and optional source-linked File 16 educational assistance;
+* F23-FPI-01 through F23-FPI-24 Future Publishing Intelligence with validated own/institution scope, Founder-only permission simulation, privacy-minimized signals, strong cohort suppression, File 19/26 ownership boundaries and deterministic side-effect-free What-if planning;
 * idempotent jobs, retries, exponential backoff, dead-letter state, operator notifications, retention cleanup, privacy export/erasure and non-destructive local repair;
 * explicit operational mutation REST nonce, approved-account, same-origin and payload-bound idempotency enforcement;
 * transaction commit/rollback with request and outcome evidence in the canonical hash-chained dashboard audit;
@@ -81,7 +82,8 @@ No. Provider acceptance, environment, membership, capability, ownership, object 
 
 = 1.3.0 =
 
-* Reconciled File 23 with the amended 6–7 August 2026 central and File 23 governing plans.
+* Reconciled File 23 with the amended 6–10 August 2026 central/File 23 governing plans and Future Publishing Intelligence 24 addendum.
+* Added F23-FPI-01–F23-FPI-24 plus 80-round current corrective review/security/privacy regression gates.
 * Expanded dependency/assurance architecture from File 00–25 to File 00–26 and declared File 26 Search/Discovery/Ranking canonical ownership.
 * Added explicit Teacher and Admin studio capabilities and server-authoritative Founder/Admin/Teacher/Doctor workspace resolution.
 * Preserved Founder-only actions while permitting bounded institution-scope Admin operations only where native capabilities/adapters authorize them.

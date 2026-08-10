@@ -5,7 +5,7 @@ This form must remain **Pending** until every required evidence field is complet
 ## Artifact identity
 
 - Release version: `1.3.0`
-- Governing plan revision represented: `2026-08-07`
+- Governing plan revision represented: `2026-08-10`
 - Exact Git head: ________________________________
 - Base/main head reviewed: `a8a8c805f4730998ccb44bd95c87591836561759`
 - Installable ZIP: `23-sabri-doctor-founder-publishing-dashboard-1.3.0.zip`
@@ -39,7 +39,9 @@ This form must remain **Pending** until every required evidence field is complet
 - [ ] `tests/governing-plan-2026-tests.php` passes exact 70 CV IDs, F23-CEN-01, 16 AJ journeys and current owner/brand/studio guardrails.
 - [ ] Fresh 1.3.0 Review A completed after coding; every found defect fixed and retested.
 - [ ] Fresh 1.3.0 Review B completed after Review A fixes; every found defect fixed and retested.
-- [ ] Historical forty-round baseline gate remains green; it is not substituted for the two fresh 1.3.0 reviews.
+- [ ] Historical forty-round baseline gate remains green; it is not substituted for the fresh 1.3.0 or current 80-round reviews.
+- [ ] Current 2026-08-10 eighty-round review/fix record and executable gate pass on the exact final candidate head.
+- [ ] F23-FPI-01–F23-FPI-24 security/privacy regression suite passes, including scope authorization, sensitive-data minimization, cohort suppression and side-effect-free simulation.
 - [ ] Database schema/capability/data-ownership/threat-model/current-plan traceability documents reviewed.
 - [ ] Deterministic installable/source packages and checksums generated from the exact accepted repository head.
 - [ ] Zero unresolved repository blocker/critical defects; any residual risk explicitly documented.
@@ -75,6 +77,7 @@ This form must remain **Pending** until every required evidence field is complet
 - Fresh Review B: _________________________________
 - Defect register and retests: ______________________
 - Historical forty-round audit: `docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md`
+- Current eighty-round audit: `docs/AUDIT-80-ROUND-REVIEW-AND-CORRECTIONS-2026-08-10.md`
 
 ## Approvals
 

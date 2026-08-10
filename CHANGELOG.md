@@ -2,6 +2,11 @@
 
 ## 1.3.0 — 2026-08-10
 
+- Added and hardened the Founder-approved Future Publishing Intelligence Superset (F23-FPI-01 through F23-FPI-24) as federated/advisory projections only.
+- Enforced dashboard + analytics capability, own/institution scope validation and current institutional assertions on private intelligence REST routes; the Role/Permission Simulator is Founder-only.
+- Added privacy-minimized signal allowlists, sensitive Ask input/output rejection, stronger experiment/cohort suppression, timezone-explicit Best-Time/SLA logic, resolved-review no-realert, File 19 escalation ownership and File 26 ranking ownership.
+- Corrected daily reviewer-capacity handling in What-if simulation, normalized Evergreen/Evidence status aliases, and made provenance/accessibility/localization/repurposing invariants explicit.
+- Added an 80-assertion FPI security/privacy regression suite plus an 80-round repository review/fix gate and refreshed plan/document/workflow parity to the 2026-08-10 governing revision.
 - Reconciled File 23 source implementation with the amended 6–7 August 2026 central governing plan and amended File 23 plan while preserving native domain ownership.
 - Expanded the dependency/assurance manifest from File 00–25 to File 00–26 and declared File 26 as the sole Search/Discovery/Ranking owner.
 - Added an executable governing-plan contract for the exact 70 inherited requirements (CV-050–CV-062 and CV-229–CV-285), F23-CEN-01 and the 16 File 23 acceptance journeys.

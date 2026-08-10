@@ -5,8 +5,8 @@
 - Version: `1.3.0`
 - Baseline main before this correction: `a8a8c805f4730998ccb44bd95c87591836561759`
 - Working branch: `feature/file23-2026-governing-plan-completion`
-- Governing plan revision represented in code: `2026-08-07`
-- Governing sources: latest consolidated three-central-plans document plus the amended File 23 Doctor and Founder Publishing Dashboard plan.
+- Governing plan revision represented in code: `2026-08-10`
+- Governing sources: latest consolidated three-central-plans document plus the amended File 23 Doctor and Founder Publishing Dashboard plan, including the 10 August 2026 Future Publishing Intelligence 24 addendum.
 - Scope rule: repository source status only; staging/live/deployed state is independent evidence.
 
 ## Current-plan source completion
@@ -24,6 +24,8 @@ Implemented on this candidate:
 - Executable current-plan mapping of exactly 70 inherited CV requirements (`CV-050–CV-062`, `CV-229–CV-285`), `F23-CEN-01` and the 16 amended File 23 acceptance journeys.
 - Explicit operational mutation nonce, same-origin, approved-account, idempotency, replay, privacy and transaction/audit boundaries.
 - Deterministic Version 1.3.0 installable/source packaging workflow and current-plan CI regression gates.
+- Future Publishing Intelligence F23-FPI-01–F23-FPI-24 with Founder-only permission simulation, own/institution scope enforcement, sensitive-signal minimization, strong cohort suppression, timezone-safe SLA/best-time logic, no autonomous write/clinical authority, and deterministic side-effect-free What-if simulation.
+- New eighty-round review/fix closure and dedicated FPI security/privacy regression suite; historical 40-round and fresh A/B reviews remain regression evidence rather than substitutes for the current final-head review.
 
 ## Completion classification
 

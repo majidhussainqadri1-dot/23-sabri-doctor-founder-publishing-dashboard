@@ -1,6 +1,6 @@
 <?php
 /**
- * Executable File 23 mapping for the 6–7 August 2026 governing plans.
+ * Executable File 23 mapping for the 6–10 August 2026 governing plans.
  *
  * This class is a compliance/traceability contract, not a second source of
  * domain truth. Canonical domain ownership remains with the numbered owner
@@ -12,7 +12,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Governing_Plan {
-	public const REVISION               = '2026-08-07';
+	public const REVISION               = '2026-08-10';
 	public const PRIMARY_GREEN_FALLBACK = '#087A4E';
 	public const FILE_COUNT_MAX          = 26;
 

@@ -43,7 +43,9 @@ All privileged actions remain subject to native owner authorization and File 00 
 - `includes/class-spdb-publishing-intelligence.php` — canonical File 23 service for the 24-feature catalog, sanitized federated signal contract, privacy thresholds, advisory evaluators, Ask hook and What-if simulation.
 - `sabri-publishing-dashboard.php` — loads/registers the service and exposes `spdb_get_publishing_intelligence_catalog()`.
 - `templates/analytics.php` — surfaces all 24 facilities inside the private Analytics workspace using existing accessible File 23 card patterns.
-- `tests/publishing-intelligence-24-tests.php` — standalone regression suite covering exact 24 IDs, no canonical write authority, privacy suppression, File 26 ownership, donor neutrality, playbooks, safe AI degradation and read-only simulation.
+- `tests/publishing-intelligence-24-tests.php` — baseline standalone regression suite covering exact 24 IDs, no canonical write authority, privacy suppression, File 26 ownership, donor neutrality, playbooks, safe AI degradation and read-only simulation.
+- `tests/publishing-intelligence-security-regression-tests.php` — 80 security/privacy/logic assertions for scope authorization, sensitive-data minimization, cohort suppression, timezone/SLA handling, all 24 feature invariants and deterministic simulation.
+- `tests/eighty-round-review-gate-tests.php` — current 80-round review/fix evidence gate.
 
 ## Private REST contract
 
@@ -52,7 +54,7 @@ All privileged actions remain subject to native owner authorization and File 00 
 - `POST /wp-json/spdb/v1/intelligence/ask`
 - `POST /wp-json/spdb/v1/intelligence/simulate`
 
-The REST permission gate requires authenticated File 23 dashboard eligibility plus analytics capability. Feature snapshots consume sanitized signals via `spdb/publishing_intelligence_signals`. Conversational providers integrate through `spdb/publishing_intelligence_ask`.
+The REST permission gate requires authenticated File 23 dashboard eligibility, `spdb_view_dashboard`, analytics capability, validated `own|institution` scope and a current File 00 institutional assertion for institution scope. The Role/Permission Simulator is Founder-only. Feature snapshots consume privacy-minimized signals via `spdb/publishing_intelligence_signals`. Conversational providers integrate through `spdb/publishing_intelligence_ask`; sensitive prompts or provider responses are rejected rather than forwarded/returned.
 
 ## Hard safety invariants
 

@@ -98,7 +98,7 @@ if ( is_array( $trace ) ) {
 	}
 }
 $assert( $expected === $trace_ids, 'Machine-readable traceability must contain the same exact 70 CV IDs.' );
-$assert( '2026-08-07' === (string) ( $trace['plan_revision'] ?? '' ), 'Traceability must identify the amended governing-plan revision.' );
+$assert( '2026-08-10' === (string) ( $trace['plan_revision'] ?? '' ), 'Traceability must identify the amended governing-plan revision including the Future Publishing Intelligence addendum.' );
 $assert( isset( $trace['file_specific']['F23-CEN-01'] ), 'Traceability must include F23-CEN-01.' );
 
 $plugin = (string) file_get_contents( $root . '/sabri-publishing-dashboard.php' );
