@@ -20,6 +20,7 @@ define( 'SPDB_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'SPDB_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-governing-plan.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-operational-mutation-guard.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-publishing-intelligence.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-plugin.php';
 register_activation_hook( __FILE__, array( 'SPDB_Operational_Mutation_Guard', 'activate' ) );
 register_activation_hook( __FILE__, array( 'SPDB_Plugin', 'activate' ) );
@@ -32,5 +33,8 @@ function spdb_get_capabilities(): array { return SPDB_Capabilities::all(); }
 function spdb_get_assurance_manifest(): array { return spdb()->assurance_manifest(); }
 /** @return array<int,array<string,mixed>> Complete File 00–26 discovery manifest. */
 function spdb_get_dependency_manifest(): array { return spdb()->dependency_manifest(); }
+/** @return array<string,array<string,mixed>> File 23 Future Publishing Intelligence Superset catalog. */
+function spdb_get_publishing_intelligence_catalog(): array { return SPDB_Publishing_Intelligence::catalog(); }
 SPDB_Operational_Mutation_Guard::register();
+SPDB_Publishing_Intelligence::register();
 spdb()->boot();
