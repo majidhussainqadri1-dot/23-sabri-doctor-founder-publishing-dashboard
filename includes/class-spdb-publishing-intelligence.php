@@ -555,6 +555,7 @@ final class SPDB_Publishing_Intelligence {
 				continue;
 			}
 			$item = self::allowlist_row( $row, array( 'dimension', 'label', 'value', 'cohort_count', 'interval', 'provider' ) );
+			$item = self::redact_sensitive_text_fields( $item, array( 'label', 'value' ) );
 			$item['dimension'] = $dimension;
 			$item['cohort_count'] = $cohort;
 			$rows[] = $item;
@@ -564,24 +565,57 @@ final class SPDB_Publishing_Intelligence {
 
 	/** @return array<string,mixed> */
 	private static function internal_benchmark( array $signals ): array {
-		$data = self::privacy_thresholded( $signals, array( 'metric', 'label', 'value', 'cohort_count', 'interval', 'benchmark', 'provider' ) );
-		$data['anonymous_cohorts_only'] = true;
-		$data['public_shaming_or_ranking'] = false;
-		$data['paid_or_donor_influence'] = false;
-		return $data;
+		$items = array();
+		$suppressed = 0;
+		$incomplete = 0;
+		$threshold = self::privacy_threshold();
+		foreach ( $signals as $row ) {
+			$cohort = max( 0, (int) ( $row['cohort_count'] ?? 0 ) );
+			if ( $cohort < $threshold ) {
+				++$suppressed;
+				continue;
+			}
+			$item = self::allowlist_row( $row, array( 'metric', 'definition', 'label', 'value', 'cohort_count', 'interval', 'benchmark', 'provider' ) );
+			if ( '' === trim( (string) ( $item['metric'] ?? '' ) ) || '' === trim( (string) ( $item['definition'] ?? '' ) ) ) {
+				++$incomplete;
+				continue;
+			}
+			$item = self::redact_sensitive_text_fields( $item, array( 'definition', 'label', 'value', 'benchmark' ) );
+			$item['cohort_count'] = $cohort;
+			$items[] = $item;
+		}
+		return array(
+			'items' => $items,
+			'suppressed_count' => $suppressed,
+			'incomplete_metric_rows_suppressed' => $incomplete,
+			'privacy_threshold' => $threshold,
+			'metric_definition_required' => true,
+			'anonymous_cohorts_only' => true,
+			'public_shaming_or_ranking' => false,
+			'paid_or_donor_influence' => false,
+		);
 	}
 
 	/** @return array<string,mixed> */
 	private static function external_benchmark( array $signals ): array {
 		$items = array();
 		$suppressed_incomplete = 0;
+		$suppressed_compliance = 0;
 		foreach ( $signals as $row ) {
-			$item = self::allowlist_row( $row, array( 'source', 'source_url', 'source_date', 'retrieved_at', 'metric', 'label', 'value', 'trend', 'provenance', 'terms_status', 'robots_status', 'provider' ) );
+			$item = self::allowlist_row( $row, array( 'source', 'source_url', 'source_date', 'retrieved_at', 'metric', 'label', 'value', 'trend', 'provenance', 'terms_status', 'robots_status', 'law_status', 'provider' ) );
 			$source = trim( (string) ( $item['source'] ?? '' ) );
 			$provenance = trim( (string) ( $item['provenance'] ?? '' ) );
 			$source_date = trim( (string) ( $item['source_date'] ?? '' ) );
 			if ( '' === $source || '' === $provenance || ! self::valid_public_source_date( $source_date ) ) {
 				++$suppressed_incomplete;
+				continue;
+			}
+			if (
+				! self::public_source_compliance_allows( (string) ( $item['terms_status'] ?? '' ) )
+				|| ! self::public_source_compliance_allows( (string) ( $item['robots_status'] ?? '' ) )
+				|| ! self::public_source_compliance_allows( (string) ( $item['law_status'] ?? '' ) )
+			) {
+				++$suppressed_compliance;
 				continue;
 			}
 			if ( isset( $item['source_url'] ) ) {
@@ -590,14 +624,17 @@ final class SPDB_Publishing_Intelligence {
 					unset( $item['source_url'] );
 				}
 			}
+			$item = self::redact_sensitive_text_fields( $item, array( 'label', 'value', 'trend' ) );
 			$items[] = $item;
 		}
 		return array(
 			'items' => $items,
 			'incomplete_source_rows_suppressed' => $suppressed_incomplete,
+			'compliance_rows_suppressed' => $suppressed_compliance,
 			'knowledge_opportunity_only' => true,
 			'ranking_manipulation' => false,
 			'source_date_and_provenance_required' => true,
+			'robots_terms_law_required' => true,
 			'provider_disable_path_required' => true,
 		);
 	}
@@ -628,17 +665,24 @@ final class SPDB_Publishing_Intelligence {
 		$counts = array( 'fresh' => 0, 'review_soon' => 0, 'outdated' => 0, 'broken_evidence' => 0, 'superseded' => 0 );
 		$items = array();
 		foreach ( $signals as $row ) {
-			$status = self::normalize_evergreen_status( (string) ( $row['status'] ?? '' ) );
-			if ( '' === $status ) {
-				$last = self::parse_timestamp( (string) ( $row['last_reviewed_at'] ?? '' ), $timezone );
-				$interval = max( 30, min( 1095, (int) ( $row['review_interval_days'] ?? 365 ) ) );
-				$due = null === $last ? 0 : $last + $interval * self::day_seconds();
-				if ( 0 === $due || $due < $today ) {
-					$status = 'outdated';
-				} elseif ( $due <= $today + 30 * self::day_seconds() ) {
-					$status = 'review_soon';
-				} else {
-					$status = 'fresh';
+			$evidence_status = self::normalize_evidence_status( (string) ( $row['evidence_status'] ?? '' ) );
+			if ( in_array( $evidence_status, array( 'broken', 'withdrawn' ), true ) ) {
+				$status = 'broken_evidence';
+			} elseif ( 'superseded' === $evidence_status ) {
+				$status = 'superseded';
+			} else {
+				$status = self::normalize_evergreen_status( (string) ( $row['status'] ?? '' ) );
+				if ( '' === $status ) {
+					$last = self::parse_timestamp( (string) ( $row['last_reviewed_at'] ?? '' ), $timezone );
+					$interval = max( 30, min( 1095, (int) ( $row['review_interval_days'] ?? 365 ) ) );
+					$due = null === $last ? 0 : $last + $interval * self::day_seconds();
+					if ( 0 === $due || $due < $today ) {
+						$status = 'outdated';
+					} elseif ( $due <= $today + 30 * self::day_seconds() ) {
+						$status = 'review_soon';
+					} else {
+						$status = 'fresh';
+					}
 				}
 			}
 			++$counts[ $status ];
@@ -646,7 +690,7 @@ final class SPDB_Publishing_Intelligence {
 			$item['health_status'] = $status;
 			$items[] = $item;
 		}
-		return array( 'counts' => $counts, 'items' => $items, 'auto_delete' => false );
+		return array( 'counts' => $counts, 'items' => $items, 'auto_delete' => false, 'broken_or_superseded_evidence_degrades_immediately' => true );
 	}
 
 	/** @return array<string,mixed> */
@@ -665,10 +709,15 @@ final class SPDB_Publishing_Intelligence {
 	/** @return array<string,mixed> */
 	private static function accessibility( array $signals ): array {
 		$data = self::advisory_flags( $signals, 'authorized_human_or_native_owner', false );
+		$motion = self::signal_has_token( $signals, array( 'reduced-motion', 'motion' ) );
+		$reduced_data = self::signal_has_token( $signals, array( 'reduced-data', 'data-saver', 'low-bandwidth' ) );
 		$data['readiness_only'] = true;
 		$data['certification_claim'] = false;
-		$data['wcag_readiness_traceable'] = true;
-		$data['reduced_motion_and_data_considered'] = true;
+		$data['wcag_readiness_traceable'] = ! empty( $data['flags'] );
+		$data['reduced_motion_considered'] = $motion;
+		$data['reduced_data_considered'] = $reduced_data;
+		$data['reduced_motion_and_data_considered'] = $motion && $reduced_data;
+		$data['readiness_status'] = empty( $data['flags'] ) ? 'unavailable' : 'evidence_present';
 		return $data;
 	}
 
@@ -1000,10 +1049,39 @@ final class SPDB_Publishing_Intelligence {
 	}
 
 	private static function valid_public_source_date( string $value ): bool {
-		if ( '' === trim( $value ) ) {
+		$value = trim( $value );
+		if ( '' === $value || 1 !== preg_match( '/^(\d{4})-(\d{2})-(\d{2})(?:[T ]([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d))?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)?)?$/', $value, $matches ) ) {
 			return false;
 		}
-		return null !== self::parse_timestamp( $value, 'UTC' );
+		if ( ! checkdate( (int) $matches[2], (int) $matches[3], (int) $matches[1] ) ) {
+			return false;
+		}
+		$timestamp = self::parse_timestamp( $value, 'UTC' );
+		return null !== $timestamp && $timestamp <= time() + 300;
+	}
+
+	private static function public_source_compliance_allows( string $value ): bool {
+		$value = str_replace( '-', '_', self::key( $value ) );
+		return in_array( $value, array( 'allowed', 'approved', 'compliant', 'permitted', 'not_applicable' ), true );
+	}
+
+	/** @param array<int,array<string,mixed>> $signals @param string[] $tokens */
+	private static function signal_has_token( array $signals, array $tokens ): bool {
+		foreach ( $signals as $row ) {
+			foreach ( array( 'code', 'category', 'field', 'reason_code', 'check' ) as $field ) {
+				if ( ! isset( $row[ $field ] ) || ! is_scalar( $row[ $field ] ) ) {
+					continue;
+				}
+				$value = str_replace( '_', '-', self::key( (string) $row[ $field ] ) );
+				foreach ( $tokens as $token ) {
+					$needle = str_replace( '_', '-', self::key( $token ) );
+					if ( '' !== $needle && false !== strpos( $value, $needle ) ) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 
 	private static function normalize_timezone( string $value ): string {

@@ -1,3 +1,9 @@
+## 2026-08-10 — third fresh 80-round hardening pass (candidate 1.3.0)
+- Re-check export authorization against current File 00 account state/capability at request, listing, generation and download time.
+- Delete expired encrypted export artifacts before metadata retention purge, preserving retry evidence on cleanup failure.
+- Harden FPI-16/17 aggregate privacy and metric explainability, FPI-18 lawful-source/date acceptance, FPI-20 evidence degradation and FPI-22 evidence-based readiness claims.
+- Added third independent 80-round register (161–240) and targeted regressions; staging/live state remains unverified.
+
 ## 2026-08-10 — second fresh 80-round hardening pass (candidate 1.3.0)
 - Hardened FPI free-text privacy in repurposing, semantic diff, advisory flags, Privacy Leak Guard and comment intelligence.
 - Enforced FPI-18 source/date/provenance acceptance before external benchmark rows are displayed.

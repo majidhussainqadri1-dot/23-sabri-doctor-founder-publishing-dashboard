@@ -204,7 +204,7 @@ $assert( 1 === count( $audience['data']['items'] ) && false === $audience['data'
 $GLOBALS['spdb_test_signals']['internal-benchmark'] = array( array( 'metric' => 'engagement', 'cohort_count' => 50, 'value' => 2.3 ) );
 $bench = SPDB_Publishing_Intelligence::snapshot( 'internal-benchmark' );
 $assert( false === $bench['data']['paid_or_donor_influence'] && false === $bench['data']['public_shaming_or_ranking'], 'Internal benchmark must be donor-neutral and non-shaming.' );
-$GLOBALS['spdb_test_signals']['external-benchmark'] = array( array( 'source' => 'Public source', 'source_url' => 'javascript:alert(1)', 'source_date' => '2026-08-01', 'provenance' => 'public', 'patient_name' => 'Nope' ) );
+$GLOBALS['spdb_test_signals']['external-benchmark'] = array( array( 'source' => 'Public source', 'source_url' => 'javascript:alert(1)', 'source_date' => '2026-08-01', 'provenance' => 'public', 'terms_status' => 'allowed', 'robots_status' => 'allowed', 'law_status' => 'approved', 'patient_name' => 'Nope' ) );
 $ext = SPDB_Publishing_Intelligence::snapshot( 'external-benchmark' );
 $assert( 'Public source' === $ext['data']['items'][0]['source'] && '2026-08-01' === $ext['data']['items'][0]['source_date'], 'External benchmark must surface source/date provenance.' );
 $assert( false === strpos( json_encode( $ext ), 'Nope' ) && ! isset( $ext['data']['items'][0]['source_url'] ) && true === $ext['data']['provider_disable_path_required'], 'External benchmark must minimize sensitive data, reject unsafe source URLs and have a provider-disable path.' );
@@ -294,7 +294,7 @@ $comment_private_encoded = json_encode( $comment_private );
 $assert( false === strpos( $comment_private_encoded, 'user@example.com' ) && false === strpos( $comment_private_encoded, '1234567' ), 'Comment intelligence cluster labels must suppress detected sensitive free text.' );
 
 $GLOBALS['spdb_test_signals']['external-benchmark'] = array(
-	array( 'source' => 'Public source', 'source_date' => '2026-08-01', 'provenance' => 'public', 'source_url' => 'http://127.0.0.1/admin', 'provider' => 'public-provider' ),
+	array( 'source' => 'Public source', 'source_date' => '2026-08-01', 'provenance' => 'public', 'source_url' => 'http://127.0.0.1/admin', 'terms_status' => 'allowed', 'robots_status' => 'allowed', 'law_status' => 'approved', 'provider' => 'public-provider' ),
 	array( 'source' => 'Incomplete source', 'source_date' => 'not-a-date', 'provider' => 'public-provider' ),
 );
 $ext_hardened = SPDB_Publishing_Intelligence::snapshot( 'external-benchmark' );
@@ -312,6 +312,54 @@ $assert( true === $prov_hardened['data']['items'][1]['badge_eligible'] && 'provi
 $GLOBALS['spdb_test_ask_calls'] = 0;
 $ask_unlabelled_phone = SPDB_Publishing_Intelligence::ask( 'Please contact +92 300 1234567 about this item.' );
 $assert( 'rejected_sensitive_input' === $ask_unlabelled_phone['status'] && 0 === $GLOBALS['spdb_test_ask_calls'], 'Unlabelled telephone patterns must be blocked before Ask provider invocation.' );
+
+
+// Third fresh 80-round pass: privacy, lawful-source, freshness and a11y regressions.
+$GLOBALS['spdb_test_privacy_threshold'] = 20;
+$GLOBALS['spdb_test_signals']['audience-board'] = array(
+	array( 'dimension' => 'language', 'label' => 'user@example.com', 'value' => 'Contact +92 300 1234567', 'cohort_count' => 30, 'provider' => 'analytics' ),
+);
+$audience_private_value = SPDB_Publishing_Intelligence::snapshot( 'audience-board' );
+$audience_private_encoded = json_encode( $audience_private_value );
+$assert( false === strpos( $audience_private_encoded, 'user@example.com' ) && false === strpos( $audience_private_encoded, '1234567' ), 'Audience aggregate labels/values must suppress detected identifiers even above the cohort threshold.' );
+
+$GLOBALS['spdb_test_signals']['internal-benchmark'] = array(
+	array( 'metric' => 'engagement_rate', 'definition' => 'Approved aggregate interaction rate.', 'label' => 'Contact +92 300 1234567', 'value' => 12.4, 'benchmark' => 11.2, 'cohort_count' => 40, 'provider' => 'analytics' ),
+	array( 'metric' => 'undefined_metric', 'cohort_count' => 40, 'value' => 9, 'provider' => 'analytics' ),
+);
+$internal_explainable = SPDB_Publishing_Intelligence::snapshot( 'internal-benchmark' );
+$assert( 1 === count( $internal_explainable['data']['items'] ) && 1 === $internal_explainable['data']['incomplete_metric_rows_suppressed'], 'Internal benchmarking must suppress rows without an explainable metric definition.' );
+$assert( true === $internal_explainable['data']['metric_definition_required'] && ! isset( $internal_explainable['data']['items'][0]['label'] ), 'Internal benchmark definitions are mandatory and detected sensitive labels are suppressed.' );
+
+$GLOBALS['spdb_test_signals']['external-benchmark'] = array(
+	array( 'source' => 'Lawful source', 'source_date' => '2026-08-01', 'provenance' => 'public', 'terms_status' => 'allowed', 'robots_status' => 'allowed', 'law_status' => 'approved', 'provider' => 'public-provider' ),
+	array( 'source' => 'Terms forbidden', 'source_date' => '2026-08-01', 'provenance' => 'public', 'terms_status' => 'forbidden', 'robots_status' => 'allowed', 'law_status' => 'approved', 'provider' => 'public-provider' ),
+	array( 'source' => 'Relative date', 'source_date' => 'tomorrow', 'provenance' => 'public', 'terms_status' => 'allowed', 'robots_status' => 'allowed', 'law_status' => 'approved', 'provider' => 'public-provider' ),
+	array( 'source' => 'Future source', 'source_date' => '2100-01-01', 'provenance' => 'public', 'terms_status' => 'allowed', 'robots_status' => 'allowed', 'law_status' => 'approved', 'provider' => 'public-provider' ),
+);
+$external_lawful = SPDB_Publishing_Intelligence::snapshot( 'external-benchmark' );
+$assert( 1 === count( $external_lawful['data']['items'] ), 'Only an explicitly dated, lawful/robots/terms-compliant external benchmark row may be projected.' );
+$assert( 1 === $external_lawful['data']['compliance_rows_suppressed'] && 2 === $external_lawful['data']['incomplete_source_rows_suppressed'], 'External benchmark must separately suppress compliance failures and invalid/relative/future source dates.' );
+$assert( true === $external_lawful['data']['robots_terms_law_required'], 'External public benchmark acceptance must explicitly require robots, terms and law status.' );
+
+$GLOBALS['spdb_test_signals']['evergreen-health'] = array(
+	array( 'object_id' => 'broken-now', 'status' => 'fresh', 'evidence_status' => 'broken', 'last_reviewed_at' => '2026-08-10', 'review_interval_days' => 365 ),
+	array( 'object_id' => 'superseded-now', 'status' => 'fresh', 'evidence_status' => 'superseded', 'last_reviewed_at' => '2026-08-10', 'review_interval_days' => 365 ),
+);
+$evergreen_evidence = SPDB_Publishing_Intelligence::snapshot( 'evergreen-health', array( 'now' => strtotime( '2026-08-10 10:00:00 UTC' ) ) );
+$assert( 'broken_evidence' === $evergreen_evidence['data']['items'][0]['health_status'] && 'superseded' === $evergreen_evidence['data']['items'][1]['health_status'], 'Broken or superseded evidence must immediately degrade evergreen health even when content was recently reviewed.' );
+$assert( true === $evergreen_evidence['data']['broken_or_superseded_evidence_degrades_immediately'], 'Evergreen response must expose the immediate evidence-degradation contract.' );
+
+$GLOBALS['spdb_test_signals']['accessibility-lab'] = array();
+$a11y_empty = SPDB_Publishing_Intelligence::snapshot( 'accessibility-lab' );
+$assert( false === $a11y_empty['data']['wcag_readiness_traceable'] && false === $a11y_empty['data']['reduced_motion_and_data_considered'] && 'unavailable' === $a11y_empty['data']['readiness_status'], 'Accessibility Lab must not claim traceability or reduced-context coverage when no evidence exists.' );
+$GLOBALS['spdb_test_signals']['accessibility-lab'] = array(
+	array( 'code' => 'heading-order', 'severity' => 'info', 'provider' => 'a11y' ),
+	array( 'code' => 'reduced-motion', 'severity' => 'info', 'provider' => 'a11y' ),
+	array( 'code' => 'reduced-data', 'severity' => 'info', 'provider' => 'a11y' ),
+);
+$a11y_evidence = SPDB_Publishing_Intelligence::snapshot( 'accessibility-lab' );
+$assert( true === $a11y_evidence['data']['wcag_readiness_traceable'] && true === $a11y_evidence['data']['reduced_motion_considered'] && true === $a11y_evidence['data']['reduced_data_considered'], 'Accessibility readiness flags must be derived from supplied evidence rather than hard-coded true values.' );
 
 if ( $failed > 0 ) { fwrite( STDERR, "{$failed} of {$tests} publishing-intelligence security regressions failed.\n" ); exit( 1 ); }
 echo "All {$tests} File 23 Publishing Intelligence security/privacy regressions passed.\n";

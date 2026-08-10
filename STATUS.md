@@ -61,3 +61,9 @@ Exact deployed code is currently unverified; repository-based conclusions must n
 - Defects found in rounds 81–89 and corrected immediately; rounds 90–160 found no new known repository defect after correction.
 - Added privacy-safe free-text handling, benchmark traceability enforcement, provenance claim normalization, public-host URL hardening and new regression evidence.
 - Hostinger staging/live, DB/schema/migration and deployed-artifact parity remain unverified; do not treat repository QA as live completion.
+
+## 2026-08-10 — third fresh 80-round repository review
+- Independent cumulative rounds 161–240 completed against starting HEAD `847108588cf2c1a5027004596890ada3eb09d206`.
+- Defects found and corrected in rounds 161–169; rounds 170–240 found no new known repository defect after correction.
+- Hardening covers current-state export authorization/revocation, expired export artifact retention, Audience/Internal/External benchmark privacy and lawful-source rules, strict source dates, Evergreen evidence degradation and evidence-based accessibility readiness.
+- Hostinger staging/live, deployed artifact parity, DB/schema/migration and live smoke remain unverified.
