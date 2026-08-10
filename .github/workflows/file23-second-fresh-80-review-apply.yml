@@ -43,6 +43,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git checkout -- .github/workflows/file23-full-plan-completion.yml
           rm -rf .file23-fresh80
           rm -f .github/workflows/file23-second-fresh-80-review-apply.yml
           git config user.name "github-actions[bot]"
