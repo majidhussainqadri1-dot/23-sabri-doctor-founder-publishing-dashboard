@@ -46,6 +46,15 @@ jobs:
           s = s.replace('strpos( $export, "true === ( $assertions[\'suspended\'] ?? true )" )', "strpos( $export, 'true === ( $assertions[\\'suspended\\'] ?? true )' )")
           s = s.replace('strpos( $export, "user_can( $user_id, \'spdb_export_reports\' )" )', "strpos( $export, 'user_can( $user_id, \\'spdb_export_reports\\' )' )")
           p.write_text(s.rstrip() + '\n', encoding='utf-8')
+
+          p = Path('tests/publishing-intelligence-security-regression-tests.php')
+          s = p.read_text(encoding='utf-8')
+          old = "array( 'source' => 'Public source', 'source_url' => 'javascript:alert(1)', 'source_date' => '2026-08-01', 'provenance' => 'public', 'patient_name' => 'Nope' )"
+          new = "array( 'source' => 'Public source', 'source_url' => 'javascript:alert(1)', 'source_date' => '2026-08-01', 'provenance' => 'public', 'terms_status' => 'allowed', 'robots_status' => 'allowed', 'law_status' => 'approved', 'patient_name' => 'Nope' )"
+          if old not in s:
+              raise SystemExit('earlier external benchmark regression fixture anchor missing')
+          s = s.replace(old, new, 1)
+          p.write_text(s.rstrip() + '\n', encoding='utf-8')
           PY
           php -l includes/class-spdb-export-service.php
           php -l includes/class-spdb-background-jobs.php
