@@ -1,0 +1,190 @@
+{
+  "document": "File 23 governing-plan implementation traceability",
+  "plan_revision": "2026-08-07",
+  "software_candidate": "1.3.0",
+  "requirement_count": 70,
+  "file_specific": {
+    "F23-CEN-01": "Founder/doctor/teacher/admin studios are federated operational projections; no direct domain table writes and no File21/File22/domain truth copy."
+  },
+  "acceptance_journeys": [
+    "AJ-06",
+    "AJ-09",
+    "AJ-10",
+    "AJ-24",
+    "AJ-25",
+    "AJ-26",
+    "AJ-31",
+    "AJ-32",
+    "AJ-33",
+    "AJ-34",
+    "AJ-35",
+    "AJ-36",
+    "AJ-37",
+    "AJ-38",
+    "AJ-39",
+    "AJ-40"
+  ],
+  "groups": [
+    {
+      "ids": [
+        "CV-050",
+        "CV-051",
+        "CV-052",
+        "CV-053",
+        "CV-054",
+        "CV-055",
+        "CV-056",
+        "CV-057",
+        "CV-058",
+        "CV-059",
+        "CV-060",
+        "CV-061",
+        "CV-062"
+      ],
+      "canonical_owners": "File21/File22 plus native content/review/source/media owners",
+      "file23_mode": "federated creation/review/calendar/source/rights/accessibility/translation/revision consumer; no draft/content truth copy",
+      "evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "assets/css/dashboard-corrections.css"
+      ]
+    },
+    {
+      "ids": [
+        "CV-229",
+        "CV-230",
+        "CV-231",
+        "CV-232",
+        "CV-233",
+        "CV-234",
+        "CV-235",
+        "CV-236",
+        "CV-237",
+        "CV-238"
+      ],
+      "canonical_owners": "File23 plus domain owners",
+      "file23_mode": "role studios, calendar, provider analytics, privacy-thresholded queues/delegation/reports/operational evidence; provider-grounded rather than fabricated",
+      "evidence": [
+        "includes/class-spdb-workspace-resolver.php",
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-governance-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-export-service.php"
+      ]
+    },
+    {
+      "ids": [
+        "CV-239",
+        "CV-240",
+        "CV-241",
+        "CV-242",
+        "CV-243",
+        "CV-244",
+        "CV-245",
+        "CV-246",
+        "CV-247",
+        "CV-248",
+        "CV-249"
+      ],
+      "canonical_owners": "File20/File25 plus every surface owner",
+      "file23_mode": "local RTL/LTR, WCAG, reflow, reduced-motion/reduced-data and localization-compatible consumption; no second shell/PWA",
+      "evidence": [
+        "assets/css/dashboard.css",
+        "assets/css/dashboard-corrections.css",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-CHECKLIST.md"
+      ]
+    },
+    {
+      "ids": [
+        "CV-250",
+        "CV-251",
+        "CV-252",
+        "CV-253",
+        "CV-254",
+        "CV-255",
+        "CV-256",
+        "CV-257",
+        "CV-258",
+        "CV-259",
+        "CV-260",
+        "CV-261"
+      ],
+      "canonical_owners": "File24 plus relevant domain owners",
+      "file23_mode": "medical-safety/trust/moderation projection and guarded native actions; no autonomous diagnosis, no patient chart, no duplicate moderation truth",
+      "evidence": [
+        "includes/class-spdb-workspace-projection-validator.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-governance-service.php"
+      ]
+    },
+    {
+      "ids": [
+        "CV-262",
+        "CV-263",
+        "CV-264",
+        "CV-265",
+        "CV-266",
+        "CV-267",
+        "CV-268",
+        "CV-269",
+        "CV-270",
+        "CV-271",
+        "CV-272",
+        "CV-273",
+        "CV-274",
+        "CV-275",
+        "CV-276",
+        "CV-277",
+        "CV-278",
+        "CV-279",
+        "CV-280",
+        "CV-281",
+        "CV-282",
+        "CV-283",
+        "CV-284",
+        "CV-285"
+      ],
+      "canonical_owners": "File24/release governance plus every native owner",
+      "file23_mode": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ]
+    }
+  ],
+  "named_mappings": {
+    "CV-060": "Preview matrix",
+    "CV-061": "Edit/version history",
+    "CV-062": "Bulk editorial desk",
+    "CV-229": "Role dashboard",
+    "CV-230": "Content calendar",
+    "CV-231": "Analytics hierarchy",
+    "CV-232": "Audience privacy",
+    "CV-233": "Inbox/queue",
+    "CV-234": "Team delegation",
+    "CV-235": "Content quality signal",
+    "CV-236": "Export/report",
+    "CV-237": "Experiment governance",
+    "CV-238": "Operational evidence",
+    "CV-245": "Low-bandwidth mode",
+    "CV-246": "PWA/offline owner boundary",
+    "CV-262": "Zero-trust authorization",
+    "CV-265": "Audit trail",
+    "CV-267": "Anti-surveillance",
+    "CV-275": "Performance budgets",
+    "CV-277": "Graceful degradation",
+    "CV-279": "Release rings",
+    "CV-280": "Two-review law",
+    "CV-283": "Data migrations",
+    "CV-285": "Runbooks/on-call"
+  },
+  "release_state_rule": "Source/code traceability is not staging/live/operational evidence."
+}
