@@ -1,5 +1,5 @@
 <?php
-/** Static and behavioral plan-to-code completion gate for File 23 v3.0. */
+/** Static and behavioral plan-to-code completion gate for File 23 v1.3.0. */
 $root = dirname( __DIR__ );
 $tests = 0;
 $failed = 0;
@@ -31,9 +31,12 @@ $client  = $read( 'assets/js/operations.js' );
 $settings = $read( 'templates/settings.php' );
 $main    = $read( 'sabri-publishing-dashboard.php' );
 $readme  = $read( 'readme.txt' );
+$manifest = $read( 'includes/class-spdb-module-manifest.php' );
+$governing = $read( 'includes/class-spdb-governing-plan.php' );
 
-$assert( str_contains( $main, "Version:     1.2.0" ) && str_contains( $main, "SPDB_VERSION', '1.2.0" ), 'Plugin release identity must be 1.2.0.' );
-$assert( str_contains( $readme, 'Stable tag: 1.2.0' ), 'Readme stable tag must match 1.2.0.' );
+$assert( str_contains( $main, "Version:     1.3.0" ) && str_contains( $main, "SPDB_VERSION', '1.3.0" ), 'Plugin release identity must be 1.3.0.' );
+$assert( str_contains( $readme, 'Stable tag: 1.3.0' ), 'Readme stable tag must match 1.3.0.' );
+$assert( str_contains( $main, 'class-spdb-governing-plan.php' ), 'Executable amended governing-plan contract must load before runtime boot.' );
 $assert( str_contains( $main, 'class-spdb-operational-mutation-guard.php' ) && str_contains( $main, 'SPDB_Operational_Mutation_Guard::register' ), 'Operational mutation guard must be loaded and registered before runtime boot.' );
 
 $views = array( 'overview', 'create', 'workspace', 'inventory', 'review', 'calendar', 'collections', 'knowledge', 'sources', 'media', 'interactions', 'revisions', 'analytics', 'notifications', 'tasks', 'reports', 'settings', 'saved-views', 'system-status' );
@@ -61,7 +64,7 @@ foreach ( $tables as $table ) {
 $assert( ! preg_match( '/CREATE TABLE[^;]*(?:publication_body|message_body|patient_record|media_binary|raw_analytics)/is', $schema ), 'File 23 schema must not duplicate native content, messages, patient records, media, or raw analytics.' );
 $assert( ! str_contains( $guard, 'CREATE TABLE' ), 'Mutation replay protection must not create an alternate data schema.' );
 
-$required_caps = array( 'spdb_manage_tasks', 'spdb_manage_delegations', 'spdb_manage_automation_rules', 'spdb_view_assurance_status', 'spdb_request_ai_assistance', 'spdb_reconcile_projections', 'spdb_export_reports' );
+$required_caps = array( 'spdb_view_teacher_studio', 'spdb_view_admin_studio', 'spdb_manage_tasks', 'spdb_manage_delegations', 'spdb_manage_automation_rules', 'spdb_view_assurance_status', 'spdb_request_ai_assistance', 'spdb_reconcile_projections', 'spdb_export_reports' );
 foreach ( $required_caps as $cap ) {
 	$assert( str_contains( $caps, "'{$cap}'" ), "Capability {$cap} must be registered." );
 }
@@ -85,6 +88,10 @@ $assert( str_contains( $repair, "'global_safe_mode_owner' => 'file20'" ) && ! st
 $assert( str_contains( $legacy, "'mutation_supported'         => false" ) && str_contains( $legacy, "'canonical_owner'            => 'file21'" ), 'Legacy File 04 handling must remain read-only and File 21-owned.' );
 $assert( str_contains( $plugin, "do_action( 'spdb/file24_assurance_evidence'" ), 'Sanitized File 24 assurance evidence must be emitted.' );
 $assert( str_contains( $state, "'production_writes'       => false" ) && str_contains( $state, "'staging_accepted'" ), 'Completion states must remain truthful and production writes fail-closed before staging.' );
+
+$assert( str_contains( $manifest, 'Complete File 00–26' ) && str_contains( $manifest, "'26'" ) && str_contains( $manifest, 'Search, Discovery and Ranking' ), 'Dependency manifest must represent File 00–26 and File 26 search/discovery ownership.' );
+$assert( str_contains( $manifest, "'search_discovery_owner'   => 'file26'" ) && str_contains( $manifest, "'direct_domain_table_write'=> false" ), 'Assurance manifest must explicitly preserve File 26 ownership and prohibit direct domain-table writes.' );
+$assert( str_contains( $governing, 'CV-%03d' ) && str_contains( $governing, 'AJ-40' ) && str_contains( $governing, "'search_discovery'       => 'file26'" ), 'Executable governing contract must cover inherited CVs, acceptance journeys, and File 26.' );
 
 $forbidden = array( 'wp_insert_post(', 'wp_update_post(', 'wp_delete_post(', 'register_post_type(' );
 $services = $read( 'includes/class-spdb-operations-service.php' ) . $read( 'includes/class-spdb-governance-service.php' ) . $read( 'includes/class-spdb-export-service.php' );

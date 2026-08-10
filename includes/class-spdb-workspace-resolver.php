@@ -13,6 +13,10 @@ final class SPDB_Workspace_Resolver {
 	 * current-user capability path to project another person's workspace or
 	 * Membership Core status.
 	 *
+	 * Founder identity is resolved first from File 00. Admin and Teacher studios
+	 * are then selected only by explicit File 23 capabilities that remain subject
+	 * to File 00 approved-account checks. A role label by itself is never enough.
+	 *
 	 * @return array<string,mixed>
 	 */
 	public function resolve( int $user_id ): array {
@@ -40,6 +44,14 @@ final class SPDB_Workspace_Resolver {
 			return $this->workspace( 'founder', __( 'Founder Publishing Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
 		}
 
+		if ( SPDB_Capabilities::current_user_can( 'spdb_view_admin_studio' ) ) {
+			return $this->workspace( 'admin', __( 'Administrator Publishing Studio', 'sabri-publishing-dashboard' ), false, $status, $user_id );
+		}
+
+		if ( SPDB_Capabilities::current_user_can( 'spdb_view_teacher_studio' ) ) {
+			return $this->workspace( 'teacher', __( 'Teacher Publishing Studio', 'sabri-publishing-dashboard' ), false, $status, $user_id );
+		}
+
 		if ( SPDB_Membership_Guard::is_user_trusted_publisher( $user_id ) ) {
 			return $this->workspace( 'trusted_doctor', __( 'Trusted Doctor Publishing Workspace', 'sabri-publishing-dashboard' ), false, $status, $user_id );
 		}
@@ -65,6 +77,10 @@ final class SPDB_Workspace_Resolver {
 		$workspace_label = __( 'Publishing Workspace', 'sabri-publishing-dashboard' );
 		if ( 'founder' === $key ) {
 			$workspace_label = __( 'Founder Workspace', 'sabri-publishing-dashboard' );
+		} elseif ( 'admin' === $key ) {
+			$workspace_label = __( 'Admin Studio', 'sabri-publishing-dashboard' );
+		} elseif ( 'teacher' === $key ) {
+			$workspace_label = __( 'Teacher Studio', 'sabri-publishing-dashboard' );
 		} elseif ( in_array( $key, array( 'doctor', 'trusted_doctor' ), true ) ) {
 			$workspace_label = __( 'Doctor Workspace', 'sabri-publishing-dashboard' );
 		} elseif ( 'restricted' === $key ) {

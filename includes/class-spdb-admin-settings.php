@@ -13,7 +13,7 @@ final class SPDB_Admin_Settings {
 	/** @return array<string,mixed> */
 	public static function defaults(): array {
 		return array(
-			'analytics_min_cohort'       => 5,
+			'analytics_min_cohort'       => 20,
 			'export_ttl_hours'           => 24,
 			'max_export_rows'            => 1000,
 			'task_retention_days'        => 365,
@@ -66,8 +66,8 @@ final class SPDB_Admin_Settings {
 	public static function sanitize( array $input ): array {
 		$defaults = self::defaults();
 		return array(
-			'analytics_min_cohort'      => min( 100, max( 2, (int) ( $input['analytics_min_cohort'] ?? $defaults['analytics_min_cohort'] ) ) ),
-			'export_ttl_hours'          => min( 72, max( 1, (int) ( $input['export_ttl_hours'] ?? $defaults['export_ttl_hours'] ) ) ),
+			'analytics_min_cohort'      => min( 100, max( 20, (int) ( $input['analytics_min_cohort'] ?? $defaults['analytics_min_cohort'] ) ) ),
+			'export_ttl_hours'          => min( 72, max( 24, (int) ( $input['export_ttl_hours'] ?? $defaults['export_ttl_hours'] ) ) ),
 			'max_export_rows'           => min( 10000, max( 100, (int) ( $input['max_export_rows'] ?? $defaults['max_export_rows'] ) ) ),
 			'task_retention_days'       => min( 730, max( 365, (int) ( $input['task_retention_days'] ?? $defaults['task_retention_days'] ) ) ),
 			'failed_job_retention_days' => min( 90, max( 30, (int) ( $input['failed_job_retention_days'] ?? $defaults['failed_job_retention_days'] ) ) ),

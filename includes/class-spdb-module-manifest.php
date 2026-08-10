@@ -1,9 +1,11 @@
 <?php
 /**
- * Complete File 00–25 dependency and assurance manifest for File 23.
+ * Complete File 00–26 dependency and assurance manifest for File 23.
  *
  * The manifest is discovery evidence only. It never grants authorization,
- * accepts an adapter, or treats availability as permission.
+ * accepts an adapter, or treats availability as permission. Governing-policy
+ * markers below describe File 23 consumer boundaries; they do not duplicate
+ * the canonical enforcement owned by the referenced domain modules.
  *
  * @package Sabri_Publishing_Dashboard
  */
@@ -84,10 +86,19 @@ final class SPDB_Module_Manifest {
 			'index_policy'             => 'noindex_noarchive',
 			'authorization_owner'      => 'file00',
 			'global_safe_mode_owner'   => 'file20',
-			'public_visual_owner'      => 'file25',
 			'native_publication_owner' => 'file21',
 			'composer_owner'           => 'file22',
+			'assurance_owner'          => 'file24',
+			'public_visual_owner'      => 'file25',
+			'search_discovery_owner'   => 'file26',
+			'primary_brand_token_owner'=> 'file25',
+			'primary_brand_fallback'   => '#087A4E',
+			'commercial_access_policy' => 'single_free_tier',
+			'donation_policy'          => 'voluntary_donor_neutral',
+			'medical_ai_policy'        => 'education_only_no_diagnosis_or_prescription',
+			'ranking_policy'           => 'no_paid_or_donor_bias',
 			'native_data_copied'       => false,
+			'direct_domain_table_write'=> false,
 			'patient_content_stored'   => false,
 			'raw_analytics_stored'     => false,
 			'operations_schema_ready'  => ! empty( $operations['healthy'] ),
@@ -117,16 +128,17 @@ final class SPDB_Module_Manifest {
 			'13'   => self::definition( 'Welcome Intro Animation', 'route-suppression diagnostic only', 'optional', 'file13', array( 'file13', 'intro' ) ),
 			'14'   => self::definition( 'Global Clinic USP', 'campaign destination health', 'optional', 'file14', array( 'file14', 'clinic_usp' ) ),
 			'15'   => self::definition( 'Radar and Trend Intelligence', 'research and trend projections', 'domain', 'file15', array( 'file15', 'radar' ) ),
-			'16'   => self::definition( 'Sabri Classical Homeopathy AI', 'source-linked assistance only', 'optional', 'file16', array( 'file16', 'ai' ) ),
+			'16'   => self::definition( 'Sabri Classical Homeopathy AI', 'source-linked educational assistance only', 'optional', 'file16', array( 'file16', 'ai' ) ),
 			'17'   => self::definition( 'Communication Network', 'community and message context links', 'domain', 'file17', array( 'file17', 'communication', 'network' ) ),
 			'18'   => self::definition( 'Marketplace', 'listing and deal context links', 'domain', 'file18', array( 'file18', 'marketplace' ) ),
 			'19'   => self::definition( 'Unified Notifications and Alerts', 'single notification delivery owner', 'full', 'file19', array( 'file19', 'notification' ) ),
 			'20'   => self::definition( 'Unified Application Shell', 'route, layout, global Safe Mode and rollback', 'core', 'file20', array( 'file20', 'shell' ) ),
 			'21'   => self::definition( 'Home and News', 'canonical publication, review and interactions', 'core', 'file21', array( 'file21', 'home_news', 'social_publication' ) ),
 			'22'   => self::definition( 'Universal Post Composer', 'canonical create and edit orchestration', 'core', 'file22', array( 'file22', 'composer' ) ),
-			'23'   => self::definition( 'Publishing Dashboard', 'federated operational metadata and UI', 'native', 'file23', array( 'file23', 'spdb' ) ),
-			'24'   => self::definition( 'Security, Privacy, Compliance and Resilience', 'sanitized assurance evidence', 'full', 'file24', array( 'file24', 'security' ) ),
-			'25'   => self::definition( 'Global Visual Experience', 'public visual and timeline destinations', 'full', 'file25', array( 'file25', 'visual' ) ),
+			'23'   => self::definition( 'Doctor and Founder Publishing Dashboard', 'federated operational metadata, role studios and UI', 'native', 'file23', array( 'file23', 'spdb' ) ),
+			'24'   => self::definition( 'Security, Privacy, Compliance and Resilience', 'sanitized assurance evidence', 'full', 'file24', array( 'file24', 'security', 'assurance' ) ),
+			'25'   => self::definition( 'Global Visual Experience', 'canonical design tokens, public visual and timeline destinations', 'full', 'file25', array( 'file25', 'visual', 'design_token' ) ),
+			'26'   => self::definition( 'Search, Discovery and Ranking', 'typed search/discovery projection and canonical result destinations', 'full', 'file26', array( 'file26', 'search', 'discovery', 'ranking' ) ),
 		);
 	}
 

@@ -34,12 +34,18 @@ final class SPDB_Export_Service {
 	 * @return array<string,mixed>|WP_Error
 	 */
 	public function request_export( array $input ) {
-		if ( ! SPDB_Capabilities::current_user_can( 'spdb_export_reports' ) ) {
+		if ( ! $this->current_user_can_export() ) {
 			return self::error( 'spdb_export_forbidden', __( 'You are not authorized to export reports.', 'sabri-publishing-dashboard' ), 403 );
 		}
 		$report_key = sanitize_key( (string) ( $input['report_key'] ?? '' ) );
 		$format     = sanitize_key( (string) ( $input['format'] ?? 'csv' ) );
 		$scope      = sanitize_key( (string) ( $input['scope'] ?? 'own' ) );
+		$confirmed  = true === ( $input['confirm_export'] ?? false );
+		$reason     = isset( $input['reason'] ) && is_scalar( $input['reason'] ) ? trim( sanitize_textarea_field( (string) $input['reason'] ) ) : '';
+		$reason_len = function_exists( 'mb_strlen' ) ? mb_strlen( $reason ) : strlen( $reason );
+		if ( ! $confirmed || $reason_len < 3 || $reason_len > 500 ) {
+			return self::error( 'spdb_export_confirmation_required', __( 'Secure export requires explicit confirmation and a brief audit reason.', 'sabri-publishing-dashboard' ), 400 );
+		}
 		$formats    = array( 'csv', 'json', 'html', 'pdf', 'ics' );
 		$reports    = array( 'publication_history', 'content_performance', 'review_history', 'knowledge_portfolio', 'comment_response', 'monthly_summary', 'institution_publishing', 'doctor_contributions', 'editorial_backlog', 'campaign_results', 'corrections_retractions', 'source_completeness', 'safety_incidents', 'content_gaps', 'calendar_health' );
 		if ( ! in_array( $report_key, $reports, true ) || ! in_array( $format, $formats, true ) || ! in_array( $scope, array( 'own', 'institution' ), true ) ) {
@@ -57,6 +63,7 @@ final class SPDB_Export_Service {
 				'format'        => $format,
 				'scope'         => $scope,
 				'filters'       => $filters,
+				'reason_hash'   => hash( 'sha256', $reason ),
 				'expires_at_gmt' => gmdate( 'Y-m-d H:i:s', time() + $ttl * HOUR_IN_SECONDS ),
 			)
 		);
@@ -79,7 +86,7 @@ final class SPDB_Export_Service {
 
 	/** @return array<int,array<string,mixed>>|WP_Error */
 	public function list_exports() {
-		if ( ! SPDB_Capabilities::current_user_can( 'spdb_export_reports' ) ) {
+		if ( ! $this->current_user_can_export() ) {
 			return self::error( 'spdb_export_forbidden', __( 'You are not authorized to view export jobs.', 'sabri-publishing-dashboard' ), 403 );
 		}
 		$rows = $this->repository->list_export_jobs( get_current_user_id(), $this->is_institutional( get_current_user_id() ) );
@@ -101,6 +108,13 @@ final class SPDB_Export_Service {
 		}
 		if ( ! in_array( $job['status'], array( 'queued', 'processing' ), true ) ) {
 			return true;
+		}
+		$owner_user_id = max( 0, (int) ( $job['owner_user_id'] ?? 0 ) );
+		if ( ! $this->user_can_export( $owner_user_id ) ) {
+			return $this->fail_processing( $export_id, self::error( 'spdb_export_authorization_revoked', __( 'Export authorization is no longer valid for the requesting account.', 'sabri-publishing-dashboard' ), 403 ) );
+		}
+		if ( 'institution' === (string) ( $job['scope'] ?? '' ) && ! $this->is_institutional( $owner_user_id ) ) {
+			return $this->fail_processing( $export_id, self::error( 'spdb_export_scope_revoked', __( 'Institution-wide export authorization is no longer valid.', 'sabri-publishing-dashboard' ), 403 ) );
 		}
 		if ( '' !== $job['expires_at_gmt'] && strtotime( $job['expires_at_gmt'] . ' UTC' ) <= time() ) {
 			return $this->fail_processing( $export_id, self::error( 'spdb_export_expired', __( 'The export request expired before generation.', 'sabri-publishing-dashboard' ), 410 ) );
@@ -164,6 +178,9 @@ final class SPDB_Export_Service {
 		$expires   = isset( $_GET['expires'] ) ? (int) $_GET['expires'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$signature = isset( $_GET['signature'] ) && is_scalar( $_GET['signature'] ) ? strtolower( trim( wp_unslash( (string) $_GET['signature'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$user_id   = get_current_user_id();
+		if ( ! $this->current_user_can_export() ) {
+			wp_die( esc_html__( 'Your current account state is not authorized to download exports.', 'sabri-publishing-dashboard' ), esc_html__( 'Export unavailable', 'sabri-publishing-dashboard' ), array( 'response' => 403 ) );
+		}
 		if ( '' === $export_id || $expires < time() || $expires > time() + HOUR_IN_SECONDS || ! hash_equals( $this->signature( $export_id, $user_id, $expires ), $signature ) ) {
 			wp_die( esc_html__( 'The export download link is invalid or expired.', 'sabri-publishing-dashboard' ), esc_html__( 'Export unavailable', 'sabri-publishing-dashboard' ), array( 'response' => 403 ) );
 		}
@@ -198,6 +215,67 @@ final class SPDB_Export_Service {
 		header( 'X-Content-Type-Options: nosniff' );
 		echo $content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Authorized binary-safe download body.
 		exit;
+	}
+
+
+	/**
+	 * Delete expired encrypted export artifacts before their metadata rows are purged.
+	 * Returning an error deliberately prevents metadata deletion so the cleanup can retry.
+	 *
+	 * @return int|WP_Error
+	 */
+	public function cleanup_expired_files() {
+		$directory = $this->private_directory();
+		if ( is_wp_error( $directory ) ) {
+			return $directory;
+		}
+		$real_dir = realpath( $directory );
+		if ( false === $real_dir ) {
+			return self::error( 'spdb_export_cleanup_storage_invalid', __( 'The private export directory could not be resolved for retention cleanup.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		global $wpdb;
+		$table   = SPDB_Operations_Schema::table( 'export_jobs' );
+		$deleted = 0;
+		$cursor  = 0;
+		$now     = current_time( 'mysql', true );
+		for ( $batch = 0; $batch < 100; ++$batch ) {
+			$rows = $wpdb->get_results(
+				$wpdb->prepare( "SELECT id, storage_ref FROM {$table} WHERE expires_at_gmt <= %s AND id > %d ORDER BY id ASC LIMIT 200", $now, $cursor ),
+				defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
+			);
+			if ( ! is_array( $rows ) ) {
+				return self::error( 'spdb_export_cleanup_read_failed', __( 'Expired export artifacts could not be enumerated safely.', 'sabri-publishing-dashboard' ), 500 );
+			}
+			if ( ! $rows ) {
+				break;
+			}
+			foreach ( $rows as $row ) {
+				$cursor   = max( $cursor, (int) ( $row['id'] ?? 0 ) );
+				$filename = basename( (string) ( $row['storage_ref'] ?? '' ) );
+				if ( '' === $filename ) {
+					continue;
+				}
+				if ( 1 !== preg_match( '/^export_[a-z0-9]{32}\.spdb$/', $filename ) ) {
+					return self::error( 'spdb_export_cleanup_reference_invalid', __( 'An expired export storage reference failed validation.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				$path = trailingslashit( $directory ) . $filename;
+				if ( ! file_exists( $path ) ) {
+					continue;
+				}
+				$real = realpath( $path );
+				if ( false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) ) {
+					return self::error( 'spdb_export_cleanup_path_invalid', __( 'An expired export artifact failed path containment validation.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				if ( ! unlink( $real ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- File 23-owned encrypted expiring artifact.
+					return self::error( 'spdb_export_cleanup_delete_failed', __( 'An expired export artifact could not be deleted; metadata retention cleanup was stopped for retry.', 'sabri-publishing-dashboard' ), 500 );
+				}
+				++$deleted;
+			}
+			if ( count( $rows ) < 200 ) {
+				break;
+			}
+		}
+		return $deleted;
 	}
 
 	/** Remove generated temporary export files owned by one user. */
@@ -254,8 +332,15 @@ final class SPDB_Export_Service {
 			'expires_at_gmt'  => $job['expires_at_gmt'],
 			'download_url'    => '',
 		);
-		if ( 'ready' === $job['status'] && '' !== $job['storage_ref'] && strtotime( $job['expires_at_gmt'] . ' UTC' ) > time() ) {
-			$out['download_url'] = $this->download_url( $job['export_id'], (int) $job['owner_user_id'] );
+		$viewer_user_id = function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0;
+		if (
+			'ready' === $job['status']
+			&& '' !== $job['storage_ref']
+			&& strtotime( $job['expires_at_gmt'] . ' UTC' ) > time()
+			&& $viewer_user_id > 0
+			&& $viewer_user_id === (int) $job['owner_user_id']
+		) {
+			$out['download_url'] = $this->download_url( $job['export_id'], $viewer_user_id );
 		}
 		return $out;
 	}
@@ -523,6 +608,36 @@ final class SPDB_Export_Service {
 	private function mime_type( string $format ): string {
 		$types = array( 'csv' => 'text/csv; charset=utf-8', 'json' => 'application/json; charset=utf-8', 'html' => 'text/html; charset=utf-8', 'pdf' => 'application/pdf', 'ics' => 'text/calendar; charset=utf-8' );
 		return $types[ $format ] ?? 'application/octet-stream';
+	}
+
+
+	private function current_user_can_export(): bool {
+		if ( ! function_exists( 'get_current_user_id' ) ) {
+			return false;
+		}
+		return $this->user_can_export( (int) get_current_user_id(), true );
+	}
+
+	private function user_can_export( int $user_id, bool $require_session_two_factor = false ): bool {
+		if ( $user_id < 1 || ! class_exists( 'SPDB_Membership_Guard' ) || ! class_exists( 'SPDB_Capabilities' ) ) {
+			return false;
+		}
+		$assertions = SPDB_Membership_Guard::assertions( $user_id );
+		if (
+			! is_array( $assertions )
+			|| true !== ( $assertions['approved'] ?? false )
+			|| true !== ( $assertions['eligible'] ?? false )
+			|| true === ( $assertions['suspended'] ?? true )
+			|| ( $require_session_two_factor && true !== ( $assertions['session_two_factor'] ?? false ) )
+		) {
+			return false;
+		}
+		if ( function_exists( 'user_can' ) ) {
+			return user_can( $user_id, 'spdb_export_reports' );
+		}
+		return function_exists( 'get_current_user_id' )
+			&& $user_id === (int) get_current_user_id()
+			&& SPDB_Capabilities::current_user_can( 'spdb_export_reports' );
 	}
 
 	private function is_institutional( int $user_id ): bool {

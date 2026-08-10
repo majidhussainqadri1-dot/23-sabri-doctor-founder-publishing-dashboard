@@ -1,5 +1,5 @@
 <?php
-/** Build the current user's Founder or Doctor publishing workspace. */
+/** Build the current user's Founder, Doctor, Teacher, or Admin publishing studio. */
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Role_Workspace_Service {
@@ -91,20 +91,52 @@ final class SPDB_Role_Workspace_Service {
 	/** @return array<string,mixed> */
 	private function derive_context( int $user_id ): array {
 		$environment = function_exists( 'wp_get_environment_type' ) ? wp_get_environment_type() : 'production';
-		if ( ! SPDB_Membership_Guard::is_available() ) { return $this->context( $user_id, 'dependency_unavailable', 'dependency_unavailable', true, false, false, false, $environment ); }
+		if ( ! SPDB_Membership_Guard::is_available() ) { return $this->context( $user_id, 'dependency_unavailable', 'dependency_unavailable', true, false, false, false, false, false, $environment ); }
 		$status = SPDB_Membership_Guard::user_status( $user_id );
-		if ( ! SPDB_Membership_Guard::can_user_view_restricted_dashboard( $user_id ) ) { return $this->context( $user_id, 'denied', $status, true, false, false, false, $environment ); }
+		if ( ! SPDB_Membership_Guard::can_user_view_restricted_dashboard( $user_id ) ) { return $this->context( $user_id, 'denied', $status, true, false, false, false, false, false, $environment ); }
 		$is_approved = SPDB_Membership_Guard::is_user_approved( $user_id );
-		if ( ! $is_approved ) { return $this->context( $user_id, 'restricted', $status, true, false, false, false, $environment ); }
+		if ( ! $is_approved ) { return $this->context( $user_id, 'restricted', $status, true, false, false, false, false, false, $environment ); }
+
 		$is_founder = SPDB_Membership_Guard::is_user_founder( $user_id );
-		$is_trusted = ! $is_founder && SPDB_Membership_Guard::is_user_trusted_publisher( $user_id );
-		$key = $is_founder ? 'founder' : ( $is_trusted ? 'trusted_doctor' : 'doctor' );
-		return $this->context( $user_id, $key, $status, false, $is_founder, $is_trusted, true, $environment );
+		$is_admin   = ! $is_founder && SPDB_Capabilities::current_user_can( 'spdb_view_admin_studio' );
+		$is_teacher = ! $is_founder && ! $is_admin && SPDB_Capabilities::current_user_can( 'spdb_view_teacher_studio' );
+		$is_trusted = ! $is_founder && ! $is_admin && ! $is_teacher && SPDB_Membership_Guard::is_user_trusted_publisher( $user_id );
+
+		if ( $is_founder ) {
+			$key = 'founder';
+		} elseif ( $is_admin ) {
+			$key = 'admin';
+		} elseif ( $is_teacher ) {
+			$key = 'teacher';
+		} elseif ( $is_trusted ) {
+			$key = 'trusted_doctor';
+		} else {
+			$key = 'doctor';
+		}
+
+		return $this->context( $user_id, $key, $status, false, $is_founder, $is_admin, $is_teacher, $is_trusted, true, $environment );
 	}
 
 	/** @return array<string,mixed> */
-	private function context( int $user_id, string $key, string $status, bool $read_only, bool $is_founder, bool $is_trusted, bool $is_approved, string $environment ): array {
-		return array( 'user_id' => $user_id, 'workspace_key' => $key, 'account_status' => $status, 'read_only' => $read_only, 'is_founder' => $is_founder, 'is_trusted' => $is_trusted, 'is_approved' => $is_approved, 'allowed_scopes' => $is_founder ? array( 'own', 'institution' ) : array( 'own' ), 'environment' => $environment );
+	private function context( int $user_id, string $key, string $status, bool $read_only, bool $is_founder, bool $is_admin, bool $is_teacher, bool $is_trusted, bool $is_approved, string $environment ): array {
+		// Institution-scoped provider projections remain a Founder-only boundary.
+		// Admin Studio is a least-privilege operational view and does not inherit
+		// Founder identity or institution-scope merely from an admin capability.
+		$can_institution = $is_founder;
+		return array(
+			'user_id'          => $user_id,
+			'workspace_key'    => $key,
+			'account_status'   => $status,
+			'read_only'        => $read_only,
+			'is_founder'       => $is_founder,
+			'is_admin'         => $is_admin,
+			'is_teacher'       => $is_teacher,
+			'is_trusted'       => $is_trusted,
+			'is_approved'      => $is_approved,
+			'can_institution'  => $can_institution,
+			'allowed_scopes'   => $can_institution ? array( 'own', 'institution' ) : array( 'own' ),
+			'environment'      => $environment,
+		);
 	}
 
 	private function provider_is_read_capable( string $provider_key, array $metadata ): bool {
@@ -118,7 +150,7 @@ final class SPDB_Role_Workspace_Service {
 		if ( ! SPDB_Capabilities::current_user_can( $contract['required_capability'] ) ) { return false; }
 		if ( $contract['founder_only'] && empty( $context['is_founder'] ) ) { return false; }
 		if ( 'own' === ( $action['scope'] ?? '' ) && (int) ( $action['owner_user_id'] ?? 0 ) !== (int) $context['user_id'] ) { return false; }
-		if ( 'institution' === ( $action['scope'] ?? '' ) && ( empty( $context['is_founder'] ) || 0 !== (int) ( $action['owner_user_id'] ?? -1 ) ) ) { return false; }
+		if ( 'institution' === ( $action['scope'] ?? '' ) && ( empty( $context['can_institution'] ) || 0 !== (int) ( $action['owner_user_id'] ?? -1 ) ) ) { return false; }
 		if ( $contract['mutating'] && ( ! empty( $context['read_only'] ) || empty( $context['is_approved'] ) || ! $this->registry->is_environment_write_eligible( (string) $action['provider_key'] ) ) ) { return false; }
 		return true;
 	}
@@ -160,8 +192,38 @@ final class SPDB_Role_Workspace_Service {
 	private function sort_activity( array &$activity ): void { usort( $activity, static fn( array $left, array $right ): int => strcmp( (string) $right['occurred_at'], (string) $left['occurred_at'] ) ); }
 
 	private function publishing_policy( string $workspace_key ): array {
-		if ( 'founder' === $workspace_key ) { return array( 'mode' => 'founder_official', 'label' => __( 'Founder Official Publishing', 'sabri-publishing-dashboard' ), 'summary' => __( 'Official publications may use a native direct-publication path only when the provider is accepted and privacy, security, malware, copyright, and legal blockers are clear.', 'sabri-publishing-dashboard' ), 'content_classes' => array( 'Founder Update', 'Official Guidance', 'Platform Announcement', 'Platform News', 'Breaking News', 'Book Announcement', 'Research Announcement', 'Clinic Announcement', 'Institution-wide Correction', 'Retraction Notice', 'Pinned Official Publication' ) ); }
-		if ( in_array( $workspace_key, array( 'doctor', 'trusted_doctor' ), true ) ) { return array( 'mode' => 'trusted_doctor' === $workspace_key ? 'trusted_professional' : 'doctor_reviewed', 'label' => __( 'Doctor Professional Publishing', 'sabri-publishing-dashboard' ), 'summary' => 'trusted_doctor' === $workspace_key ? __( 'Trusted publishing remains limited to explicitly allowed categories and native policy. Every action still requires current verification, ownership, capability, and accepted provider status.', 'sabri-publishing-dashboard' ) : __( 'Doctor publications use the native Submit for Review path by default. Patient consent, anonymity, references, medical-claim restrictions, and reviewer feedback remain authoritative.', 'sabri-publishing-dashboard' ), 'content_classes' => array( 'Articles', 'Clinical Education', 'Patient Education', 'Successful Cases', 'Remedy Notes', 'Disease Notes', 'Materia Medica', 'Repertory', 'Research', 'Nutrition', 'Preventive Health', 'Videos', 'Reels', 'PDFs', 'Q&A' ) ); }
+		if ( 'founder' === $workspace_key ) {
+			return array(
+				'mode' => 'founder_official',
+				'label' => __( 'Founder Official Publishing', 'sabri-publishing-dashboard' ),
+				'summary' => __( 'Official publications may use a native direct-publication path only when the provider is accepted and privacy, security, malware, copyright, and legal blockers are clear.', 'sabri-publishing-dashboard' ),
+				'content_classes' => array( 'Founder Update', 'Official Guidance', 'Platform Announcement', 'Platform News', 'Breaking News', 'Book Announcement', 'Research Announcement', 'Clinic Announcement', 'Institution-wide Correction', 'Retraction Notice', 'Pinned Official Publication' ),
+			);
+		}
+		if ( 'admin' === $workspace_key ) {
+			return array(
+				'mode' => 'admin_federated',
+				'label' => __( 'Administrator Publishing Studio', 'sabri-publishing-dashboard' ),
+				'summary' => __( 'The Admin Studio provides capability-scoped operational projections and native actions without inheriting Founder-only institution scope. It never impersonates the Founder or writes File 21, File 22, moderation, search, security, or profile truth directly.', 'sabri-publishing-dashboard' ),
+				'content_classes' => array( 'Editorial Operations', 'Review Queues', 'Schedules', 'Campaigns', 'Corrections', 'Reports', 'System Health' ),
+			);
+		}
+		if ( 'teacher' === $workspace_key ) {
+			return array(
+				'mode' => 'teacher_educational',
+				'label' => __( 'Teacher Educational Publishing Studio', 'sabri-publishing-dashboard' ),
+				'summary' => __( 'The Teacher Studio federates authorized educational drafts, lessons, sources, review tasks, schedules and analytics through native owners. Student private data, credentials, clinical data and domain records are not copied into File 23.', 'sabri-publishing-dashboard' ),
+				'content_classes' => array( 'Educational Articles', 'Lessons', 'Course Resources', 'Research Notes', 'Videos', 'PDFs', 'Q&A' ),
+			);
+		}
+		if ( in_array( $workspace_key, array( 'doctor', 'trusted_doctor' ), true ) ) {
+			return array(
+				'mode' => 'trusted_doctor' === $workspace_key ? 'trusted_professional' : 'doctor_reviewed',
+				'label' => __( 'Doctor Professional Publishing', 'sabri-publishing-dashboard' ),
+				'summary' => 'trusted_doctor' === $workspace_key ? __( 'Trusted publishing remains limited to explicitly allowed categories and native policy. Every action still requires current verification, ownership, capability, and accepted provider status.', 'sabri-publishing-dashboard' ) : __( 'Doctor publications use the native Submit for Review path by default. Patient consent, anonymity, references, medical-claim restrictions, and reviewer feedback remain authoritative.', 'sabri-publishing-dashboard' ),
+				'content_classes' => array( 'Articles', 'Clinical Education', 'Patient Education', 'Successful Cases', 'Remedy Notes', 'Disease Notes', 'Materia Medica', 'Repertory', 'Research', 'Nutrition', 'Preventive Health', 'Videos', 'Reels', 'PDFs', 'Q&A' ),
+			);
+		}
 		return array( 'mode' => 'restricted', 'label' => __( 'Restricted Publishing Status', 'sabri-publishing-dashboard' ), 'summary' => __( 'Publishing actions remain unavailable while the account is pending, suspended, rejected, expired, or otherwise not approved.', 'sabri-publishing-dashboard' ), 'content_classes' => array() );
 	}
 
