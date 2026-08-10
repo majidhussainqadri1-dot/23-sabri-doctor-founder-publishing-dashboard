@@ -43,6 +43,18 @@ jobs:
           p.write_text(s, encoding='utf-8')
           PY
           python3 .file23-fourth80/apply.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('tests/publishing-intelligence-24-tests.php')
+          s = p.read_text(encoding='utf-8')
+          old_a = "array( 'topic' => 'A', 'demand' => 0.9, 'coverage' => 0.2 )"
+          old_b = "array( 'topic' => 'B', 'demand' => 0.7, 'coverage' => 0.6 )"
+          if old_a not in s or old_b not in s:
+              raise SystemExit('Opportunity Radar fixture anchors missing')
+          s = s.replace(old_a, "array( 'topic' => 'A', 'demand' => 0.9, 'coverage' => 0.2, 'demand_provider' => 'file26' )", 1)
+          s = s.replace(old_b, "array( 'topic' => 'B', 'demand' => 0.7, 'coverage' => 0.6, 'demand_provider' => 'file26' )", 1)
+          p.write_text(s.rstrip() + '\n', encoding='utf-8')
+          PY
           cat > tests/fourth-fresh-80-security-contract-tests.php <<'PHP'
           <?php
           /** Fourth fresh 80-round contract regressions for plan/privacy/export hardening. */
