@@ -1,0 +1,66 @@
+name: File 23 Fourth Fresh 80 Review Apply
+
+on:
+  push:
+    branches:
+      - feature/file23-2026-governing-plan-completion
+    paths:
+      - '.file23-fourth80/**'
+      - '.github/workflows/file23-fourth-fresh-80-review-apply.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: Apply fourth fresh eighty-round corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .file23-fourth80/apply.py
+          php -l includes/class-spdb-admin-settings.php
+          php -l includes/class-spdb-export-service.php
+          php -l includes/class-spdb-operations-repository.php
+          php -l includes/class-spdb-operations-service.php
+          php -l includes/class-spdb-publishing-intelligence.php
+          php -l templates/reports.php
+          php -l tests/fourth-fresh-80-security-contract-tests.php
+          node --check assets/js/operations.js
+          php tests/fourth-fresh-80-security-contract-tests.php
+          php -d display_errors=1 -d error_reporting=E_ALL tests/publishing-intelligence-security-regression-tests.php
+          php -d display_errors=1 -d error_reporting=E_ALL tests/publishing-intelligence-24-tests.php
+          php -d display_errors=1 -d error_reporting=E_ALL tests/full-plan-security-adversarial-tests.php
+          php -d display_errors=1 -d error_reporting=E_ALL tests/third-fresh-80-export-contract-tests.php
+          php -d display_errors=1 -d error_reporting=E_ALL tests/eighty-round-review-gate-tests.php
+          php -d display_errors=1 -d error_reporting=E_ALL tests/fresh-review-1.3.0-gate-tests.php
+          for suite in tests/*-tests.php; do
+            echo "Running $suite"
+            php -d display_errors=1 -d error_reporting=E_ALL "$suite"
+          done
+          git diff --check
+      - name: Commit corrected exact tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .file23-fourth80
+          rm -f .github/workflows/file23-fourth-fresh-80-review-apply.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "No fourth-pass repair delta produced."
+            exit 1
+          fi
+          git commit -m "File 23: apply fourth fresh eighty-round corrections"
+          git push origin HEAD:feature/file23-2026-governing-plan-completion
