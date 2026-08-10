@@ -472,7 +472,9 @@ final class SPDB_Publishing_Intelligence {
 	private static function advisory_flags( array $signals, string $decision_authority, bool $auto_block ): array {
 		$flags = array();
 		foreach ( $signals as $row ) {
-			$flags[] = self::allowlist_row( $row, array( 'code', 'category', 'severity', 'field', 'location', 'message', 'reason_code', 'remediation', 'remediation_owner', 'provider' ) );
+			$item = self::allowlist_row( $row, array( 'code', 'category', 'severity', 'field', 'location', 'message', 'reason_code', 'remediation', 'remediation_owner', 'provider' ) );
+			$item = self::redact_sensitive_text_fields( $item, array( 'message', 'remediation' ) );
+			$flags[] = $item;
 		}
 		return array( 'decision_authority' => $decision_authority, 'auto_block' => $auto_block, 'flags' => $flags, 'raw_sensitive_samples_included' => false );
 	}
@@ -480,8 +482,13 @@ final class SPDB_Publishing_Intelligence {
 	/** @return array<string,mixed> */
 	private static function privacy_guard( array $signals ): array {
 		$data = self::advisory_flags( $signals, 'native_privacy_owner_or_authorized_human', false );
+		foreach ( $data['flags'] as &$flag ) {
+			unset( $flag['message'], $flag['remediation'] );
+		}
+		unset( $flag );
 		$data['raw_patient_documents_owned'] = false;
 		$data['raw_identifiers_returned'] = false;
+		$data['free_text_details_returned'] = false;
 		$data['privacy_minimized'] = true;
 		return $data;
 	}
@@ -508,6 +515,7 @@ final class SPDB_Publishing_Intelligence {
 			$class = self::key( (string) ( $item['classification'] ?? 'unknown' ) );
 			$item['classification'] = in_array( $class, $classes, true ) ? $class : 'unknown';
 			$item['uncertainty'] = max( 0.0, min( 1.0, (float) ( $item['uncertainty'] ?? 1.0 ) ) );
+			$item = self::redact_sensitive_text_fields( $item, array( 'summary' ) );
 			$items[] = $item;
 		}
 		return array( 'items' => $items, 'silent_rewrite' => false, 'human_review_required_for_material_change' => true );
@@ -518,9 +526,11 @@ final class SPDB_Publishing_Intelligence {
 		$items = array();
 		foreach ( $signals as $row ) {
 			$item = self::allowlist_row( $row, array( 'source_provider', 'source_type', 'source_id', 'source_version', 'target_format', 'outline', 'summary', 'ai_assisted', 'disclosure_required', 'language' ) );
-			if ( isset( $item['outline'] ) && self::contains_sensitive_text( (string) $item['outline'] ) ) {
-				unset( $item['outline'] );
-				$item['outline_suppressed'] = true;
+			foreach ( array( 'outline', 'summary' ) as $text_field ) {
+				if ( isset( $item[ $text_field ] ) && self::contains_sensitive_text( (string) $item[ $text_field ] ) ) {
+					unset( $item[ $text_field ] );
+					$item[ $text_field . '_suppressed' ] = true;
+				}
 			}
 			$items[] = $item;
 		}
@@ -564,8 +574,16 @@ final class SPDB_Publishing_Intelligence {
 	/** @return array<string,mixed> */
 	private static function external_benchmark( array $signals ): array {
 		$items = array();
+		$suppressed_incomplete = 0;
 		foreach ( $signals as $row ) {
 			$item = self::allowlist_row( $row, array( 'source', 'source_url', 'source_date', 'retrieved_at', 'metric', 'label', 'value', 'trend', 'provenance', 'terms_status', 'robots_status', 'provider' ) );
+			$source = trim( (string) ( $item['source'] ?? '' ) );
+			$provenance = trim( (string) ( $item['provenance'] ?? '' ) );
+			$source_date = trim( (string) ( $item['source_date'] ?? '' ) );
+			if ( '' === $source || '' === $provenance || ! self::valid_public_source_date( $source_date ) ) {
+				++$suppressed_incomplete;
+				continue;
+			}
 			if ( isset( $item['source_url'] ) ) {
 				$item['source_url'] = self::safe_public_url( (string) $item['source_url'] );
 				if ( '' === $item['source_url'] ) {
@@ -574,7 +592,14 @@ final class SPDB_Publishing_Intelligence {
 			}
 			$items[] = $item;
 		}
-		return array( 'items' => $items, 'knowledge_opportunity_only' => true, 'ranking_manipulation' => false, 'source_date_and_provenance_required' => true, 'provider_disable_path_required' => true );
+		return array(
+			'items' => $items,
+			'incomplete_source_rows_suppressed' => $suppressed_incomplete,
+			'knowledge_opportunity_only' => true,
+			'ranking_manipulation' => false,
+			'source_date_and_provenance_required' => true,
+			'provider_disable_path_required' => true,
+		);
 	}
 
 	/** @return array<string,mixed> */
@@ -589,6 +614,7 @@ final class SPDB_Publishing_Intelligence {
 				continue;
 			}
 			$item = self::allowlist_row( $row, array( 'cluster', 'category', 'label', 'cohort_count', 'count', 'trend', 'provider', 'faq_candidate', 'correction_candidate' ) );
+			$item = self::redact_sensitive_text_fields( $item, array( 'cluster', 'label' ) );
 			$item['cohort_count'] = $count;
 			$items[] = $item;
 		}
@@ -649,11 +675,19 @@ final class SPDB_Publishing_Intelligence {
 	/** @return array<string,mixed> */
 	private static function provenance( array $signals ): array {
 		$items = array();
+		$allowed_statuses = array( 'unknown', 'unverified', 'verified', 'invalid', 'unavailable', 'not_applicable' );
 		foreach ( $signals as $row ) {
 			$item = self::allowlist_row( $row, array( 'provider', 'object_type', 'object_id', 'origin', 'author_type', 'ai_assisted', 'translated', 'imported', 'source_id', 'source_version', 'authenticity_status', 'signature_status', 'tamper_evidence', 'recorded_at' ) );
-			$status = self::key( (string) ( $item['authenticity_status'] ?? '' ) );
-			$item['authenticity_status'] = '' === $status ? 'unknown' : $status;
+			$status = str_replace( '-', '_', self::key( (string) ( $item['authenticity_status'] ?? 'unknown' ) ) );
+			$signature = str_replace( '-', '_', self::key( (string) ( $item['signature_status'] ?? 'unknown' ) ) );
+			$item['authenticity_status'] = in_array( $status, $allowed_statuses, true ) ? $status : 'unknown';
+			$item['signature_status'] = in_array( $signature, $allowed_statuses, true ) ? $signature : 'unknown';
+			$item['badge_eligible'] = 'verified' === $item['authenticity_status']
+				&& 'verified' === $item['signature_status']
+				&& '' !== trim( (string) ( $item['provider'] ?? '' ) )
+				&& '' !== trim( (string) ( $item['tamper_evidence'] ?? '' ) );
 			$item['fabricated_badge'] = false;
+			$item['claim_level'] = 'provider_asserted_evidence';
 			$items[] = $item;
 		}
 		return array( 'items' => $items, 'missing_provenance_status' => 'unknown', 'native_truth_preserved' => true, 'fabricated_authenticity_badges' => false );
@@ -833,6 +867,17 @@ final class SPDB_Publishing_Intelligence {
 		return $out;
 	}
 
+	/** @param array<string,mixed> $item @param string[] $fields @return array<string,mixed> */
+	private static function redact_sensitive_text_fields( array $item, array $fields ): array {
+		foreach ( $fields as $field ) {
+			if ( isset( $item[ $field ] ) && is_scalar( $item[ $field ] ) && self::contains_sensitive_text( (string) $item[ $field ] ) ) {
+				unset( $item[ $field ] );
+				$item[ $field . '_suppressed' ] = true;
+			}
+		}
+		return $item;
+	}
+
 	private static function privacy_threshold(): int {
 		$threshold = self::MIN_PRIVACY_THRESHOLD;
 		if ( function_exists( 'apply_filters' ) ) {
@@ -859,6 +904,17 @@ final class SPDB_Publishing_Intelligence {
 		}
 		if ( 1 === preg_match( '/\b(?:passport|cnic|national\s+id|phone|mobile|patient\s+id|password|otp|recovery\s+code)\s*[:#-]?\s*[A-Z0-9+()-]{5,}\b/i', $value ) ) {
 			return true;
+		}
+		if ( 1 === preg_match( '/\b(?:patient\s+name|home\s+address|postal\s+address|street\s+address|address)\s*[:#-]\s*.{3,120}/iu', $value ) ) {
+			return true;
+		}
+		if ( preg_match_all( '/(?<![A-Za-z0-9])\+?[0-9][0-9 ()-]{7,}[0-9](?![A-Za-z0-9])/', $value, $matches ) ) {
+			foreach ( $matches[0] as $candidate ) {
+				$digits = preg_replace( '/\D+/', '', (string) $candidate );
+				if ( is_string( $digits ) && strlen( $digits ) >= 9 && strlen( $digits ) <= 15 ) {
+					return true;
+				}
+			}
 		}
 		return false;
 	}
@@ -928,7 +984,26 @@ final class SPDB_Publishing_Intelligence {
 		if ( ! in_array( $scheme, array( 'http', 'https' ), true ) || isset( $parts['user'] ) || isset( $parts['pass'] ) ) {
 			return '';
 		}
+		$host = strtolower( rtrim( (string) $parts['host'], '.' ) );
+		$ip_host = trim( $host, '[]' );
+		if ( '' === $host || 'localhost' === $host || false !== strpos( $host, '.localhost' ) || false !== strpos( $host, '.local' ) || false !== strpos( $host, '.internal' ) || false !== strpos( $host, '.test' ) || false !== strpos( $host, '.invalid' ) ) {
+			return '';
+		}
+		if ( false !== filter_var( $ip_host, FILTER_VALIDATE_IP ) ) {
+			if ( false === filter_var( $ip_host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+				return '';
+			}
+		} elseif ( false === strpos( $host, '.' ) ) {
+			return '';
+		}
 		return self::text( $value, 1000 );
+	}
+
+	private static function valid_public_source_date( string $value ): bool {
+		if ( '' === trim( $value ) ) {
+			return false;
+		}
+		return null !== self::parse_timestamp( $value, 'UTC' );
 	}
 
 	private static function normalize_timezone( string $value ): string {

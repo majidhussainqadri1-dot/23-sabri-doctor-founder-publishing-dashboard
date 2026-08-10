@@ -55,3 +55,9 @@ Until those external gates pass, File 23 is **not staging-accepted, live-deploye
 - Live Verification Status: **Not verified**.
 
 Exact deployed code is currently unverified; repository-based conclusions must not be represented as live-system truth.
+
+## 2026-08-10 — second fresh 80-round repository review
+- New independent review rounds 81–160 completed against starting HEAD `a2ea81a285bd0a74cae7c753914e867214fb6600`.
+- Defects found in rounds 81–89 and corrected immediately; rounds 90–160 found no new known repository defect after correction.
+- Added privacy-safe free-text handling, benchmark traceability enforcement, provenance claim normalization, public-host URL hardening and new regression evidence.
+- Hostinger staging/live, DB/schema/migration and deployed-artifact parity remain unverified; do not treat repository QA as live completion.

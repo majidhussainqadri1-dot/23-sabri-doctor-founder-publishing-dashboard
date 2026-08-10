@@ -1,3 +1,10 @@
+## 2026-08-10 — second fresh 80-round hardening pass (candidate 1.3.0)
+- Hardened FPI free-text privacy in repurposing, semantic diff, advisory flags, Privacy Leak Guard and comment intelligence.
+- Enforced FPI-18 source/date/provenance acceptance before external benchmark rows are displayed.
+- Normalized FPI-23 authenticity/signature states and required corroborating provider/tamper evidence before badge eligibility.
+- Extended public URL safety to reject localhost/private/reserved hosts and strengthened unlabeled telephone detection.
+- Added regression coverage and second fresh rounds 81–160 audit evidence; staging/live status remains unverified.
+
 # Changelog
 
 ## 1.3.0 — 2026-08-10

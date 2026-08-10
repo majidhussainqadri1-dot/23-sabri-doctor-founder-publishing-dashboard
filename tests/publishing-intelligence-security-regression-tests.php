@@ -264,5 +264,54 @@ $GLOBALS['spdb_test_signals']['audience-board'] = array( array( 'dimension' => '
 $threshold_high = SPDB_Publishing_Intelligence::snapshot( 'audience-board' );
 $assert( 30 === $threshold_high['privacy_threshold'] && 0 === count( $threshold_high['data']['items'] ), 'Stricter approved privacy threshold must suppress cohorts that were previously visible.' );
 
+
+// Second fresh 80-round pass: regressions discovered after the first 80-round closure.
+$GLOBALS['spdb_test_signals']['privacy-leak-guard'] = array(
+	array( 'code' => 'pii', 'severity' => 'high', 'message' => 'Patient name: Secret Person', 'remediation' => 'Call +92 300 1234567', 'provider' => 'file24' ),
+);
+$privacy_free_text = SPDB_Publishing_Intelligence::snapshot( 'privacy-leak-guard' );
+$privacy_free_encoded = json_encode( $privacy_free_text );
+$assert( false === strpos( $privacy_free_encoded, 'Secret Person' ) && false === strpos( $privacy_free_encoded, '1234567' ), 'Privacy Leak Guard must never return provider free-text samples containing patient identifiers.' );
+$assert( false === $privacy_free_text['data']['free_text_details_returned'], 'Privacy Leak Guard must explicitly declare that free-text details are not returned.' );
+
+$GLOBALS['spdb_test_signals']['repurposing-studio'] = array(
+	array( 'source_id' => 'src-private', 'target_format' => 'reel', 'outline' => 'Safe outline', 'summary' => 'Contact +92 300 1234567 for the case.' ),
+);
+$rep_private = SPDB_Publishing_Intelligence::snapshot( 'repurposing-studio' );
+$assert( ! isset( $rep_private['data']['signals'][0]['summary'] ) && true === $rep_private['data']['signals'][0]['summary_suppressed'], 'Repurposing summary must be suppressed when sensitive free text is detected.' );
+
+$GLOBALS['spdb_test_signals']['semantic-diff'] = array(
+	array( 'classification' => 'clinical', 'summary' => 'Patient email user@example.com changed.' ),
+);
+$diff_private = SPDB_Publishing_Intelligence::snapshot( 'semantic-diff' );
+$assert( ! isset( $diff_private['data']['items'][0]['summary'] ) && true === $diff_private['data']['items'][0]['summary_suppressed'], 'Semantic diff summary must suppress detected sensitive free text.' );
+
+$GLOBALS['spdb_test_signals']['comment-intelligence'] = array(
+	array( 'cluster' => 'user@example.com asked for source', 'label' => 'Contact +92 300 1234567', 'cohort_count' => 31, 'provider' => 'file21' ),
+);
+$comment_private = SPDB_Publishing_Intelligence::snapshot( 'comment-intelligence' );
+$comment_private_encoded = json_encode( $comment_private );
+$assert( false === strpos( $comment_private_encoded, 'user@example.com' ) && false === strpos( $comment_private_encoded, '1234567' ), 'Comment intelligence cluster labels must suppress detected sensitive free text.' );
+
+$GLOBALS['spdb_test_signals']['external-benchmark'] = array(
+	array( 'source' => 'Public source', 'source_date' => '2026-08-01', 'provenance' => 'public', 'source_url' => 'http://127.0.0.1/admin', 'provider' => 'public-provider' ),
+	array( 'source' => 'Incomplete source', 'source_date' => 'not-a-date', 'provider' => 'public-provider' ),
+);
+$ext_hardened = SPDB_Publishing_Intelligence::snapshot( 'external-benchmark' );
+$assert( 1 === count( $ext_hardened['data']['items'] ) && 1 === $ext_hardened['data']['incomplete_source_rows_suppressed'], 'External benchmark must suppress rows without valid source/date/provenance.' );
+$assert( ! isset( $ext_hardened['data']['items'][0]['source_url'] ), 'External benchmark must reject localhost/private/reserved source URLs.' );
+
+$GLOBALS['spdb_test_signals']['provenance-ledger'] = array(
+	array( 'provider' => 'file21', 'object_id' => 'p2', 'authenticity_status' => 'certified-absolute', 'signature_status' => 'verified', 'tamper_evidence' => 'hash:abc' ),
+	array( 'provider' => 'file21', 'object_id' => 'p3', 'authenticity_status' => 'verified', 'signature_status' => 'verified', 'tamper_evidence' => 'hash:def' ),
+);
+$prov_hardened = SPDB_Publishing_Intelligence::snapshot( 'provenance-ledger' );
+$assert( 'unknown' === $prov_hardened['data']['items'][0]['authenticity_status'] && false === $prov_hardened['data']['items'][0]['badge_eligible'], 'Unknown authenticity labels must normalize to Unknown and never become badge-eligible.' );
+$assert( true === $prov_hardened['data']['items'][1]['badge_eligible'] && 'provider_asserted_evidence' === $prov_hardened['data']['items'][1]['claim_level'], 'Verified provenance badge eligibility requires provider, verified signature and tamper evidence, and remains provider-asserted evidence.' );
+
+$GLOBALS['spdb_test_ask_calls'] = 0;
+$ask_unlabelled_phone = SPDB_Publishing_Intelligence::ask( 'Please contact +92 300 1234567 about this item.' );
+$assert( 'rejected_sensitive_input' === $ask_unlabelled_phone['status'] && 0 === $GLOBALS['spdb_test_ask_calls'], 'Unlabelled telephone patterns must be blocked before Ask provider invocation.' );
+
 if ( $failed > 0 ) { fwrite( STDERR, "{$failed} of {$tests} publishing-intelligence security regressions failed.\n" ); exit( 1 ); }
 echo "All {$tests} File 23 Publishing Intelligence security/privacy regressions passed.\n";
