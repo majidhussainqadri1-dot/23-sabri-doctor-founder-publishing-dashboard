@@ -119,7 +119,10 @@ final class SPDB_Role_Workspace_Service {
 
 	/** @return array<string,mixed> */
 	private function context( int $user_id, string $key, string $status, bool $read_only, bool $is_founder, bool $is_admin, bool $is_teacher, bool $is_trusted, bool $is_approved, string $environment ): array {
-		$can_institution = $is_founder || $is_admin;
+		// Institution-scoped provider projections remain a Founder-only boundary.
+		// Admin Studio is a least-privilege operational view and does not inherit
+		// Founder identity or institution-scope merely from an admin capability.
+		$can_institution = $is_founder;
 		return array(
 			'user_id'          => $user_id,
 			'workspace_key'    => $key,
@@ -201,7 +204,7 @@ final class SPDB_Role_Workspace_Service {
 			return array(
 				'mode' => 'admin_federated',
 				'label' => __( 'Administrator Publishing Studio', 'sabri-publishing-dashboard' ),
-				'summary' => __( 'The Admin Studio provides institution-scoped operational projections and only those native actions granted by current capabilities and accepted adapters. It never impersonates the Founder or writes File 21, File 22, moderation, search, security, or profile truth directly.', 'sabri-publishing-dashboard' ),
+				'summary' => __( 'The Admin Studio provides capability-scoped operational projections and native actions without inheriting Founder-only institution scope. It never impersonates the Founder or writes File 21, File 22, moderation, search, security, or profile truth directly.', 'sabri-publishing-dashboard' ),
 				'content_classes' => array( 'Editorial Operations', 'Review Queues', 'Schedules', 'Campaigns', 'Corrections', 'Reports', 'System Health' ),
 			);
 		}
