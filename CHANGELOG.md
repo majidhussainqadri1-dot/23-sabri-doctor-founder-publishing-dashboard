@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.3.0 — 2026-08-10
+
+- Reconciled File 23 source implementation with the amended 6–7 August 2026 central governing plan and amended File 23 plan while preserving native domain ownership.
+- Expanded the dependency/assurance manifest from File 00–25 to File 00–26 and declared File 26 as the sole Search/Discovery/Ranking owner.
+- Added an executable governing-plan contract for the exact 70 inherited requirements (CV-050–CV-062 and CV-229–CV-285), F23-CEN-01 and the 16 File 23 acceptance journeys.
+- Added machine-readable current-plan traceability and CI gates so plan presence is not confused with implementation evidence.
+- Added explicit Teacher and Administrator studio capabilities and server-authoritative Founder/Admin/Teacher/Doctor workspace resolution without role-label authorization shortcuts.
+- Preserved Founder-only action semantics and File 00 account-state authorization; File 23 still does not create roles or copy native publication, review, learning, profile, search, moderation, media or analytics truth.
+- Replaced the obsolete orange primary presentation with File 25-owned primary token consumption and the approved Sabri Green #087A4E fallback; orange remains warning/contextual only.
+- Added reduced-data local presentation behavior while preserving File 20 as the sole application shell/PWA/Safe Mode owner.
+- Added explicit assurance markers for single-free-tier access, voluntary donor-neutral support, no paid/donor ranking bias and education-only AI with no diagnosis/prescription authority.
+- Updated deterministic 1.3.0 release tooling and both full-plan/final-release workflows to run the amended-plan regression suite and package exact-head evidence.
+- Kept staging acceptance, live deployment and operational acceptance as separate evidence gates; the source release sign-off remains pending until those external gates are actually satisfied.
+
 ## 1.2.0 — 2026-08-04
 
 - Completed forty independent thematic review/fix rounds against the Definitive Master Plan v3.0 and File 23 Final Central-Plan-Harmonized v3.0.
