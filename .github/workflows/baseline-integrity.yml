@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: file23-baseline-${{ github.event.pull_request.number || github.ref }}-${{ matrix.php }}
+  group: file23-baseline-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -40,15 +40,23 @@ jobs:
           test "${#suites[@]}" -ge 24
           for suite in "${suites[@]}"; do php -d display_errors=1 -d error_reporting=E_ALL "$suite"; done
           php tests/architecture-guard.php
-      - name: Verify current full-plan release boundaries
+      - name: Verify current 1.3.0 governing boundaries
         shell: bash
         run: |
           set -euo pipefail
-          grep -Fq "Version:     1.2.0" sabri-publishing-dashboard.php
-          grep -Fq "Stable tag: 1.2.0" readme.txt
+          grep -Fq "Version:     1.3.0" sabri-publishing-dashboard.php
+          grep -Fq "Stable tag: 1.3.0" readme.txt
           grep -Fq "'phase'                   => 'full_plan_candidate'" includes/class-spdb-system-state.php
           grep -Fq 'class-spdb-operations-service.php' includes/class-spdb-plugin.php
           grep -Fq 'class-spdb-background-jobs.php' includes/class-spdb-plugin.php
           grep -Fq 'class-spdb-privacy-integration.php' includes/class-spdb-plugin.php
           grep -Fq 'spdb/file24_assurance_evidence' includes/class-spdb-plugin.php
           grep -Fq "global_safe_mode_owner' => 'file20" includes/class-spdb-local-repair.php
+          grep -Fq 'Complete File 00–26' includes/class-spdb-module-manifest.php
+          grep -Fq "'search_discovery_owner'   => 'file26'" includes/class-spdb-module-manifest.php
+          grep -Fq 'spdb_view_teacher_studio' includes/class-spdb-capabilities.php
+          grep -Fq 'spdb_view_admin_studio' includes/class-spdb-capabilities.php
+          grep -Fq 'var(--sabri-color-primary, #087A4E)' assets/css/dashboard-corrections.css
+          grep -Fq 'prefers-reduced-data: reduce' assets/css/dashboard-corrections.css
+          php tests/governing-plan-2026-tests.php
+          php tests/fresh-review-1.3.0-gate-tests.php
