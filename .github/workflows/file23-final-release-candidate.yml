@@ -77,7 +77,7 @@ jobs:
       - name: Verify exact pins and File 00 contract
         shell: bash
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           test "$(git -C file00 rev-parse HEAD)" = "$FILE00_SHA"
           test "$(git -C file21 rev-parse HEAD)" = "$FILE21_SHA"
           test "$(git -C file22 rev-parse HEAD)" = "$FILE22_SHA"
@@ -90,7 +90,7 @@ jobs:
           grep -Fq 'SPDB_Membership_Guard::can_user_view_restricted_dashboard' file20/sabri-unified-application-shell/includes/class-publishing-dashboard-entry.php
           grep -Fq '23 — Publishing Dashboard' file24/plugin/sabri-security-center/docs/INTEGRATION-MATRIX.md
           grep -Fq '26 — Search, Discovery, Recommendations, Knowledge Graph and Classification' file24/plugin/sabri-security-center/docs/INTEGRATION-MATRIX.md
-          grep -Fq 'green-accent visual treatment' file25/docs/DESIGN-SYSTEM-CONTRACT.md
+          grep -Fq 'File 25 exposes globally unique `--sabri-visual-*` semantic tokens.' file25/docs/DESIGN-SYSTEM-CONTRACT.md
           grep -Fq 'Canonical owner remains authoritative' file26/docs/CONNECTOR-CONTRACT.md
           grep -Fq "'26'" file23/includes/class-spdb-module-manifest.php\n          grep -Fq "'search_ranking_owner'      => 'file26'" file23/includes/class-spdb-module-manifest.php
           grep -Fq 'F23-FPI-24' file23/includes/class-spdb-publishing-intelligence.php
