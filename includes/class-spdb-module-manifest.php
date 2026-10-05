@@ -85,6 +85,7 @@ final class SPDB_Module_Manifest {
 			'authorization_owner'      => 'file00',
 			'global_safe_mode_owner'   => 'file20',
 			'public_visual_owner'      => 'file25',
+			'search_ranking_owner'      => 'file26',
 			'native_publication_owner' => 'file21',
 			'composer_owner'           => 'file22',
 			'native_data_copied'       => false,
@@ -127,6 +128,7 @@ final class SPDB_Module_Manifest {
 			'23'   => self::definition( 'Publishing Dashboard', 'federated operational metadata and UI', 'native', 'file23', array( 'file23', 'spdb' ) ),
 			'24'   => self::definition( 'Security, Privacy, Compliance and Resilience', 'sanitized assurance evidence', 'full', 'file24', array( 'file24', 'security' ) ),
 			'25'   => self::definition( 'Global Visual Experience', 'public visual and timeline destinations', 'full', 'file25', array( 'file25', 'visual' ) ),
+			'26'   => self::definition( 'Search, Discovery, Recommendations, Knowledge Graph and Classification', 'search/ranking intelligence and opportunity-signal owner', 'full', 'file26', array( 'file26', 'search', 'discovery', 'ranking' ) ),
 		);
 	}
 
