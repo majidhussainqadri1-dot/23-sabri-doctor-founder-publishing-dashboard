@@ -77,7 +77,7 @@ jobs:
       - name: Verify exact pins and File 00 contract
         shell: bash
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           test "$(git -C file00 rev-parse HEAD)" = "$FILE00_SHA"
           test "$(git -C file21 rev-parse HEAD)" = "$FILE21_SHA"
           test "$(git -C file22 rev-parse HEAD)" = "$FILE22_SHA"
