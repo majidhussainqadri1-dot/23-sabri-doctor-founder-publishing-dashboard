@@ -26,4 +26,20 @@ $title_id = $instance_id . '-analytics-title';
 			</div>
 		<?php endif; ?>
 	<?php endif; ?>
+
+	<?php $intelligence_catalog = function_exists( 'spdb_get_publishing_intelligence_catalog' ) ? spdb_get_publishing_intelligence_catalog() : array(); ?>
+	<section class="spdb-operations-panel" aria-labelledby="<?php echo esc_attr( $instance_id . '-publishing-intelligence-title' ); ?>">
+		<p class="spdb-eyebrow"><?php esc_html_e( 'Advisory and projection only', 'sabri-publishing-dashboard' ); ?></p>
+		<h3 id="<?php echo esc_attr( $instance_id . '-publishing-intelligence-title' ); ?>"><?php esc_html_e( 'Future Publishing Intelligence', 'sabri-publishing-dashboard' ); ?></h3>
+		<p><?php esc_html_e( 'These 24 governed facilities never receive canonical write authority. Search/ranking remains File 26-owned, notification delivery File 19-owned, final creation File 22-owned, assurance File 24-owned, and public visual presentation File 25-owned.', 'sabri-publishing-dashboard' ); ?></p>
+		<div class="spdb-operations-grid" data-spdb-intelligence-catalog>
+			<?php foreach ( $intelligence_catalog as $feature ) : ?>
+				<article class="spdb-operational-card">
+					<span class="spdb-eyebrow"><?php echo esc_html( (string) ( $feature['id'] ?? '' ) ); ?> · <?php echo esc_html( (string) ( $feature['priority'] ?? '' ) ); ?></span>
+					<h4><?php echo esc_html( (string) ( $feature['label'] ?? '' ) ); ?></h4>
+					<p><?php esc_html_e( 'Advisory/projection only — no auto-publish, auto-schedule, or canonical mutation.', 'sabri-publishing-dashboard' ); ?></p>
+				</article>
+			<?php endforeach; ?>
+		</div>
+	</section>
 </section>

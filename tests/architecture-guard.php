@@ -213,9 +213,26 @@ $require_markers(
 );
 $manifest = $require_markers(
 	'includes/class-spdb-module-manifest.php',
-	array( "'00'", "'01-a'", "'01-b'", "'02'", "'03'", "'04'", "'05'", "'06'", "'07'", "'08'", "'09'", "'10'", "'11'", "'12'", "'13'", "'14'", "'15'", "'16'", "'17'", "'18'", "'19'", "'20'", "'21'", "'22'", "'23'", "'24'", "'25'" ),
+	array( "'00'", "'01-a'", "'01-b'", "'02'", "'03'", "'04'", "'05'", "'06'", "'07'", "'08'", "'09'", "'10'", "'11'", "'12'", "'13'", "'14'", "'15'", "'16'", "'17'", "'18'", "'19'", "'20'", "'21'", "'22'", "'23'", "'24'", "'25'", "'26'" ),
 	'module manifest entry'
 );
+
+$intelligence = $require_markers(
+	'includes/class-spdb-publishing-intelligence.php',
+	array( 'F23-FPI-01', 'F23-FPI-24', 'canonical_write_authority', 'file26', 'spdb/publishing_intelligence_signals', 'spdb/publishing_intelligence_ask', '/intelligence/catalog', '/intelligence/simulate', 'DEFAULT_PRIVACY_THRESHOLD = 20' ),
+	'Future Publishing Intelligence boundary'
+);
+if ( '' !== $intelligence ) {
+	if ( 24 !== preg_match_all( "/'id' => 'F23-FPI-\\d{2}'/", $intelligence ) ) {
+		$violations[] = 'Future Publishing Intelligence must define exactly 24 governed feature IDs';
+	}
+	foreach ( array( 'wp_insert_post(', 'wp_update_post(', 'wp_delete_post(', 'update_post_meta(', 'register_post_type(' ) as $native_mutation ) {
+		if ( str_contains( $intelligence, $native_mutation ) ) {
+			$violations[] = 'Future Publishing Intelligence attempts forbidden canonical mutation: ' . $native_mutation;
+		}
+	}
+}
+
 
 foreach ( array( 'workspace.php', 'review.php', 'calendar.php' ) as $template_name ) {
 	$template = $root . '/templates/' . $template_name;

@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased — 2026-10-05
+
+- Completed a twenty-round repository-to-plan reconciliation against the File 23 governing plan, central platform constitution and current companion File 00/20/21/22/24/25/26 contracts.
+- Implemented all 24 approved Future Publishing Intelligence facilities as advisory/projection-only capabilities with no canonical write authority.
+- Added private intelligence catalogue, snapshot, Ask and read-only simulation contracts; protected mutating advisory requests with nonce, same-origin, idempotency and audit controls.
+- Added File 26 to the permanent dependency/assurance manifest and preserved File 26 search/ranking ownership, File 19 notification delivery, File 22 final creation, File 24 assurance and File 25 public visual ownership.
+- Raised the analytics small-cohort privacy floor to 20 and enforced donor/payment neutrality in intelligence signals.
+- Reconciled the dashboard primary visual token to Sabri Green (#087A4E), retaining orange only as a secondary/contextual accent.
+- Updated cross-repository CI to current exact companion heads and repaired invalid workflow-level matrix concurrency so GitHub Actions jobs execute normally.
+- Added executable Future Publishing Intelligence tests and a dated 20-round audit record. Staging, live deployment, DB/schema/migration state and operational acceptance remain separate evidence gates.
+
 ## 1.2.0 — 2026-08-04
 
 - Completed forty independent thematic review/fix rounds against the Definitive Master Plan v3.0 and File 23 Final Central-Plan-Harmonized v3.0.

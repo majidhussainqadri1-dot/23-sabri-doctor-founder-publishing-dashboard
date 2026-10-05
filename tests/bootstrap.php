@@ -159,6 +159,7 @@ require_once dirname( __DIR__ ) . '/includes/class-spdb-operations-rest-controll
 require_once dirname( __DIR__ ) . '/includes/class-spdb-module-manifest.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-legacy-migration-diagnostics.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-admin-settings.php';
+require_once dirname( __DIR__ ) . '/includes/class-spdb-publishing-intelligence.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-dashboard-router.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-workspace-resolver.php';
 require_once dirname( __DIR__ ) . '/includes/class-spdb-saved-views.php';

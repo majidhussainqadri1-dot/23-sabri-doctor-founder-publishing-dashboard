@@ -136,7 +136,7 @@ $native_reference_health = is_array( $system_state['native_references'] ?? null 
 					<?php endif; ?>
 					<?php if ( ! empty( $system_state['module_manifest'] ) ) : ?>
 						<section class="spdb-operations-panel" aria-labelledby="<?php echo esc_attr( $instance_id . '-module-manifest-title' ); ?>">
-							<h3 id="<?php echo esc_attr( $instance_id . '-module-manifest-title' ); ?>"><?php esc_html_e( 'File 00–25 Dependency Manifest', 'sabri-publishing-dashboard' ); ?></h3>
+							<h3 id="<?php echo esc_attr( $instance_id . '-module-manifest-title' ); ?>"><?php esc_html_e( 'File 00–26 Dependency Manifest', 'sabri-publishing-dashboard' ); ?></h3>
 							<div class="spdb-table-wrap" role="region" tabindex="0" aria-label="<?php esc_attr_e( 'Dependency manifest table', 'sabri-publishing-dashboard' ); ?>"><table><thead><tr><th><?php esc_html_e( 'File', 'sabri-publishing-dashboard' ); ?></th><th><?php esc_html_e( 'Boundary', 'sabri-publishing-dashboard' ); ?></th><th><?php esc_html_e( 'Status', 'sabri-publishing-dashboard' ); ?></th></tr></thead><tbody><?php foreach ( $system_state['module_manifest'] as $module ) : ?><tr><td><?php echo esc_html( (string) ( $module['file'] ?? '' ) ); ?></td><td><?php echo esc_html( (string) ( $module['relationship'] ?? '' ) ); ?></td><td><?php echo esc_html( (string) ( $module['effective_state'] ?? 'unknown' ) ); ?></td></tr><?php endforeach; ?></tbody></table></div>
 						</section>
 					<?php endif; ?>

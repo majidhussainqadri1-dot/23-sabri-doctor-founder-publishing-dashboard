@@ -31,6 +31,10 @@ $client  = $read( 'assets/js/operations.js' );
 $settings = $read( 'templates/settings.php' );
 $main    = $read( 'sabri-publishing-dashboard.php' );
 $readme  = $read( 'readme.txt' );
+$intelligence = $read( 'includes/class-spdb-publishing-intelligence.php' );
+$manifest = $read( 'includes/class-spdb-module-manifest.php' );
+$admin_settings = $read( 'includes/class-spdb-admin-settings.php' );
+$dashboard_css = $read( 'assets/css/dashboard.css' );
 
 $assert( str_contains( $main, "Version:     1.2.0" ) && str_contains( $main, "SPDB_VERSION', '1.2.0" ), 'Plugin release identity must be 1.2.0.' );
 $assert( str_contains( $readme, 'Stable tag: 1.2.0' ), 'Readme stable tag must match 1.2.0.' );
@@ -49,6 +53,7 @@ $classes = array(
 	'class-spdb-privacy-integration.php', 'class-spdb-local-repair.php',
 	'class-spdb-activation-wizard.php', 'class-spdb-operations-rest-controller.php',
 	'class-spdb-module-manifest.php', 'class-spdb-legacy-migration-diagnostics.php',
+	'class-spdb-publishing-intelligence.php',
 );
 foreach ( $classes as $class ) {
 	$assert( str_contains( $plugin, $class ), "Plugin composition root must load {$class}." );
@@ -85,6 +90,15 @@ $assert( str_contains( $repair, "'global_safe_mode_owner' => 'file20'" ) && ! st
 $assert( str_contains( $legacy, "'mutation_supported'         => false" ) && str_contains( $legacy, "'canonical_owner'            => 'file21'" ), 'Legacy File 04 handling must remain read-only and File 21-owned.' );
 $assert( str_contains( $plugin, "do_action( 'spdb/file24_assurance_evidence'" ), 'Sanitized File 24 assurance evidence must be emitted.' );
 $assert( str_contains( $state, "'production_writes'       => false" ) && str_contains( $state, "'staging_accepted'" ), 'Completion states must remain truthful and production writes fail-closed before staging.' );
+
+$assert( str_contains( $manifest, "'26'" ) && str_contains( $manifest, "'search_ranking_owner'      => 'file26'" ), 'Dependency and assurance manifests must include canonical File 26 search/ranking ownership.' );
+$assert( str_contains( $admin_settings, "'analytics_min_cohort'       => 20" ) && str_contains( $admin_settings, 'max( 20,' ), 'Privacy-safe analytics must enforce the central-plan minimum cohort floor of 20.' );
+$assert( str_contains( $dashboard_css, '#087a4e' ) && str_contains( $dashboard_css, '--spdb-secondary: #f47a1f' ), 'Sabri Green must be the primary dashboard token while orange remains secondary/contextual.' );
+$assert( 24 === preg_match_all( "/'id' => 'F23-FPI-\\d{2}'/", $intelligence ), 'Future Publishing Intelligence must contain exactly 24 governed feature IDs.' );
+$assert( str_contains( $intelligence, "'canonical_write_authority'" ) && str_contains( $intelligence, "= false;" ), 'Publishing intelligence must be advisory and must not assume canonical write authority.' );
+$assert( str_contains( $intelligence, "'search_ranking_owner'" ) && str_contains( $intelligence, "'file26'" ), 'Publishing intelligence must preserve File 26 search/ranking ownership.' );
+$assert( str_contains( $intelligence, 'spdb/publishing_intelligence_signals' ) && str_contains( $intelligence, 'spdb/publishing_intelligence_ask' ), 'Publishing intelligence provider hooks must be present.' );
+$assert( str_contains( $intelligence, '/intelligence/catalog' ) && str_contains( $intelligence, '/intelligence/simulate' ), 'Private publishing intelligence REST contracts must be present.' );
 
 $forbidden = array( 'wp_insert_post(', 'wp_update_post(', 'wp_delete_post(', 'register_post_type(' );
 $services = $read( 'includes/class-spdb-operations-service.php' ) . $read( 'includes/class-spdb-governance-service.php' ) . $read( 'includes/class-spdb-export-service.php' );
