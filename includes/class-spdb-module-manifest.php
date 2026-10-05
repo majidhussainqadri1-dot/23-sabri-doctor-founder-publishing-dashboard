@@ -1,6 +1,6 @@
 <?php
 /**
- * Complete File 00–25 dependency and assurance manifest for File 23.
+ * Complete File 00–26 dependency and assurance manifest for File 23.
  *
  * The manifest is discovery evidence only. It never grants authorization,
  * accepts an adapter, or treats availability as permission.
