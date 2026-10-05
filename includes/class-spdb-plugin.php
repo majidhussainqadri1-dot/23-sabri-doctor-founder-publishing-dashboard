@@ -62,6 +62,7 @@ require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-local-repair.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-activation-wizard.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-privacy-integration.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-operations-rest-controller.php';
+require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-publishing-intelligence.php';
 
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-dashboard-router.php';
 require_once SPDB_PLUGIN_DIR . 'includes/class-spdb-workspace-resolver.php';
@@ -96,6 +97,7 @@ final class SPDB_Plugin {
 	private SPDB_Activation_Wizard $activation_wizard;
 	private SPDB_Privacy_Integration $privacy_integration;
 	private SPDB_Operations_REST_Controller $operations_rest;
+	private SPDB_Publishing_Intelligence $publishing_intelligence;
 	private SPDB_Saved_Views $saved_views;
 	private SPDB_REST_Privacy $rest_privacy;
 	private SPDB_System_State $system_state;
@@ -142,6 +144,8 @@ final class SPDB_Plugin {
 			$this->activation_wizard,
 			$this->adapter_acceptance
 		);
+		$this->publishing_intelligence = new SPDB_Publishing_Intelligence();
+
 
 		$this->saved_views = new SPDB_Saved_Views( $this->operations_repository );
 		$this->rest_privacy = new SPDB_REST_Privacy();
@@ -213,6 +217,7 @@ final class SPDB_Plugin {
 		$this->review_calendar_rest->register();
 		$this->collections_rest->register();
 		$this->operations_rest->register();
+		$this->publishing_intelligence->register();
 		$this->export_service->register();
 		$this->automation_engine->register();
 		$this->background_jobs->register();
