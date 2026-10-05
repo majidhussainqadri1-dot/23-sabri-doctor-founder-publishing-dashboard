@@ -91,7 +91,7 @@ final class SPDB_Publishing_Intelligence {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'rest_ask' ),
-				'permission_callback' => array( $this, 'can_read' ),
+				'permission_callback' => array( $this, 'can_ask' ),
 			)
 		);
 		register_rest_route(
@@ -100,7 +100,7 @@ final class SPDB_Publishing_Intelligence {
 			array(
 				'methods'             => WP_REST_Server::CREATABLE,
 				'callback'            => array( $this, 'rest_simulate' ),
-				'permission_callback' => array( $this, 'can_read' ),
+				'permission_callback' => array( $this, 'can_simulate' ),
 			)
 		);
 	}
@@ -109,8 +109,16 @@ final class SPDB_Publishing_Intelligence {
 		$user_id = get_current_user_id();
 		return is_user_logged_in()
 			&& $user_id > 0
-			&& SPDB_Membership_Guard::can_user_view_restricted_dashboard( $user_id )
+			&& SPDB_Membership_Guard::is_user_approved( $user_id )
 			&& SPDB_Capabilities::current_user_can( 'spdb_view_dashboard' );
+	}
+
+	public function can_ask(): bool {
+		return $this->can_read() && SPDB_Capabilities::current_user_can( 'spdb_request_ai_assistance' );
+	}
+
+	public function can_simulate(): bool {
+		return $this->can_read() && SPDB_Capabilities::current_user_can( 'spdb_manage_schedule' );
 	}
 
 	public function rest_catalog() {
