@@ -12,6 +12,7 @@ File 23 is the operational command center. It does not own native publication bo
 - File 22: sole create/edit/draft/preview/submit orchestration.
 - File 24: security/privacy/compliance assurance evidence.
 - File 25: public visual/profile/timeline presentation.
+- File 26: canonical Search, Discovery, Recommendations, Knowledge Graph and Classification; File 23 consumes only bounded opportunity/search signals.
 
 ## 1.2.0 forty-round hardened candidate
 
@@ -23,7 +24,9 @@ The source has passed forty independent thematic review/fix rounds and includes 
 - Cross-module tasks, scoped MFA-bound delegation, bounded automation rules and a reviewed native-action execution boundary.
 - Background jobs with idempotency, locks, retries, exponential backoff, dead-letter state and privacy-safe File 19 notifications.
 - WordPress privacy export/erasure for File 23-owned data, retention cleanup, append-only audit integrity, local reversible repair and explicit staging acceptance evidence.
-- Complete File 00–25 dependency manifest, File 24 sanitized assurance manifest and read-only File 04 migration diagnostics.
+- Complete File 00–26 dependency manifest, File 24 sanitized assurance manifest and read-only File 04 migration diagnostics.
+- Future Publishing Intelligence 24 catalogue (`F23-FPI-01` through `F23-FPI-24`) with advisory/projection-only boundaries, File 26 search/ranking ownership, File 19 notification-delivery ownership, File 22 final-creation ownership, minimum analytics cohort 20, and donor/payment neutrality.
+- Sabri Green (`#087A4E`) as the primary File 25-compatible visual token; orange retained only as a secondary/contextual accent.
 - Full private navigation and responsive, RTL and accessibility treatment.
 
 ## Forty-round hardening
