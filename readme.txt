@@ -27,7 +27,9 @@ Version 1.2.0 completes the code-level File 23 functional plan on top of the rev
 * transaction commit/rollback with request and outcome evidence in the canonical hash-chained dashboard audit;
 * bounded non-autoload replay receipts with private/no-store responses and sensitive-field suppression;
 * high-entropy browser idempotency keys and required audit reasons for high-risk settings and acceptance writes;
-* activation readiness, File 23-only settings and full plan navigation without duplicating File 20, File 21, File 22, File 24 or File 25 ownership;
+* activation readiness, File 23-only settings and full plan navigation without duplicating File 20, File 21, File 22, File 24, File 25 or File 26 ownership;
+* the governed Future Publishing Intelligence 24 catalogue as advisory/projection-only facilities, preserving File 26 search/ranking ownership, File 19 delivery ownership and File 22 final-creation ownership;
+* a minimum analytics cohort floor of 20 and Sabri Green primary visual-token compatibility;
 * reviewed native-reference registry and readiness consumer wired into Collections;
 * strict IDOR, privacy, no-store/noindex, same-origin and capability boundaries;
 * responsive, RTL, keyboard, reduced-motion and forced-color presentation controls;
