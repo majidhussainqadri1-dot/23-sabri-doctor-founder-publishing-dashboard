@@ -36,6 +36,8 @@ $deliverables = array(
 	'docs/KNOWN-LIMITATIONS.md'                                    => array( 'Residual-risk', 'LiteSpeed', 'F23-LIM-010' ),
 	'docs/RELEASE-SIGNOFF.md'                                      => array( 'Exact Git head', 'PENDING', 'Founder' ),
 	'docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md' => array( 'چالیس ادوار', 'دور 40', 'Hostinger staging' ),
+	'docs/FUTURE-PUBLISHING-INTELLIGENCE-24-ADDENDUM-2026-08-10.md' => array( 'F23-FPI-01', 'F23-FPI-24', 'File 26', 'canonical_write_authority=false' ),
+	'docs/AUDIT-20-ROUND-PLAN-RECONCILIATION-2026-10-05.md' => array( '20 audit rounds', 'Repository HEAD', 'File 26', 'Future Publishing Intelligence' ),
 );
 
 foreach ( $deliverables as $relative => $markers ) {
