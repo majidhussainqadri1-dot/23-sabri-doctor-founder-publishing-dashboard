@@ -31,5 +31,7 @@ function spdb_get_capabilities(): array { return SPDB_Capabilities::all(); }
 function spdb_get_assurance_manifest(): array { return spdb()->assurance_manifest(); }
 /** @return array<int,array<string,mixed>> Complete File 00–25 discovery manifest. */
 function spdb_get_dependency_manifest(): array { return spdb()->dependency_manifest(); }
+/** @return array<int,array<string,mixed>> Governed Future Publishing Intelligence catalogue. */
+function spdb_get_publishing_intelligence_catalog(): array { return SPDB_Publishing_Intelligence::catalog(); }
 SPDB_Operational_Mutation_Guard::register();
 spdb()->boot();
