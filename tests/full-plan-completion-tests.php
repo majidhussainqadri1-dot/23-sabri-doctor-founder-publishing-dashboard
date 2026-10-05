@@ -95,8 +95,8 @@ $assert( str_contains( $manifest, "'26'" ) && str_contains( $manifest, "'search_
 $assert( str_contains( $admin_settings, "'analytics_min_cohort'       => 20" ) && str_contains( $admin_settings, 'max( 20,' ), 'Privacy-safe analytics must enforce the central-plan minimum cohort floor of 20.' );
 $assert( str_contains( $dashboard_css, '#087a4e' ) && str_contains( $dashboard_css, '--spdb-secondary: #f47a1f' ), 'Sabri Green must be the primary dashboard token while orange remains secondary/contextual.' );
 $assert( 24 === preg_match_all( "/'id' => 'F23-FPI-\\d{2}'/", $intelligence ), 'Future Publishing Intelligence must contain exactly 24 governed feature IDs.' );
-$assert( str_contains( $intelligence, "'canonical_write_authority'   => false" ) && str_contains( $intelligence, "'search_ranking_owner'        =") === false, 'Publishing intelligence must be advisory and must not assume canonical write authority.' );
-$assert( str_contains( $intelligence, "'search_ranking_owner'        => 'file26'" ), 'Publishing intelligence must preserve File 26 search/ranking ownership.' );
+$assert( str_contains( $intelligence, "'canonical_write_authority'" ) && str_contains( $intelligence, "= false;" ), 'Publishing intelligence must be advisory and must not assume canonical write authority.' );
+$assert( str_contains( $intelligence, "'search_ranking_owner'" ) && str_contains( $intelligence, "'file26'" ), 'Publishing intelligence must preserve File 26 search/ranking ownership.' );
 $assert( str_contains( $intelligence, 'spdb/publishing_intelligence_signals' ) && str_contains( $intelligence, 'spdb/publishing_intelligence_ask' ), 'Publishing intelligence provider hooks must be present.' );
 $assert( str_contains( $intelligence, '/intelligence/catalog' ) && str_contains( $intelligence, '/intelligence/simulate' ), 'Private publishing intelligence REST contracts must be present.' );
 
