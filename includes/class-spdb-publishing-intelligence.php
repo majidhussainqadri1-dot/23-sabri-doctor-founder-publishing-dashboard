@@ -223,7 +223,7 @@ final class SPDB_Publishing_Intelligence {
 		$signals = is_array( $signals ) ? $signals : array();
 		$threshold = self::privacy_threshold();
 		$cohort = isset( $signals['cohort_count'] ) && is_numeric( $signals['cohort_count'] ) ? max( 0, (int) $signals['cohort_count'] ) : null;
-		$suppressed = ! empty( $feature['privacy_thresholded'] ) && null !== $cohort && $cohort < $threshold;
+		$suppressed = ! empty( $feature['privacy_thresholded'] ) && ( null === $cohort || $cohort < $threshold );
 		if ( $suppressed ) {
 			$signals = array(
 				'cohort_count' => $cohort,

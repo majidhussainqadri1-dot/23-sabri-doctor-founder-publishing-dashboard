@@ -57,6 +57,27 @@ $assert( false !== strpos( $source, "spdb/publishing_intelligence_signals" ), 'F
 $assert( false !== strpos( $source, "spdb/publishing_intelligence_ask" ), 'Approved conversational provider hook is required.' );
 $assert( false !== strpos( $source, "'side_effects'              => false" ), 'What-if simulation must be side-effect free.' );
 
+// Regression: cohort evidence is mandatory for thresholded intelligence snapshots.
+foreach ( array(
+	array( 'signals' => array( 'metric' => 'private-aggregate' ), 'suppressed' => true, 'visible' => false ),
+	array( 'signals' => array( 'cohort_count' => 'invalid', 'metric' => 'private-aggregate' ), 'suppressed' => true, 'visible' => false ),
+	array( 'signals' => array( 'cohort_count' => 19, 'metric' => 'private-aggregate' ), 'suppressed' => true, 'visible' => false ),
+	array( 'signals' => array( 'cohort_count' => 20, 'metric' => 'eligible-aggregate' ), 'suppressed' => false, 'visible' => true ),
+) as $case ) {
+	$GLOBALS['wp_filter']['spdb/publishing_intelligence_signals'] = array(
+		static function ( $value, $context ) use ( $case ) { return $case['signals']; },
+	);
+	$view = $service->rest_feature( new WP_REST_Request( '', array( 'feature' => 'F23-FPI-03' ) ) );
+	$assert( $case['suppressed'] === $view['suppressed'], 'Thresholded feature must fail closed when cohort is absent, invalid or small.' );
+	$assert( $case['visible'] === isset( $view['signals']['metric'] ), 'Suppression must not return an aggregate metric.' );
+}
+$GLOBALS['wp_filter']['spdb/publishing_intelligence_signals'] = array(
+	static function ( $value, $context ) { return array( 'editorial_status' => 'available' ); },
+);
+$unthresholded = $service->rest_feature( new WP_REST_Request( '', array( 'feature' => 'F23-FPI-01' ) ) );
+$assert( false === $unthresholded['suppressed'] && 'available' === $unthresholded['signals']['editorial_status'], 'Non-thresholded operational metadata must remain available.' );
+unset( $GLOBALS['wp_filter']['spdb/publishing_intelligence_signals'] );
+
 if ( $failed ) {
 	fwrite( STDERR, "{$failed} of {$tests} publishing-intelligence tests failed.\n" );
 	exit( 1 );

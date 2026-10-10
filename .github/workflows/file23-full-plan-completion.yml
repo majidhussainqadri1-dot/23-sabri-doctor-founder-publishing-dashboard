@@ -18,7 +18,7 @@ env:
   FILE22_SHA: b7a7f2e69411cbd32f0574fd12d766fb70c01b7a
   FILE20_SHA: 8a4dbcaf4fef8e926b9b834ecfde16c21a0f00ca
   FILE24_SHA: a5b8d49968a7a5a7d6f3f4655bea541bf38a9acb
-  FILE25_SHA: 59927df876dc92c7461351420c7b7c95c65c6a93
+  FILE25_SHA: 347a4ff4d4c233c5ea6cd82c7786ee5398ea9d1e
   FILE26_SHA: bbea3aad466792a4a6a62b53532bbd45c7c592de
 
 jobs:
@@ -144,7 +144,8 @@ jobs:
           grep -Fq '26 — Search, Discovery, Recommendations, Knowledge Graph and Classification' file24/plugin/sabri-security-center/docs/INTEGRATION-MATRIX.md
           grep -Fq 'File 25 exposes globally unique `--sabri-visual-*` semantic tokens.' file25/docs/DESIGN-SYSTEM-CONTRACT.md
           grep -Fq 'Canonical owner remains authoritative' file26/docs/CONNECTOR-CONTRACT.md
-          grep -Fq "'26'" file23/includes/class-spdb-module-manifest.php\n          grep -Fq "'search_ranking_owner'      => 'file26'" file23/includes/class-spdb-module-manifest.php
+          grep -Fq "'26'" file23/includes/class-spdb-module-manifest.php
+          grep -Fq "'search_ranking_owner'      => 'file26'" file23/includes/class-spdb-module-manifest.php
           grep -Fq 'F23-FPI-24' file23/includes/class-spdb-publishing-intelligence.php
           php -l file00/source/sabri-membership-core/includes/class-smc-contracts.php
           grep -Fq 'SMC_Contracts::assertions( $user_id )' file23/includes/class-spdb-membership-guard.php
