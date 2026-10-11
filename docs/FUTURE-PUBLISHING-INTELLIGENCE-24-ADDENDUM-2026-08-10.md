@@ -72,3 +72,7 @@ The REST permission gate requires authenticated File 23 dashboard eligibility, `
 ## Completion truth
 
 This addendum establishes code-level implementation on its feature branch. It does not itself prove Hostinger staging acceptance, deployed artifact parity, live database/migration state or production operational acceptance. Those remain separate release gates under the platform's Evidence-First and Live-First rules.
+
+## October 2026 reconciliation of governing boundaries
+
+The File 23 intelligence layer must respect `canonical_write_authority=false`, File 26 search/ranking ownership, File 19 delivery ownership, File 22 final-creation ownership, File 24 assurance and File 25 public-visual ownership. The minimum audience cohort floor is 20; an administrator-set stricter threshold must never be reduced by a provider filter. Sabri Green is the File 25-compatible primary visual token; orange is a secondary accent. These are source-level contract statements, not staging or live acceptance evidence.

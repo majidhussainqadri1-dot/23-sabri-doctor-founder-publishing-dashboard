@@ -52,6 +52,11 @@ final class SPDB_Publishing_Intelligence {
 			$feature['key'] = $key;
 		}
 		unset( $feature );
+		// Native-owner-specific annotations; these are declarations, not authorization grants.
+		$catalog['opportunity-radar']['canonical_owner'] = 'file26';
+		$catalog['review-sla']['delivery_owner'] = 'file19';
+		$catalog['repurposing-studio']['final_creation_owner'] = 'file22';
+		$catalog['accessibility-lab']['public_visual_owner'] = 'file25';
 		return $catalog;
 	}
 
@@ -838,7 +843,7 @@ final class SPDB_Publishing_Intelligence {
 
 	/** @return array<string,mixed> */
 	private static function feature( string $id, string $label, string $priority, string $purpose, string $ownership ): array {
-		return array( 'id' => $id, 'key' => '', 'label' => $label, 'priority' => $priority, 'purpose' => $purpose, 'ownership' => $ownership, 'canonical_write_authority' => false, 'advisory_or_projection' => true );
+		return array( 'id' => $id, 'key' => '', 'label' => $label, 'priority' => $priority, 'purpose' => $purpose, 'ownership' => $ownership, 'canonical_write_authority' => false, 'advisory_or_projection' => true, 'advisory_or_projection_only' => true, 'search_ranking_owner' => 'file26', 'donor_payment_influence' => false, 'auto_publish' => false, 'auto_schedule' => false );
 	}
 
 	/** @return array<int,array<string,mixed>> */
@@ -992,8 +997,14 @@ final class SPDB_Publishing_Intelligence {
 
 	private static function privacy_threshold(): int {
 		$threshold = self::MIN_PRIVACY_THRESHOLD;
+		if ( class_exists( 'SPDB_Admin_Settings' ) && method_exists( 'SPDB_Admin_Settings', 'get' ) ) {
+			$settings = SPDB_Admin_Settings::get();
+			if ( is_array( $settings ) ) {
+				$threshold = max( $threshold, (int) ( $settings['analytics_min_cohort'] ?? $threshold ) );
+			}
+		}
 		if ( function_exists( 'apply_filters' ) ) {
-			$threshold = (int) apply_filters( 'spdb/publishing_intelligence_privacy_threshold', $threshold );
+			$threshold = max( $threshold, (int) apply_filters( 'spdb/publishing_intelligence_privacy_threshold', $threshold ) );
 		}
 		return max( self::MIN_PRIVACY_THRESHOLD, min( 10000, $threshold ) );
 	}

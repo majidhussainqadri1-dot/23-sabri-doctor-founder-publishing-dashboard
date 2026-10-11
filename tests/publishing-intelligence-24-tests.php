@@ -5,6 +5,10 @@ define( 'ABSPATH', __DIR__ . '/' );
 define( 'HOUR_IN_SECONDS', 3600 );
 define( 'DAY_IN_SECONDS', 86400 );
 $GLOBALS['spdb_test_signals'] = array();
+$GLOBALS['spdb_test_configured_cohort'] = 20;
+class SPDB_Admin_Settings {
+	public static function get(): array { return array( 'analytics_min_cohort' => $GLOBALS['spdb_test_configured_cohort'] ); }
+}
 function apply_filters( $hook, $value, ...$args ) {
 	if ( 'spdb/publishing_intelligence_signals' === $hook ) {
 		$feature = (string) ( $args[0] ?? '' );
@@ -30,6 +34,10 @@ $assert( 24 === count( array_unique( $ids ) ), 'All 24 requirement IDs must be u
 foreach ( $catalog as $feature ) {
 	$assert( false === $feature['canonical_write_authority'], $feature['id'] . ' must not gain canonical write authority.' );
 	$assert( true === $feature['advisory_or_projection'], $feature['id'] . ' must remain advisory/projection based.' );
+	$assert( true === $feature['advisory_or_projection_only'], $feature['id'] . ' must preserve prior advisory contract.' );
+	$assert( 'file26' === $feature['search_ranking_owner'], $feature['id'] . ' must preserve File 26 search ownership.' );
+	$assert( false === $feature['donor_payment_influence'], $feature['id'] . ' must prohibit donor ranking influence.' );
+	$assert( false === $feature['auto_publish'] && false === $feature['auto_schedule'], $feature['id'] . ' must prohibit autonomous publication/scheduling.' );
 }
 
 $GLOBALS['spdb_test_signals']['best-time'] = array(
@@ -41,6 +49,15 @@ $best = SPDB_Publishing_Intelligence::snapshot( 'best-time' );
 $assert( 2 === count( $best['data']['recommended_windows'] ), 'Best-time intelligence must suppress cohorts below the privacy threshold.' );
 $assert( 'Tuesday 09:00' === $best['data']['recommended_windows'][0]['window'], 'Best-time windows must be ranked by score after privacy suppression.' );
 $assert( false === $best['data']['auto_schedule'], 'Best-time intelligence must never auto-schedule.' );
+
+$GLOBALS['spdb_test_configured_cohort'] = 40;
+$GLOBALS['spdb_test_signals']['best-time'] = array(
+	array( 'window' => 'Under threshold', 'score' => 0.99, 'observations' => 35 ),
+	array( 'window' => 'Allowed threshold', 'score' => 0.90, 'observations' => 50 ),
+);
+$strict_best = SPDB_Publishing_Intelligence::snapshot( 'best-time' );
+$assert( 1 === count( $strict_best['data']['recommended_windows'] ) && 'Allowed threshold' === $strict_best['data']['recommended_windows'][0]['window'], 'Configured cohort threshold 40 must not be lowered to the default 20.' );
+$GLOBALS['spdb_test_configured_cohort'] = 20;
 
 $GLOBALS['spdb_test_signals']['opportunity-radar'] = array(
 	array( 'topic' => 'A', 'demand' => 0.9, 'coverage' => 0.2, 'demand_provider' => 'file26' ),

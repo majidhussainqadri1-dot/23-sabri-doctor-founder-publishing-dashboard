@@ -91,6 +91,7 @@ final class SPDB_Module_Manifest {
 			'assurance_owner'          => 'file24',
 			'public_visual_owner'      => 'file25',
 			'search_discovery_owner'   => 'file26',
+			'search_ranking_owner'      => 'file26',
 			'primary_brand_token_owner'=> 'file25',
 			'primary_brand_fallback'   => '#087A4E',
 			'commercial_access_policy' => 'single_free_tier',

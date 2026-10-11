@@ -1,6 +1,8 @@
 :root {
-	--spdb-accent: #f47a1f;
-	--spdb-accent-strong: #a84200;
+	--spdb-accent: var(--sabri-visual-primary, #087a4e);
+	--spdb-accent-strong: var(--sabri-visual-strong-primary, #045b39);
+	--spdb-accent-soft: var(--sabri-visual-soft-primary, #e9f6ef);
+	--spdb-secondary: #f47a1f;
 	--spdb-ink: #1f2933;
 	--spdb-muted: #5f6b76;
 	--spdb-border: #d8dee4;
@@ -103,7 +105,7 @@
 	border: 2px solid var(--spdb-accent);
 	border-radius: 0.75rem;
 	text-align: center;
-	background: #fff8f2;
+	background: var(--spdb-accent-soft);
 }
 
 .spdb-phase span {
@@ -149,12 +151,12 @@
 }
 
 .spdb-navigation a:hover {
-	background: #fff4ea;
+	background: var(--spdb-accent-soft);
 }
 
 .spdb-navigation a[aria-current="page"] {
 	background: var(--spdb-accent);
-	color: #211107;
+	color: #ffffff;
 }
 
 .spdb-main {
@@ -181,7 +183,7 @@
 	padding: 0.9rem 1rem;
 	border-left: 0.3rem solid var(--spdb-accent-strong);
 	border-radius: 0.4rem;
-	background: #fff8f2;
+	background: var(--spdb-accent-soft);
 }
 
 .spdb-notice--critical {
@@ -218,7 +220,7 @@
 	padding: 1rem;
 	border: 1px solid var(--spdb-border);
 	border-radius: 0.8rem;
-	background: linear-gradient(180deg, #fff 0%, #fffaf6 100%);
+	background: linear-gradient(180deg, #fff 0%, #f6fbf8 100%);
 }
 
 .spdb-card > span,

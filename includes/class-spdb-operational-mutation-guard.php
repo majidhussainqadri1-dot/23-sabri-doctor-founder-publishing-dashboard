@@ -222,6 +222,7 @@ final class SPDB_Operational_Mutation_Guard {
 			'#^/spdb/v1/automation-rules(?:/rule_[a-z0-9]{32}/status)?$#'   => array( 'transactional' => true, 'require_reason' => false ),
 			'#^/spdb/v1/exports$#'                                          => array( 'transactional' => true, 'require_reason' => false ),
 			'#^/spdb/v1/ai-assistance$#'                                    => array( 'transactional' => false, 'require_reason' => false ),
+			'#^/spdb/v1/intelligence/(?:ask|simulate)$#'                       => array( 'transactional' => false, 'require_reason' => false ),
 			'#^/spdb/v1/preferences$#'                                      => array( 'transactional' => true, 'require_reason' => false ),
 			'#^/spdb/v1/settings$#'                                         => array( 'transactional' => true, 'require_reason' => true ),
 			'#^/spdb/v1/system-check/repair$#'                              => array( 'transactional' => true, 'require_reason' => true ),

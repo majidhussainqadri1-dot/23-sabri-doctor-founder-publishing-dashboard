@@ -32,6 +32,9 @@ $settings = $read( 'templates/settings.php' );
 $main    = $read( 'sabri-publishing-dashboard.php' );
 $readme  = $read( 'readme.txt' );
 $manifest = $read( 'includes/class-spdb-module-manifest.php' );
+$intelligence = $read( 'includes/class-spdb-publishing-intelligence.php' );
+$admin_settings = $read( 'includes/class-spdb-admin-settings.php' );
+$dashboard_css = $read( 'assets/css/dashboard.css' );
 $governing = $read( 'includes/class-spdb-governing-plan.php' );
 
 $assert( str_contains( $main, "Version:     1.3.0" ) && str_contains( $main, "SPDB_VERSION', '1.3.0" ), 'Plugin release identity must be 1.3.0.' );
@@ -92,6 +95,12 @@ $assert( str_contains( $state, "'production_writes'       => false" ) && str_con
 $assert( str_contains( $manifest, 'Complete File 00–26' ) && str_contains( $manifest, "'26'" ) && str_contains( $manifest, 'Search, Discovery and Ranking' ), 'Dependency manifest must represent File 00–26 and File 26 search/discovery ownership.' );
 $assert( str_contains( $manifest, "'search_discovery_owner'   => 'file26'" ) && str_contains( $manifest, "'direct_domain_table_write'=> false" ), 'Assurance manifest must explicitly preserve File 26 ownership and prohibit direct domain-table writes.' );
 $assert( str_contains( $governing, 'CV-%03d' ) && str_contains( $governing, 'AJ-40' ) && str_contains( $governing, "'search_discovery'       => 'file26'" ), 'Executable governing contract must cover inherited CVs, acceptance journeys, and File 26.' );
+
+$assert( str_contains( $manifest, "'search_ranking_owner'      => 'file26'" ), 'October reconciliation must preserve File 26 search/ranking owner alias.' );
+$assert( str_contains( $admin_settings, "'analytics_min_cohort'       => 20" ) && str_contains( $admin_settings, 'max( 20,' ), 'Configured analytics privacy floor must be at least 20.' );
+$assert( str_contains( $dashboard_css, '#087a4e' ) && str_contains( $dashboard_css, '--spdb-secondary: #f47a1f' ), 'Main branch Sabri Green visual token must be preserved.' );
+$assert( 24 === substr_count( $intelligence, "self::feature( 'F23-FPI-" ), 'Exactly 24 approved intelligence features must be retained after reconciliation.' );
+$assert( str_contains( $intelligence, "'search_ranking_owner' => 'file26'" ) && str_contains( $intelligence, "'canonical_write_authority' => false" ), 'Intelligence remains donor-neutral and File 26-owned for search/ranking.' );
 
 $forbidden = array( 'wp_insert_post(', 'wp_update_post(', 'wp_delete_post(', 'register_post_type(' );
 $services = $read( 'includes/class-spdb-operations-service.php' ) . $read( 'includes/class-spdb-governance-service.php' ) . $read( 'includes/class-spdb-export-service.php' );
