@@ -56,6 +56,7 @@ foreach ( $deliverables as $relative => $markers ) {
 
 // Current source manifest, native owner, and exact companion-contract lineage gates.
 $source_manifest = (string) file_get_contents( $root . '/docs/SOURCE-MANIFEST.md' );
+$assert( false !== strpos( $source_manifest, 'File 19 notification ownership' ), 'Source manifest must preserve File 19 notification ownership and event contracts.' );
 $assert( false !== strpos( $source_manifest, 'Version 1.3.0' ), 'Source manifest must describe the current 1.3.0 release.' );
 $assert( false === strpos( $source_manifest, '1.2.0' ), 'Source manifest must not name the obsolete 1.2.0 package outputs.' );
 $owner_matrix = (string) file_get_contents( $root . '/docs/RESPONSIBILITY-MATRIX.md' );
@@ -64,9 +65,11 @@ $assert( false !== strpos( $owner_matrix, '| Security and privacy assurance | Fi
 $assert( false !== strpos( $owner_matrix, '| Search, discovery, ranking and demand signals | File 26 |' ), 'Ranking owner must remain File 26.' );
 foreach ( array( 'file23-full-plan-completion.yml', 'file23-final-release-candidate.yml' ) as $workflow_name ) {
 	$current_workflow = (string) file_get_contents( $root . '/.github/workflows/' . $workflow_name );
-	foreach ( array( '2fa7c022ee9cd1b65432e900579512f304532442', 'f2eb7e95ddea327af36ea725ffb923b029f885e6', 'b7a7f2e69411cbd32f0574fd12d766fb70c01b7a', '8a4dbcaf4fef8e926b9b834ecfde16c21a0f00ca', 'a5b8d49968a7a5a7d6f3f4655bea541bf38a9acb', '347a4ff4d4c233c5ea6cd82c7786ee5398ea9d1e', 'bbea3aad466792a4a6a62b53532bbd45c7c592de' ) as $pin ) {
+	foreach ( array( '2fa7c022ee9cd1b65432e900579512f304532442', '04078025b643ab7696e4cb4e37826bf152defa18', 'f2eb7e95ddea327af36ea725ffb923b029f885e6', 'b7a7f2e69411cbd32f0574fd12d766fb70c01b7a', '8a4dbcaf4fef8e926b9b834ecfde16c21a0f00ca', 'a5b8d49968a7a5a7d6f3f4655bea541bf38a9acb', '347a4ff4d4c233c5ea6cd82c7786ee5398ea9d1e', 'bbea3aad466792a4a6a62b53532bbd45c7c592de' ) as $pin ) {
 		$assert( false !== strpos( $current_workflow, $pin ), 'Current companion SHA missing from ' . $workflow_name );
 	}
+  $assert( false !== strpos( $current_workflow, 'NotificationCreated.v1' ), 'File 19 runtime event-contract gate missing from ' . $workflow_name );
+  $assert( false !== strpos( $current_workflow, 'file19=' ), 'File 19 exact SHA missing from release evidence in ' . $workflow_name );
 }
 
 $build = (string) file_get_contents( $root . '/tools/build-final-release.sh' );

@@ -14,6 +14,7 @@ concurrency:
 
 env:
   FILE00_SHA: 2fa7c022ee9cd1b65432e900579512f304532442
+  FILE19_SHA: 04078025b643ab7696e4cb4e37826bf152defa18
   FILE21_SHA: f2eb7e95ddea327af36ea725ffb923b029f885e6
   FILE22_SHA: b7a7f2e69411cbd32f0574fd12d766fb70c01b7a
   FILE20_SHA: 8a4dbcaf4fef8e926b9b834ecfde16c21a0f00ca
@@ -102,6 +103,12 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@v5
         with:
+          repository: majidhussainqadri1-dot/19-sabri-unified-notifications
+          ref: ${{ env.FILE19_SHA }}
+          path: file19
+          persist-credentials: false
+      - uses: actions/checkout@v5
+        with:
           repository: majidhussainqadri1-dot/sabri-complete-home-news-feed
           ref: ${{ env.FILE21_SHA }}
           path: file21
@@ -145,6 +152,7 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git -C file00 rev-parse HEAD)" = "$FILE00_SHA"
+          test "$(git -C file19 rev-parse HEAD)" = "$FILE19_SHA"
           test "$(git -C file21 rev-parse HEAD)" = "$FILE21_SHA"
           test "$(git -C file22 rev-parse HEAD)" = "$FILE22_SHA"
           test "$(git -C file20 rev-parse HEAD)" = "$FILE20_SHA"
@@ -162,6 +170,9 @@ jobs:
           grep -Fq "'search_ranking_owner'      => 'file26'" file23/includes/class-spdb-module-manifest.php
           grep -Fq 'F23-FPI-24' file23/includes/class-spdb-publishing-intelligence.php
           php -l file00/source/sabri-membership-core/includes/class-smc-contracts.php
+          php -l file19/19-unified-notifications/includes/class-sun-platform-events.php
+          php -r 'define("ABSPATH", "/"); require "file19/19-unified-notifications/includes/class-sun-platform-events.php"; $contracts = SUN_Platform_Events::contracts(); foreach (array("NotificationCreated.v1", "NotificationRead.v1", "NotificationDeliveryFailed.v1", "NotificationPreferenceChanged.v1") as $event) { if (!isset($contracts[$event])) { fwrite(STDERR, "Missing File 19 event: " . $event . "\n"); exit(1); } }'
+          grep -Fq 'File 19 remains the sole notification projection' file19/README.md
           grep -Fq 'SMC_Contracts::assertions( $user_id )' file23/includes/class-spdb-membership-guard.php
           grep -Fq "MINIMUM_CONTRACT_VERSION  = '1.1.2'" file23/includes/class-spdb-membership-guard.php
       - name: Prepare current File 22 autoload boundary
@@ -232,9 +243,9 @@ jobs:
       - name: Record exact source evidence
         shell: bash
         run: |
-          printf 'file23_head=%s\nfile00=%s\nfile21=%s\nfile22=%s\nversion=1.3.0\nplan_revision=2026-08-10\n' \
+          printf 'file23_head=%s\nfile00=%s\nfile19=%s\nfile20=%s\nfile21=%s\nfile22=%s\nfile24=%s\nfile25=%s\nfile26=%s\nversion=1.3.0\nplan_revision=2026-08-10\n' \
             "${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}" \
-            "$FILE00_SHA" "$FILE21_SHA" "$FILE22_SHA" > FILE23-1.3.0-RELEASE-EVIDENCE.txt
+            "$FILE00_SHA" "$FILE19_SHA" "$FILE20_SHA" "$FILE21_SHA" "$FILE22_SHA" "$FILE24_SHA" "$FILE25_SHA" "$FILE26_SHA" > FILE23-1.3.0-RELEASE-EVIDENCE.txt
       - uses: actions/upload-artifact@v4
         with:
           name: file23-1.3.0-governing-plan-candidate
