@@ -137,7 +137,7 @@ final class SPDB_Publishing_Intelligence {
 	}
 
 	public static function rest_snapshot( $request ) {
-		$feature = self::key( self::request_scalar( $request, 'feature', 80 ) );
+		$feature = self::requested_feature( $request );
 		$snapshot = self::snapshot( $feature, self::request_context( $request ) );
 		if ( null === $snapshot ) {
 			return new WP_Error( 'spdb_intelligence_unknown_feature', __( 'Unknown publishing-intelligence feature.', 'sabri-publishing-dashboard' ), array( 'status' => 404 ) );
@@ -1030,21 +1030,25 @@ final class SPDB_Publishing_Intelligence {
 	}
 
 	private static function requested_feature( $request ): string {
-		$feature = self::key( self::request_scalar( $request, 'feature', 80 ) );
-		if ( '' !== $feature ) {
-			return $feature;
-		}
 		$route = '';
 		if ( is_object( $request ) && method_exists( $request, 'get_route' ) ) {
 			$route = (string) $request->get_route();
 		}
-		if ( false !== strpos( $route, '/intelligence/ask' ) ) {
-			return 'ask-dashboard';
+		// REST route is server-selected. A client-supplied feature must not weaken permissions.
+		if ( '' !== $route ) {
+			if ( preg_match( '~(?:^|/)intelligence/simulate/?$~', $route ) ) {
+				return 'what-if-planner';
+			}
+			if ( preg_match( '~(?:^|/)intelligence/ask/?$~', $route ) ) {
+				return 'ask-dashboard';
+			}
+			if ( preg_match( '~(?:^|/)intelligence/([a-z0-9-]+)/?$~', $route, $matches ) ) {
+				return 'catalog' === $matches[1] ? '' : $matches[1];
+			}
+			return '';
 		}
-		if ( false !== strpos( $route, '/intelligence/simulate' ) ) {
-			return 'what-if-planner';
-		}
-		return '';
+		// Preserve direct/internal legacy calls without an HTTP route.
+		return self::key( self::request_scalar( $request, 'feature', 80 ) );
 	}
 
 	private static function request_scalar( $request, string $key, int $max ): string {

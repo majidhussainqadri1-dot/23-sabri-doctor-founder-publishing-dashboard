@@ -374,6 +374,22 @@ $assert( SPDB_Publishing_Intelligence::rest_can_view( $what_if_own ), 'An instit
 $GLOBALS['spdb_test_caps']['spdb_view_global_analytics'] = false;
 $GLOBALS['spdb_test_institutional'] = false;
 
+// Route-bound authorization: spoofed feature fields must not unlock privileged execution.
+$spoofed_sim = new SPDB_Test_Request( array( 'scope' => 'own', 'feature' => 'mission-control' ), '/spdb/v1/intelligence/simulate' );
+$assert( ! SPDB_Publishing_Intelligence::rest_can_view( $spoofed_sim ), 'Simulation route must not accept a less-restricted feature supplied by the client.' );
+$missing_sim = new SPDB_Test_Request( array( 'scope' => 'own' ), '/spdb/v1/intelligence/simulate' );
+$assert( ! SPDB_Publishing_Intelligence::rest_can_view( $missing_sim ), 'Simulation permission must bind to route even when feature is absent.' );
+$spoofed_permission = new SPDB_Test_Request( array( 'scope' => 'own', 'feature' => 'mission-control' ), '/spdb/v1/intelligence/permission-simulator' );
+$assert( ! SPDB_Publishing_Intelligence::rest_can_view( $spoofed_permission ), 'Founder-only simulator route must not accept a spoofed feature field.' );
+$GLOBALS['spdb_test_caps']['spdb_view_global_analytics'] = true;
+$GLOBALS['spdb_test_institutional'] = true;
+$assert( SPDB_Publishing_Intelligence::rest_can_view( $spoofed_sim ), 'Institutional global-analytics operator retains authorized What-if route access.' );
+$GLOBALS['spdb_test_founder'] = true;
+$assert( SPDB_Publishing_Intelligence::rest_can_view( $spoofed_permission ), 'Founder retains permission simulator access despite an unrelated feature field.' );
+$GLOBALS['spdb_test_founder'] = false;
+$GLOBALS['spdb_test_caps']['spdb_view_global_analytics'] = false;
+$GLOBALS['spdb_test_institutional'] = false;
+
 $GLOBALS['spdb_test_signals']['mission-control'] = array( array( 'label' => 'user@example.com', 'title' => 'Call +92 300 1234567', 'severity' => 'high' ) );
 $mission_private = SPDB_Publishing_Intelligence::snapshot( 'mission-control' );
 $assert( false === strpos( json_encode( $mission_private ), 'user@example.com' ) && false === strpos( json_encode( $mission_private ), '1234567' ), 'Mission Control labels/titles must suppress detected identifiers.' );
