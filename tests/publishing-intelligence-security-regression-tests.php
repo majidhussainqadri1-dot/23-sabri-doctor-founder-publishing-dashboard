@@ -411,7 +411,8 @@ $GLOBALS['spdb_test_signals']['opportunity-radar'] = array(
 );
 $op_owner = SPDB_Publishing_Intelligence::snapshot( 'opportunity-radar' );
 $assert( 1 === count( $op_owner['data']['opportunities'] ) && 1 === $op_owner['data']['untrusted_demand_rows_suppressed'], 'Opportunity Radar must suppress demand not attributable to File 26.' );
-$assert( true === $op_owner['data']['opportunities'][0]['demand_owner_verified'], 'Accepted opportunity demand must carry verified File 26 ownership evidence.' );
+$assert( false === $op_owner['data']['opportunities'][0]['demand_owner_verified'], 'File 26 marker alone must not claim independently verified provenance.' );
+$assert( 'unverified_provider_claim' === $op_owner['data']['opportunities'][0]['demand_provenance_status'], 'Missing provider attestation must be visible in advisory Opportunity Radar.' );
 
 $GLOBALS['spdb_test_signals']['review-sla'] = array( array( 'provider' => 'file21', 'object_type' => 'post', 'object_id' => 'same', 'due_at' => '2026-08-10 12:00:00', 'status' => 'pending', 'review_type' => 'clinical', 'policy' => 'standard' ) );
 $sla_due = SPDB_Publishing_Intelligence::snapshot( 'review-sla', array( 'timezone' => 'UTC', 'now' => strtotime( '2026-08-10 10:00:00 UTC' ) ) );

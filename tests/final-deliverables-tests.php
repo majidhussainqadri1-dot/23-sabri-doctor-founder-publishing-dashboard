@@ -52,6 +52,21 @@ foreach ( $deliverables as $relative => $markers ) {
 	}
 }
 
+// Current source manifest, native owner, and exact companion-contract lineage gates.
+$source_manifest = (string) file_get_contents( $root . '/docs/SOURCE-MANIFEST.md' );
+$assert( false !== strpos( $source_manifest, 'Version 1.3.0' ), 'Source manifest must describe the current 1.3.0 release.' );
+$assert( false === strpos( $source_manifest, '1.2.0' ), 'Source manifest must not name the obsolete 1.2.0 package outputs.' );
+$owner_matrix = (string) file_get_contents( $root . '/docs/RESPONSIBILITY-MATRIX.md' );
+$assert( false !== strpos( $owner_matrix, '| Public timeline and visual presentation | File 25 |' ), 'Public timeline owner must be File 25.' );
+$assert( false !== strpos( $owner_matrix, '| Security and privacy assurance | File 24 |' ), 'Privacy assurance owner must be File 24.' );
+$assert( false !== strpos( $owner_matrix, '| Search, discovery, ranking and demand signals | File 26 |' ), 'Ranking owner must remain File 26.' );
+foreach ( array( 'file23-full-plan-completion.yml', 'file23-final-release-candidate.yml' ) as $workflow_name ) {
+	$current_workflow = (string) file_get_contents( $root . '/.github/workflows/' . $workflow_name );
+	foreach ( array( '2fa7c022ee9cd1b65432e900579512f304532442', 'f2eb7e95ddea327af36ea725ffb923b029f885e6', 'b7a7f2e69411cbd32f0574fd12d766fb70c01b7a' ) as $pin ) {
+		$assert( false !== strpos( $current_workflow, $pin ), 'Current companion SHA missing from ' . $workflow_name );
+	}
+}
+
 $build = (string) file_get_contents( $root . '/tools/build-final-release.sh' );
 foreach ( array(
 	'version="1.3.0"',

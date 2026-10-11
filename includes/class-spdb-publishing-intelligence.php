@@ -417,7 +417,9 @@ final class SPDB_Publishing_Intelligence {
 			$item['demand'] = round( (float) ( $row['demand'] ?? 0 ), 4 );
 			$item['coverage'] = round( (float) ( $row['coverage'] ?? 0 ), 4 );
 			$item['opportunity_score'] = round( max( 0.0, $item['demand'] - $item['coverage'] ), 4 );
-			$item['demand_owner_verified'] = true;
+			// File 26 marker is self-declared; do not fabricate verified provider attestation.
+			$item['demand_owner_verified'] = false;
+			$item['demand_provenance_status'] = 'unverified_provider_claim';
 			$rows[] = $item;
 		}
 		usort( $rows, static fn( array $a, array $b ): int => ( $b['opportunity_score'] ?? 0 ) <=> ( $a['opportunity_score'] ?? 0 ) );
