@@ -70,6 +70,7 @@ final class SPDB_Publishing_Intelligence {
 		register_rest_route( self::API_NAMESPACE, '/intelligence/catalog', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'rest_catalog' ), 'permission_callback' => array( __CLASS__, 'rest_can_view' ) ) );
 		register_rest_route( self::API_NAMESPACE, '/intelligence/ask', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'rest_ask' ), 'permission_callback' => array( __CLASS__, 'rest_can_view' ) ) );
 		register_rest_route( self::API_NAMESPACE, '/intelligence/simulate', array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'rest_simulate' ), 'permission_callback' => array( __CLASS__, 'rest_can_view' ) ) );
+		register_rest_route( self::API_NAMESPACE, '/intelligence/(?P<feature_id>F23-FPI-[0-9]{2})', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'rest_snapshot' ), 'permission_callback' => array( __CLASS__, 'rest_can_view' ) ) );
 		register_rest_route( self::API_NAMESPACE, '/intelligence/(?P<feature>[a-z0-9-]+)', array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'rest_snapshot' ), 'permission_callback' => array( __CLASS__, 'rest_can_view' ) ) );
 	}
 
@@ -115,6 +116,9 @@ final class SPDB_Publishing_Intelligence {
 		}
 
 		$feature = self::requested_feature( $request );
+		if ( '__unknown_feature__' === $feature ) {
+			return false;
+		}
 		if ( 'permission-simulator' === $feature && ! SPDB_Membership_Guard::is_user_founder( $user_id ) ) {
 			return false;
 		}
@@ -1054,6 +1058,15 @@ final class SPDB_Publishing_Intelligence {
 			}
 			if ( preg_match( '~(?:^|/)intelligence/ask/?$~', $route ) ) {
 				return 'ask-dashboard';
+			}
+			// Legacy ID routes resolve through the canonical catalog BEFORE permission checks.
+			if ( preg_match( '~(?:^|/)intelligence/(F23-FPI-[0-9]{2})/?$~', $route, $id_matches ) ) {
+				foreach ( self::catalog() as $slug => $item ) {
+					if ( $id_matches[1] === ( $item['id'] ?? '' ) ) {
+						return $slug;
+					}
+				}
+				return '__unknown_feature__';
 			}
 			if ( preg_match( '~(?:^|/)intelligence/([a-z0-9-]+)/?$~', $route, $matches ) ) {
 				return 'catalog' === $matches[1] ? '' : $matches[1];
