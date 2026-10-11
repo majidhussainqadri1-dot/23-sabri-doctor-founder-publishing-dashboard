@@ -52,3 +52,10 @@ Scope: File 23 repository candidate only. No staging/live/deployment evidence.
 - DB/schema version: unknown.
 - Migration state: unknown.
 - Hostinger staging/live acceptance: unverified.
+
+## 11 October 2026 — 11:20 PKT read-only reconciliation checkpoint
+- Main dcae138e6073f4d0ff596623deb05b9940b8271b, original PR #26 40124e3fd6efa9c062fc98813dbaaf024601225b, integration 33751036b92121e7b1ad0e4601e2f9b173f620a7 verified unchanged.
+- All 18 companion HEADs unchanged. Existing integration CI 10/10 green, but Final Release Candidate job has not been run at this SHA.
+- Main final workflow File25 SHA is stale and contains a literal backslash-n between grep commands; do not copy either defect into the integration workflow.
+- M1/M2 patch retains 1.3.0 and adds File20/24/25/26 exact contracts plus historical October audit and August FPI addendum checks. This ledger records intent, not proof of commit or CI.
+- Round 01 NOT GREEN; rounds 02–20 NOT STARTED. No live/staging/DB evidence.

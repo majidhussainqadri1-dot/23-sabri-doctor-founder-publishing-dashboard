@@ -37,6 +37,8 @@ $deliverables = array(
 	'docs/KNOWN-LIMITATIONS.md'                                    => array( 'Residual-risk', 'LiteSpeed', 'F23-LIM-010' ),
 	'docs/RELEASE-SIGNOFF.md'                                      => array( 'Exact Git head', 'PENDING', 'Founder' ),
 	'docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md'     => array( 'چالیس ادوار', 'دور 40', 'Hostinger staging' ),
+	'docs/FUTURE-PUBLISHING-INTELLIGENCE-24-ADDENDUM-2026-08-10.md' => array( 'F23-FPI-01', 'F23-FPI-24', 'File 26', 'canonical_write_authority=false' ),
+	'docs/AUDIT-20-ROUND-PLAN-RECONCILIATION-2026-10-05.md' => array( '20 audit rounds', 'Repository HEAD', 'File 26', 'Future Publishing Intelligence' ),
 );
 
 foreach ( $deliverables as $relative => $markers ) {
@@ -62,7 +64,7 @@ $assert( false !== strpos( $owner_matrix, '| Security and privacy assurance | Fi
 $assert( false !== strpos( $owner_matrix, '| Search, discovery, ranking and demand signals | File 26 |' ), 'Ranking owner must remain File 26.' );
 foreach ( array( 'file23-full-plan-completion.yml', 'file23-final-release-candidate.yml' ) as $workflow_name ) {
 	$current_workflow = (string) file_get_contents( $root . '/.github/workflows/' . $workflow_name );
-	foreach ( array( '2fa7c022ee9cd1b65432e900579512f304532442', 'f2eb7e95ddea327af36ea725ffb923b029f885e6', 'b7a7f2e69411cbd32f0574fd12d766fb70c01b7a' ) as $pin ) {
+	foreach ( array( '2fa7c022ee9cd1b65432e900579512f304532442', 'f2eb7e95ddea327af36ea725ffb923b029f885e6', 'b7a7f2e69411cbd32f0574fd12d766fb70c01b7a', '8a4dbcaf4fef8e926b9b834ecfde16c21a0f00ca', 'a5b8d49968a7a5a7d6f3f4655bea541bf38a9acb', '347a4ff4d4c233c5ea6cd82c7786ee5398ea9d1e', 'bbea3aad466792a4a6a62b53532bbd45c7c592de' ) as $pin ) {
 		$assert( false !== strpos( $current_workflow, $pin ), 'Current companion SHA missing from ' . $workflow_name );
 	}
 }
@@ -87,6 +89,8 @@ foreach ( array(
 	'23-Doctor-Founder-Publishing-Dashboard-Source-1.3.0.zip',
 	'FILE23-1.3.0-SOURCE-MANIFEST.sha256',
 	'docs/GOVERNING-PLAN-2026-TRACEABILITY.json',
+	'docs/AUDIT-20-ROUND-PLAN-RECONCILIATION-2026-10-05.md',
+	'docs/FUTURE-PUBLISHING-INTELLIGENCE-24-ADDENDUM-2026-08-10.md',
 	'docs/RELEASE-SIGNOFF.md',
 	'docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md',
 ) as $marker ) {
