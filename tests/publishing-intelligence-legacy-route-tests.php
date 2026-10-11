@@ -2,7 +2,7 @@
 /** File 23 legacy feature-ID REST compatibility and authorization regressions. */
 $GLOBALS['spdb_registered_intelligence_routes'] = array();
 function register_rest_route( $namespace, $route, $options ) {
-    $GLOBALS['spdb_registered_intelligence_routes'][ $namespace . $route ] = $options;
+    $GLOBALS['spdb_registered_intelligence_routes'][ '/' . trim( $namespace, '/' ) . $route ] = $options;
 }
 require __DIR__ . '/publishing-intelligence-security-regression-tests.php';
 
