@@ -1,4 +1,4 @@
-# File 21–24 Responsibility Matrix
+# File 23 Federated Responsibility Matrix — Current Native Owners
 
 ## Governing Rule
 
@@ -19,8 +19,10 @@ Each permanent data domain has exactly one native owner. File 23 may query, proj
 | Reels | File 11 | Project metadata and native actions | Owning Reel binaries or watch history |
 | PDF Library | File 12 | Project metadata, compliance, and native routes | Owning encrypted PDF binaries, notes, or reading progress |
 | Notifications | File 19 | Consume notification events and show inbox link/status | Creating another delivery queue |
+| Security and privacy assurance | File 24 | Consume native assurance/containment evidence and show audit-safe status | Replacing security policy, containment or incident truth |
+| Search, discovery, ranking and demand signals | File 26 | Consume approved and provenance-labeled read-only demand signals | Owning search/ranking indexes or trusting provider identity claimed by clients |
 | Profiles and public identity | Files 00/03 | Preview resolved author identity and link to native editor | Writing parallel profile data |
-| Public timeline and visual presentation | File 24 | Preview/link to public destinations | Owning public profile rendering |
+| Public timeline and visual presentation | File 25 | Preview/link to public destinations | Owning public profile rendering |
 | Raw analytics events | Native providers/analytics service | Read bounded aggregates and cache summaries | Collecting raw cross-platform events without an approved contract |
 | Cross-module tasks | File 23 | Own task metadata and references | Copying native content into tasks |
 | Cross-module collections/campaigns | File 23 | Own canonical object references, order, goals, and schedule metadata | Copying content bodies or replacing native series |

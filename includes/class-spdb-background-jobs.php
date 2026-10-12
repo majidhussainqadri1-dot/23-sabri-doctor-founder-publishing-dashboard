@@ -141,6 +141,10 @@ final class SPDB_Background_Jobs {
 					return $this->refresh_adapter_health();
 
 				case 'retention_cleanup':
+					$artifact_cleanup = $this->exports->cleanup_expired_files();
+					if ( is_wp_error( $artifact_cleanup ) ) {
+						return $artifact_cleanup;
+					}
 					$result = $this->repository->cleanup_retention( SPDB_Admin_Settings::get() );
 					return is_wp_error( $result ) ? $result : true;
 

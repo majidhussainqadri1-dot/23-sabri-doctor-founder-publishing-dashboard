@@ -219,11 +219,11 @@ $manifest = $require_markers(
 
 $intelligence = $require_markers(
 	'includes/class-spdb-publishing-intelligence.php',
-	array( 'F23-FPI-01', 'F23-FPI-24', 'canonical_write_authority', 'file26', 'spdb/publishing_intelligence_signals', 'spdb/publishing_intelligence_ask', '/intelligence/catalog', '/intelligence/simulate', 'DEFAULT_PRIVACY_THRESHOLD = 20' ),
+	array( 'F23-FPI-01', 'F23-FPI-24', 'canonical_write_authority', 'file26', 'spdb/publishing_intelligence_signals', 'spdb/publishing_intelligence_ask', '/intelligence/catalog', '/intelligence/simulate', 'MIN_PRIVACY_THRESHOLD = 20' ),
 	'Future Publishing Intelligence boundary'
 );
 if ( '' !== $intelligence ) {
-	if ( 24 !== preg_match_all( "/'id' => 'F23-FPI-\\d{2}'/", $intelligence ) ) {
+	if ( 24 !== substr_count( $intelligence, "self::feature( 'F23-FPI-" ) ) {
 		$violations[] = 'Future Publishing Intelligence must define exactly 24 governed feature IDs';
 	}
 	foreach ( array( 'wp_insert_post(', 'wp_update_post(', 'wp_delete_post(', 'update_post_meta(', 'register_post_type(' ) as $native_mutation ) {

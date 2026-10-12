@@ -1,4 +1,4 @@
-# File 23 Requirements-to-Code Traceability Matrix — Version 1.2.0
+# File 23 Requirements-to-Code Traceability Matrix — Version 1.3.0
 
 Canonical plans: Definitive Master Plan v3.0 and File 23 Final Central-Plan-Harmonized v3.0.
 
@@ -7,7 +7,7 @@ Canonical plans: Definitive Master Plan v3.0 and File 23 Final Central-Plan-Harm
 | F23-R001 Private authenticated noindex/no-store dashboard | Dashboard router, membership guard, cache/index headers | Dashboard-core and cache-boundary tests; LiteSpeed staging pending |
 | F23-R002 Every action rechecks server assertions and object version | Capabilities, mutation guard, operation broker, native re-read | Authorization/stale/replay tests |
 | F23-R003 No duplicate native backend | Two bounded schemas and architecture guard | Architecture/schema inspection |
-| F23-R004 Full 00–25 manifest and compatibility | Module manifest and adapter registry | Full-plan/activation health tests |
+| F23-R004 Full 00–26 manifest and compatibility | Module manifest and adapter registry | Full-plan/activation health tests |
 | F23-R005 File 21 canonical publication/review | Versioned provider contract and broker | Pinned real File 21 contract suite |
 | F23-R006 File 22 sole create/edit orchestration | Create route/deep link only; no File 23 editor | Pinned real File 22 and duplicate-form tests |
 | F23-R007 Founder direct publish only through native policy | Founder workspace plus native operation declaration/authorization | Policy and negative operation tests; real staging pending |
@@ -47,3 +47,7 @@ Canonical plans: Definitive Master Plan v3.0 and File 23 Final Central-Plan-Harm
 ## Forty-round review evidence
 
 All F23-R001–F23-R035 rows are cross-checked by `docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md` and the executable `tests/forty-round-review-gate-tests.php`. The gate verifies ordered 01–40 rounds, correction/retest fields, strict File 00 authority, capability reconciliation, ownership, transactional schemas, audit concurrency, encrypted exports, privacy lifecycle, provider acceptance, release version and permanent CI enforcement.
+
+## Future Publishing Intelligence 24 addendum traceability
+
+F23-FPI-01 through F23-FPI-24 are implemented in `includes/class-spdb-publishing-intelligence.php`, surfaced in `templates/analytics.php`, specified in `docs/FUTURE-PUBLISHING-INTELLIGENCE-24-ADDENDUM-2026-08-10.md`, and regression-tested by `tests/publishing-intelligence-24-tests.php` plus `tests/publishing-intelligence-security-regression-tests.php`. The implementation is explicitly advisory/projection-only; File 00 authorization, File 19 delivery, File 21 publication/comments/revisions, File 22 creation, File 24 assurance, File 25 visual presentation and File 26 search/ranking ownership remain authoritative.

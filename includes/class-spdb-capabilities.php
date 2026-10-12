@@ -12,7 +12,10 @@ final class SPDB_Capabilities {
 	 * Return the canonical File 23 capability keys.
 	 *
 	 * File 23 deliberately does not create WordPress roles. File 00 or an
-	 * administrator-approved integration grants these capabilities.
+	 * administrator-approved integration grants these capabilities. Studio
+	 * capabilities select a federated operational view only; they never grant
+	 * ownership of native publication, learning, moderation, search, profile,
+	 * security, or analytics truth.
 	 *
 	 * @return string[]
 	 */
@@ -21,6 +24,8 @@ final class SPDB_Capabilities {
 			'spdb_view_dashboard',
 			'spdb_view_own_content',
 			'spdb_manage_own_content',
+			'spdb_view_teacher_studio',
+			'spdb_view_admin_studio',
 			'spdb_view_review_queue',
 			'spdb_review_assigned_content',
 			'spdb_manage_schedule',

@@ -1,6 +1,10 @@
 <?php
 /**
- * Executable gate for the forty independent File 23 review/fix rounds.
+ * Executable continuity gate for the forty independent File 23 review/fix rounds.
+ *
+ * The forty-round record is historical hardening evidence from 2026-08-04.
+ * This gate verifies that its core controls remain present in 1.3.0; it is not a
+ * substitute for the two fresh post-change 1.3.0 review/fix rounds.
  */
 
 $root   = dirname( __DIR__ );
@@ -53,9 +57,9 @@ $files = array(
 );
 
 $gates = array(
-	array( 'main', array( 'Version:     1.2.0', "SPDB_VERSION', '1.2.0" ) ),
-	array( 'caps', array( "return array( 'spdb_manage_safe_mode' )" ) ),
-	array( 'installer', array( 'private const SCHEMA_VERSION', "= '4';", 'remove_cap' ) ),
+	array( 'main', array( 'Version:     1.3.0', "SPDB_VERSION', '1.3.0" ) ),
+	array( 'caps', array( "return array( 'spdb_manage_safe_mode' )", 'spdb_view_teacher_studio', 'spdb_view_admin_studio' ) ),
+	array( 'installer', array( 'private const SCHEMA_VERSION', "= '5';", 'remove_cap' ) ),
 	array( 'membership', array( 'canonical_contract_present', 'is_user_founder', 'is_user_trusted_publisher', 'true === $assertions[\'approved\']' ) ),
 	array( 'governance', array( 'spdb_task_assignee_invalid', 'spdb_delegation_provider_forbidden', 'spdb_delegation_capability_invalid' ) ),
 	array( 'acceptance', array( 'ACCEPTANCE_PRODUCTION_ACCEPTED', 'evidence_hash', 'provider_acceptance_changed', 'return $audit' ) ),
@@ -79,8 +83,8 @@ $gates = array(
 	array( 'rest', array( '/provider-acceptance/', 'record_provider_acceptance', 'write_permission' ) ),
 	array( 'migration', array( 'canonical_owner', 'migration' ) ),
 	array( 'activation', array( 'backup_restore_evidence', 'rollback_evidence', 'source_commit' ) ),
-	array( 'build', array( 'version="1.2.0"', 'git archive', 'SOURCE-MANIFEST' ) ),
-	array( 'workflow', array( 'forty-round-review-gate-tests.php', 'AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS', 'file23-1.2.0' ) ),
+	array( 'build', array( 'version="1.3.0"', 'git archive', 'SOURCE-MANIFEST' ) ),
+	array( 'workflow', array( 'forty-round-review-gate-tests.php', 'AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS', 'file23-1.3.0' ) ),
 );
 foreach ( $gates as $index => $gate ) {
 	foreach ( $gate[1] as $marker ) {
@@ -100,4 +104,4 @@ if ( $failed > 0 ) {
 	fwrite( STDERR, "{$failed} of {$tests} forty-round review gates failed.\n" );
 	exit( 1 );
 }
-echo "All {$tests} forty-round review gates passed.\n";
+echo "All {$tests} forty-round review continuity gates passed.\n";

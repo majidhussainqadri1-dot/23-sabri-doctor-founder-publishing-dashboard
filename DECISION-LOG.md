@@ -8,12 +8,14 @@
 
 **Decision:** File 23 is an operational façade over native providers. Publication bodies, drafts, review decisions, schedules, sources, media, comments, corrections, retractions, and raw analytics remain with native owners.
 
-## 2026-07-30 — D-003 — File Numbering
+## 2026-07-30 — D-003 — File Numbering (Historical; superseded)
+
+Historical 30 July mapping preserved for audit only. It was superseded by the later central-plan numbering decisions. Current mapping is recorded in D-029 below.
 
 - File 21 — Complete Home and News Feed
 - File 22 — Universal Post Composer
 - File 23 — Doctor and Founder Publishing Dashboard
-- File 24 — Complete Public UI, Profile Timeline and Visual Experience
+- File 24 — Complete Public UI, Profile Timeline and Visual Experience (historical value only)
 
 ## 2026-07-30 — D-004 — Four-Dimensional State Projection
 
@@ -124,3 +126,7 @@
 **Decision:** Workspace destinations are parsed from raw query pairs. Duplicate, bracketed, empty, malformed, sensitive, recursively encoded nested-target, and ambiguous parameters are rejected before rendering.
 
 **Reason:** Generic query normalization can collapse conflicting parameters or conceal encoded redirect and secret-bearing values.
+
+## 2026-08-10 — D-029 — Current File 21–26 Ownership and Future Publishing Intelligence
+
+**Decision:** Current canonical ownership is File 21 publication/newsroom, File 22 Universal Composer, File 23 private Publishing Dashboard, File 24 Security/Privacy/Compliance/Resilience assurance, File 25 public visual/profile/timeline experience, and File 26 Search/Discovery/Ranking. File 23 Future Publishing Intelligence F23-FPI-01 through F23-FPI-24 remains federated/advisory, never becomes a second backend, and is subject to File 00 server-side authority, privacy thresholds, native-owner decisions and the 10 August 2026 eighty-round corrective review gate.

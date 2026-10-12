@@ -1,3 +1,10 @@
+:root {
+	/* File 25 remains the canonical token owner. File 23 consumes that token and
+	 * uses the approved Sabri Green only as a safe fallback when File 25 is absent. */
+	--spdb-accent: var(--sabri-color-primary, #087A4E);
+	--spdb-accent-strong: var(--sabri-color-primary-strong, #055C3A);
+}
+
 .spdb-main:focus {
 	outline: 3px solid var(--spdb-focus);
 	outline-offset: 3px;
@@ -5,4 +12,42 @@
 
 .spdb-empty-state[hidden] {
 	display: none;
+}
+
+.spdb-phase,
+.spdb-notice {
+	background: #f0faf5;
+}
+
+.spdb-navigation a:hover {
+	background: #eef8f3;
+}
+
+.spdb-navigation a[aria-current="page"],
+.spdb-button {
+	color: #ffffff;
+}
+
+.spdb-card,
+.spdb-status-grid article {
+	background: linear-gradient(180deg, #ffffff 0%, #f7fcf9 100%);
+}
+
+/* Orange is retained only for contextual warning semantics, never as primary. */
+.spdb-notice--warning {
+	border-color: #c26a00;
+	background: #fff7e8;
+	color: #6d3c00;
+}
+
+/* Local low-data presentation guard. File 20 remains the global shell/PWA owner. */
+@media (prefers-reduced-data: reduce) {
+	.spdb-header {
+		box-shadow: none;
+	}
+
+	.spdb-card,
+	.spdb-status-grid article {
+		background: var(--spdb-surface);
+	}
 }

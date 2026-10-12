@@ -1,4 +1,4 @@
-# File 23 Database Schema Manifest — Version 1.2.0
+# File 23 Database Schema Manifest — Version 1.3.0
 
 ## Scope law
 

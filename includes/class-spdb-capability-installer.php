@@ -12,12 +12,17 @@
 defined( 'ABSPATH' ) || exit;
 
 final class SPDB_Capability_Installer {
-	private const SCHEMA_VERSION     = '4';
+	private const SCHEMA_VERSION     = '5';
 	private const VERSION_OPTION     = 'spdb_capability_schema_version';
 	private const FINGERPRINT_OPTION = 'spdb_capability_role_fingerprint';
 
 	/**
 	 * Return the least-privilege capability matrix for existing roles.
+	 *
+	 * The administrator receives the explicit Admin Studio capability through
+	 * SPDB_Capabilities::all(). A teacher receives only a bounded educational
+	 * operational studio when an existing File 00/integration role named
+	 * sabri_teacher is present; File 23 never creates that role.
 	 *
 	 * @return array<string,string[]>
 	 */
@@ -46,6 +51,18 @@ final class SPDB_Capability_Installer {
 					'spdb_view_own_analytics',
 					'spdb_manage_schedule',
 					'spdb_manage_interactions',
+					'spdb_manage_tasks',
+					'spdb_export_reports',
+					'spdb_request_ai_assistance',
+				)
+			),
+			'sabri_teacher'          => array_merge(
+				$restricted,
+				array(
+					'spdb_view_teacher_studio',
+					'spdb_manage_own_content',
+					'spdb_view_own_analytics',
+					'spdb_manage_schedule',
 					'spdb_manage_tasks',
 					'spdb_export_reports',
 					'spdb_request_ai_assistance',

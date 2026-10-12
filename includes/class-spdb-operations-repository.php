@@ -664,8 +664,11 @@ final class SPDB_Operations_Repository {
 	public function store_metric_snapshot( array $metric ) {
 		global $wpdb;
 		$table = SPDB_Operations_Schema::table( 'metric_snapshots' );
+		$cohort_count = max( 0, (int) ( $metric['cohort_count'] ?? 0 ) );
+		$current_threshold = class_exists( 'SPDB_Admin_Settings' ) ? (int) SPDB_Admin_Settings::get()['analytics_min_cohort'] : 20;
+		$effective_threshold = max( 20, $current_threshold, (int) ( $metric['privacy_threshold'] ?? 0 ) );
 		$value = self::encode_json( array(
-			'value'      => $metric['value'],
+			'value'      => $cohort_count < $effective_threshold ? null : ( $metric['value'] ?? null ),
 			'unit'       => $metric['unit'],
 			'label'      => $metric['label'],
 			'definition' => substr( wp_strip_all_tags( (string) $metric['definition'] ), 0, 500 ),
@@ -684,8 +687,8 @@ final class SPDB_Operations_Repository {
 			'period_end_gmt'   => (string) $metric['period_end_gmt'],
 			'definition_hash'  => hash( 'sha256', (string) $metric['definition'] ),
 			'value_json'       => $value,
-			'cohort_count'     => (int) $metric['cohort_count'],
-			'privacy_threshold' => (int) $metric['privacy_threshold'],
+			'cohort_count'     => $cohort_count,
+			'privacy_threshold' => $effective_threshold,
 			'generated_at_gmt' => (string) $metric['generated_at_gmt'],
 			'expires_at_gmt'   => (string) $metric['expires_at_gmt'],
 		);
@@ -703,7 +706,7 @@ final class SPDB_Operations_Repository {
 		$now   = current_time( 'mysql', true );
 		if ( $institution ) {
 			$sql = $wpdb->prepare(
-				"SELECT * FROM {$table} WHERE expires_at_gmt > %s ORDER BY period_end_gmt DESC, id DESC LIMIT %d",
+				"SELECT * FROM {$table} WHERE scope = 'institution' AND expires_at_gmt > %s ORDER BY period_end_gmt DESC, id DESC LIMIT %d",
 				$now,
 				$limit
 			);
@@ -735,28 +738,43 @@ final class SPDB_Operations_Repository {
 		if ( is_wp_error( $filters ) ) {
 			return $filters;
 		}
-		$row = array(
-			'export_id'       => $export_id,
-			'owner_user_id'   => (int) $data['owner_user_id'],
-			'report_key'      => (string) $data['report_key'],
-			'format'          => (string) $data['format'],
-			'scope'           => (string) $data['scope'],
-			'status'          => 'queued',
-			'filters_json'    => $filters,
-			'storage_ref'     => '',
-			'file_hash'       => '',
-			'row_count'       => 0,
-			'error_code'      => '',
-			'created_at_gmt'  => $now,
-			'updated_at_gmt'  => $now,
-			'expires_at_gmt'  => (string) $data['expires_at_gmt'],
-		);
-		if ( false === $wpdb->insert( $table, $row ) ) {
-			return self::error( 'spdb_export_create_failed', __( 'The export job could not be created.', 'sabri-publishing-dashboard' ), 500 );
+		$reason_hash = strtolower( trim( (string) ( $data['reason_hash'] ?? '' ) ) );
+		if ( 1 !== preg_match( '/^[a-f0-9]{64}$/', $reason_hash ) ) {
+			return self::error( 'spdb_export_reason_invalid', __( 'The secure export audit reason is invalid.', 'sabri-publishing-dashboard' ), 400 );
 		}
-		$audit = $this->append_audit( (int) $data['owner_user_id'], 'export_requested', $export_id, array( 'report_key' => $row['report_key'], 'format' => $row['format'], 'scope' => $row['scope'] ) );
-		if ( is_wp_error( $audit ) ) {
-			return $audit;
+		$result = $this->atomic(
+			function () use ( $wpdb, $table, $export_id, $now, $filters, $data, $reason_hash ) {
+				$row = array(
+					'export_id'       => $export_id,
+					'owner_user_id'   => (int) $data['owner_user_id'],
+					'report_key'      => (string) $data['report_key'],
+					'format'          => (string) $data['format'],
+					'scope'           => (string) $data['scope'],
+					'status'          => 'queued',
+					'filters_json'    => $filters,
+					'storage_ref'     => '',
+					'file_hash'       => '',
+					'row_count'       => 0,
+					'error_code'      => '',
+					'created_at_gmt'  => $now,
+					'updated_at_gmt'  => $now,
+					'expires_at_gmt'  => (string) $data['expires_at_gmt'],
+				);
+				if ( false === $wpdb->insert( $table, $row ) ) {
+					return self::error( 'spdb_export_create_failed', __( 'The export job could not be created.', 'sabri-publishing-dashboard' ), 500 );
+				}
+				$audit = $this->append_audit(
+					(int) $data['owner_user_id'],
+					'export_requested',
+					$export_id,
+					array( 'report_key' => $row['report_key'], 'format' => $row['format'], 'scope' => $row['scope'], 'reason_hash' => $reason_hash )
+				);
+				return is_wp_error( $audit ) ? $audit : true;
+			},
+			'export_request'
+		);
+		if ( is_wp_error( $result ) ) {
+			return $result;
 		}
 		return $this->get_export_job( $export_id, (int) $data['owner_user_id'], true );
 	}
@@ -1525,6 +1543,9 @@ final class SPDB_Operations_Repository {
 	/** @param array<string,mixed> $row @return array<string,mixed> */
 	private function normalize_metric_row( array $row ): array {
 		$value = self::decode_object( $row['value_json'] ?? '' );
+		$cohort_count = max( 0, (int) ( $row['cohort_count'] ?? 0 ) );
+		$current_threshold = class_exists( 'SPDB_Admin_Settings' ) ? (int) SPDB_Admin_Settings::get()['analytics_min_cohort'] : 20;
+		$effective_threshold = max( 20, $current_threshold, (int) ( $row['privacy_threshold'] ?? 0 ) );
 		return array(
 			'snapshot_id'      => sanitize_key( (string) ( $row['snapshot_id'] ?? '' ) ),
 			'provider_key'     => sanitize_key( (string) ( $row['provider_key'] ?? '' ) ),
@@ -1534,13 +1555,13 @@ final class SPDB_Operations_Repository {
 			'period_start_gmt' => self::mysql_datetime( $row['period_start_gmt'] ?? '' ),
 			'period_end_gmt'   => self::mysql_datetime( $row['period_end_gmt'] ?? '' ),
 			'definition_hash'  => (string) ( $row['definition_hash'] ?? '' ),
-			'value'            => $value['value'] ?? null,
+			'value'            => $cohort_count < $effective_threshold ? null : ( $value['value'] ?? null ),
 			'unit'             => sanitize_key( (string) ( $value['unit'] ?? 'count' ) ),
 			'label'            => sanitize_text_field( (string) ( $value['label'] ?? '' ) ),
 			'definition'       => sanitize_text_field( (string) ( $value['definition'] ?? __( 'Cached provider-owned aggregate metric.', 'sabri-publishing-dashboard' ) ) ),
 			'interval'         => in_array( sanitize_key( (string) ( $value['interval'] ?? 'custom' ) ), array( 'realtime', 'hourly', 'daily', 'weekly', 'monthly', 'custom' ), true ) ? sanitize_key( (string) ( $value['interval'] ?? 'custom' ) ) : 'custom',
-			'cohort_count'     => max( 0, (int) ( $row['cohort_count'] ?? 0 ) ),
-			'privacy_threshold' => max( 2, (int) ( $row['privacy_threshold'] ?? 5 ) ),
+			'cohort_count'     => $cohort_count,
+			'privacy_threshold' => $effective_threshold,
 			'generated_at_gmt' => self::mysql_datetime( $row['generated_at_gmt'] ?? '' ),
 			'expires_at_gmt'   => self::mysql_datetime( $row['expires_at_gmt'] ?? '' ),
 		);
