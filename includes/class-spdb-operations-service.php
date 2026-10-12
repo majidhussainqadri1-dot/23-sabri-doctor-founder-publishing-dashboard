@@ -172,7 +172,7 @@ final class SPDB_Operations_Service {
 						'metric_key'       => (string) $snapshot['metric_key'],
 						'label'            => (string) $snapshot['label'],
 						'definition'       => (string) $snapshot['definition'],
-						'value'            => $snapshot['value'],
+						'value'            => ( (int) $snapshot['cohort_count'] < $effective_threshold ) ? null : $snapshot['value'],
 						'unit'             => (string) $snapshot['unit'],
 						'interval'         => (string) $snapshot['interval'],
 						'cohort_count'     => (int) $snapshot['cohort_count'],

@@ -664,8 +664,11 @@ final class SPDB_Operations_Repository {
 	public function store_metric_snapshot( array $metric ) {
 		global $wpdb;
 		$table = SPDB_Operations_Schema::table( 'metric_snapshots' );
+		$cohort_count = max( 0, (int) ( $metric['cohort_count'] ?? 0 ) );
+		$current_threshold = class_exists( 'SPDB_Admin_Settings' ) ? (int) SPDB_Admin_Settings::get()['analytics_min_cohort'] : 20;
+		$effective_threshold = max( 20, $current_threshold, (int) ( $metric['privacy_threshold'] ?? 0 ) );
 		$value = self::encode_json( array(
-			'value'      => $metric['value'],
+			'value'      => $cohort_count < $effective_threshold ? null : ( $metric['value'] ?? null ),
 			'unit'       => $metric['unit'],
 			'label'      => $metric['label'],
 			'definition' => substr( wp_strip_all_tags( (string) $metric['definition'] ), 0, 500 ),
@@ -674,8 +677,6 @@ final class SPDB_Operations_Repository {
 		if ( is_wp_error( $value ) ) {
 			return $value;
 		}
-		$current_threshold = class_exists( 'SPDB_Admin_Settings' ) ? (int) SPDB_Admin_Settings::get()['analytics_min_cohort'] : 20;
-		$effective_threshold = max( 20, $current_threshold, (int) ( $metric['privacy_threshold'] ?? 0 ) );
 		$row = array(
 			'snapshot_id'      => self::id( 'metric' ),
 			'provider_key'     => (string) $metric['provider_key'],
@@ -686,7 +687,7 @@ final class SPDB_Operations_Repository {
 			'period_end_gmt'   => (string) $metric['period_end_gmt'],
 			'definition_hash'  => hash( 'sha256', (string) $metric['definition'] ),
 			'value_json'       => $value,
-			'cohort_count'     => (int) $metric['cohort_count'],
+			'cohort_count'     => $cohort_count,
 			'privacy_threshold' => $effective_threshold,
 			'generated_at_gmt' => (string) $metric['generated_at_gmt'],
 			'expires_at_gmt'   => (string) $metric['expires_at_gmt'],
@@ -705,7 +706,7 @@ final class SPDB_Operations_Repository {
 		$now   = current_time( 'mysql', true );
 		if ( $institution ) {
 			$sql = $wpdb->prepare(
-				"SELECT * FROM {$table} WHERE expires_at_gmt > %s ORDER BY period_end_gmt DESC, id DESC LIMIT %d",
+				"SELECT * FROM {$table} WHERE scope = 'institution' AND expires_at_gmt > %s ORDER BY period_end_gmt DESC, id DESC LIMIT %d",
 				$now,
 				$limit
 			);
@@ -1542,6 +1543,9 @@ final class SPDB_Operations_Repository {
 	/** @param array<string,mixed> $row @return array<string,mixed> */
 	private function normalize_metric_row( array $row ): array {
 		$value = self::decode_object( $row['value_json'] ?? '' );
+		$cohort_count = max( 0, (int) ( $row['cohort_count'] ?? 0 ) );
+		$current_threshold = class_exists( 'SPDB_Admin_Settings' ) ? (int) SPDB_Admin_Settings::get()['analytics_min_cohort'] : 20;
+		$effective_threshold = max( 20, $current_threshold, (int) ( $row['privacy_threshold'] ?? 0 ) );
 		return array(
 			'snapshot_id'      => sanitize_key( (string) ( $row['snapshot_id'] ?? '' ) ),
 			'provider_key'     => sanitize_key( (string) ( $row['provider_key'] ?? '' ) ),
@@ -1551,13 +1555,13 @@ final class SPDB_Operations_Repository {
 			'period_start_gmt' => self::mysql_datetime( $row['period_start_gmt'] ?? '' ),
 			'period_end_gmt'   => self::mysql_datetime( $row['period_end_gmt'] ?? '' ),
 			'definition_hash'  => (string) ( $row['definition_hash'] ?? '' ),
-			'value'            => $value['value'] ?? null,
+			'value'            => $cohort_count < $effective_threshold ? null : ( $value['value'] ?? null ),
 			'unit'             => sanitize_key( (string) ( $value['unit'] ?? 'count' ) ),
 			'label'            => sanitize_text_field( (string) ( $value['label'] ?? '' ) ),
 			'definition'       => sanitize_text_field( (string) ( $value['definition'] ?? __( 'Cached provider-owned aggregate metric.', 'sabri-publishing-dashboard' ) ) ),
 			'interval'         => in_array( sanitize_key( (string) ( $value['interval'] ?? 'custom' ) ), array( 'realtime', 'hourly', 'daily', 'weekly', 'monthly', 'custom' ), true ) ? sanitize_key( (string) ( $value['interval'] ?? 'custom' ) ) : 'custom',
-			'cohort_count'     => max( 0, (int) ( $row['cohort_count'] ?? 0 ) ),
-			'privacy_threshold' => max( 2, (int) ( $row['privacy_threshold'] ?? 5 ) ),
+			'cohort_count'     => $cohort_count,
+			'privacy_threshold' => $effective_threshold,
 			'generated_at_gmt' => self::mysql_datetime( $row['generated_at_gmt'] ?? '' ),
 			'expires_at_gmt'   => self::mysql_datetime( $row['expires_at_gmt'] ?? '' ),
 		);
