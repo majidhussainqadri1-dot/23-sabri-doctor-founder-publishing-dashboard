@@ -104,3 +104,22 @@ The source checks below are **not** twenty completed independent green audit rou
 - Freeze: plugin entry file declares `SPDB_VERSION=1.3.0` at current candidate, but `tests/bootstrap.php` defined `SPDB_VERSION=1.2.0` and `docs/DATABASE-SCHEMA-MANIFEST.md` heading still said `Version 1.2.0`. This is a test-environment/document release parity defect, not evidence of a live database schema defect.
 - Correct isolated repository source/test bootstrap and manifest heading to 1.3.0, while explicitly preserving operational schema `1.1.0` and collections schema `4`. Add executable final-deliverables regression for version parity and physical-schema distinction.
 - Require fresh exact SHA full CI and final release package before source gate closure. Original PR #26/Main semantic merge and deployed/staging/DB evidence remain separate and unverified. Do not count this targeted check as a full independent 20-round review.
+
+## 12 October 2026 — Candidate-only two-parent semantic reconciliation gate (M4)
+
+**Exact frozen source references:** Current Main `dcae138e6073f4d0ff596623deb05b9940b8271b`; isolated File23 candidate `662dbf55ea29c9921435337119161225f641c864`; merge base `a8a8c805f4730998ccb44bd95c87591836561759`. Do not use the original PR base metadata as the current Main HEAD.
+
+Git-tree 3-way classification: 162 unchanged, 42 candidate-only, 4 byte-identical changes on both branches, 18 differing blobs changed on both branches and 1 Main-only changed source. The Main-only path `includes/class-spdb-plugin.php` registers an instance of `SPDB_Publishing_Intelligence`, while current File23 candidate registers the static service once from `sabri-publishing-dashboard.php`. Importing both would double-register private REST callbacks. Keep the existing single static registration and its complete current route/security test coverage.
+
+**Semantic conflict resolution plan (all 18 divergent paths, no blind overwrite):**
+- `.github/workflows/baseline-integrity.yml`, `.github/workflows/file23-final-release-candidate.yml`, `.github/workflows/file23-full-plan-completion.yml`: preserve tested candidate 1.3.0 workflows, fixed File25 and File00/19/20/21/22/24/25/26 pinned exact-head contract checkouts, release package creation and version gates; obsolete Main 1.2.0 artifact names are not carried into the current release.
+- `CHANGELOG.md`, `README.md`, `STATUS.md`, `readme.txt`: retain current 1.3.0 candidate documentation and the separately preserved historical October 5 audit. Do not elevate a historical Main audit to a new 20-round review.
+- `includes/class-spdb-admin-settings.php`, `includes/class-spdb-module-manifest.php`, `includes/class-spdb-publishing-intelligence.php`, `sabri-publishing-dashboard.php`, `templates/analytics.php`: retain candidate's 1.3.0 complete 24-feature implementation, >=20 and stricter admin cohort privacy, File 26 ranking ownership, File 19 notification, File 22 composer, File 24 assurance, File 25 visual, neutral donors, safe single registration and founder-only permissions.
+- `tests/architecture-guard.php`, `tests/bootstrap.php`, `tests/final-deliverables-tests.php`, `tests/full-plan-completion-tests.php`, `tests/publishing-intelligence-24-tests.php`: preserve the tested 1.3.0 gate including M8/M9/M11/M12 regressions, current PHP 8.0–8.3 CI, and bootstrap/plugin version parity.
+- `docs/FUTURE-PUBLISHING-INTELLIGENCE-24-ADDENDUM-2026-08-10.md`: retain the later approved 10-Aug amendment and its current canonical owner safety boundaries.
+
+**Byte-identical Main improvements preserved:** `assets/css/dashboard.css`, `includes/class-spdb-operational-mutation-guard.php`, `templates/dashboard.php`, `docs/AUDIT-20-ROUND-PLAN-RECONCILIATION-2026-10-05.md`.
+
+**Operation guard:** Construct a non-forced **isolated integration-branch-only** two-parent merge candidate with first parent current candidate SHA and second parent frozen Main SHA; preserve reviewed candidate source tree except this ledger. Run full exact merge SHA CI and check branch parity before ever fast-forwarding the original PR. Do not merge to Main or deploy/stage on repository-only evidence. A successful merge candidate does not itself complete twenty independent full audits; R01 not accepted and R02–R20 not started until each complete and passed.
+
+**Deployed Version:** UNKNOWN. **Installed DB/Schema Version:** UNKNOWN. **Migration State:** UNKNOWN. **Live Verification Status:** UNVERIFIED.
