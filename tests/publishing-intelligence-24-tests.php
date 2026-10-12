@@ -100,6 +100,7 @@ $test_variants = array(
 		'small_arm' => array( 'cohort_count' => 8, 'value' => 876 ),
 		'large_arm' => array( 'cohort_count' => 60, 'value' => 123 ),
 		'no_cohort_arm' => array( 'value' => 321 ),
+		'custom_metric_arm' => array( 'ctr' => 0.83 ),
 	) ),
 );
 $GLOBALS['spdb_test_configured_cohort'] = 20;
@@ -109,6 +110,7 @@ $variants = $variant_result['data']['experiments'][0]['variant_metrics'] ?? arra
 $assert( true === ( $variants['small_arm']['suppressed'] ?? false ) && ! array_key_exists( 'value', $variants['small_arm'] ?? array() ), 'FPI-02 individual variant below 20 must not expose metric value despite large parent cohort.' );
 $assert( 123 === ( $variants['large_arm']['value'] ?? null ), 'FPI-02 eligible variant preserves privacy-safe aggregate.' );
 $assert( true === ( $variants['no_cohort_arm']['suppressed'] ?? false ) && ! array_key_exists( 'value', $variants['no_cohort_arm'] ?? array() ), 'FPI-02 variant with unknown cohort must fail closed.' );
+$assert( true === ( $variants['custom_metric_arm']['suppressed'] ?? false ) && ! array_key_exists( 'ctr', $variants['custom_metric_arm'] ?? array() ), 'FPI-02 provider-defined numeric metric without a cohort must fail closed.' );
 $GLOBALS['spdb_test_configured_cohort'] = 50;
 $GLOBALS['spdb_test_signals']['experiment-lab'] = array( array( 'experiment_id' => 'nested-admin-privacy', 'cohort_count' => 120, 'variant_metrics' => array(
 	'below_admin' => array( 'cohort_count' => 30, 'value' => 901 ),
