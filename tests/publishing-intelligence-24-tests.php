@@ -122,5 +122,37 @@ $assert( true === ( $admin_variants['below_admin']['suppressed'] ?? false ) && !
 $assert( 902 === ( $admin_variants['above_admin']['value'] ?? null ), 'FPI-02 stricter admin threshold must preserve eligible cohort 60.' );
 $GLOBALS['spdb_test_configured_cohort'] = 20;
 
+
+/** M13: malformed/coerced cohort strings cannot authorize aggregates. */
+$GLOBALS['spdb_test_configured_cohort'] = 20;
+$GLOBALS['spdb_test_signals']['audience-board'] = array(
+ array( 'dimension' => 'language', 'label' => 'Unverified', 'value' => 99, 'cohort_count' => '20people' ),
+ array( 'dimension' => 'language', 'label' => 'Decimal', 'value' => 98, 'cohort_count' => '20.5' ),
+ array( 'dimension' => 'language', 'label' => 'Scientific', 'value' => 97, 'cohort_count' => '2e2' ),
+ array( 'dimension' => 'language', 'label' => 'Canonical string', 'value' => 96, 'cohort_count' => '25' ),
+);
+$m13_audience = SPDB_Publishing_Intelligence::snapshot( 'audience-board' );
+$assert( 1 === count( $m13_audience['data']['items'] ) && 'Canonical string' === $m13_audience['data']['items'][0]['label'], 'M13 malformed audience count fails closed, canonical digits supported.' );
+$GLOBALS['spdb_test_signals']['best-time'] = array( array( 'window' => 'Invalid', 'score' => 0.8, 'observations' => '25fake' ) );
+$m13_best = SPDB_Publishing_Intelligence::snapshot( 'best-time' );
+$assert( 0 === count( $m13_best['data']['recommended_windows'] ), 'M13 invalid best-time observations must be rejected.' );
+$GLOBALS['spdb_test_signals']['experiment-lab'] = array( array( 'experiment_id' => 'fake-parent', 'cohort_count' => '100foo', 'uplift' => 999, 'variant_metrics' => array( 'arm' => array( 'cohort_count' => 50, 'value' => 999 ) ) ) );
+$m13_exp = SPDB_Publishing_Intelligence::snapshot( 'experiment-lab' );
+$assert( true === $m13_exp['data']['experiments'][0]['suppressed'] && ! isset( $m13_exp['data']['experiments'][0]['uplift'] ), 'M13 invalid parent experiment cohort fails closed.' );
+$GLOBALS['spdb_test_signals']['experiment-lab'] = array( array( 'experiment_id' => 'fake-arm', 'cohort_count' => 100, 'variant_metrics' => array( 'arm' => array( 'cohort_count' => '50invalid', 'value' => 12345 ) ) ) );
+$m13_arm = SPDB_Publishing_Intelligence::snapshot( 'experiment-lab' );
+$assert( true === ( $m13_arm['data']['experiments'][0]['variant_metrics']['arm']['suppressed'] ?? false ) && ! isset( $m13_arm['data']['experiments'][0]['variant_metrics']['arm']['value'] ), 'M13 nested invalid arm cohort fails closed.' );
+$GLOBALS['spdb_test_signals']['comment-intelligence'] = array( array( 'cluster' => 'small', 'count' => '30fake' ) );
+$m13_comment = SPDB_Publishing_Intelligence::snapshot( 'comment-intelligence' );
+$assert( 0 === count( $m13_comment['data']['items'] ), 'M13 malformed comment count fails closed.' );
+$GLOBALS['spdb_test_signals']['internal-benchmark'] = array( array( 'metric' => 'engagement', 'definition' => 'Test ratio', 'cohort_count' => '200bad', 'value' => 1.23 ) );
+$m13_bench = SPDB_Publishing_Intelligence::snapshot( 'internal-benchmark' );
+$assert( 0 === count( $m13_bench['data']['items'] ), 'M13 malformed benchmark count fails closed.' );
+$GLOBALS['spdb_test_configured_cohort'] = 50;
+$GLOBALS['spdb_test_signals']['audience-board'] = array( array( 'dimension' => 'language', 'label' => 'not enough', 'value' => 88, 'cohort_count' => '60invalid' ) );
+$m13_strict = SPDB_Publishing_Intelligence::snapshot( 'audience-board' );
+$assert( 0 === count( $m13_strict['data']['items'] ), 'M13 admin threshold 50 cannot be bypassed by leading digits.' );
+$GLOBALS['spdb_test_configured_cohort'] = 20;
+
 if ( $failed > 0 ) { fwrite( STDERR, "{$failed} of {$tests} publishing-intelligence tests failed.\n" ); exit( 1 ); }
 echo "All {$tests} File 23 Publishing Intelligence 24 tests passed.\n";

@@ -360,7 +360,7 @@ final class SPDB_Publishing_Intelligence {
 		$rows = array();
 		$threshold = self::privacy_threshold();
 		foreach ( $signals as $row ) {
-			$cohort = max( 0, (int) ( $row['cohort_count'] ?? 0 ) );
+			$cohort = self::verified_cohort_count( $row['cohort_count'] ?? null );
 			$base = self::allowlist_row( $row, array( 'experiment_id', 'status', 'variant_ids', 'cohort_count', 'started_at', 'ended_at', 'metric' ) );
 			$base['cohort_count'] = $cohort;
 			$base['suppressed'] = $cohort < $threshold;
@@ -393,7 +393,7 @@ final class SPDB_Publishing_Intelligence {
 		$threshold = self::privacy_threshold();
 		$timezone = self::normalize_timezone( (string) ( $context['timezone'] ?? 'UTC' ) );
 		foreach ( $signals as $row ) {
-			$observations = max( 0, (int) ( $row['observations'] ?? $row['cohort_count'] ?? 0 ) );
+			$observations = self::verified_cohort_count( $row['observations'] ?? $row['cohort_count'] ?? null );
 			if ( $observations < $threshold ) {
 				continue;
 			}
@@ -585,7 +585,7 @@ final class SPDB_Publishing_Intelligence {
 		$suppressed = 0;
 		$threshold = self::privacy_threshold();
 		foreach ( $signals as $row ) {
-			$cohort = max( 0, (int) ( $row['cohort_count'] ?? 0 ) );
+			$cohort = self::verified_cohort_count( $row['cohort_count'] ?? null );
 			if ( $cohort < $threshold ) {
 				++$suppressed;
 				continue;
@@ -611,7 +611,7 @@ final class SPDB_Publishing_Intelligence {
 		$incomplete = 0;
 		$threshold = self::privacy_threshold();
 		foreach ( $signals as $row ) {
-			$cohort = max( 0, (int) ( $row['cohort_count'] ?? 0 ) );
+			$cohort = self::verified_cohort_count( $row['cohort_count'] ?? null );
 			if ( $cohort < $threshold ) {
 				++$suppressed;
 				continue;
@@ -686,7 +686,7 @@ final class SPDB_Publishing_Intelligence {
 		$items = array();
 		$suppressed = 0;
 		foreach ( $signals as $row ) {
-			$count = max( 0, (int) ( $row['cohort_count'] ?? $row['count'] ?? 0 ) );
+			$count = self::verified_cohort_count( $row['cohort_count'] ?? $row['count'] ?? null );
 			if ( $count < $threshold ) {
 				++$suppressed;
 				continue;
@@ -789,7 +789,7 @@ final class SPDB_Publishing_Intelligence {
 		$suppressed = 0;
 		$threshold = self::privacy_threshold();
 		foreach ( $signals as $row ) {
-			if ( max( 0, (int) ( $row['cohort_count'] ?? 0 ) ) < $threshold ) {
+			if ( self::verified_cohort_count( $row['cohort_count'] ?? null ) < $threshold ) {
 				++$suppressed;
 				continue;
 			}
@@ -979,7 +979,7 @@ final class SPDB_Publishing_Intelligence {
 			}
 			$contains_metric = array_key_exists( 'value', $value ) || array_key_exists( 'score', $value ) || array_key_exists( 'uplift', $value ) || array_key_exists( 'conversion_rate', $value ) || array_key_exists( 'conversions', $value ) || array_key_exists( 'views', $value ) || array_key_exists( 'clicks', $value );
 			if ( $has_cohort || $contains_metric || $contains_numeric_measure ) {
-				$cohort = (int) ( $value['cohort_count'] ?? $value['observations'] ?? 0 );
+				$cohort = self::verified_cohort_count( $value['cohort_count'] ?? $value['observations'] ?? null );
 				if ( ! $has_cohort || $cohort < self::privacy_threshold() ) {
 					return array( 'suppressed' => true );
 				}
@@ -1016,6 +1016,17 @@ final class SPDB_Publishing_Intelligence {
 			}
 		}
 		return $item;
+	}
+
+	/** Enforce proven nonnegative whole-person cohorts. Never loosely cast text. */
+	private static function verified_cohort_count( $raw ): int {
+		if ( is_int( $raw ) ) {
+			return max( 0, $raw );
+		}
+		if ( is_string( $raw ) && 1 === preg_match( '/^(?:0|[1-9][0-9]{0,8})$/D', $raw ) ) {
+			return (int) $raw;
+		}
+		return 0;
 	}
 
 	private static function privacy_threshold(): int {
