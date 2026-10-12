@@ -965,6 +965,16 @@ final class SPDB_Publishing_Intelligence {
 			return array();
 		}
 		if ( is_array( $value ) ) {
+			// Every nested experiment arm must meet its own privacy cohort; the
+			// enclosing experiment cohort cannot authorize a smaller variant.
+			$has_cohort = array_key_exists( 'cohort_count', $value ) || array_key_exists( 'observations', $value );
+			$contains_metric = array_key_exists( 'value', $value ) || array_key_exists( 'score', $value ) || array_key_exists( 'uplift', $value ) || array_key_exists( 'conversion_rate', $value ) || array_key_exists( 'conversions', $value ) || array_key_exists( 'views', $value ) || array_key_exists( 'clicks', $value );
+			if ( $has_cohort || $contains_metric ) {
+				$cohort = (int) ( $value['cohort_count'] ?? $value['observations'] ?? 0 );
+				if ( ! $has_cohort || $cohort < self::privacy_threshold() ) {
+					return array( 'suppressed' => true );
+				}
+			}
 			$out = array();
 			foreach ( array_slice( $value, 0, 100, true ) as $key => $item ) {
 				$clean_key = self::key( (string) $key );

@@ -94,5 +94,31 @@ $simulation = SPDB_Publishing_Intelligence::simulate( array( 'reviewer_daily_cap
 $assert( 'attention' === $simulation['risk_level'], 'What-if planner must surface collision or reviewer-overload risk.' );
 $assert( false === $simulation['auto_schedule'], 'What-if planner must remain read-only/advisory.' );
 
+
+$test_variants = array(
+	array( 'experiment_id' => 'nested-privacy', 'cohort_count' => 120, 'variant_metrics' => array(
+		'small_arm' => array( 'cohort_count' => 8, 'value' => 876 ),
+		'large_arm' => array( 'cohort_count' => 60, 'value' => 123 ),
+		'no_cohort_arm' => array( 'value' => 321 ),
+	) ),
+);
+$GLOBALS['spdb_test_configured_cohort'] = 20;
+$GLOBALS['spdb_test_signals']['experiment-lab'] = $test_variants;
+$variant_result = SPDB_Publishing_Intelligence::snapshot( 'experiment-lab' );
+$variants = $variant_result['data']['experiments'][0]['variant_metrics'] ?? array();
+$assert( true === ( $variants['small_arm']['suppressed'] ?? false ) && ! array_key_exists( 'value', $variants['small_arm'] ?? array() ), 'FPI-02 individual variant below 20 must not expose metric value despite large parent cohort.' );
+$assert( 123 === ( $variants['large_arm']['value'] ?? null ), 'FPI-02 eligible variant preserves privacy-safe aggregate.' );
+$assert( true === ( $variants['no_cohort_arm']['suppressed'] ?? false ) && ! array_key_exists( 'value', $variants['no_cohort_arm'] ?? array() ), 'FPI-02 variant with unknown cohort must fail closed.' );
+$GLOBALS['spdb_test_configured_cohort'] = 50;
+$GLOBALS['spdb_test_signals']['experiment-lab'] = array( array( 'experiment_id' => 'nested-admin-privacy', 'cohort_count' => 120, 'variant_metrics' => array(
+	'below_admin' => array( 'cohort_count' => 30, 'value' => 901 ),
+	'above_admin' => array( 'cohort_count' => 60, 'value' => 902 ),
+) ) );
+$admin_variant_result = SPDB_Publishing_Intelligence::snapshot( 'experiment-lab' );
+$admin_variants = $admin_variant_result['data']['experiments'][0]['variant_metrics'] ?? array();
+$assert( true === ( $admin_variants['below_admin']['suppressed'] ?? false ) && ! array_key_exists( 'value', $admin_variants['below_admin'] ?? array() ), 'FPI-02 stricter admin threshold 50 must suppress variant cohort 30.' );
+$assert( 902 === ( $admin_variants['above_admin']['value'] ?? null ), 'FPI-02 stricter admin threshold must preserve eligible cohort 60.' );
+$GLOBALS['spdb_test_configured_cohort'] = 20;
+
 if ( $failed > 0 ) { fwrite( STDERR, "{$failed} of {$tests} publishing-intelligence tests failed.\n" ); exit( 1 ); }
 echo "All {$tests} File 23 Publishing Intelligence 24 tests passed.\n";
