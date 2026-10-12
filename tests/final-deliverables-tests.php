@@ -100,6 +100,13 @@ foreach ( array(
 	$assert( false !== strpos( $workflow, $marker ), "Final release workflow is missing marker: {$marker}." );
 }
 
+// Release version must match the executable test runtime and its schema manifest.
+$bootstrap = (string) file_get_contents( $root . '/tests/bootstrap.php' );
+$schema_manifest = (string) file_get_contents( $root . '/docs/DATABASE-SCHEMA-MANIFEST.md' );
+$assert( str_contains( $bootstrap, "define( 'SPDB_VERSION', '1.3.0' );" ), 'Executable test bootstrap must use current candidate version 1.3.0.' );
+$assert( str_starts_with( $schema_manifest, '# File 23 Database Schema Manifest — Version 1.3.0' ), 'Database schema manifest document release identity must match 1.3.0.' );
+$assert( str_contains( $schema_manifest, 'Operational metadata | `1.1.0`' ) && str_contains( $schema_manifest, 'Collections and knowledge pointers | `4`' ), 'Independent physical schema versions must not be rewritten to match plugin release number.' );
+
 if ( $failed > 0 ) {
 	fwrite( STDERR, "{$failed} of {$tests} final-deliverables tests failed.\n" );
 	exit( 1 );
