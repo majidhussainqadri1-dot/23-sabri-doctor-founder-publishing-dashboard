@@ -154,5 +154,38 @@ $m13_strict = SPDB_Publishing_Intelligence::snapshot( 'audience-board' );
 $assert( 0 === count( $m13_strict['data']['items'] ), 'M13 admin threshold 50 cannot be bypassed by leading digits.' );
 $GLOBALS['spdb_test_configured_cohort'] = 20;
 
+
+// M14: provider-defined string metrics, scalar arms and nested metric groups
+// may never inherit their parent experiment's sufficiently large cohort.
+$GLOBALS['spdb_test_configured_cohort'] = 20;
+$GLOBALS['spdb_test_signals']['experiment-lab'] = array( array(
+    'experiment_id' => 'm14-string-values', 'cohort_count' => 120,
+    'variant_metrics' => array(
+        'without_cohort' => array( 'custom_ctr' => '0.975' ),
+        'scalar_numeric' => 0.991,
+        'scalar_string' => '0.992',
+        'small_cohort' => array( 'cohort_count' => 8, 'custom_ctr' => '0.953' ),
+        'qualified_cohort' => array( 'cohort_count' => 60, 'custom_ctr' => '0.125' ),
+        'nested_unproven' => array( 'cohort_count' => 60, 'metric' => array( 'custom_ctr' => '0.952' ) ),
+    ),
+) );
+$m14 = SPDB_Publishing_Intelligence::snapshot( 'experiment-lab' );
+$m14_variants = $m14['data']['experiments'][0]['variant_metrics'] ?? array();
+$assert( true === ( $m14_variants['without_cohort']['suppressed'] ?? false ) && ! isset( $m14_variants['without_cohort']['custom_ctr'] ), 'M14 string metric without independent cohort suppressed.' );
+$assert( true === ( $m14_variants['scalar_numeric']['suppressed'] ?? false ), 'M14 scalar numeric arm without cohort suppressed.' );
+$assert( true === ( $m14_variants['scalar_string']['suppressed'] ?? false ), 'M14 scalar string arm without cohort suppressed.' );
+$assert( true === ( $m14_variants['small_cohort']['suppressed'] ?? false ), 'M14 small arm with string metric suppressed.' );
+$assert( '0.125' === ( $m14_variants['qualified_cohort']['custom_ctr'] ?? null ), 'M14 valid independently qualified arm retains sanitized string metric.' );
+$assert( true === ( $m14_variants['nested_unproven']['metric']['suppressed'] ?? false ) && ! isset( $m14_variants['nested_unproven']['metric']['custom_ctr'] ), 'M14 nested unproven cohort group suppressed.' );
+$GLOBALS['spdb_test_configured_cohort'] = 50;
+$GLOBALS['spdb_test_signals']['experiment-lab'] = array( array( 'experiment_id' => 'm14-admin', 'cohort_count' => 120, 'variant_metrics' => array(
+    'under_admin' => array( 'cohort_count' => 30, 'custom_ctr' => '0.66' ),
+    'over_admin' => array( 'cohort_count' => 60, 'custom_ctr' => '0.77' ),
+) ) );
+$m14_admin = SPDB_Publishing_Intelligence::snapshot( 'experiment-lab' );
+$m14_v = $m14_admin['data']['experiments'][0]['variant_metrics'] ?? array();
+$assert( true === ( $m14_v['under_admin']['suppressed'] ?? false ) && '0.77' === ( $m14_v['over_admin']['custom_ctr'] ?? null ), 'M14 admin minimum 50 governs every arm.' );
+$GLOBALS['spdb_test_configured_cohort'] = 20;
+
 if ( $failed > 0 ) { fwrite( STDERR, "{$failed} of {$tests} publishing-intelligence tests failed.\n" ); exit( 1 ); }
 echo "All {$tests} File 23 Publishing Intelligence 24 tests passed.\n";

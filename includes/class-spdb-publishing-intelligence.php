@@ -961,45 +961,29 @@ final class SPDB_Publishing_Intelligence {
 
 	/** @return mixed */
 	private static function privacy_safe_metric_tree( $value, int $depth = 0 ) {
-		if ( $depth >= self::MAX_DEPTH ) {
-			return array();
-		}
+		if ( $depth >= self::MAX_DEPTH ) { return array(); }
 		if ( is_array( $value ) ) {
-			// Every nested experiment arm must meet its own privacy cohort; the
-			// enclosing experiment cohort cannot authorize a smaller variant.
-			$has_cohort = array_key_exists( 'cohort_count', $value ) || array_key_exists( 'observations', $value );
-			// Metric keys are provider-defined; do not depend only on a fixed
-			// set of names such as value/score. An unproven numeric arm fails closed.
-			$contains_numeric_measure = false;
-			foreach ( $value as $key => $item ) {
-				if ( ( is_int( $item ) || is_float( $item ) ) && ! in_array( self::key( (string) $key ), array( 'cohort_count', 'observations' ), true ) ) {
-					$contains_numeric_measure = true;
-					break;
-				}
-			}
-			$contains_metric = array_key_exists( 'value', $value ) || array_key_exists( 'score', $value ) || array_key_exists( 'uplift', $value ) || array_key_exists( 'conversion_rate', $value ) || array_key_exists( 'conversions', $value ) || array_key_exists( 'views', $value ) || array_key_exists( 'clicks', $value );
-			if ( $has_cohort || $contains_metric || $contains_numeric_measure ) {
+			// The root is a collection of variant arms, not a cohort.
+			// Every arm and nested metric group needs independent cohort evidence.
+			if ( $depth > 0 ) {
+				$has_cohort = array_key_exists( 'cohort_count', $value ) || array_key_exists( 'observations', $value );
 				$cohort = self::verified_cohort_count( $value['cohort_count'] ?? $value['observations'] ?? null );
-				if ( ! $has_cohort || $cohort < self::privacy_threshold() ) {
-					return array( 'suppressed' => true );
-				}
+				if ( ! $has_cohort || $cohort < self::privacy_threshold() ) { return array( 'suppressed' => true ); }
 			}
 			$out = array();
 			foreach ( array_slice( $value, 0, 100, true ) as $key => $item ) {
 				$clean_key = self::key( (string) $key );
-				if ( '' === $clean_key || self::is_sensitive_key( $clean_key ) ) {
+				if ( '' === $clean_key || self::is_sensitive_key( $clean_key ) ) { continue; }
+				if ( 0 === $depth && ! is_array( $item ) ) {
+					$out[ $clean_key ] = array( 'suppressed' => true );
 					continue;
 				}
 				$clean = self::privacy_safe_metric_tree( $item, $depth + 1 );
-				if ( null !== $clean ) {
-					$out[ $clean_key ] = $clean;
-				}
+				if ( null !== $clean ) { $out[ $clean_key ] = $clean; }
 			}
 			return $out;
 		}
-		if ( is_bool( $value ) || is_int( $value ) || is_float( $value ) ) {
-			return $value;
-		}
+		if ( is_bool( $value ) || is_int( $value ) || is_float( $value ) ) { return $value; }
 		if ( is_scalar( $value ) ) {
 			$text = self::text( (string) $value, 160 );
 			return '' !== $text && ! self::contains_sensitive_text( $text ) ? $text : null;
