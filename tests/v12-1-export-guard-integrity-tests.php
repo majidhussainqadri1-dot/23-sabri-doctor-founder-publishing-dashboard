@@ -25,6 +25,7 @@ require_once dirname( __DIR__ ) . '/includes/class-spdb-export-service.php';
 
 $service = ( new ReflectionClass( SPDB_Export_Service::class ) )->newInstanceWithoutConstructor();
 $method  = new ReflectionMethod( SPDB_Export_Service::class, 'private_directory' );
+$method->setAccessible( true ); // PHP 8.0 private-method reflection compatibility.
 $tests   = 0;
 $failed  = 0;
 $assert  = static function ( bool $passed, string $message ) use ( &$tests, &$failed ): void {
