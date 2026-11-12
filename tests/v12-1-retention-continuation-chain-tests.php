@@ -6,6 +6,7 @@
  * private export artifacts. It does not prove Hostinger storage or cron.
  */
 require_once __DIR__ . '/bootstrap.php';
+defined( 'DAY_IN_SECONDS' ) || define( 'DAY_IN_SECONDS', 86400 ); // Repository retention helper reads WP core constant.
 function wp_salt( string $scheme = 'auth' ): string { return 'file23-job-test-secret-' . $scheme; }
 $GLOBALS['spdb_retention_chain_root'] = sys_get_temp_dir() . '/spdb-retention-chain-' . bin2hex( random_bytes( 7 ) );
 function wp_upload_dir( $time = null, $create_dir = true ): array { return array( 'basedir' => $GLOBALS['spdb_retention_chain_root'], 'error' => false ); }
