@@ -149,11 +149,22 @@ final class SPDB_Export_Service {
 		if ( is_wp_error( $sealed ) ) {
 			return $this->fail_processing( $export_id, $sealed );
 		}
+		// An erasure can begin while a queued job is rendering. Re-check
+		// the durable owner lock immediately before any ciphertext write.
+		if ( self::privacy_erasure_pending( $owner_user_id ) ) {
+			return $this->fail_processing( $export_id, self::error( 'spdb_export_erasure_pending', __( 'Owner privacy erasure blocks export generation.', 'sabri-publishing-dashboard' ), 409 ) );
+		}
 		// Exclusive create prevents retry/symlink overwrite of an existing
 		// ciphertext path. The host must still independently deny HTTP access.
 		$path = $this->write_ciphertext_exclusive( $directory, $filename, $sealed );
 		if ( is_wp_error( $path ) ) {
 			return $this->fail_processing( $export_id, $path );
+		}
+		// A privacy eraser may set its lock between the pre-write check
+		// and the exclusive create. Do not publish or retain that artifact.
+		if ( self::privacy_erasure_pending( $owner_user_id ) ) {
+			@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Prevent new ciphertext while erasure is pending.
+			return $this->fail_processing( $export_id, self::error( 'spdb_export_erasure_pending', __( 'Owner privacy erasure blocks export generation.', 'sabri-publishing-dashboard' ), 409 ) );
 		}
 		$hash = hash_file( 'sha256', $path );
 		if ( ! is_string( $hash ) || 64 !== strlen( $hash ) ) {
@@ -515,6 +526,7 @@ final class SPDB_Export_Service {
 			&& strtotime( $job['expires_at_gmt'] . ' UTC' ) > time()
 			&& $viewer_user_id > 0
 			&& $viewer_user_id === (int) $job['owner_user_id']
+			&& ! self::privacy_erasure_pending( $viewer_user_id )
 		) {
 			$out['download_url'] = $this->download_url( $job['export_id'], $viewer_user_id );
 		}
@@ -799,6 +811,17 @@ final class SPDB_Export_Service {
 	}
 
 
+	/** Durable, File23-only owner-specific erasure checkpoint. No browser controls this key. */
+	public static function privacy_erasure_checkpoint_key( int $user_id ): string {
+		return 'spdb_export_erase_progress_v1_' . max( 0, $user_id );
+	}
+
+	/** The presence of any checkpoint blocks new/queued private report generation. */
+	public static function privacy_erasure_pending( int $user_id ): bool {
+		return $user_id > 0 && function_exists( 'get_option' )
+			&& false !== get_option( self::privacy_erasure_checkpoint_key( $user_id ), false );
+	}
+
 	private function current_user_can_export(): bool {
 		if ( ! function_exists( 'get_current_user_id' ) ) {
 			return false;
@@ -807,7 +830,7 @@ final class SPDB_Export_Service {
 	}
 
 	private function user_can_export( int $user_id, bool $require_session_two_factor = false ): bool {
-		if ( $user_id < 1 || ! class_exists( 'SPDB_Membership_Guard' ) || ! class_exists( 'SPDB_Capabilities' ) ) {
+		if ( $user_id < 1 || self::privacy_erasure_pending( $user_id ) || ! class_exists( 'SPDB_Membership_Guard' ) || ! class_exists( 'SPDB_Capabilities' ) ) {
 			return false;
 		}
 		$assertions = SPDB_Membership_Guard::assertions( $user_id );
