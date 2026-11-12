@@ -34,7 +34,7 @@ $process=is_int($process_start)&&is_int($process_end)?substr($source,$process_st
 $acquire=strpos($process,"GET_LOCK(%s, 5)");
 $write=strpos($process,'write_ciphertext_exclusive( $directory, $filename, $sealed )');
 $release=strpos($process,"RELEASE_LOCK(%s)");
-$assert(false!==$acquire && false!==$write && false!==$release && $acquire<$write && $write<$release,'Encryped export write and completion occur strictly inside serialized owner lock.');
+$assert(false!==$acquire && false!==$write && false!==$release && $acquire<$write && $write<$release,'Encrypted export write and completion occur strictly inside serialized owner lock.');
 $assert(false!==strpos($process,'$fresh = $this->repository->get_export_job( $export_id, 0, true )'),'Owner lock requires a fresh authoritative DB job check before writing.');
 $assert(false!==strpos($process,'$this->user_can_export( $owner_user_id )'),'Owner lock rechecks current File00 state before committing ciphertext.');
 $assert(false!==strpos($process,'privacy_erasure_pending( $owner_user_id )'),'Late privacy erasure blocks in-flight report generation.');
@@ -47,7 +47,7 @@ $privacy_wrapper=is_int($privacy_start)&&is_int($privacy_end)?substr($privacy,$p
 $assert(false!==strpos($privacy_wrapper,'privacy_erasure_lock_name( $user_id )'),'WordPress erasure uses exactly the same owner lock key as export writer.');
 $assert(false!==strpos($privacy_wrapper,'GET_LOCK(%s, 2)')&&false!==strpos($privacy_wrapper,'RELEASE_LOCK(%s)'),'Owner privacy lock is acquired and always released.');
 $assert(false!==strpos($privacy,'erase_user_files_page( $user_id, $checkpoint[\'cursor\'], 200, $verify )'),'Privacy erasure is limited to one 200-row page per request.');
-$assert(false!==strpos($privacy,"$checkpoint['stage'] = 'verify';"),'Privacy erasure requires a second verification pass.');
+$assert(false!==strpos($privacy, '$checkpoint[\'stage\'] = \'verify\';'),'Privacy erasure requires a second verification pass.');
 $assert(false!==strpos($privacy,'$this->repository->privacy_erase( $user_id )'),'Native metadata erase happens only after two-pass traversal.');
 
 $assert(false!==strpos($background,'retention_continuation_signature('),'Retention job continuations are HMAC authenticated.');
