@@ -46,6 +46,14 @@ This document does not pre-declare those gates successful. A green historical ru
 
 Until those external gates pass, File 23 is **not staging-accepted, live-deployed or operationally accepted**. Production writes remain subject to the existing fail-closed provider/environment acceptance model.
 
+## V12.1 source fix milestone — 2026-11-12
+
+- Initial source validation identified one staging acceptance artifact/version parity gap (issue #30). New negative tests first failed as expected when the verifier was missing.
+- Corrective source commit `2bd422657f859c328518c38f2082d7b477ef0cc8`: activation now fails closed without a fresh server-side deployed artifact, schemas and complete migration assertion. **22 new attestation tests passed**.
+- The exact code/test SHA passed Baseline Integrity **#1527**, Full Plan Completion **#578**, Final Release Candidate **#332**. Documentation changes after that SHA require their own new exact-head CI run.
+- **Source mitigation != Hostinger integration**: no actual File20/deployment-operator attestor has been installed/verified, so issue #30 remains open. Owner contract and ten staging checks: `docs/FILE23-DEPLOYED-ATTESTATION-CONTRACT-V1.md`.
+- No main merge, staging acceptance or live operation is claimed.
+
 ## V12.1 coding-gap census and 16-work-package backlog — 2026-11-12
 
 - **Plan annex:** `docs/FILE23-V12.1-CODING-GAP-BACKLOG-2026-11-12.md`. The source/requirement/acceptance classification is *not* a completion percentage.
