@@ -19,7 +19,7 @@ class SPDB_Expiry_Progress_DB {
 	public function prepare( string $query, ...$args ): string {
 		$this->cutoff = (string) $args[0];
 		$this->cursor = (int) $args[1];
-		$this->limit = (int) $args[2];
+		$this->limit = (int) ( $args[3] ?? $args[2] );
 		return $query;
 	}
 	public function get_results( string $query, $mode = null ) {
