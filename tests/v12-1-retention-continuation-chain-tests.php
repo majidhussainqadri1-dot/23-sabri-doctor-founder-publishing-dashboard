@@ -142,6 +142,15 @@ try {
 	$invalid=$run->invoke($runner,$bad);
 	$assert(is_wp_error($invalid)&&'spdb_retention_continuation_invalid'===$invalid->get_error_code(),'Forged high cursor cannot trigger metadata purge.');
 	$assert(401===$GLOBALS['wpdb']->purges,'Forged continuation did not delete additional metadata.');
+	$last_signed = json_decode(end($GLOBALS['wpdb']->jobs)['payload_json'],true);
+	$max_forged = $last_signed;
+	$max_forged['max_id'] = 999999;
+	$forged_bound = $run->invoke($runner,array('job_id'=>'job_'.str_repeat('a',32),'payload'=>$max_forged));
+	$assert(is_wp_error($forged_bound)&&'spdb_retention_continuation_invalid'===$forged_bound->get_error_code(),'Changing max row ID without fresh server signature is rejected.');
+	$typed_forgery = $last_signed;
+	$typed_forgery['phase'] = array('verify');
+	$typed = $run->invoke($runner,array('job_id'=>'job_'.str_repeat('a',32),'payload'=>$typed_forgery));
+	$assert(is_wp_error($typed)&&'spdb_retention_continuation_invalid'===$typed->get_error_code(),'Nested/invalid payload fields are rejected before computing signature.');
 
 	// A new job must not falsely succeed when its next stage cannot be enqueued.
 	$GLOBALS['wpdb']->exports[]=array('id'=>500,'status'=>'ready','storage_ref'=>'','expires_at_gmt'=>$cutoff);
