@@ -341,6 +341,79 @@ final class SPDB_Export_Service {
 	}
 
 	/**
+	 * Bounded owner-specific ciphertext erasure or independent verification.
+	 *
+	 * Unlike the legacy one-call method, this returns a server-owned
+	 * continuation cursor so WordPress privacy erasure can span >20,000 rows
+	 * without deleting metadata prematurely. The caller MUST complete a
+	 * second verification pass from cursor zero before deleting job records.
+	 * The owner-scoped cursor is only an offset; it grants no authority.
+	 *
+	 * @return array{deleted:int,next_cursor:int,done:bool}|WP_Error
+	 */
+	public function erase_user_files_page( int $user_id, int $after_id = 0, int $limit = 200, bool $verify_only = false ) {
+		if ( $user_id < 1 || $after_id < 0 || $limit < 1 || $limit > 200 ) {
+			return self::error( 'spdb_export_erase_page_invalid', __( 'Private export erasure pagination is invalid.', 'sabri-publishing-dashboard' ), 400 );
+		}
+		$directory = $this->private_directory();
+		if ( is_wp_error( $directory ) ) {
+			return self::error( 'spdb_export_erase_storage_unavailable', __( 'Private export storage could not be inspected for erasure.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$real_dir = realpath( $directory );
+		if ( false === $real_dir || ! is_dir( $real_dir ) ) {
+			return self::error( 'spdb_export_erase_storage_unavailable', __( 'Private export storage could not be resolved for erasure.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		global $wpdb;
+		$table = SPDB_Operations_Schema::table( 'export_jobs' );
+		$rows = $wpdb->get_results(
+			$wpdb->prepare( "SELECT id, storage_ref FROM {$table} WHERE owner_user_id = %d AND id > %d ORDER BY id ASC LIMIT %d", $user_id, $after_id, $limit ),
+			defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
+		);
+		if ( ! is_array( $rows ) ) {
+			return self::error( 'spdb_export_erase_read_failed', __( 'Private export metadata could not be enumerated.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$deleted = 0;
+		$cursor = $after_id;
+		foreach ( $rows as $row ) {
+			$id = (int) ( $row['id'] ?? 0 );
+			if ( $id <= $cursor ) {
+				return self::error( 'spdb_export_erase_cursor_invalid', __( 'Private export metadata did not maintain a strict owner-specific cursor.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			$cursor = $id;
+			$storage_ref = (string) ( $row['storage_ref'] ?? '' );
+			if ( '' === $storage_ref ) {
+				continue; // Queued, incomplete or failed job has no published ciphertext reference.
+			}
+			if ( 1 !== preg_match( '/^export_[a-z0-9]{32}\\.spdb$/', $storage_ref ) ) {
+				return self::error( 'spdb_export_erase_reference_invalid', __( 'A private export metadata reference is invalid.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			$path = trailingslashit( $directory ) . $storage_ref;
+			if ( is_link( $path ) ) {
+				return self::error( 'spdb_export_erase_path_invalid', __( 'A private export artifact is a symlink.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			if ( ! file_exists( $path ) ) {
+				continue; // Already removed file: safe to retry or verify.
+			}
+			$real = realpath( $path );
+			if ( false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) ) {
+				return self::error( 'spdb_export_erase_path_invalid', __( 'A private export artifact failed containment verification.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			if ( $verify_only ) {
+				return self::error( 'spdb_export_erase_verification_failed', __( 'A private export artifact still exists after the erasure pass.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			if ( ! unlink( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Delete only a validated File23 ciphertext path, never a resolved symlink target.
+				return self::error( 'spdb_export_erase_delete_failed', __( 'Private export deletion failed and metadata must be retained.', 'sabri-publishing-dashboard' ), 500 );
+			}
+			++$deleted;
+		}
+		return array(
+			'deleted' => $deleted,
+			'next_cursor' => $cursor,
+			'done' => count( $rows ) < $limit,
+		);
+	}
+
+	/**
 	 * Erase generated ciphertext files for exactly one owner, before the
 	 * corresponding metadata is removed by the WordPress privacy eraser.
 	 *
