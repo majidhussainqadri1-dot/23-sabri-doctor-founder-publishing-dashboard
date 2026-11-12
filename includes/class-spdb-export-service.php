@@ -141,7 +141,6 @@ final class SPDB_Export_Service {
 			return $this->fail_processing( $export_id, $directory );
 		}
 		$filename = $export_id . '.spdb';
-		$path     = trailingslashit( $directory ) . $filename;
 		$content  = $this->render( $job['format'], $model );
 		if ( is_wp_error( $content ) ) {
 			return $this->fail_processing( $export_id, $content );
@@ -150,10 +149,12 @@ final class SPDB_Export_Service {
 		if ( is_wp_error( $sealed ) ) {
 			return $this->fail_processing( $export_id, $sealed );
 		}
-		if ( false === file_put_contents( $path, $sealed, LOCK_EX ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Protected generated artifact directory.
-			return $this->fail_processing( $export_id, self::error( 'spdb_export_file_write_failed', __( 'The export file could not be written.', 'sabri-publishing-dashboard' ), 500 ) );
+		// Exclusive create prevents retry/symlink overwrite of an existing
+		// ciphertext path. The host must still independently deny HTTP access.
+		$path = $this->write_ciphertext_exclusive( $directory, $filename, $sealed );
+		if ( is_wp_error( $path ) ) {
+			return $this->fail_processing( $export_id, $path );
 		}
-		@chmod( $path, 0640 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Best-effort hardening.
 		$hash = hash_file( 'sha256', $path );
 		if ( ! is_string( $hash ) || 64 !== strlen( $hash ) ) {
 			@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Cleanup generated file.
@@ -166,6 +167,52 @@ final class SPDB_Export_Service {
 			return $completed;
 		}
 		return true;
+	}
+
+	/**
+	 * Create new encrypted report bytes without following an existing symlink
+	 * or replacing an existing export. A normal fopen/write mode would overwrite
+	 * files under a reused export ID and could follow a hostile filesystem link.
+	 *
+	 * @return string|WP_Error Absolute verified artifact path.
+	 */
+	private function write_ciphertext_exclusive( string $directory, string $filename, string $content ) {
+		if ( 1 !== preg_match( '/^export_[a-z0-9]{32}\\.spdb$/', $filename ) ) {
+			return self::error( 'spdb_export_file_name_invalid', __( 'The private export filename is invalid.', 'sabri-publishing-dashboard' ), 400 );
+		}
+		$real_dir = realpath( $directory );
+		if ( false === $real_dir || ! is_dir( $real_dir ) ) {
+			return self::error( 'spdb_export_storage_unavailable', __( 'The private export directory is unavailable.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$path = trailingslashit( $real_dir ) . $filename;
+		if ( is_link( $path ) || file_exists( $path ) ) {
+			return self::error( 'spdb_export_file_exists', __( 'An export artifact already exists; overwrite is forbidden.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		$stream = @fopen( $path, 'xb' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Atomic exclusive local encrypted artifact creation.
+		if ( false === $stream ) {
+			return self::error( 'spdb_export_file_write_failed', __( 'The encrypted export artifact could not be created exclusively.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$size = strlen( $content );
+		$offset = 0;
+		while ( $offset < $size ) {
+			$written = @fwrite( $stream, substr( $content, $offset ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Verify partial write count.
+			if ( ! is_int( $written ) || $written <= 0 ) {
+				break;
+			}
+			$offset += $written;
+		}
+		$flushed = @fflush( $stream ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Verify generated encrypted file is flushed.
+		$closed = @fclose( $stream ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Verify generated encrypted file is closed.
+		if ( $offset !== $size || ! $flushed || ! $closed || ! @chmod( $path, 0600 ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Fail closed if private permissions cannot be set.
+			@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove incomplete private export.
+			return self::error( 'spdb_export_file_write_failed', __( 'The encrypted export could not be stored safely.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$real = realpath( $path );
+		if ( false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) ) {
+			@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove invalid private export.
+			return self::error( 'spdb_export_file_path_invalid', __( 'The encrypted export path failed containment verification.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		return $real;
 	}
 
 	/** Download only through an authenticated, owner-bound, expiring signature. */
