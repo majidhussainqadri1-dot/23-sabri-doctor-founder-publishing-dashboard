@@ -4,6 +4,23 @@
 **حاکم منصوبہ:** «صابری سوشل ہومیوپیتھی پلیٹ فارم — جامع مرکزی ماسٹر پلان V12.1»، ۱۰ نومبر ۲۰۲۶ء، بالخصوص باب ۱۲ (صفحہ ۲۱۹–۲۲۷)۔  
 **اس دستاویز کا کام:** مذکورہ **اسی ۱۶ ورک پیکیجز** والے منصوبے کا قابلِ تجدید، ثبوتی «بقایا کوڈنگ و قبولیت» ضمیمہ۔ پرانا منصوبہ منسوخ یا متوازی مادر منصوبہ نہیں بنتا۔
 
+## تازہ عملی پیش رفت — ۱۲ نومبر ۲۰۲۶ء، فائل 23 سورس آڈٹ (بعد از ابتدائی رجسٹر)
+
+**اطلاق:** اس رجسٹر کی اصل تاریخی snapshot ذیل میں برقرار ہے۔ یہ حصہ اس کے بعد کے source commits کی تازہ تکمیل اور باقی رکاوٹوں کو شمار کرتا ہے۔ GitHub PR #29 اسی Version 1.3.0 candidate کا Draft child ہے؛ `main`، Hostinger اور DB کو اس رپورٹ سے ہرگز تبدیل شدہ یا verified نہ سمجھیں۔
+
+| شناخت | ماخذ سے ثابت اصل نقص | کوڈنگ و آزمائش کی حالت | قابلِ قبول باقی ثبوت |
+|---|---|---|---|
+| V12.1-GUARD-01 (پہلا مرحلہ) | نجی export guard files کی موجودگی تو دیکھی جاتی تھی مگر سالمیت نہیں | Guard type/content/symlink fail-closed؛ مخصوص regression green | واقعی Hostinger origin/CDN access-denial |
+| **V12.1-STO09-ERASE-01** | `erase_user_files()` فولڈر/SQL/حذف کی ناکامی پر خاموش صفر دے سکتا تھا، جب کہ `erase_personal_data()` پھر متعلقہ metadata erase کرتا تھا؛ orphan ciphertext/false completion کا خطرہ | دونوں source methods patched؛ SQL failure، malformed ref، symlink، cursor، 20,000-record cap، idempotent retry اور record-preservation regressions؛ PHP 8.0–8.3 CI source-pass | حقیقی filesystem permission failure، deletion concurrency، retentions، Hostinger staging |
+| **V12.1-STO05-EXPORT-02** | `process()` کا `file_put_contents` پہلے سے موجود report path/symlink پر overwrite کرسکتا تھا | Exclusive `fopen(...,'xb')` writer، path/name validation، partial-write cleanup، encrypted-before-write gate اور dedicated regression؛ **اس تازہ ترمیم کا exact-head CI الگ دوبارہ درکار** | Hostinger temp/private path permissions، report retries/concurrency، CDN denial |
+| **GAP-CODE-01 / Issue #30** | Staging acceptance کو حقیقی deployed bytes اور DB/schema/migration سے منسلک کرنا | File23 consumer fail-closed source موجود؛ حقیقی trusted owner attestor کی عدم تصدیق برقرار | File20 owner issue #45، real measured Hostinger bytes، negative migration tests، Founder staging acceptance |
+
+**نیا مصدقہ source-audit tally:** اس تازہ دور میں **۲** مزید source defects دریافت اور اصلاحی کوڈ درج؛ سابقہ GUARD-01 کے ساتھ **۳ source-level repairs candidate**؛ سابقہ ایک test-fixture defect درست؛ release-attestation مالک/نصب-حالت کی **۱ کھلی رکاوٹ**؛ ۱۳ known operational limitations برقرار۔ یہ صفر لائیو defects کا دعویٰ نہیں۔
+
+**نئے کوڈ کا مقام:** `includes/class-spdb-export-service.php` اور `includes/class-spdb-privacy-integration.php`؛ ٹیسٹ: `tests/v12-1-personal-erasure-safety-tests.php`، `tests/v12-1-export-exclusive-write-tests.php`؛ پرانی test-continuity شرط کو `tests/forty-round-review-gate-tests.php` میں جدید encrypted-before-exclusive معیار کے مطابق بدلا گیا۔
+
+**قبولیت کا حکم:** ورک پیکیجز WP-04، WP-05 اور WP-09 کے source-hardening حصے آگے بڑھے، لیکن WP-12 کی real 10k+ DB/migration recovery، WP-13 کی آخری SHA پر جامع CI اور دو بیرونی آزاد reviews، WP-14 Staging، WP-15 Live سب ابھی اصل ثبوت مانگتے ہیں۔ Issue #30 اور File20 #45 اختتامی blocker ہیں۔ اس طرح ۱۶ میں سے ۱۶ ورک پیکیجز کے الگ acceptance gates برقرار ہیں؛ کسی کو صرف source patch پر مکمل Release نہیں لکھا جائے گا۔
+
 ## ۱۔ تحقیق کا متعین قطعہ اور موجودہ حقیقت
 
 | حقیقت | بنیاد / حد |
