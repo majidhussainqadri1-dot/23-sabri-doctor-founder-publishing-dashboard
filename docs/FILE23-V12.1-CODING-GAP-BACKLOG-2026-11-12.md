@@ -30,6 +30,23 @@ STO-09 کی دونوں اصلاحات میں 20,000 سے زائد ریکارڈ �
 
 **موجودہ الگ باقی کام کی گنتی:** (۱) File20/Hostinger کے حقیقی deployed-byte attestation کا انضمام — File23 Issue #30 اور File20 Issue #45؛ (۲) File23 کے 20k+ ریکارڈ کے لیے محفوظ قابلِ استمرار صفائی — Issue #31؛ (۳) سابقہ ۱۳ بیرونی release/operation حدود۔ ان میں سے کسی کو ۳۱ نئے runtime defects یا ۱۰۰٪ مکمل coding نہ سمجھا جائے۔
 
+## ۱۲ نومبر ۲۰۲۶ء — WP-12 مسئلہ #31: بیس ہزار سے زائد ریکارڈوں کی اصلاحی کوڈنگ اور شواہد
+
+**تصدیق شدہ سابقہ خامی:** File23 کی نجی ذاتی رپورٹوں کی حذف کاری اور مدت ختم ہونے والی رپورٹوں کی صفائی 100×200 ریکارڈ کے بعد محفوظ طور پر رکتی تھیں، مگر اگلی بار صفر سے شروع ہوتی تھیں۔ یوں 20,000 سے زائد مستقل SQL ریکارڈوں کی خودکار تکمیل ممکن نہ تھی۔ یہ **source-level scalability defect** تھا، Hostinger live incident کا ثبوت نہیں۔
+
+**کوڈنگ کی تکمیل — Source candidate:**
+- `includes/class-spdb-export-service.php`: 200 ریکارڈ فی کال کی مالک سے مقید صفحہ وار حذف کاری؛ علیحدہ `verify_only` مرحلہ؛ صارف کی حذف کاری کے وقت نئی رپورٹ تیار/فراہم کرنے کی ممانعت؛ رپورٹ کی تحریر سے پہلے اور بعد تاریخ و اختیار کی نئی جانچ؛ مشترک owner-specific MySQL advisory lock۔
+- `includes/class-spdb-privacy-integration.php`: WordPress Privacy Eraser کی قابلِ استمرار HMAC سے محفوظ server-owned checkpoint؛ حذف اور دوبارہ تصدیق دو مرحلے؛ مستقل DB ریکارڈ صرف مکمل تصدیق کے بعد؛ checkpoint بگڑنے/SQL/فائل/lock کی خرابی میں fail-closed۔
+- `includes/class-spdb-background-jobs.php`: مدت ختم ہونے والی رپورٹوں کے لیے دستخط شدہ، idempotent continuation jobs؛ شروع کا GMT cutoff، آخری SQL ID، phase اور cursor منجمد؛ نئی job کو محفوظ queue کیے بغیر سابقہ job کو مکمل نہ کہنا۔
+- `includes/class-spdb-operations-repository.php`: حذف شدہ Metadata کا SQL حکم **اصلی مقررہ cutoff اور max row ID** دونوں سے بندھا ہوا؛ دورانِ عمل نئے ریکارڈ پرانے عمل میں شامل نہیں۔
+- `tests/v12-1-resumable-erasure-tests.php`، `tests/v12-1-privacy-erasure-progress-tests.php`، `tests/v12-1-resumable-expiry-tests.php`، `tests/v12-1-retention-continuation-chain-tests.php`، `tests/v12-1-owner-erasure-lock-contract-tests.php`: حقیقی Source methods کے یونٹ و مربوط ٹیسٹ؛ 20,001 ریکارڈ، دوسری تصدیق، forged cursor/max-ID، نئے ریکارڈ کی حفاظت، lock contention، retry اور fail-closed۔
+
+**آخری مکمل جانچی گئی code/test snapshot:** `d23e2246830480f7679ba32ca4405b4c7bb164c4` — Baseline Integrity **#1572**، Full Plan Completion **#623**، Final Release Candidate **#377** کامیاب۔ اس کے بعد ہونے والی دستاویزی تدوین کے ہر نئے HEAD پر CI دوبارہ درکار ہوگی۔
+
+**تنقیدی جائزہ:** `docs/AUDIT-V12.1-WP12-RESUMABLE-ERASURE-REVIEW-2026-11-12.md` کے A/B دو مختلف اندرونی زاویے؛ دو آزاد بیرونی reviewers، Hostinger اصل file/DB، 20,001+ seeded objects کے حتمی میزبان ٹیسٹ، concurrent cron، LiteSpeed private URL اور backup/restore ابھی مکمل نہیں۔
+
+**بقایا مسائل کا درست شمار:** File23 Issue **#31** میں Source improvement + CI complete، مگر **Staging/Live acceptance pending**؛ File23 **#30** / File20 **#45** حقیقی deployed artifact attestation pending؛ پہلے کی **13** operational limitations برقرار؛ اصل پوری Repository کے بے شمار غیر جانچے فنکشنز کو خود بخود 0 defect قرار دینا ممنوع۔
+
 ## ۱۔ تحقیق کا متعین قطعہ اور موجودہ حقیقت
 
 | حقیقت | بنیاد / حد |
