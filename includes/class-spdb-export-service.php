@@ -395,8 +395,8 @@ final class SPDB_Export_Service {
 	 *
 	 * @return array{deleted:int,next_cursor:int,done:bool}|WP_Error
 	 */
-	public function cleanup_expired_files_page( string $cutoff, int $after_id = 0, int $limit = 200, bool $verify_only = false ) {
-		if ( $after_id < 0 || $limit < 1 || $limit > 200 ||
+	public function cleanup_expired_files_page( string $cutoff, int $after_id = 0, int $limit = 200, bool $verify_only = false, int $max_id = PHP_INT_MAX ) {
+		if ( $after_id < 0 || $max_id < 0 || $after_id > $max_id || $limit < 1 || $limit > 200 ||
 			1 !== preg_match( '/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/', $cutoff ) ||
 			false === strtotime( $cutoff . ' UTC' ) || $cutoff > current_time( 'mysql', true ) ) {
 			return self::error( 'spdb_export_cleanup_page_invalid', __( 'The expired-export cleanup checkpoint is invalid.', 'sabri-publishing-dashboard' ), 400 );
@@ -412,7 +412,7 @@ final class SPDB_Export_Service {
 		global $wpdb;
 		$table = SPDB_Operations_Schema::table( 'export_jobs' );
 		$rows = $wpdb->get_results(
-			$wpdb->prepare( "SELECT id, storage_ref, status FROM {$table} WHERE expires_at_gmt <= %s AND id > %d ORDER BY id ASC LIMIT %d", $cutoff, $after_id, $limit ),
+			$wpdb->prepare( "SELECT id, storage_ref, status FROM {$table} WHERE expires_at_gmt <= %s AND id > %d AND id <= %d ORDER BY id ASC LIMIT %d", $cutoff, $after_id, $max_id, $limit ),
 			defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
 		);
 		if ( ! is_array( $rows ) ) {
