@@ -189,17 +189,21 @@ final class SPDB_Background_Jobs {
 			);
 		} else {
 			$state = $payload;
-			if ( ! is_string( $state['signature'] ?? null ) ||
-				! hash_equals( self::retention_continuation_signature( $state ), $state['signature'] ) ) {
-				return self::error( 'spdb_retention_continuation_invalid', __( 'The retention continuation is unauthenticated.', 'sabri-publishing-dashboard' ) );
-			}
 		}
-		if ( 1 !== preg_match( '/^job_[a-z0-9]{32}$/', (string) ( $state['root_job_id'] ?? '' ) ) ||
+		// Validate types before computing a MAC. Never stringify nested
+		// attacker-influenced arrays or accept an unchecked DB payload.
+		if ( ! is_string( $state['root_job_id'] ?? null ) ||
+			1 !== preg_match( '/^job_[a-z0-9]{32}$/', $state['root_job_id'] ) ||
 			! in_array( $state['phase'] ?? null, array( 'remove', 'verify' ), true ) ||
 			! is_int( $state['cursor'] ?? null ) || $state['cursor'] < 0 ||
 			! is_int( $state['hop'] ?? null ) || $state['hop'] < 0 || $state['hop'] > 1000000 ||
 			! is_string( $state['cutoff'] ?? null ) ) {
 			return self::error( 'spdb_retention_continuation_invalid', __( 'The retention continuation fields are invalid.', 'sabri-publishing-dashboard' ) );
+		}
+		if ( array() !== $payload &&
+			( ! is_string( $state['signature'] ?? null ) ||
+			! hash_equals( self::retention_continuation_signature( $state ), $state['signature'] ) ) ) {
+			return self::error( 'spdb_retention_continuation_invalid', __( 'The retention continuation is unauthenticated.', 'sabri-publishing-dashboard' ) );
 		}
 		$step = $this->exports->cleanup_expired_files_page( $state['cutoff'], $state['cursor'], 200, 'verify' === $state['phase'] );
 		if ( is_wp_error( $step ) ) {
