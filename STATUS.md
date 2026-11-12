@@ -92,6 +92,15 @@ Until those external gates pass, File 23 is **not staging-accepted, live-deploye
 - Known staging/live release limitations remain `F23-LIM-001..013`. Do not count all 13 as code defects or report a fictitious site-wide defect total.
 - **Decision:** keep PR #29 Draft, leave PR #26/main unmerged, no deployed code claim. Release still requires fresh independent reviews, source package checksum, verified DB/migrations, Hostinger private-URL denial, real-role journey, restore/rollback and Founder sign-off.
 
+## 2026-11-12 — WP-12 >20k resumable source implementation checkpoint
+
+- **Reviewed source/test SHA:** `d23e2246830480f7679ba32ca4405b4c7bb164c4`; GitHub Actions Baseline Integrity **#1572**, Full Plan Completion **#623**, Final Release Candidate **#377** all **SUCCESS**. Documentation-only later HEADs must be retested separately.
+- Source-targeted Issue #31 earlier non-progressing >20k owner-erasure and expiry-retention loops now use bounded, server-side signed continuation/checkpoint and full second verification before export metadata purging. Newer records are excluded by frozen cutoff **and max row ID**.
+- Owner privacy erasure and late export creation share MySQL advisory lock, verify current File00 authority / export-job status and fail closed on malformed or unverifiable state. Transient lock contention returns retryable error without marking the report permanently failed.
+- Five new WP12 suites cover 20,001 mixed-owner/expired rows, forged cursor/max-ID, independent verification, same-cutoff newer-row preservation, six-step retention chain and lock contention; details in `docs/AUDIT-V12.1-WP12-RESUMABLE-ERASURE-REVIEW-2026-11-12.md`.
+- Source issue #31 remains open pending **real 20k+ Hostinger staging** and acceptance. Separate installed-attestor issues File23 #30 / File20 #45 remain open. Existing 13 operations limitations are **not 13 demonstrated live bugs**.
+- **No merge, no staging/live deploy, no mutation to Hostinger DB, no Founder signoff.** Only GitHub Draft PR #29 changed.
+
 ## Live-reality register
 
 - Repository candidate: Version `1.3.0` on the branch above; exact final SHA must be recorded after the last code/review change.
