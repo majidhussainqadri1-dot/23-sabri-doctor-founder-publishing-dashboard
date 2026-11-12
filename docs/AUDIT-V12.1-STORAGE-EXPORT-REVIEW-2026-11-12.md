@@ -1,6 +1,6 @@
 # File 23 V12.1 — Storage / Privacy Source Review A & B
 **Review date:** 12 November 2026, Pakistan.  
-**Reviewed source/test HEAD before this document:** `60c052469566c4381d9a99972e0674c82879497a` on Draft PR #29; parent PR #26 `df59cb2be8c1a69dc3539bc7e0a58d5d79125ac3`.  
+**Review scope through code/test HEAD:** `7ce22a488129d5cbb76be4d540ab5a3ae0494468` (A/B review also considered earlier `60c052469566c4381d9a99972e0674c82879497a`) on Draft PR #29; parent PR #26 `df59cb2be8c1a69dc3539bc7e0a58d5d79125ac3`.  
 **Governing scope:** central V12.1 STO-05, STO-07, STO-09; File23 plan WP-04, WP-05, WP-09, WP-12, WP-13.  
 **Evidence boundary:** two sequential analytical review passes, **not** two independent external/human reviewers. No Hostinger, installed ZIP, DB/migration, Nginx/LiteSpeed, File00/20/24/CF04 or live evidence is asserted here.
 
@@ -38,14 +38,27 @@ Prior `SPDB_Export_Service::process()` called `file_put_contents($path,$sealed,L
 - Legitimate export retry when an earlier crash left ciphertext will now fail closed until stale artifact reconciliation/cleanup. Do not silently overwrite it; operator recovery and idempotent job lifecycle need real staging tests.
 - Cryptographic encryption/decryption uses WordPress salt; backup/key rotation recovery and checksum manifest require owner-controlled restore acceptance. Green CI proves neither Hostinger filesystem security nor end-to-end access control.
 
+## C — Expired retention cleanup, symlink target isolation and bounded traversal
+
+### Reproducible source defect: V12.1-STO09-EXPIRED-03
+The older `cleanup_expired_files()` called `basename(storage_ref)` and then `realpath()`, finally `unlink($real)`. If a record's expected ciphertext filename was replaced by a symlink to a different valid artifact **inside** the directory, `$real` became the target; expiry cleanup could delete that other file instead of rejecting the symlink. In addition, after exactly 100 full batches (20,000 rows) the method returned success without verifying that enumeration was complete; its caller could then purge all expired job metadata.
+
+### Correction and proof
+1. Validate the **entire raw storage reference**, not its basename. Reject any path traversal or malformed name.
+2. Reject `is_link($path)` **before** checking existence or resolving realpath, and unlink only the verified original path, never a resolved symlink target.
+3. Require monotonically increasing DB row IDs; SQL failures, invalid cursors and 100-full-page truncation now return `WP_Error`, which stops metadata retention cleanup for investigation.
+4. New executable `tests/v12-1-expired-export-retention-tests.php`: same-folder symlink target survival, malformed ref, verified target deletion, DB failure, invalid cursor and 20,000-row cap. No Hostinger test is implied.
+
+**Residual risk:** Cleanup of more than 20,000 expired records needs an explicitly operator-approved resumable/segmented process. The current fail-closed limit does not solve that operational workflow; never delete metadata to conceal incomplete cleanup. Hostinger symlink policy and storage/DB concurrency remain outside source-only proof.
+
 ## Defect accounting after source review
 
 | Category | Count | Status |
 |---|---:|---|
-| New source defects examined in this session | **2** | Both patched in Draft PR #29 |
+| New source defects examined in this session | **3** | All three patched in Draft PR #29 |
 | Previously patched source guard-integrity defect | **1** | Source patch already in PR #29 |
-| Total targeted source corrections in PR #29 | **3** | Final exact-head CI and independent reviewer approval remain release gates |
-| New executable suites this session | **2** | Personal erasure, exclusive ciphertext |
+| Total targeted source corrections in PR #29 | **4** | Final exact-head CI and independent reviewer approval remain release gates |
+| New executable suites this session | **3** | Personal erasure, exclusive ciphertext, expired-retention cleanup |
 | Old continuity-test source check updated | **1** | Asserts stronger invariant, not bypassed |
 | Open trusted deployed attestation owner integration | **1** | File23 issue #30 / File20 issue #45 |
 | Existing other operational limitations | **13** | `F23-LIM-001..013`, all still require evidence |
