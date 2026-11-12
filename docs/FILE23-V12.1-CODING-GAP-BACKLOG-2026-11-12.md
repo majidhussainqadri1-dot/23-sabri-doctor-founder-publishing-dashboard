@@ -96,6 +96,16 @@
 7. دو code-change بعد fresh independent reviews + exact-head PHP 8.0–8.3، JS, privacy, architecture, deterministic ZIP, package digest۔
 8. Hostinger staging/rollback/real load/Founder approval؛ اس کے بعد ہی `main` merge و live rollout کی الگ مجاز کارروائی۔
 
+## ۶۔۱ ۱۲ نومبر ۲۰۲۶ء کا پہلا کوڈنگ مرحلہ — GAP-CODE-01 کی ماخذی اصلاح
+
+اصل 1.3.0 Activation Wizard کی سورس خامی کی منفی آزمائش پہلے `tests/v12-1-deployed-attestation-tests.php` میں شامل کی گئی؛ اس وقت `669cf26852c2038a815f853498e697034232d6c3` پر تین GitHub Actions ناکام ہوئے، کیونکہ مطلوبہ تصدیقی ضابطہ موجود نہیں تھا۔
+
+اصلاح `2bd422657f859c328518c38f2082d7b477ef0cc8`: `class-spdb-activation-wizard.php` اب `spdb/file23_deployed_artifact_attestation` کے ذریعے سرور-سائیڈ، موجودہ (۵ منٹ سے کم قدیم) attestation نہ ملنے پر staging acceptance اور live activation کو **false** رکھتا ہے۔ مصدر commit، package SHA-256، plugin version، environment، operations/collections schema اور completed migration کی مطابقت شرط ہے۔ Founder کی دی گئی hex شکل کو installed hash کی حقیقی پیمائش نہیں سمجھا جاتا۔
+
+**تصدیق شدہ source QA:** اسی exact SHA پر Baseline Integrity #1527، Full Plan Completion #578، Final Release Candidate #332 تینوں GitHub Actions کامیاب؛ نئے negative test میں ۲۲ assertions کامیاب۔
+
+**تبدیل شدہ شمار:** `GAP-CODE-01` کی **File 23 سورس سطح کی fail-closed اصلاح موجود ہے**؛ مگر **ایک حقیقی external deployment-attestor integration/acceptance blocker** باقی ہے، لہٰذا issue #30 اور F23-LIM-013 کو بند نہیں کیا گیا۔ اصل Hostinger package hash، DB/migration، trusted attestor اور staging/live tests غیر تصدیق شدہ ہیں۔ پہلی جدول اس کام سے *پہلے* کے frozen audit snapshot کو بیان کرتی ہے؛ نئے ماخذی patch کے بعد «ایک کھلا غیر مصحح File23 source guard» کہنا درست نہیں ہوگا، اور «لائیو مسئلہ حل» کہنا بھی غلط ہوگا۔
+
 ## ۷۔ ہر نشست کی قابلِ شمار رپورٹ کا غیر متغیر قالب
 
 - Repository main SHA: ___؛ PR branch SHA: ___؛ plugin version: ___۔
