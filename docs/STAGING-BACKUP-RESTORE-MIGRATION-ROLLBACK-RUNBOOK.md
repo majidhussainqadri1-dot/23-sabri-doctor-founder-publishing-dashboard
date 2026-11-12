@@ -85,6 +85,19 @@ This is a **future staged procedure** only. None of these Hostinger results has 
 9. **Same-version adverse case**: replace one installed PHP file while retaining plugin header `1.3.0`, restore a stale acceptance option, or defer a migration; acceptance must immediately fail closed. Repeat after actual restore and new Founder decision. Keep File23 issue #30 OPEN until measured proof exists.
 10. **Release evidence**: attach dated role/URL/HTTP/cache/DB/migration/package hashes to `docs/RELEASE-SIGNOFF.md`; write separate **Repository HEAD / Deployed Version / DB Version / Migration State / Live Verification Status**. No source-only check authorizes a live rollout.
 
+## V12.1 WP-12 20,001+ object resumable erasure and retention staging drill
+
+Run in a **disposable staging database** with synthetic report ciphertext only, after exact-package and DB/schema/migration freeze. No production patient data.
+
+1. Seed 20,001 owner-specific export_jobs, 200+ foreign-owned jobs, a mix of ready/queued/processing, future/expired, a few valid encrypted artifacts and intentionally malformed refs in separate resettable fixtures.
+2. Submit a normal WordPress personal-data erasure request; invoke successive paged callbacks, restart worker between pages, and inspect HMAC checkpoint owner/stage/cursor. Confirm 200-row bounded scan, no metadata deletion during remove/verify, and complete second pass prior to final SQL deletion.
+3. Run a separate private export generator concurrently, including a job already rendering before the erasure checkpoint. Confirm a common MySQL owner lock and native job/capability recheck prevent newly persisted ciphertext after erasure begins. Temporarily fail GET_LOCK, SQL select, unlink, option write and job completion: preserve metadata and report retry/retained state, never fabricate success.
+4. Tamper with checkpoint max ID, stage, cursor and HMAC in a disposable copy; test two concurrent privacy page requests and user-switch. Confirm lock release, fail-closed status, no cross-account access, safe operator reset only with recorded approval.
+5. Seed >20,001 expired rows; start the signed background continuation chain, then insert an additional already-expired row with higher SQL ID. Confirm the initial maximum row ID and frozen GMT cutoff preserve it. Test forged max ID, nested JSON, replayed hop, unavailable queue, resumed missed cron, duplicate idempotency, dead letter and no premature metadata purge.
+6. After verified file deletion run the SQL retention stage and confirm exactly the frozen range is purged, while newly inserted and future records retain both metadata and ciphertext. Test second verification when a ciphertext reappears; abort deletion.
+7. Measure actual MySQL locking, query plan, CPU, PHP memory, deadline/SLO, and time for 20,001/100,000 rows. Record Hostinger cron configuration and recovery/runbook owner. Back up and restore plugin files + database + wp_options mid-scan; prove the checkpoint is recoverable and never reauthorizes a different plugin/package.
+8. Attach exact HEAD, package SHA, installed-file attestation, schema, migration, logs, restoration proof and Founder decision to `docs/RELEASE-SIGNOFF.md`. File23 #31 stays open until independently accepted staging evidence.
+
 ## Accessibility and responsive acceptance
 
 Test 320, 360, 390, 480, 768, 1024, 1280, 1440 and 1920 CSS pixels in English and Urdu/RTL. Complete all workflows with keyboard only and at 200% and 400% zoom. Verify visible focus, landmarks, headings, labels, captions, status announcements, contrast, reduced motion, forced colors and one supported screen reader. Record each result, browser/device and evidence location.
