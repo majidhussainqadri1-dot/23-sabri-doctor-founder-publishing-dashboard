@@ -3,7 +3,20 @@
  * V12.1 File 00 privileged export assertion consumer regression.
  * Source-unit test only. The true File 00 provider contract needs Hostinger staging.
  */
-require_once __DIR__ . '/bootstrap.php';
+// This test must isolate the File 23 consumer from the real File 00 class:
+// bootstrap.php loads the latter, so using it would redeclare a final class.
+defined( 'ABSPATH' ) || define( 'ABSPATH', __DIR__ . '/' );
+$GLOBALS['spdb_test_user_id'] = 7;
+$GLOBALS['spdb_test_user_capabilities'] = array();
+function get_current_user_id(): int {
+	return (int) $GLOBALS['spdb_test_user_id'];
+}
+function user_can( int $user_id, string $capability, ...$args ): bool {
+	return ! empty( $GLOBALS['spdb_test_user_capabilities'][ $user_id ][ $capability ] );
+}
+function current_user_can( string $capability, ...$args ): bool {
+	return user_can( get_current_user_id(), $capability, ...$args );
+}
 
 $GLOBALS['spdb_test_v121_members'] = array();
 class SPDB_Membership_Guard {
