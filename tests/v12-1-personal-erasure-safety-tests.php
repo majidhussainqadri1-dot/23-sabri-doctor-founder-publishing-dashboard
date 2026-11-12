@@ -31,10 +31,15 @@ class SPDB_Erasure_Test_DB {
 	public array $rows = array();
 	public bool $fail_query = false;
 	public int $reads = 0;
+	public bool $endless_full_batches = false;
 	public function prepare( string $query, ...$values ): string { return $query; }
 	public function get_results( string $query, $output = null ) {
 		++$this->reads;
 		if ( $this->fail_query ) { return false; }
+		if ( $this->endless_full_batches ) {
+			$start = ( $this->reads - 1 ) * 200 + 1;
+			return array_map( static fn( int $id ): array => array( 'id' => $id, 'storage_ref' => '' ), range( $start, $start + 199 ) );
+		}
 		return $this->rows;
 	}
 }
@@ -85,6 +90,21 @@ try {
 		$assert( file_exists( $target ), 'Symlink target must never be deleted.' );
 		unlink( $link );
 	}
+
+	$GLOBALS['wpdb']->rows = array( array( 'id' => 3, 'storage_ref' => '' ) );
+	$assert( 0 === $service->erase_user_files( 7 ), 'Queued export without ciphertext may erase metadata safely.' );
+
+	$GLOBALS['wpdb']->rows = array( array( 'id' => 3, 'storage_ref' => 'export_' . str_repeat( 'c', 32 ) . '.spdb' ) );
+	$assert( 0 === $service->erase_user_files( 7 ), 'Already removed ciphertext is idempotently safe to retry.' );
+
+	$GLOBALS['wpdb']->rows = array( array( 'id' => 3, 'storage_ref' => $valid ), array( 'id' => 2, 'storage_ref' => $valid ) );
+	$check_error( $service->erase_user_files( 7 ), 'spdb_export_erase_cursor_invalid' );
+
+	$GLOBALS['wpdb']->rows = array();
+	$GLOBALS['wpdb']->endless_full_batches = true;
+	$GLOBALS['wpdb']->reads = 0;
+	$check_error( $service->erase_user_files( 7 ), 'spdb_export_erase_batch_incomplete' );
+	$GLOBALS['wpdb']->endless_full_batches = false;
 
 	$GLOBALS['wpdb']->rows = array();
 	$assert( 0 === $service->erase_user_files( 7 ), 'Zero existing private export jobs must return zero deletions.' );
