@@ -29,6 +29,7 @@ function trailingslashit( string $value ): string { return rtrim( $value, '/\\' 
 
 class SPDB_Erasure_Test_DB {
 	public array $rows = array();
+	public function get_var( string $sql ) { return '1'; }
 	public bool $fail_query = false;
 	public int $reads = 0;
 	public bool $endless_full_batches = false;
