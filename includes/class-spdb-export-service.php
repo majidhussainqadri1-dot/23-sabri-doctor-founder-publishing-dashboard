@@ -281,10 +281,11 @@ final class SPDB_Export_Service {
 			return self::error( 'spdb_export_cleanup_storage_invalid', __( 'The private export directory could not be resolved for retention cleanup.', 'sabri-publishing-dashboard' ), 500 );
 		}
 		global $wpdb;
-		$table   = SPDB_Operations_Schema::table( 'export_jobs' );
-		$deleted = 0;
-		$cursor  = 0;
-		$now     = current_time( 'mysql', true );
+		$table    = SPDB_Operations_Schema::table( 'export_jobs' );
+		$deleted  = 0;
+		$cursor   = 0;
+		$now      = current_time( 'mysql', true );
+		$finished = false;
 		for ( $batch = 0; $batch < 100; ++$batch ) {
 			$rows = $wpdb->get_results(
 				$wpdb->prepare( "SELECT id, storage_ref FROM {$table} WHERE expires_at_gmt <= %s AND id > %d ORDER BY id ASC LIMIT 200", $now, $cursor ),
@@ -294,18 +295,28 @@ final class SPDB_Export_Service {
 				return self::error( 'spdb_export_cleanup_read_failed', __( 'Expired export artifacts could not be enumerated safely.', 'sabri-publishing-dashboard' ), 500 );
 			}
 			if ( ! $rows ) {
+				$finished = true;
 				break;
 			}
 			foreach ( $rows as $row ) {
-				$cursor   = max( $cursor, (int) ( $row['id'] ?? 0 ) );
-				$filename = basename( (string) ( $row['storage_ref'] ?? '' ) );
-				if ( '' === $filename ) {
+				$id = (int) ( $row['id'] ?? 0 );
+				if ( $id <= $cursor ) {
+					return self::error( 'spdb_export_cleanup_cursor_invalid', __( 'Expired export artifacts could not be enumerated in a safe order.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				$cursor = $id;
+				$storage_ref = (string) ( $row['storage_ref'] ?? '' );
+				if ( '' === $storage_ref ) {
 					continue;
 				}
-				if ( 1 !== preg_match( '/^export_[a-z0-9]{32}\.spdb$/', $filename ) ) {
+				if ( 1 !== preg_match( '/^export_[a-z0-9]{32}\\.spdb$/', $storage_ref ) ) {
 					return self::error( 'spdb_export_cleanup_reference_invalid', __( 'An expired export storage reference failed validation.', 'sabri-publishing-dashboard' ), 409 );
 				}
-				$path = trailingslashit( $directory ) . $filename;
+				$path = trailingslashit( $directory ) . $storage_ref;
+				// realpath() follows symlinks: unlinking the resolved target could
+				// delete another export instead of this expired reference.
+				if ( is_link( $path ) ) {
+					return self::error( 'spdb_export_cleanup_path_invalid', __( 'An expired export artifact failed path containment validation.', 'sabri-publishing-dashboard' ), 409 );
+				}
 				if ( ! file_exists( $path ) ) {
 					continue;
 				}
@@ -313,14 +324,18 @@ final class SPDB_Export_Service {
 				if ( false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) ) {
 					return self::error( 'spdb_export_cleanup_path_invalid', __( 'An expired export artifact failed path containment validation.', 'sabri-publishing-dashboard' ), 409 );
 				}
-				if ( ! unlink( $real ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- File 23-owned encrypted expiring artifact.
+				if ( ! unlink( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Delete only the validated File23 ciphertext path, never a resolved symlink target.
 					return self::error( 'spdb_export_cleanup_delete_failed', __( 'An expired export artifact could not be deleted; metadata retention cleanup was stopped for retry.', 'sabri-publishing-dashboard' ), 500 );
 				}
 				++$deleted;
 			}
 			if ( count( $rows ) < 200 ) {
+				$finished = true;
 				break;
 			}
+		}
+		if ( ! $finished ) {
+			return self::error( 'spdb_export_cleanup_batch_incomplete', __( 'Expired export cleanup reached its safe batch limit; metadata retention cleanup must not run before a controlled continuation.', 'sabri-publishing-dashboard' ), 409 );
 		}
 		return $deleted;
 	}
