@@ -17,7 +17,7 @@ $assert( false !== strpos( $export, 'spdb_export_authorization_revoked' ) && fal
 $assert( false !== strpos( $export, 'public function cleanup_expired_files()' ), 'Export service must expose bounded expired-artifact cleanup.' );
 $assert( false !== strpos( $export, 'WHERE expires_at_gmt <= %s AND id > %d' ) && false !== strpos( $export, 'spdb_export_cleanup_delete_failed' ), 'Expired artifact cleanup must be expiry-bounded and fail closed on file deletion failure.' );
 $cleanup_pos = is_string( $bg ) ? strpos( $bg, '$this->exports->cleanup_expired_files_page(' ) : false;
-$metadata_pos = is_string( $bg ) ? strpos( $bg, '$this->repository->cleanup_retention( SPDB_Admin_Settings::get(), $state[\'cutoff\'] )' ) : false;
+$metadata_pos = is_string( $bg ) ? strpos( $bg, '$this->repository->cleanup_retention( SPDB_Admin_Settings::get(), $state[\'cutoff\'], $state[\'max_id\'] )' ) : false;
 $assert(
 	false !== $cleanup_pos && false !== $metadata_pos && $cleanup_pos < $metadata_pos
 	&& false !== strpos( $bg, "if ( ! empty( \$step['done'] ) && 'verify' === \$state['phase'] )" )
