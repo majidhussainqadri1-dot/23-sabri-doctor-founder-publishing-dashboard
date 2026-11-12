@@ -141,12 +141,7 @@ final class SPDB_Background_Jobs {
 					return $this->refresh_adapter_health();
 
 				case 'retention_cleanup':
-					$artifact_cleanup = $this->exports->cleanup_expired_files();
-					if ( is_wp_error( $artifact_cleanup ) ) {
-						return $artifact_cleanup;
-					}
-					$result = $this->repository->cleanup_retention( SPDB_Admin_Settings::get() );
-					return is_wp_error( $result ) ? $result : true;
+					return $this->run_retention_cleanup( $job );
 
 				case 'calendar_reconcile':
 				case 'failed_schedule_detection':
@@ -164,6 +159,100 @@ final class SPDB_Background_Jobs {
 				wp_set_current_user( $previous_user );
 			}
 		}
+	}
+
+	/**
+	 * V12.1 WP-12: use signed, native queued continuations instead of a
+	 * 20,000-row global success/failure limit. File bytes are deleted in a
+	 * bounded pass, then every eligible metadata row is independently
+	 * rechecked before the owner repository may remove export-job rows.
+	 *
+	 * A continuation must be enqueued successfully BEFORE this job can
+	 * complete. Retries use a deterministic idempotency key and cannot
+	 * create duplicate continuation jobs.
+	 *
+	 * @param array<string,mixed> $job
+	 * @return true|WP_Error
+	 */
+	private function run_retention_cleanup( array $job ) {
+		if ( ! function_exists( 'wp_salt' ) ) {
+			return self::error( 'spdb_retention_signing_unavailable', __( 'Retention continuation signing is unavailable.', 'sabri-publishing-dashboard' ) );
+		}
+		$payload = is_array( $job['payload'] ?? null ) ? $job['payload'] : array();
+		if ( array() === $payload ) {
+			$state = array(
+				'root_job_id' => (string) ( $job['job_id'] ?? '' ),
+				'cutoff' => current_time( 'mysql', true ),
+				'phase' => 'remove',
+				'cursor' => 0,
+				'hop' => 0,
+			);
+		} else {
+			$state = $payload;
+			if ( ! is_string( $state['signature'] ?? null ) ||
+				! hash_equals( self::retention_continuation_signature( $state ), $state['signature'] ) ) {
+				return self::error( 'spdb_retention_continuation_invalid', __( 'The retention continuation is unauthenticated.', 'sabri-publishing-dashboard' ) );
+			}
+		}
+		if ( 1 !== preg_match( '/^job_[a-z0-9]{32}$/', (string) ( $state['root_job_id'] ?? '' ) ) ||
+			! in_array( $state['phase'] ?? null, array( 'remove', 'verify' ), true ) ||
+			! is_int( $state['cursor'] ?? null ) || $state['cursor'] < 0 ||
+			! is_int( $state['hop'] ?? null ) || $state['hop'] < 0 || $state['hop'] > 1000000 ||
+			! is_string( $state['cutoff'] ?? null ) ) {
+			return self::error( 'spdb_retention_continuation_invalid', __( 'The retention continuation fields are invalid.', 'sabri-publishing-dashboard' ) );
+		}
+		$step = $this->exports->cleanup_expired_files_page( $state['cutoff'], $state['cursor'], 200, 'verify' === $state['phase'] );
+		if ( is_wp_error( $step ) ) {
+			return $step;
+		}
+		if ( ! empty( $step['done'] ) && 'verify' === $state['phase'] ) {
+			// The exact frozen cutoff has now passed deletion and full
+			// verification. Newly expired records wait for the next job.
+			$result = $this->repository->cleanup_retention( SPDB_Admin_Settings::get(), $state['cutoff'] );
+			return is_wp_error( $result ) ? $result : true;
+		}
+
+		$next = array(
+			'root_job_id' => $state['root_job_id'],
+			'cutoff' => $state['cutoff'],
+			'phase' => ! empty( $step['done'] ) ? 'verify' : $state['phase'],
+			'cursor' => ! empty( $step['done'] ) ? 0 : $step['next_cursor'],
+			'hop' => $state['hop'] + 1,
+		);
+		$next['signature'] = self::retention_continuation_signature( $next );
+		$identity = 'retention_step_' . hash( 'sha256', implode( '|', array( $next['root_job_id'], $next['cutoff'], $next['phase'], $next['cursor'], $next['hop'] ) ) );
+		$continuation = $this->repository->enqueue_job(
+			'retention_cleanup',
+			0,
+			$next,
+			$identity,
+			(int) SPDB_Admin_Settings::get()['job_max_attempts']
+		);
+		if ( is_wp_error( $continuation ) ) {
+			return $continuation;
+		}
+		if ( ! is_array( $continuation ) || ! in_array( $continuation['status'] ?? '', array( 'queued', 'processing', 'completed' ), true ) ) {
+			return self::error( 'spdb_retention_continuation_failed', __( 'The retention continuation was not accepted for processing.', 'sabri-publishing-dashboard' ) );
+		}
+		return true;
+	}
+
+	/**
+	 * The signature authenticates a private, server-created continuation
+	 * only; it is NOT proof that Hostinger ran the filesystem cleanup.
+	 *
+	 * @param array<string,mixed> $state
+	 */
+	private static function retention_continuation_signature( array $state ): string {
+		$values = array(
+			'file23-retention-v1',
+			(string) ( $state['root_job_id'] ?? '' ),
+			(string) ( $state['cutoff'] ?? '' ),
+			(string) ( $state['phase'] ?? '' ),
+			(string) ( $state['cursor'] ?? '' ),
+			(string) ( $state['hop'] ?? '' ),
+		);
+		return hash_hmac( 'sha256', implode( '|', $values ), wp_salt( 'auth' ) );
 	}
 
 	/** @param array<string,mixed> $job @return true|WP_Error */
