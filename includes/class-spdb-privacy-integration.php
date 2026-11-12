@@ -86,6 +86,27 @@ final class SPDB_Privacy_Integration {
 			return array( 'items_removed' => false, 'items_retained' => false, 'messages' => array(), 'done' => true );
 		}
 		$user_id = (int) $user->ID;
+		global $wpdb;
+		if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'get_var' ) || ! method_exists( $wpdb, 'prepare' ) ) {
+			return $this->erasure_error_response( new WP_Error( 'spdb_erasure_lock_unavailable', __( 'The private export erasure lock service is unavailable.', 'sabri-publishing-dashboard' ) ) );
+		}
+		// Serialize every page, checkpoint transition and final metadata
+		// deletion for the same owner. An in-flight parallel eraser must
+		// never overwrite a later verification cursor or recreate a lock.
+		$lock_name = SPDB_Export_Service::privacy_erasure_lock_name( $user_id );
+		$acquired = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 2)', $lock_name ) );
+		if ( '1' !== (string) $acquired ) {
+			return $this->erasure_error_response( new WP_Error( 'spdb_erasure_lock_busy', __( 'Another private export erasure request is already running.', 'sabri-publishing-dashboard' ) ) );
+		}
+		try {
+			return $this->erase_personal_data_locked( $user_id, $page );
+		} finally {
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
+		}
+	}
+
+	/** One server-serialized WordPress privacy erasure page. */
+	private function erase_personal_data_locked( int $user_id, int $page ): array {
 		$checkpoint = $this->read_erasure_checkpoint( $user_id );
 		if ( is_wp_error( $checkpoint ) ) {
 			return $this->erasure_error_response( $checkpoint );
