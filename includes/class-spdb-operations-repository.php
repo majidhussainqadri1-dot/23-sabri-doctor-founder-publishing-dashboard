@@ -1417,15 +1417,20 @@ final class SPDB_Operations_Repository {
 	 *
 	 * @return array<string,int>|WP_Error
 	 */
-	public function cleanup_retention( array $settings ) {
+	public function cleanup_retention( array $settings, ?string $export_cutoff = null ) {
+		$now = current_time( 'mysql', true );
+		$cutoff = null === $export_cutoff ? $now : $export_cutoff;
+		if ( 1 !== preg_match( '/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/', $cutoff ) || false === strtotime( $cutoff . ' UTC' ) || $cutoff > $now ) {
+			return self::error( 'spdb_retention_cutoff_invalid', __( 'An invalid or future File 23 export retention cutoff was supplied.', 'sabri-publishing-dashboard' ), 400 );
+		}
 		return $this->atomic(
-			function () use ( $settings ) {
+			function () use ( $settings, $cutoff ) {
 				global $wpdb;
 				$now = current_time( 'mysql', true );
 				$deleted = array( 'metrics' => 0, 'exports' => 0, 'jobs' => 0, 'tasks' => 0, 'health' => 0 );
 				$queries = array(
 					'metrics' => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'metric_snapshots' ) . ' WHERE expires_at_gmt <= %s', $now ),
-					'exports' => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'export_jobs' ) . ' WHERE expires_at_gmt <= %s', $now ),
+					'exports' => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'export_jobs' ) . ' WHERE expires_at_gmt <= %s', $cutoff ),
 					'health'  => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'adapter_health' ) . ' WHERE expires_at_gmt <= %s', $now ),
 					'jobs'    => $wpdb->prepare(
 						'DELETE FROM ' . SPDB_Operations_Schema::table( 'background_jobs' ) . " WHERE status IN ('completed','dead_letter') AND updated_at_gmt < %s",
