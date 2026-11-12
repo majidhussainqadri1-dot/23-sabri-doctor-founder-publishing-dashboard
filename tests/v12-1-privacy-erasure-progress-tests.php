@@ -92,6 +92,10 @@ try {
 	$assert( is_array( get_option( $key, false ) ), 'Malformed checkpoint is retained for audit rather than silently bypassed.' );
 	update_option( $key, $state1, false );
 
+	$GLOBALS['wpdb']->lock_busy = true;
+	$contended = $privacy->erase_personal_data( 'privacy@test.invalid', 2 );
+	$assert( true === $contended['items_retained'] && 200 === get_option( $key, false )['cursor'], 'A concurrent erasure page must fail without modifying owner progress.' );
+	$GLOBALS['wpdb']->lock_busy = false;
 	$page2 = $privacy->erase_personal_data( 'privacy@test.invalid', 2 );
 	$state2 = get_option( $key, false );
 	$assert( false === $page2['done'] && 400 === $state2['cursor'], 'Second call resumes from persisted owner cursor.' );
