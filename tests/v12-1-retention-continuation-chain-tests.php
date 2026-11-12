@@ -109,7 +109,7 @@ try {
 	$steps=0;
 	do {
 		$result=$run->invoke($runner,$job);
-		$assert(true===$result,'Each signed maintenance continuation must succeed; got '.(is_wp_error($result)?$result->get_error_code():gettype($result)));
+		$assert(true===$result,'Each signed maintenance continuation must succeed at step '.($steps+1).' (jobs='.count($GLOBALS['wpdb']->jobs).',purges='.$GLOBALS['wpdb']->purges.'); got '.(is_wp_error($result)?$result->get_error_code():gettype($result)));
 		++$steps;
 		if($GLOBALS['wpdb']->purges>0){break;}
 		$assert(count($GLOBALS['wpdb']->jobs)===$steps,'Exactly one new continuation queued for the next bounded step.');
