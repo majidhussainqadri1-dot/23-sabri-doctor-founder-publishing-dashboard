@@ -40,6 +40,9 @@ $assert(false!==strpos($process,'$this->user_can_export( $owner_user_id )'),'Own
 $assert(false!==strpos($process,'privacy_erasure_pending( $owner_user_id )'),'Late privacy erasure blocks in-flight report generation.');
 $assert(false!==strpos($process,"'spdb_export_expired'"),'Expiration is rechecked after lengthy provider projection work.');
 $assert(false!==strpos($process,'finally {'),'Advisory lock is released on all outcomes.');
+$busy_at = strpos($process,'spdb_export_owner_lock_busy');
+$busy_segment = false === $busy_at ? '' : substr($process,max(0,$busy_at-130),280);
+$assert(false!==$busy_at && false===strpos($busy_segment,'fail_processing('),'Temporary owner-lock contention preserves processing state for a retry, not permanent job failure.');
 
 $privacy_start=strpos($privacy,'public function erase_personal_data(');
 $privacy_end=strpos($privacy,'private function erase_personal_data_locked(',$privacy_start);
