@@ -97,7 +97,14 @@ foreach ( array( 'wp_insert_post(', 'wp_update_post(', 'wp_delete_post(', 'updat
 	$assert( false === strpos( $all_source, $forbidden ), "File 23 must not directly mutate native publication data through {$forbidden}." );
 }
 $assert( false === strpos( $files['caps'], "'spdb_manage_safe_mode'," ), 'Retired Safe Mode authority must not remain in the canonical capability list.' );
-$assert( false !== strpos( $files['exports'], 'file_put_contents( $path, $sealed, LOCK_EX )' ), 'Generated exports must be written only after authenticated encryption.' );
+$sealed_at = strpos( $files['exports'], '$sealed = $this->seal_content( $content, $export_id );' );
+$exclusive_at = strpos( $files['exports'], '$path = $this->write_ciphertext_exclusive( $directory, $filename, $sealed );' );
+$assert(
+	false !== $sealed_at && false !== $exclusive_at && $sealed_at < $exclusive_at
+	&& false !== strpos( $files['exports'], "fopen( \$path, 'xb' )" )
+	&& false === strpos( $files['exports'], 'file_put_contents( $path, $sealed, LOCK_EX )' ),
+	'Generated reports must be authenticated-encrypted before exclusive, no-overwrite file creation.'
+);
 $assert( false === strpos( $files['exports'], 'Protected generated artifact directory.\n' ), 'Legacy plaintext generated-export write must not remain.' );
 
 if ( $failed > 0 ) {
