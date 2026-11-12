@@ -380,8 +380,20 @@ final class SPDB_Export_Service {
 		);
 		foreach ( $guards as $file => $content ) {
 			$path = trailingslashit( $directory ) . $file;
+			// A pre-existing, replaced or symlinked guard is not evidence of
+			// protection. Fail closed instead of serving private export data.
+			if ( is_link( $path ) ) {
+				return self::error( 'spdb_export_storage_guard_invalid', __( 'Private export storage has an invalid protection file.', 'sabri-publishing-dashboard' ), 500 );
+			}
 			if ( ! file_exists( $path ) && false === file_put_contents( $path, $content, LOCK_EX ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Required private directory guard.
 				return self::error( 'spdb_export_storage_guard_failed', __( 'Private export storage could not be guarded.', 'sabri-publishing-dashboard' ), 500 );
+			}
+			if ( ! is_file( $path ) || ! is_readable( $path ) ) {
+				return self::error( 'spdb_export_storage_guard_invalid', __( 'Private export storage has an invalid protection file.', 'sabri-publishing-dashboard' ), 500 );
+			}
+			$actual = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Verify the installed server guard exactly.
+			if ( ! is_string( $actual ) || ! hash_equals( $content, $actual ) ) {
+				return self::error( 'spdb_export_storage_guard_invalid', __( 'Private export storage has an invalid protection file.', 'sabri-publishing-dashboard' ), 500 );
 			}
 		}
 		return $directory;
