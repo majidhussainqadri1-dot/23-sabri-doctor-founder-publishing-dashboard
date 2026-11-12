@@ -81,8 +81,19 @@ final class SPDB_Privacy_Integration {
 		if ( ! $user instanceof WP_User ) {
 			return array( 'items_removed' => false, 'items_retained' => false, 'messages' => array(), 'done' => true );
 		}
-		$files    = $this->exports->erase_user_files( (int) $user->ID );
-		$result   = $this->repository->privacy_erase( (int) $user->ID );
+		$files = $this->exports->erase_user_files( (int) $user->ID );
+		// Do not erase the export job rows while any associated encrypted
+		// artifact may remain. A silent zero would orphan the ciphertext
+		// and prevent a safe retry under V12.1-STO-09.
+		if ( is_wp_error( $files ) ) {
+			return array(
+				'items_removed'  => false,
+				'items_retained' => true,
+				'messages'       => array( $files->get_error_message() ),
+				'done'           => true,
+			);
+		}
+		$result = $this->repository->privacy_erase( (int) $user->ID );
 		if ( is_wp_error( $result ) ) {
 			return array(
 				'items_removed'  => false,
