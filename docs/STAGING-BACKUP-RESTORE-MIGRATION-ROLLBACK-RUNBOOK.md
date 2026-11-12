@@ -70,6 +70,21 @@ Use separate real staging accounts and record screenshots plus audit IDs:
 - Rate-limit and repeated-submit tests; no duplicate native action.
 - Dependency outage and exception isolation.
 
+## V12.1 private export / deletion and attestation negative rehearsal (required)
+
+This is a **future staged procedure** only. None of these Hostinger results has yet been observed or accepted. Use synthetic non-patient report fixtures, and preserve screenshots, response headers, audit IDs, DB row states, filesystem manifest and the exact deployed SHA.
+
+1. **Actual serving stack**: identify Apache/LiteSpeed/Nginx/CDN and its real route from `wp-content/uploads/spdb-private-exports/`; do not assume that a correct `.htaccess` is enforced by an upstream server. From an anonymous browser and direct origin/CDN URL, `GET` and `HEAD` a synthetic ciphertext and assert 403/404 and **zero file bytes**. Repeat through caches and after login/logout.
+2. **Authorized report**: prove that only a current owner with approved File 00 permission and current second-factor assertion can download through the intended `admin-post.php` expiring owner-HMAC link. Try a different Doctor, suspended actor, expired token, role switch, replay and missing owner row.
+3. **Guard integrity**: tamper with synthetic `.htaccess`, `web.config` and `index.php` on a disposable staging copy. Assert File 23 fails closed and reports an error; verify no public file access even when guard behavior is intentionally altered.
+4. **Exclusive ciphertext write**: pre-create the expected `export_ID.spdb` file and separately create a symlink with the same name. Trigger only a synthetic, authorized report job and assert no overwrite and no change to a different file. Record failure state, retry behavior, cleanup instructions and file permission mode `0600`.
+5. **Privacy erasure**: seed a synthetic user's encrypted exports; simulate unavailable private directory, SQL SELECT error, malformed ref, symlink, denied unlink and a mid-enumeration interruption. Assert `export_jobs` references remain when any file erasure fails; never show a false complete state.
+6. **Expired retention**: prepare two synthetic ciphertexts owned by different users; point one expired filename symlink at the other's file. Run retention cleanup and assert it fails without deleting the target or deleting metadata. Simulate 20,000+ expired rows; bounded cleanup must not trigger metadata purge.
+7. **Storage/DB reconciliation**: test crash after ciphertext creation but before export-job completion, and DB transaction failure after file deletion. Produce an operator-verifiable orphan reconciliation plan. A bounded fail-closed error is not a successful bulk erasure.
+8. **File20 trusted deployed attestation**: obtain explicit evidence from File20/deployment operator (Issue #45) that active installed File23 files match source/package SHA and measured operations/collections schemas and migrations. Verify `spdb/file23_deployed_artifact_attestation` carries an authorized, fresh server-side assertion, **not** a form/option string.
+9. **Same-version adverse case**: replace one installed PHP file while retaining plugin header `1.3.0`, restore a stale acceptance option, or defer a migration; acceptance must immediately fail closed. Repeat after actual restore and new Founder decision. Keep File23 issue #30 OPEN until measured proof exists.
+10. **Release evidence**: attach dated role/URL/HTTP/cache/DB/migration/package hashes to `docs/RELEASE-SIGNOFF.md`; write separate **Repository HEAD / Deployed Version / DB Version / Migration State / Live Verification Status**. No source-only check authorizes a live rollout.
+
 ## Accessibility and responsive acceptance
 
 Test 320, 360, 390, 480, 768, 1024, 1280, 1440 and 1920 CSS pixels in English and Urdu/RTL. Complete all workflows with keyboard only and at 200% and 400% zoom. Verify visible focus, landmarks, headings, labels, captions, status announcements, contrast, reduced motion, forced colors and one supported screen reader. Record each result, browser/device and evidence location.
