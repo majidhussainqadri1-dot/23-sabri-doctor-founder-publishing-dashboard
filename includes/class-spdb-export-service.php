@@ -151,14 +151,14 @@ final class SPDB_Export_Service {
 		}
 		global $wpdb;
 		if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'get_var' ) || ! method_exists( $wpdb, 'prepare' ) ) {
-			return $this->fail_processing( $export_id, self::error( 'spdb_export_owner_lock_unavailable', __( 'Owner export coordination is unavailable.', 'sabri-publishing-dashboard' ), 503 ) );
+			return self::error( 'spdb_export_owner_lock_unavailable', __( 'Owner export coordination is unavailable; the job remains retryable.', 'sabri-publishing-dashboard' ), 503 );
 		}
 		// A late background job and a WordPress privacy eraser must not
 		// race across owner metadata deletion and ciphertext generation.
 		$lock_name = self::privacy_erasure_lock_name( $owner_user_id );
 		$locked = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock_name ) );
 		if ( '1' !== (string) $locked ) {
-			return $this->fail_processing( $export_id, self::error( 'spdb_export_owner_lock_busy', __( 'An owner export/erasure operation is already running.', 'sabri-publishing-dashboard' ), 503 ) );
+			return self::error( 'spdb_export_owner_lock_busy', __( 'An owner export/erasure operation is already running; retry later.', 'sabri-publishing-dashboard' ), 503 );
 		}
 		try {
 			// The owner and native job might have been erased or revoked
