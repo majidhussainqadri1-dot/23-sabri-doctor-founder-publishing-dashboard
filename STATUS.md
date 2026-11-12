@@ -46,6 +46,16 @@ This document does not pre-declare those gates successful. A green historical ru
 
 Until those external gates pass, File 23 is **not staging-accepted, live-deployed or operationally accepted**. Production writes remain subject to the existing fail-closed provider/environment acceptance model.
 
+## V12.1 coding-gap census and 16-work-package backlog — 2026-11-12
+
+- **Plan annex:** `docs/FILE23-V12.1-CODING-GAP-BACKLOG-2026-11-12.md`. The source/requirement/acceptance classification is *not* a completion percentage.
+- Confirmed open File23 source/release-assurance gap: **1** (`GAP-CODE-01`, artifact attestation / issue #30).
+- Previous source guard defect corrected: **1**, source tests green; one later test-fixture defect also corrected.
+- V12.1 Chapter-12 mapping: **17** new IDs = **7** source-evidenced consumers + **10** native-owner contract/runtime checks pending. No source-gap inference from missing external evidence.
+- Known operational/release limitations: **13** (`F23-LIM-001..013`), counted separately from coding errors.
+- WP-00..15: all **16** individually tracked, including WP-14 staging and WP-15 live go/no-go gates; these two final operational gates are not completed.
+- The full repository's remaining coding defect total cannot be certified without the rest of the line-by-line audit and real companion/Hostinger evidence.
+
 ## V12.1 reconciliation checkpoint — 2026-11-12 (child Draft PR #29)
 
 - Parent PR #26 Version 1.3.0 HEAD: `df59cb2be8c1a69dc3539bc7e0a58d5d79125ac3`; the child branch remains unmerged.
