@@ -46,6 +46,19 @@ This document does not pre-declare those gates successful. A green historical ru
 
 Until those external gates pass, File 23 is **not staging-accepted, live-deployed or operationally accepted**. Production writes remain subject to the existing fail-closed provider/environment acceptance model.
 
+## V12.1 reconciliation checkpoint — 2026-11-12 (child Draft PR #29)
+
+- Parent PR #26 Version 1.3.0 HEAD: `df59cb2be8c1a69dc3539bc7e0a58d5d79125ac3`; the child branch remains unmerged.
+- One confirmed private-export guard integrity defect in source was corrected with a fail-closed guard-content/type check.
+- Chapter 12 STO-01..10 and ACT-01..07 received 17 additive owner/consumer/evidence mappings without modifying the original 70 CV / 16 AJ / 24 FPI scheme.
+- Three V12.1 tests: private export guard integrity, File 00 MFA/revocation export-consumer behavior, and governance traceability.
+- One new test-fixture class-redeclaration defect was detected by CI and corrected on `12ff57e14b105623615808357d8eeedf0acce327`.
+- On that **code/test SHA**, Baseline Integrity #1520, Full Plan Completion #571 and Final Release Candidate #325 all succeeded. Later documentation commits require their own exact-head run.
+- GitHub issue #30 records the unresolved deployed-artifact/staging-acceptance attestation gap. Source CI does not resolve it.
+- Two internal source review passes are documented; **two independent external release reviews, real Hostinger private URL denial and staging/live acceptance remain pending**.
+- See `docs/V12.1-FILE23-SECURITY-RECONCILIATION-2026-11-12.md`, `docs/AUDIT-V12.1-SOURCE-REVIEWS-2026-11-12.md` and updated limitations/sign-off.
+- No `main` merge or live deployment is implied.
+
 ## Live-reality register
 
 - Repository candidate: Version `1.3.0` on the branch above; exact final SHA must be recorded after the last code/review change.
