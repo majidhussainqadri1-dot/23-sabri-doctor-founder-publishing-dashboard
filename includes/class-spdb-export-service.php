@@ -902,6 +902,11 @@ final class SPDB_Export_Service {
 		return 'spdb_export_erase_progress_v1_' . max( 0, $user_id );
 	}
 
+	/** MySQL advisory-lock identifier shared by owner erasure request pages. */
+	public static function privacy_erasure_lock_name( int $user_id ): string {
+		return 'spdb_privacy_' . substr( hash( 'sha256', 'file23|export|owner|' . max( 0, $user_id ) ), 0, 40 );
+	}
+
 	/** The presence of any checkpoint blocks new/queued private report generation. */
 	public static function privacy_erasure_pending( int $user_id ): bool {
 		return $user_id > 0 && function_exists( 'get_option' )
