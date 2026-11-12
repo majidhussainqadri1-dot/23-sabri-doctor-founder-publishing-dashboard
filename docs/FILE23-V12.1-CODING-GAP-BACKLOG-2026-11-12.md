@@ -24,6 +24,12 @@
 
 **قبولیت کا حکم:** ورک پیکیجز WP-04، WP-05 اور WP-09 کے source-hardening حصے آگے بڑھے، لیکن WP-12 کی real 10k+ DB/migration recovery، WP-13 کی آخری SHA پر جامع CI اور دو بیرونی آزاد reviews، WP-14 Staging، WP-15 Live سب ابھی اصل ثبوت مانگتے ہیں۔ Issue #30 اور File20 #45 اختتامی blocker ہیں۔ اس طرح ۱۶ میں سے ۱۶ ورک پیکیجز کے الگ acceptance gates برقرار ہیں؛ کسی کو صرف source patch پر مکمل Release نہیں لکھا جائے گا۔
 
+### نئی قابلِ شمار باقی کوڈنگ — WP-12 اور Issue #31
+
+STO-09 کی دونوں اصلاحات میں 20,000 سے زائد ریکارڈ پر نامکمل حذف کاری کو واضح `WP_Error` کے ساتھ روکا گیا ہے، **لیکن یہ اختتامی کارکردگی نہیں**: اگلی کوشش پہلے ہی SQL ریکارڈ سے دوبارہ شروع ہونے کی وجہ سے بار بار اسی حد پر رک سکتی ہے۔ لہٰذا بڑا ڈیٹاسیٹ محفوظ انداز میں مکمل کرنے کے لیے الگ audit-bound، مالک سے مربوط، resumable deletion/retention protocol درکار ہے۔ اس کا مخصوص source/operational acceptance backlog **File23 GitHub Issue #31** میں درج ہے۔ اسے پروڈکشن پر پیش آنے والا ثابت شدہ بگ نہ کہا جائے؛ یہ **سورس میں ثابت شدہ scalable-continuation gap** ہے۔
+
+**موجودہ الگ باقی کام کی گنتی:** (۱) File20/Hostinger کے حقیقی deployed-byte attestation کا انضمام — File23 Issue #30 اور File20 Issue #45؛ (۲) File23 کے 20k+ ریکارڈ کے لیے محفوظ قابلِ استمرار صفائی — Issue #31؛ (۳) سابقہ ۱۳ بیرونی release/operation حدود۔ ان میں سے کسی کو ۳۱ نئے runtime defects یا ۱۰۰٪ مکمل coding نہ سمجھا جائے۔
+
 ## ۱۔ تحقیق کا متعین قطعہ اور موجودہ حقیقت
 
 | حقیقت | بنیاد / حد |
