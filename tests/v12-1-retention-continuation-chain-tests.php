@@ -36,13 +36,13 @@ class SPDB_Continuation_Test_DB {
 	}
 	public function get_results( string $sql, $mode = null ) {
 		if ( $this->fail_read ) { return false; }
-		if ( ! preg_match( "/expires_at_gmt <= '([^']+)' AND id > (\\d+) ORDER BY id ASC LIMIT (\\d+)/", $sql, $parts ) ) {
+		if ( ! preg_match( "/expires_at_gmt <= '([^']+)' AND id > (\\d+) AND id <= (\\d+) ORDER BY id ASC LIMIT (\\d+)/", $sql, $parts ) ) {
 			return array();
 		}
-		$cutoff = $parts[1]; $cursor = (int) $parts[2]; $limit = (int) $parts[3];
+		$cutoff = $parts[1]; $cursor = (int) $parts[2]; $max_id = (int) $parts[3]; $limit = (int) $parts[4];
 		$rows = array();
 		foreach ( $this->exports as $row ) {
-			if ( $row['expires_at_gmt'] <= $cutoff && $row['id'] > $cursor ) {
+			if ( $row['expires_at_gmt'] <= $cutoff && $row['id'] > $cursor && $row['id'] <= $max_id ) {
 				$rows[] = array( 'id' => $row['id'], 'storage_ref' => $row['storage_ref'], 'status' => $row['status'] );
 			}
 			if ( count( $rows ) >= $limit ) { break; }
@@ -65,6 +65,11 @@ class SPDB_Continuation_Test_DB {
 		return false;
 	}
 	public function get_var( string $sql ) {
+		if ( str_contains( $sql, 'COALESCE(MAX(id), 0)' ) ) {
+			preg_match( "/expires_at_gmt <= '([^']+)'/", $sql, $m );
+			$ids = array_map( static fn( array $row ): int => $row['id'], array_filter( $this->exports, static fn( array $row ): bool => $row['expires_at_gmt'] <= ( $m[1] ?? '' ) ) );
+			return $ids ? max( $ids ) : 0;
+		}
 		if ( str_contains( $sql, '@@in_transaction' ) ) { return '0'; }
 		if ( str_contains( $sql, 'GET_LOCK(' ) || str_contains( $sql, 'RELEASE_LOCK(' ) ) { return '1'; }
 		return null;
@@ -72,7 +77,9 @@ class SPDB_Continuation_Test_DB {
 	public function query( string $sql ) {
 		if ( preg_match( "/DELETE FROM .*export_jobs WHERE expires_at_gmt <= '([^']+)'/", $sql, $m ) ) {
 			$old = count( $this->exports );
-			$this->exports = array_values( array_filter( $this->exports, static fn( array $row ): bool => $row['expires_at_gmt'] > $m[1] ) );
+			preg_match( '/AND id <= (\\d+)/', $sql, $match_max );
+			$maximum = isset( $match_max[1] ) ? (int) $match_max[1] : PHP_INT_MAX;
+			$this->exports = array_values( array_filter( $this->exports, static fn( array $row ): bool => $row['expires_at_gmt'] > $m[1] || $row['id'] > $maximum ) );
 			$this->purges += $old - count( $this->exports );
 			$this->deleted_cutoffs[] = $m[1];
 			return $old - count( $this->exports );
@@ -99,6 +106,7 @@ try {
 	$first='export_'.str_repeat('a',32).'.spdb';
 	$last='export_'.str_repeat('b',32).'.spdb';
 	$future='export_'.str_repeat('c',32).'.spdb';
+	$new_same_cutoff='export_'.str_repeat('e',32).'.spdb';
 	$init=new ReflectionMethod(SPDB_Export_Service::class,'private_directory');$init->setAccessible(true);$init->invoke($exports);
 	$GLOBALS['wpdb']->exports[0]['storage_ref']=$first;
 	$GLOBALS['wpdb']->exports[400]['storage_ref']=$last;
@@ -112,6 +120,10 @@ try {
 		$result=$run->invoke($runner,$job);
 		$assert(true===$result,'Each signed maintenance continuation must succeed at step '.($steps+1).' (jobs='.count($GLOBALS['wpdb']->jobs).',purges='.$GLOBALS['wpdb']->purges.'); got '.(is_wp_error($result)?$result->get_error_code():gettype($result)));
 		++$steps;
+		if(1===$steps){
+			$GLOBALS['wpdb']->exports[]=array('id'=>403,'status'=>'ready','storage_ref'=>$new_same_cutoff,'expires_at_gmt'=>$cutoff);
+			file_put_contents($directory.'/'.$new_same_cutoff,'NEW-CIPHERTEXT');
+		}
 		if($GLOBALS['wpdb']->purges>0){break;}
 		$assert(count($GLOBALS['wpdb']->jobs)===$steps,'Exactly one new continuation queued for the next bounded step.');
 		$last_job=end($GLOBALS['wpdb']->jobs);
@@ -122,8 +134,8 @@ try {
 		if($steps>10){break;}
 	}while(true);
 	$assert(6===$steps && 401===$GLOBALS['wpdb']->purges,'Two complete 3-page passes precede one frozen-cutoff DB purge.');
-	$assert(1===count($GLOBALS['wpdb']->exports)&&402===$GLOBALS['wpdb']->exports[0]['id'],'Future cutoff record remains in database.');
-	$assert(is_file($directory.'/'.$future)&&!file_exists($directory.'/'.$first)&&!file_exists($directory.'/'.$last),'Only expired ciphertexts deleted.');
+	$assert(2===count($GLOBALS['wpdb']->exports)&&402===$GLOBALS['wpdb']->exports[0]['id']&&403===$GLOBALS['wpdb']->exports[1]['id'],'Future and post-start same-cutoff records remain in database.');
+	$assert(is_file($directory.'/'.$future)&&is_file($directory.'/'.$new_same_cutoff)&&!file_exists($directory.'/'.$first)&&!file_exists($directory.'/'.$last),'Old expired ciphertexts deleted; post-start source remains.');
 	$assert($GLOBALS['wpdb']->deleted_cutoffs===array($cutoff),'Metadata purge uses the originally frozen UTC cutoff.');
 
 	$bad=array('job_id'=>'job_'.str_repeat('e',32),'payload'=>array('root_job_id'=>'job_'.str_repeat('d',32),'cutoff'=>$cutoff,'phase'=>'verify','cursor'=>999999,'hop'=>5,'signature'=>str_repeat('0',64)));
