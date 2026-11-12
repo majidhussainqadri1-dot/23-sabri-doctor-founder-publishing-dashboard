@@ -47,6 +47,15 @@ Read: governing V12.1 Chapter 12 STO-01–10/ACT-01–07; original 1.3.0 traceab
 
 Those three automated results establish source/test workflow success on the **reviewed code/test commit**, not staging, production, or this later audit-document commit. Repeat exact-head CI after any further documentation or code change before considering repository closure.
 
+## Reopened CI finding and immediate correction — 2026-11-12
+
+After Review B, a third runtime consumer regression was added as `tests/v12-1-export-auth-consumer-tests.php`. It checks current File 00 two-factor, suspension, eligibility, approval and export-capability revocation at the File 23 consumer boundary. This did not change production source.
+
+- Initial new test fixture duplicated `SPDB_Membership_Guard`, already loaded by `tests/bootstrap.php`. **Baseline Integrity #1519 and Full Plan Completion #570 failed** on PHP 8.0–8.3. This is a **test-fixture defect**, not a runtime export defect.
+- Logs identified the exact PHP fatal class redefinition. Correction commit: `12ff57e14b105623615808357d8eeedf0acce327`; the test now uses an isolated File 00 mock rather than the full bootstrap.
+- Same exact corrected commit passed **Baseline Integrity #1520**, **Full Plan Completion #571** and **Final Release Candidate #325**. All three workflows were independently checked as success.
+- These notes make clear that the two review passes must be repeated if later production code changes, and that independent external review remains outstanding.
+
 ## Quantified result and remaining gates
 
 - Confirmed File 23 source defects found in this targeted audit: **1** (`V12.1-GUARD-01`).
