@@ -5,7 +5,8 @@ This form must remain **Pending** until every required evidence field is complet
 ## Artifact identity
 
 - Release version: `1.3.0`
-- Governing plan revision represented: **baseline `2026-08-10` + V12.1 amendment dated `2026-11-10` (source consumer mapping, not live acceptance)**
+- Governing plan revision represented: `2026-08-10` (original Version 1.3.0 baseline; preserve historical test/source truth)
+- Additive governing V12.1 amendment: `2026-11-10` (File23 consumer mapping; not deployed/live acceptance)
 - Exact Git head: ________________________________
 - Source baseline main (12 Nov 2026): `dcae138e6073f4d0ff596623deb05b9940b8271b`; parent PR #26 head: `df59cb2be8c1a69dc3539bc7e0a58d5d79125ac3`; re-verify before sign-off
 - Installable ZIP: `23-sabri-doctor-founder-publishing-dashboard-1.3.0.zip`
