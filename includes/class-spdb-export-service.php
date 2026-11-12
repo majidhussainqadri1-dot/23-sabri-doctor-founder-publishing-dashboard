@@ -352,6 +352,83 @@ final class SPDB_Export_Service {
 	}
 
 	/**
+	 * Bounded expiry cleanup for a frozen UTC cutoff; caller keeps the
+	 * continuation cursor in a server-owned background-job payload.
+	 *
+	 * This method never deletes the corresponding database rows. The caller
+	 * MUST complete an independent verification pass with the exact same
+	 * cutoff and MUST NOT run metadata retention cleanup on partial state.
+	 *
+	 * @return array{deleted:int,next_cursor:int,done:bool}|WP_Error
+	 */
+	public function cleanup_expired_files_page( string $cutoff, int $after_id = 0, int $limit = 200, bool $verify_only = false ) {
+		if ( $after_id < 0 || $limit < 1 || $limit > 200 ||
+			1 !== preg_match( '/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/', $cutoff ) ||
+			false === strtotime( $cutoff . ' UTC' ) || $cutoff > current_time( 'mysql', true ) ) {
+			return self::error( 'spdb_export_cleanup_page_invalid', __( 'The expired-export cleanup checkpoint is invalid.', 'sabri-publishing-dashboard' ), 400 );
+		}
+		$directory = $this->private_directory();
+		if ( is_wp_error( $directory ) ) {
+			return $directory;
+		}
+		$real_dir = realpath( $directory );
+		if ( false === $real_dir || ! is_dir( $real_dir ) ) {
+			return self::error( 'spdb_export_cleanup_storage_invalid', __( 'The private export directory is unavailable.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		global $wpdb;
+		$table = SPDB_Operations_Schema::table( 'export_jobs' );
+		$rows = $wpdb->get_results(
+			$wpdb->prepare( "SELECT id, storage_ref, status FROM {$table} WHERE expires_at_gmt <= %s AND id > %d ORDER BY id ASC LIMIT %d", $cutoff, $after_id, $limit ),
+			defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
+		);
+		if ( ! is_array( $rows ) ) {
+			return self::error( 'spdb_export_cleanup_read_failed', __( 'Expired export rows could not be inspected.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$deleted = 0;
+		$cursor = $after_id;
+		foreach ( $rows as $row ) {
+			$id = (int) ( $row['id'] ?? 0 );
+			if ( $id <= $cursor ) {
+				return self::error( 'spdb_export_cleanup_cursor_invalid', __( 'Expired export rows have an invalid cursor order.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			$cursor = $id;
+			if ( in_array( (string) ( $row['status'] ?? '' ), array( 'queued', 'processing' ), true ) ) {
+				return self::error( 'spdb_export_cleanup_active_job', __( 'An expired export job is still active; metadata retention is deferred.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			$storage_ref = (string) ( $row['storage_ref'] ?? '' );
+			if ( '' === $storage_ref ) {
+				continue;
+			}
+			if ( 1 !== preg_match( '/^export_[a-z0-9]{32}\\.spdb$/', $storage_ref ) ) {
+				return self::error( 'spdb_export_cleanup_reference_invalid', __( 'An expired export storage reference is invalid.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			$path = trailingslashit( $directory ) . $storage_ref;
+			if ( is_link( $path ) ) {
+				return self::error( 'spdb_export_cleanup_path_invalid', __( 'An expired export artifact is a symlink.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			if ( ! file_exists( $path ) ) {
+				continue;
+			}
+			$real = realpath( $path );
+			if ( false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) ) {
+				return self::error( 'spdb_export_cleanup_path_invalid', __( 'An expired export artifact failed private-path containment.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			if ( $verify_only ) {
+				return self::error( 'spdb_export_cleanup_verification_failed', __( 'An expired export artifact remains after cleanup.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			if ( ! unlink( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Only remove validated expired File23 ciphertext path.
+				return self::error( 'spdb_export_cleanup_delete_failed', __( 'An expired export file could not be deleted.', 'sabri-publishing-dashboard' ), 500 );
+			}
+			++$deleted;
+		}
+		return array(
+			'deleted' => $deleted,
+			'next_cursor' => $cursor,
+			'done' => count( $rows ) < $limit,
+		);
+	}
+
+	/**
 	 * Bounded owner-specific ciphertext erasure or independent verification.
 	 *
 	 * Unlike the legacy one-call method, this returns a server-owned
