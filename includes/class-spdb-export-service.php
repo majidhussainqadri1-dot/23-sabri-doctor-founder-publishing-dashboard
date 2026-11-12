@@ -278,41 +278,82 @@ final class SPDB_Export_Service {
 		return $deleted;
 	}
 
-	/** Remove generated temporary export files owned by one user. */
-	public function erase_user_files( int $user_id ): int {
+	/**
+	 * Erase generated ciphertext files for exactly one owner, before the
+	 * corresponding metadata is removed by the WordPress privacy eraser.
+	 *
+	 * Returning zero for a storage/DB/delete failure is unsafe: the caller
+	 * would erase the only remaining reference to an orphaned ciphertext.
+	 * Never delete metadata unless this enumeration completed successfully.
+	 *
+	 * @return int|WP_Error
+	 */
+	public function erase_user_files( int $user_id ) {
 		if ( $user_id < 1 ) {
-			return 0;
+			return self::error( 'spdb_export_erase_user_invalid', __( 'The export erasure account is invalid.', 'sabri-publishing-dashboard' ), 400 );
 		}
 		$directory = $this->private_directory();
 		if ( is_wp_error( $directory ) ) {
-			return 0;
+			return self::error( 'spdb_export_erase_storage_unavailable', __( 'Private export storage could not be inspected for erasure.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$real_dir = realpath( $directory );
+		if ( false === $real_dir ) {
+			return self::error( 'spdb_export_erase_storage_unavailable', __( 'Private export storage could not be resolved for erasure.', 'sabri-publishing-dashboard' ), 500 );
 		}
 		global $wpdb;
-		$table   = SPDB_Operations_Schema::table( 'export_jobs' );
-		$deleted = 0;
-		$cursor  = 0;
+		$table    = SPDB_Operations_Schema::table( 'export_jobs' );
+		$deleted  = 0;
+		$cursor   = 0;
+		$finished = false;
 		for ( $batch = 0; $batch < 100; ++$batch ) {
 			$rows = $wpdb->get_results(
 				$wpdb->prepare( "SELECT id, storage_ref FROM {$table} WHERE owner_user_id = %d AND id > %d ORDER BY id ASC LIMIT 200", $user_id, $cursor ),
 				defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
 			);
-			if ( ! is_array( $rows ) || ! $rows ) {
+			if ( ! is_array( $rows ) ) {
+				return self::error( 'spdb_export_erase_read_failed', __( 'Private export metadata could not be inspected for erasure.', 'sabri-publishing-dashboard' ), 500 );
+			}
+			if ( ! $rows ) {
+				$finished = true;
 				break;
 			}
 			foreach ( $rows as $row ) {
-				$cursor   = max( $cursor, (int) ( $row['id'] ?? 0 ) );
-				$filename = basename( (string) ( $row['storage_ref'] ?? '' ) );
-				if ( '' === $filename || 1 !== preg_match( '/^export_[a-z0-9]{32}\.spdb$/', $filename ) ) {
+				$id = (int) ( $row['id'] ?? 0 );
+				if ( $id <= $cursor ) {
+					return self::error( 'spdb_export_erase_cursor_invalid', __( 'Private export metadata could not be enumerated safely.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				$cursor = $id;
+				$storage_ref = (string) ( $row['storage_ref'] ?? '' );
+				// Empty reference means a queued/failed export has no artifact.
+				if ( '' === $storage_ref ) {
 					continue;
 				}
-				$path = trailingslashit( $directory ) . $filename;
-				if ( is_file( $path ) && unlink( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Deleting File 23-owned encrypted temporary export only.
-					++$deleted;
+				if ( 1 !== preg_match( '/^export_[a-z0-9]{32}\\.spdb$/', $storage_ref ) ) {
+					return self::error( 'spdb_export_erase_reference_invalid', __( 'Private export storage has an invalid reference.', 'sabri-publishing-dashboard' ), 409 );
 				}
+				$path = trailingslashit( $directory ) . $storage_ref;
+				if ( is_link( $path ) ) {
+					return self::error( 'spdb_export_erase_path_invalid', __( 'A private export artifact failed containment verification.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				if ( ! file_exists( $path ) ) {
+					continue;
+				}
+				$real = realpath( $path );
+				if ( false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) ) {
+					return self::error( 'spdb_export_erase_path_invalid', __( 'A private export artifact failed containment verification.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				if ( ! unlink( $real ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Erase a verified File 23-owned encrypted export.
+					return self::error( 'spdb_export_erase_delete_failed', __( 'Private export deletion failed; metadata erasure is deferred for retry.', 'sabri-publishing-dashboard' ), 500 );
+				}
+				++$deleted;
 			}
 			if ( count( $rows ) < 200 ) {
+				$finished = true;
 				break;
 			}
+		}
+		if ( ! $finished ) {
+			return self::error( 'spdb_export_erase_batch_incomplete', __( 'Private export erasure reached its safe batch limit and requires another pass before metadata deletion.', 'sabri-publishing-dashboard' ), 409 );
 		}
 		return $deleted;
 	}
