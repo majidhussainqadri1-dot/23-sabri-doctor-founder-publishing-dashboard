@@ -26,6 +26,17 @@ function trailingslashit( string $path ): string { return rtrim( $path, '/\\' ) 
 
 class SPDB_Privacy_Progress_DB {
 	public array $rows = array();
+	public bool $lock_busy = false;
+	public int $lock_depth = 0;
+	public function get_var( string $sql ) {
+		if ( str_contains( $sql, 'GET_LOCK' ) ) {
+			if ( $this->lock_busy || $this->lock_depth > 0 ) { return '0'; }
+			++$this->lock_depth;
+			return '1';
+		}
+		if ( str_contains( $sql, 'RELEASE_LOCK' ) ) { --$this->lock_depth; return '1'; }
+		return null;
+	}
 	public int $current_owner = 0;
 	public int $cursor = 0;
 	public int $limit = 0;
