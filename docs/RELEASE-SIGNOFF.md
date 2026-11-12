@@ -47,6 +47,16 @@ This form must remain **Pending** until every required evidence field is complet
 - [ ] Deterministic installable/source packages and checksums generated from the exact accepted repository head.
 - [ ] Zero unresolved repository blocker/critical defects; any residual risk explicitly documented.
 
+## WP-12 V12.1 large-volume source QA and staging acceptance gates
+
+- [ ] Source HEAD, SHA, CI and **two independent external reviews** of the final WP-12 implementation recorded; internal A/B review passes do not substitute for external approval.
+- [ ] Live Hostinger/MySQL staging clone with >20,001 synthetic encrypted export rows proves that repeated WordPress privacy erasure pages resume with owner-specific signed checkpoints, DELETE/VERIFY passes and metadata deletion only at the end.
+- [ ] Repeated and concurrent eraser requests, forged cursor, missing/modified HMAC, missing File00 authorization, MySQL GET_LOCK contention, unavailable SQL/filesystem and malicious symlink produce fail-closed outcomes with recoverable owner records.
+- [ ] Export generators that have already rendered content may not publish ciphertext after an owner's privacy erasure starts; test critical-section locking and current owner/job reauthorization with genuine concurrent PHP workers.
+- [ ] Retention job chain survives >20,001 rows, missed cron, retries, idempotent requeue, exception, dead-letter and backup/restore; frozen cutoff **and max SQL row ID** prevent later inserted rows (even earlier-expired ones) entering old deletion work.
+- [ ] Real DB query plan, lock latency, 10k+ performance, backup/restore of old progress options, private-file HTTP denial through Hostinger/CDN and durable audit reviewed; attached dated test evidence required.
+- [ ] File23 issue #31 not closed from source CI alone; File20/#45 and File23/#30 deployed artifact parity still pending.
+
 ## Staging / deployment acceptance evidence
 
 - [ ] Exact package/checksum installed; deployed-source parity verified.
