@@ -5,6 +5,7 @@
  * This tests File23 source behavior only, not Hostinger path hardening.
  */
 require_once __DIR__ . '/bootstrap.php';
+function trailingslashit( string $path ): string { return rtrim( $path, '/\\\\' ) . '/'; }
 
 $tests = 0; $failed = 0;
 $assert = static function ( bool $pass, string $message ) use ( &$tests, &$failed ): void {
