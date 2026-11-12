@@ -49,6 +49,8 @@ This form must remain **Pending** until every required evidence field is complet
 ## Staging / deployment acceptance evidence
 
 - [ ] Exact package/checksum installed; deployed-source parity verified.
+- [ ] Direct unauthenticated access to File 23 private export ciphertext URLs is denied by the actual Hostinger origin and any CDN/proxy (do not infer from .htaccess contents).
+- [ ] Same-version package/code replacement invalidates acceptance unless a trusted exact deployed-code attestation and DB/migration parity remain verified (see issue #30).
 - [ ] Fresh install and supported upgrades pass; migration state verified.
 - [ ] Founder/Doctor/Teacher/Admin/Reviewer/Pending/Suspended journeys pass for roles/capabilities actually present.
 - [ ] File 19/20/21/22/24/25/26 and required companion integrations pass with real plugins.
