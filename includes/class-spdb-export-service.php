@@ -149,6 +149,11 @@ final class SPDB_Export_Service {
 		if ( is_wp_error( $sealed ) ) {
 			return $this->fail_processing( $export_id, $sealed );
 		}
+		// A job can expire while the provider is rendering; do not write
+		// new ciphertext for an already expired retention-bound export.
+		if ( '' !== $job['expires_at_gmt'] && strtotime( $job['expires_at_gmt'] . ' UTC' ) <= time() ) {
+			return $this->fail_processing( $export_id, self::error( 'spdb_export_expired', __( 'The export expired before its file could be written.', 'sabri-publishing-dashboard' ), 410 ) );
+		}
 		// An erasure can begin while a queued job is rendering. Re-check
 		// the durable owner lock immediately before any ciphertext write.
 		if ( self::privacy_erasure_pending( $owner_user_id ) ) {
@@ -165,6 +170,10 @@ final class SPDB_Export_Service {
 		if ( self::privacy_erasure_pending( $owner_user_id ) ) {
 			@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Prevent new ciphertext while erasure is pending.
 			return $this->fail_processing( $export_id, self::error( 'spdb_export_erasure_pending', __( 'Owner privacy erasure blocks export generation.', 'sabri-publishing-dashboard' ), 409 ) );
+		}
+		if ( '' !== $job['expires_at_gmt'] && strtotime( $job['expires_at_gmt'] . ' UTC' ) <= time() ) {
+			@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Prevent a late-generated expired ciphertext.
+			return $this->fail_processing( $export_id, self::error( 'spdb_export_expired', __( 'The export expired while generating its private file.', 'sabri-publishing-dashboard' ), 410 ) );
 		}
 		$hash = hash_file( 'sha256', $path );
 		if ( ! is_string( $hash ) || 64 !== strlen( $hash ) ) {
