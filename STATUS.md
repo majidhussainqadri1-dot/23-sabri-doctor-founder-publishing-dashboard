@@ -77,6 +77,21 @@ Until those external gates pass, File 23 is **not staging-accepted, live-deploye
 - See `docs/V12.1-FILE23-SECURITY-RECONCILIATION-2026-11-12.md`, `docs/AUDIT-V12.1-SOURCE-REVIEWS-2026-11-12.md` and updated limitations/sign-off.
 - No `main` merge or live deployment is implied.
 
+## 2026-11-12 — V12.1 follow-up: verified coding defects, fixes and owners
+
+**This is a new chronological checkpoint**. Historical August reviews and earlier 12 November checkpoints above are retained as dated statements, not rewritten as today's reality.
+
+- In this working session, **3 newly proven File23 source defects** were found and corrected on Draft PR #29: `V12.1-STO09-ERASE-01` (private export erasure silently continuing after failed file/DB cleanup), `V12.1-STO05-EXPORT-02` (existing ciphertext/symlink overwrite), and `V12.1-STO09-EXPIRED-03` (resolved symlink target could be unlinked; truncated 20k expiry traversal could report success).
+- Counting the earlier `V12.1-GUARD-01` correction, **4 targeted source-level corrections are in Draft PR #29**. These are *repository candidate* corrections; actual live incidents/fixes are **not confirmed**.
+- New executable suites: `tests/v12-1-personal-erasure-safety-tests.php`, `tests/v12-1-export-exclusive-write-tests.php`, `tests/v12-1-expired-export-retention-tests.php`. Historical continuity gate adjusted to demand encrypt-before-exclusive-write instead of demanding the vulnerable `file_put_contents`.
+- Exact source/test checkpoint for the 3 new corrections: `7ce22a488129d5cbb76be4d540ab5a3ae0494468`. Revalidate **final HEAD** after any documentation-only changes.
+- Testing-only defects/obsolete assertions found during QA are counted separately from production source defects. CI failures were investigated from exact job logs and corrective tests rerun; no historical green run is assumed applicable after changes.
+- Two/three different-scope source review passes are documented, **not represented as two independent external reviewers**: `docs/AUDIT-V12.1-STORAGE-EXPORT-REVIEW-2026-11-12.md`.
+- Real File20 owner attestation is still a separate external release gate. Handoff: File20 issue #45, linked to File23 issue #30. **Neither the host attestor nor production parity is certified by these source changes.**
+- Plan + 128-unit census: `docs/FILE23-V12.1-CODING-GAP-BACKLOG-2026-11-12.md`; real Hostinger stages and File00/02/20/24/CF04 owners still require measured contract evidence.
+- Known staging/live release limitations remain `F23-LIM-001..013`. Do not count all 13 as code defects or report a fictitious site-wide defect total.
+- **Decision:** keep PR #29 Draft, leave PR #26/main unmerged, no deployed code claim. Release still requires fresh independent reviews, source package checksum, verified DB/migrations, Hostinger private-URL denial, real-role journey, restore/rollback and Founder sign-off.
+
 ## Live-reality register
 
 - Repository candidate: Version `1.3.0` on the branch above; exact final SHA must be recorded after the last code/review change.
