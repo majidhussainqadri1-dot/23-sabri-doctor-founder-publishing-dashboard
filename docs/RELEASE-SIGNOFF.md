@@ -5,9 +5,9 @@ This form must remain **Pending** until every required evidence field is complet
 ## Artifact identity
 
 - Release version: `1.3.0`
-- Governing plan revision represented: `2026-08-10`
+- Governing plan revision represented: **baseline `2026-08-10` + V12.1 amendment dated `2026-11-10` (source consumer mapping, not live acceptance)**
 - Exact Git head: ________________________________
-- Base/main head reviewed: `a8a8c805f4730998ccb44bd95c87591836561759`
+- Source baseline main (12 Nov 2026): `dcae138e6073f4d0ff596623deb05b9940b8271b`; parent PR #26 head: `df59cb2be8c1a69dc3539bc7e0a58d5d79125ac3`; re-verify before sign-off
 - Installable ZIP: `23-sabri-doctor-founder-publishing-dashboard-1.3.0.zip`
 - Installable ZIP SHA-256: _________________________
 - Complete-source ZIP: `23-Doctor-Founder-Publishing-Dashboard-Source-1.3.0.zip`
@@ -56,6 +56,10 @@ This form must remain **Pending** until every required evidence field is complet
 - [ ] File 19/20/21/22/24/25/26 and required companion integrations pass with real plugins.
 - [ ] File 26 remains Search/Discovery/Ranking owner; no File 23 duplicate search/ranking backend exists.
 - [ ] IDOR/CSRF/replay/concurrency/export/privacy/security negative tests pass.
+- [ ] V12.1-STO-09: File 23 personal privacy erasure **retains export metadata** on storage/DB/invalid-reference/unlink/partial-batch failure; all deleted artifacts are confirmed before owner records are removed. Test real Hostinger permission failures and idempotent retries.
+- [ ] V12.1-STO-09: expired export retention rejects symlinks and malformed references; never unlinks another owner's resolved target; never purges metadata on truncated 20,000-row cleanup.
+- [ ] V12.1-STO-05/07: report ciphertext generated only after AES-GCM seal, created exclusively (no overwrite/symlink follow), chmod 0600 and checked for real-path containment; failed/retried jobs and interrupted artifacts have an operational reconciliation plan.
+- [ ] Owner File20/Hostinger deployment attestor contract is independently implemented and tested (File20 issue #45, File23 issue #30); zero accepted staging state without real versioned source/package/schema/migration parity.
 - [ ] LiteSpeed cross-user cache isolation passes.
 - [ ] Mobile/tablet/desktop, RTL/LTR, keyboard, screen-reader, 200% zoom, contrast, reduced-motion and low-bandwidth tests pass.
 - [ ] Real 10,000+ object performance/SLO evidence is accepted.
@@ -77,6 +81,8 @@ This form must remain **Pending** until every required evidence field is complet
 - Security/privacy review: _________________________
 - Fresh Review A: _________________________________
 - Fresh Review B: _________________________________
+- V12.1 source Review A/B/C (same-author passes, not independent approvals): `docs/AUDIT-V12.1-STORAGE-EXPORT-REVIEW-2026-11-12.md`
+- Independent post-change external reviews (two): **PENDING**
 - Defect register and retests: ______________________
 - Historical forty-round audit: `docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md`
 - Current eighty-round audit: `docs/AUDIT-80-ROUND-REVIEW-AND-CORRECTIONS-2026-08-10.md`
