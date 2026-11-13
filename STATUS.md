@@ -112,6 +112,13 @@ Until those external gates pass, File 23 is **not staging-accepted, live-deploye
 - **Open release dependencies:** File23 #30 / File20 #45 (trusted exact deployed-byte/schema/migration attestor); File23 #31 (real 20,001+ Hostinger personal erasure/retention, backup, concurrency and Cron); 13 prior operational limits and staging/live WP-14/15.
 - **Release decision:** Version 1.3.0 candidate is source-coded, packaged and GitHub-QA green within the reviewed scope. Draft PR #29 and parent PR #26 remain unmerged. **No staging acceptance, deployment, DB change, live smoke, parity confirmation or permission for a production rollout** is claimed.
 
+## 13 November 2026 — Latest source review: eighth source-level identity defect corrected
+
+- **V12.1-PORTABILITY-CONTRIBUTOR-08:** The previous WordPress personal-data export authorization check used `array_map('intval', contributors)` on institutional parent collection and item metadata. `"7spoof"` would convert to integer 7 and could wrongly authorize a different user's export. Both checks now require strict JSON integer identity `in_array($user_id, contributors, true)`.
+- New synthetic negative tests in `tests/v12-1-privacy-collection-export-pagination-tests.php` cover unauthorized foreign parent + item when contributor is `"7spoof"`. That suite now has **6,130 assertions**; all **6 new source regression suites total 6,184** assertions, plus two prior negative operator-probe tests. Historical seven-defect section below represents an earlier checkpoint, not the latest total.
+- **Current working tally: 8 confirmed File23 source-level issues and 8 source candidate fixes** this session; staging/live fixes 0 verified; remaining blockers #30/#45 attestor and #31 real Hostinger DB/large-volume integration, 10 external integration contracts, 13 known limits, two independent external reviews, Founder staging approval and live re-test.
+- Candidate PR #29 remains Draft, parent #26 and main unmerged. Exact final HEAD CI must be refreshed after this status update; archive digest is source evidence and not installed deployed bytes. No Hostinger DB or site change occurred.
+
 ## 13 November 2026 — Current final-source review: seven new defects and their regression coverage
 
 - **7 source defects confirmed and addressed in this work session**, combining the five privacy/retention/portability corrections below with (6) File23 Collections Schema same-version implicit auto-repair drift and (7) preferences SQL error wrongly treated as absent during WordPress privacy portability.
