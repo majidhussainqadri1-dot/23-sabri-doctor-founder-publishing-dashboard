@@ -1264,8 +1264,15 @@ final class SPDB_Operations_Repository {
 	 */
 	public function privacy_export( int $user_id, int $page = 1, int $per_page = 100 ) {
 		global $wpdb;
-		$page     = min( 10000, max( 1, $page ) );
+		$page     = max( 1, $page );
 		$per_page = min( 200, max( 1, $per_page ) );
+		// WordPress personal-data portability is not a UI list with a fixed
+		// 10,000-page horizon. Clamping page 10,001 to 10,000 can make core
+		// repeat/export the same records forever when the previous page
+		// remains full. Reject only a mathematically unrepresentable offset.
+		if ( $page - 1 > intdiv( PHP_INT_MAX, $per_page ) ) {
+			return self::error( 'spdb_privacy_page_overflow', __( 'The requested privacy export page is outside the safe database offset range.', 'sabri-publishing-dashboard' ), 400 );
+		}
 		$offset   = ( $page - 1 ) * $per_page;
 
 		$tasks = $this->list_tasks( $user_id, false, $page, $per_page );
