@@ -1597,7 +1597,7 @@ final class SPDB_Operations_Repository {
 		$collections = array_values( array_filter( $raw, static function ( array $row ) use ( $user_id ): bool {
 			if ( (int) ( $row['owner_user_id'] ?? 0 ) === $user_id ) { return true; }
 			$contributors = self::decode_object( $row['contributors_json'] ?? '' );
-			return in_array( $user_id, array_map( 'intval', $contributors ), true );
+			return in_array( $user_id, $contributors, true );
 		} ) );
 		// Item pointers are a separate bounded privacy-export stream. The
 		// previous LIMIT 5000 was scoped to each page of collections: one
@@ -1617,7 +1617,7 @@ final class SPDB_Operations_Repository {
 		foreach ( $raw_items as $item ) {
 			$parent_owner = (int) ( $item['parent_owner_user_id'] ?? 0 );
 			$contributors = self::decode_object( $item['parent_contributors_json'] ?? '' );
-			if ( $parent_owner !== $user_id && ! in_array( $user_id, array_map( 'intval', $contributors ), true ) ) {
+			if ( $parent_owner !== $user_id && ! in_array( $user_id, $contributors, true ) ) {
 				continue; // Avoid leaking false-positive SQL LIKE hits (7 versus 17).
 			}
 			unset( $item['parent_owner_user_id'], $item['parent_contributors_json'] );
