@@ -66,6 +66,14 @@ if ( is_string( $pdf ) ) {
 				? Normalizer::normalize( $text, Normalizer::FORM_KC )
 				: false;
 			$assert( is_string( $normalized ) && str_contains( $normalized, 'السلام' ), 'Real generated PDF preserves Arabic text after presentation-form normalization.' );
+			$assert( is_string( $normalized ) && str_contains( $normalized, 'کتاب' ), 'Real generated PDF also retains joined Urdu letters after NFKC normalization.' );
+			$info = shell_exec( 'pdfinfo ' . escapeshellarg( $raw ) . ' 2>/dev/null' );
+			$assert( is_string( $info ) && (bool) preg_match( '/^Pages:\\s*([2-9]|[1-9][0-9]+)$/m', $info ), 'Real complete 125-row PDF spans multiple valid pages.' );
+			$font_tool = trim( (string) shell_exec( 'command -v pdffonts' ) );
+			$font_table = '' !== $font_tool
+				? shell_exec( escapeshellarg( $font_tool ) . ' ' . escapeshellarg( $raw ) . ' 2>/dev/null' )
+				: false;
+			$assert( is_string( $font_table ) && (bool) preg_match( '/\\s+yes\\s+yes\\s+yes\\s+\\d+\\s+\\d+/', $font_table ), 'Actual Unicode PDF includes embedded and subsetted fonts with ToUnicode mapping.' );
 			$assert( is_string( $text ) && ! str_contains( $text, '???' ), 'Urdu/Arabic is not replaced by the old ASCII question-mark fallback.' );
 		} else {
 			if ( '1' === getenv( 'FILE23_REQUIRE_PDF_TEXT_EXTRACT' ) ) {
