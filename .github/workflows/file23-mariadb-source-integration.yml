@@ -1,0 +1,49 @@
+name: File23 V12.1 Real MariaDB Source Integration
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: file23-mariadb-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  synthetic-owner-erasure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: file23_ci_only
+          MARIADB_ROOT_HOST: '%'
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysqli, mbstring, gd, intl
+          coverage: none
+      - name: Verify disposable MariaDB source erasure, exact owner and InnoDB rollback
+        shell: bash
+        env:
+          FILE23_TEST_MARIADB: '1'
+          FILE23_TEST_DB_PASSWORD: file23_ci_only
+        run: |
+          set -euo pipefail
+          php -l tests/v12-1-mariadb-private-erasure-integration.php
+          php -d display_errors=1 -d error_reporting=E_ALL tests/v12-1-mariadb-private-erasure-integration.php
