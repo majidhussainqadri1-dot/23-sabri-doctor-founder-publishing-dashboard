@@ -26,7 +26,7 @@ class SPDB_Expiry_Progress_DB {
 		$found = array();
 		foreach ( $this->rows as $row ) {
 			if ( $row['expires_at_gmt'] <= $this->cutoff && $row['id'] > $this->cursor ) {
-				$found[] = array( 'id' => $row['id'], 'storage_ref' => $row['storage_ref'], 'status' => $row['status'] );
+				$found[] = array( 'id' => $row['id'], 'storage_ref' => $row['storage_ref'], 'export_id' => '' !== $row['storage_ref'] ? substr( $row['storage_ref'], 0, -5 ) : 'export_' . str_repeat( '0', 32 ), 'status' => $row['status'] );
 			}
 			if ( count( $found ) >= $this->limit ) { break; }
 		}
