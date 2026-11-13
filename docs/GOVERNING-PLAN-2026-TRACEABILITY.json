@@ -291,7 +291,10 @@
           "includes/class-spdb-export-service.php",
           "tests/v12-1-export-guard-integrity-tests.php",
           "tests/v12-1-strict-private-download-path-tests.php",
-          "docs/AUDIT-V12.1-FILE23-SOURCE-REVIEWS-2026-11-13.md"
+          "tests/v12-1-private-storage-directory-binding-tests.php",
+          "tests/v12-1-export-artifact-id-binding-tests.php",
+          "docs/AUDIT-V12.1-FILE23-SOURCE-REVIEWS-2026-11-13.md",
+          "docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md"
         ],
         "source_status": "source-reviewed-hosting-unverified",
         "staging_acceptance": "pending",
@@ -320,7 +323,10 @@
           "includes/class-spdb-privacy-integration.php",
           "tests/v12-1-retention-proof-boundary-tests.php",
           "tests/v12-1-institutional-privacy-pagination-tests.php",
-          "docs/AUDIT-V12.1-FILE23-PRIVACY-RETENTION-2026-11-13.md"
+          "tests/v12-1-export-artifact-id-binding-tests.php",
+          "tests/v12-1-privacy-deep-page-tests.php",
+          "docs/AUDIT-V12.1-FILE23-PRIVACY-RETENTION-2026-11-13.md",
+          "docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md"
         ],
         "source_status": "source-reviewed-hosting-unverified",
         "staging_acceptance": "pending",
