@@ -57,6 +57,21 @@ This form must remain **Pending** until every required evidence field is complet
 - [ ] Real DB query plan, lock latency, 10k+ performance, backup/restore of old progress options, private-file HTTP denial through Hostinger/CDN and durable audit reviewed; attached dated test evidence required.
 - [ ] File23 issue #31 not closed from source CI alone; File20/#45 and File23/#30 deployed artifact parity still pending.
 
+## 13 November 2026 — Additional V12.1 WP-00/STO-07/schema validation gates
+
+- [ ] Source exact final SHA passes all new `tests/v12-1-strict-private-download-path-tests.php`, `tests/v12-1-readonly-host-evidence-tests.php`, and `tests/v12-1-operations-schema-structure-tests.php` on PHP 8.0–8.3 where offered, **after** all follow-up commits.
+- [ ] Strict private ciphertext download resolves only `export_ID.spdb` for that exact authorized job, refuses raw path normalization, malformed hash and same-directory symlinks, and refuses corrupted or missing bytes.
+- [ ] All **ten operations tables** have actually measured required columns and indexes, not merely name/InnoDB/version-option equality. `SPDB_Operations_Schema::requirements()` must match current install DDL.
+- [ ] Same-version recorded schema drift does **not** silently execute dbDelta on unrelated admin requests; exact deployed state/database snapshot preserved before any authorized migration repair.
+- [ ] File23 read-only operator tool `tools/file23-readonly-host-evidence.php` is executed under authenticated **staging WP-CLI** only, not through HTTP; the output is stored privately with source helper checksum and operator identity.
+- [ ] Measured installed tree fingerprint from the operator tool is independently compared with the **exact approved installable ZIP extraction** using the same relative-path+size+SHA-256 algorithm. Tool output `is_attestation=false` is not promoted to a verified attestation by assumption.
+- [ ] Real DB tables/columns/indexes/type/collation, schema versions `1.1.0`/`4`, migration row state and deployment package match the File20 trusted measured provider; partial/failed migration blocks stage acceptance.
+- [ ] Direct Hostinger **origin and CDN** unauthenticated GET and HEAD for synthetic ciphertext return 403/404 and no bytes; URL revocation, per-user cache and permission reversal are separately recorded.
+- [ ] Two genuinely independent post-source reviews and Founder approval are attached. Internal analytical A/B notes are **not** a substitute.
+- [ ] File23 #30 and File20 #45 remain unresolved until real trusted owner-attestation implementation, staging/live exact-byte parity and Founder sign-off; File23 #31 remains unresolved until real 20k+ staging/restore proof.
+
+**Source handoffs:** `docs/AUDIT-V12.1-FILE23-SOURCE-REVIEWS-2026-11-13.md` and `docs/V12.1-FILE23-HOSTINGER-READONLY-PARITY-HANDOFF-2026-11-13.md`. These source files do not prove that a disconnected Jetpack site or an unconnected WPVibe account has access to deployed plugin bytes.
+
 ## Staging / deployment acceptance evidence
 
 - [ ] Exact package/checksum installed; deployed-source parity verified.
