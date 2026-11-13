@@ -45,3 +45,14 @@ Added `tests/v12-1-mariadb-private-erasure-integration.php`, run in a **disposab
 | Merge / deploy / live retest | **NONE** |
 
 **NO-GO for production:** Source tests and the GitHub artifact cannot certify the live Hostinger installed state. Exact deployed code ابھی unverified ہے؛ repository-based diagnosis provisional ہے.
+
+## 6. Locked PDF runtime supply-chain check (source CI only)
+
+New `.github/workflows/file23-pdf-supply-chain-audit.yml` runs on the Draft PR. It validates `composer.json` against the frozen `composer.lock`, installs **only locked production packages** under PHP 8.0 (no Composer plugins or scripts), checks required PHP extensions and bundled license/Unicode font files, then runs `composer audit --locked --no-interaction --format=plain`. **GitHub workflow #1 SUCCESS at source HEAD `d35ce45af5e8d39b938b2526441a94fa9a5cf1b8`**, and Composer reported **"No security vulnerability advisories found."** This is a current source-dependency advisory check, NOT an independent license legal opinion, font-license acceptance, automatic remediation, or assurance that future advisories cannot emerge. Real Hostinger plugin runtime and WordPress+edge controls remain unverified.
+
+## 7. Evidence boundary: what source success does not close
+
+The mPDF embedded Unicode/RTL source candidate addresses the original 120-row/5-column/ASCII source defect, but File23 **Issue #32 remains OPEN** until authorized Hostinger staging passes actual PDF-vs-CSV/JSON completeness, real Urdu/Arabic visual/copy-paste, under-load memory/CPU, owner/MFA/current roles, private origin+CDN access denial, font/license checks and independent Founder sign-off.
+
+The disposable MariaDB **566 checks** do not certify File23 **Issue #31** real 20,001+ WordPress Cron continuation/interruptions, backup restoration, database schema/migration, or File20 actual installed-byte attestation. File23 **Issue #30** and File20 **#45** remain OPEN. All release acceptance statuses must stay pending until live evidence is independently verified.
+
