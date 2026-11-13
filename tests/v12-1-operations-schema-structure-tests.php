@@ -92,5 +92,15 @@ $check_code( SPDB_Operations_Schema::verify(), 'spdb_operations_table_not_transa
 $GLOBALS['wpdb']->bad_engine = '';
 $GLOBALS['wpdb']->missing_table = 'wp_test_spdb_export_jobs';
 $check_code( SPDB_Operations_Schema::verify(), 'spdb_operations_table_missing' );
+// A same-version partial migration is drift, not permission to run an
+// automatic invasive dbDelta repair on an unrelated admin_init request.
+$GLOBALS['spdb_test_options']['spdb_operations_schema_version'] = SPDB_Operations_Schema::VERSION;
+$GLOBALS['wpdb']->missing_table = '';
+$GLOBALS['wpdb']->missing_column = 'storage_ref';
+$check_code( SPDB_Operations_Schema::maybe_upgrade(), 'spdb_operations_schema_drift' );
+$GLOBALS['wpdb']->missing_column = '';
+$assert( true === SPDB_Operations_Schema::maybe_upgrade(), 'Same-version verified schema needs no automatic migration.' );
+unset( $GLOBALS['spdb_test_options']['spdb_operations_schema_version'] );
+
 if ( $failed ) { fwrite( STDERR, "{$failed} of {$tests} V12.1 structural schema tests failed.\n" ); exit( 1 ); }
 echo "All {$tests} V12.1 structural schema tests passed.\n";
