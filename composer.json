@@ -1,0 +1,21 @@
+{
+    "name": "sabri/file23-pdf-runtime",
+    "description": "Pinned UTF-8 and RTL PDF runtime for File 23 reports",
+    "type": "project",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": "^8.0",
+        "ext-gd": "*",
+        "ext-mbstring": "*",
+        "mpdf/mpdf": "^8.2.6"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": false,
+        "platform": {
+            "php": "8.0.30"
+        }
+    },
+    "prefer-stable": true,
+    "minimum-stability": "stable"
+}
