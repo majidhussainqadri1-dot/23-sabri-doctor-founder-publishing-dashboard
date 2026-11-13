@@ -1362,15 +1362,14 @@ final class SPDB_Operations_Repository {
 				$collections_table = SPDB_Collections_Schema::collections_table();
 				$items_table       = SPDB_Collections_Schema::items_table();
 				$links_table       = SPDB_Collections_Schema::links_table();
-				$own_ids = $wpdb->get_col( $wpdb->prepare( "SELECT collection_id FROM {$collections_table} WHERE scope = 'own' AND owner_user_id = %d", $user_id ) );
-				if ( ! is_array( $own_ids ) ) { return self::error( 'spdb_privacy_collection_read_failed', __( 'Personal collections could not be inspected.', 'sabri-publishing-dashboard' ), 500 ); }
-				$own_ids = array_values( array_filter( array_map( 'strval', $own_ids ) ) );
-				if ( $own_ids ) {
-					$placeholders = implode( ',', array_fill( 0, count( $own_ids ), '%s' ) );
-					$result = $wpdb->query( $wpdb->prepare( "DELETE FROM {$items_table} WHERE collection_id IN ({$placeholders})", ...$own_ids ) );
-					if ( false === $result ) { return self::error( 'spdb_privacy_collection_erase_failed', __( 'Personal collection items could not be erased.', 'sabri-publishing-dashboard' ), 500 ); }
-					$deleted += (int) $result;
+				// A single owner/scope-bound relational DELETE avoids loading
+				// every collection ID into PHP and building an unbounded IN list.
+				// The enclosing privacy_erase transaction rolls back on failure.
+				$own_items = $this->erase_owned_collection_items( $user_id );
+				if ( is_wp_error( $own_items ) ) {
+					return $own_items;
 				}
+				$deleted += $own_items;
 				$result = $wpdb->query( $wpdb->prepare( "DELETE FROM {$collections_table} WHERE scope = 'own' AND owner_user_id = %d", $user_id ) );
 				if ( false === $result ) { return self::error( 'spdb_privacy_collection_erase_failed', __( 'Personal collections could not be erased.', 'sabri-publishing-dashboard' ), 500 ); }
 				$deleted += (int) $result;
@@ -1395,6 +1394,35 @@ final class SPDB_Operations_Repository {
 			},
 			'privacy_erase'
 		);
+	}
+
+	/**
+	 * Set-based erasure of the canonical File23 collection-item pointers that
+	 * belong to this user's own-scope collections. No external content or
+	 * cross-owner/institutional rows may be deleted by this helper.
+	 *
+	 * This must be called within the parent's InnoDB privacy transaction.
+	 *
+	 * @return int|WP_Error
+	 */
+	private function erase_owned_collection_items( int $user_id ) {
+		if ( $user_id < 1 ) {
+			return self::error( 'spdb_privacy_user_invalid', __( 'The privacy-erasure owner is invalid.', 'sabri-publishing-dashboard' ), 400 );
+		}
+		global $wpdb;
+		$items = SPDB_Collections_Schema::items_table();
+		$collections = SPDB_Collections_Schema::collections_table();
+		if ( 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $items ) || 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $collections ) ) {
+			return self::error( 'spdb_privacy_collection_table_invalid', __( 'The File23 collection table identifiers are invalid.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$query = $wpdb->prepare(
+			"DELETE item_rows FROM `{$items}` AS item_rows INNER JOIN `{$collections}` AS own_col ON item_rows.collection_id = own_col.collection_id WHERE own_col.scope = 'own' AND own_col.owner_user_id = %d",
+			$user_id
+		);
+		$result = $wpdb->query( $query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Both table names are strict local schema identifiers, owner bound by prepare().
+		return false === $result
+			? self::error( 'spdb_privacy_collection_erase_failed', __( 'Personal collection items could not be erased.', 'sabri-publishing-dashboard' ), 500 )
+			: (int) $result;
 	}
 
 	/**
