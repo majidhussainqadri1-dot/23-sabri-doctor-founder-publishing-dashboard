@@ -1316,6 +1316,12 @@ final class SPDB_Operations_Repository {
 			return $collection_page;
 		}
 		$preferences     = 1 === $page ? $this->get_preferences( $user_id ) : array();
+		// get_preferences() preserves its ordinary UI contract (missing row
+		// means defaults), but WordPress privacy portability must distinguish
+		// a real SELECT failure from a legitimately absent preferences row.
+		if ( 1 === $page && is_object( $wpdb ) && ! empty( $wpdb->last_error ) ) {
+			return self::error( 'spdb_privacy_preferences_read_failed', __( 'Private dashboard preferences could not be read completely.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$counts = array( count( $tasks ), count( $saved_views ), count( $delegations ), count( $rules ), count( $exports ) );
 		$has_more = in_array( $per_page, $counts, true ) || true === ( $collection_page['has_more'] ?? false );
 
