@@ -128,13 +128,50 @@ try {
 	$assert( $finished && 20001 === $cursor && $checks >= 101, 'Second real-SQL verification pass spans all owner rows.' );
 	$assert( '20002' === (string) $GLOBALS['wpdb']->get_var( 'SELECT COUNT(*) FROM ' . $table ), 'Export metadata is retained until explicit authorized SQL cleanup.' );
 
+	// The expiry-retention path must independently traverse >20k real
+	// rows, delete only expired File23 artifacts and re-verify from zero.
+	file_put_contents( $folder . '/' . $first, 'OWNER7_EXPIRED_1' );
+	file_put_contents( $folder . '/' . $last, 'OWNER7_EXPIRED_20001' );
+	$expiry_cursor = 0; $expiry_pages = 0; $expiry_deleted = 0; $expiry_done = false;
+	do {
+		$step = $service->cleanup_expired_files_page( '2026-07-30 00:00:00', $expiry_cursor, 200, false, 20002 );
+		$assert( is_array( $step ), 'Actual SQL expiry page accepted the frozen cutoff and max row.' );
+		if ( ! is_array( $step ) ) { break; }
+		$expiry_cursor = (int) $step['next_cursor'];
+		$expiry_deleted += (int) $step['deleted'];
+		$expiry_done = true === $step['done'];
+		++$expiry_pages;
+	} while ( ! $expiry_done && $expiry_pages <= 120 );
+	$assert( $expiry_done && 20001 === $expiry_cursor && $expiry_pages >= 101 && 2 === $expiry_deleted, 'Actual MariaDB expiry cleanup spans 20k+ rows and removes two eligible artifacts.' );
+	$assert( 'OWNER8_C' === file_get_contents( $folder . '/' . $other ), 'Future, cross-owner artifact remains after expiry cleanup.' );
+
+	$expiry_cursor = 0; $expiry_verify_pages = 0; $expiry_done = false;
+	do {
+		$step = $service->cleanup_expired_files_page( '2026-07-30 00:00:00', $expiry_cursor, 200, true, 20002 );
+		$assert( is_array( $step ), 'Independent expiry verification page remains read-only.' );
+		if ( ! is_array( $step ) ) { break; }
+		$expiry_cursor = (int) $step['next_cursor'];
+		$expiry_done = true === $step['done'];
+		++$expiry_verify_pages;
+	} while ( ! $expiry_done && $expiry_verify_pages <= 120 );
+	$assert( $expiry_done && 20001 === $expiry_cursor && $expiry_verify_pages >= 101, 'Real MariaDB expiry verification finishes across all 20k+ expired rows.' );
+	$assert( '20002' === (string) $GLOBALS['wpdb']->get_var( 'SELECT COUNT(*) FROM ' . $table ), 'Two expiry passes do not prematurely remove metadata.' );
+
+	$db->query( 'UPDATE ' . $table . " SET status='processing' WHERE id=1" );
+	file_put_contents( $folder . '/' . $first, 'ACTIVE EXPIRED JOB' );
+	$active = $service->cleanup_expired_files_page( '2026-07-30 00:00:00', 0, 200, false, 20002 );
+	$assert( is_wp_error( $active ) && 'spdb_export_cleanup_active_job' === $active->get_error_code(), 'Actual MariaDB expired processing job is retained for retry.' );
+	$assert( 'ACTIVE EXPIRED JOB' === file_get_contents( $folder . '/' . $first ), 'Expired active ciphertext not deleted.' );
+	@unlink( $folder . '/' . $first );
+	$db->query( 'UPDATE ' . $table . " SET status='ready' WHERE id=1" );
+
 	$db->begin_transaction();
 	$db->query( 'DELETE FROM ' . $table . ' WHERE owner_user_id=7' );
 	$assert( '1' === (string) $GLOBALS['wpdb']->get_var( 'SELECT COUNT(*) FROM ' . $table ), 'InnoDB owner-scoped metadata transaction is isolated.' );
 	$db->rollback();
 	$assert( '20002' === (string) $GLOBALS['wpdb']->get_var( 'SELECT COUNT(*) FROM ' . $table ), 'Real InnoDB rollback restores metadata without losses.' );
 	$assert( microtime( true ) - $start < 150, 'CI-only MariaDB test finished within a 150-second safety budget, not a Hostinger performance SLO.' );
-	echo 'MariaDB synthetic rows=20002, erase_pages=' . $pages . ', verify_pages=' . $checks . ', select_queries=' . $GLOBALS['wpdb']->read_count . "\n";
+	echo 'MariaDB synthetic rows=20002, erase_pages=' . $pages . ', verify_pages=' . $checks . ', expiry_pages=' . $expiry_pages . ', expiry_verify_pages=' . $expiry_verify_pages . ', select_queries=' . $GLOBALS['wpdb']->read_count . "\n";
 } finally {
 	$db->query( 'DROP DATABASE IF EXISTS ' . $database );
 	$db->close();
