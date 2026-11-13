@@ -23,7 +23,10 @@ class SPDB_Expired_Test_DB {
 			$first = 200 * ( $this->reads - 1 ) + 1;
 			return array_map( static fn( int $i ): array => array( 'id' => $i, 'storage_ref' => '' ), range( $first, $first + 199 ) );
 		}
-		return $this->rows;
+		return array_map( static function ( array $row ): array {
+			$row['export_id'] = '' !== (string) ( $row['storage_ref'] ?? '' ) ? substr( (string) $row['storage_ref'], 0, -5 ) : 'export_' . str_repeat( '0', 32 );
+			return $row;
+		}, $this->rows );
 	}
 }
 $GLOBALS['wpdb'] = new SPDB_Expired_Test_DB();
