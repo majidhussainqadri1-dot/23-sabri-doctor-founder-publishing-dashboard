@@ -61,11 +61,17 @@ if ( ! is_dir( $folder ) || ! is_file( $entry ) || is_link( $folder ) ) {
 	$entries = array();
 	$iterator = new RecursiveIteratorIterator(
 		new RecursiveDirectoryIterator( $folder, FilesystemIterator::SKIP_DOTS ),
-		RecursiveIteratorIterator::LEAVES_ONLY
+		RecursiveIteratorIterator::SELF_FIRST
 	);
 	$prefix = rtrim( str_replace( '\\', '/', realpath( $folder ) ), '/' ) . '/';
 	foreach ( $iterator as $item ) {
 		$absolute = $item->getPathname();
+		// Visit directory entries as well as files: a symlinked *directory*
+		// must invalidate the fingerprint rather than being skipped as a
+		// non-leaf. Never recurse into linked directories.
+		if ( $item->isDir() && ! $item->isLink() ) {
+			continue;
+		}
 		if ( $item->isLink() || ! $item->isFile() || ! $item->isReadable() ) {
 			++$result['nonregular_file_count'];
 			continue;
