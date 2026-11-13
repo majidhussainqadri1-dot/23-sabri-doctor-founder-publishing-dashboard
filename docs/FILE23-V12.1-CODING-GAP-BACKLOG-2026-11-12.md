@@ -4,6 +4,21 @@
 **حاکم منصوبہ:** «صابری سوشل ہومیوپیتھی پلیٹ فارم — جامع مرکزی ماسٹر پلان V12.1»، ۱۰ نومبر ۲۰۲۶ء، بالخصوص باب ۱۲ (صفحہ ۲۱۹–۲۲۷)۔  
 **اس دستاویز کا کام:** مذکورہ **اسی ۱۶ ورک پیکیجز** والے منصوبے کا قابلِ تجدید، ثبوتی «بقایا کوڈنگ و قبولیت» ضمیمہ۔ پرانا منصوبہ منسوخ یا متوازی مادر منصوبہ نہیں بنتا۔
 
+## ۱۳ نومبر ۲۰۲۶ء — V12.1 اگلی کوڈنگ اور باقی کام کا تازہ رجسٹر
+
+**قابلِ تصدیق source audit:** فائل ۲۳ کے GitHub child Draft PR #29 میں پچھلی source-candidate V1.3.0 حفاظتی و WP-12 اصلاحات کے بعد دو نئی source-level کمزوریاں دریافت ہوئیں:
+
+| شناخت | سورس نقص | نئی اصلاح/ثبوت | بقایا لازمی حقیقت |
+|---|---|---|---|
+| **V12.1-STO07-DOWNLOAD-01** | نجی ciphertext download میں `basename(storage_ref)` اور `realpath` اندرونی same-folder symlink اور mismatched raw reference کو مستقل مسترد نہیں کرتے تھے | `resolve_ciphertext_download_path()`؛ strict job-ID equality، no-symlink، exact SHA، required regular readable file؛ executable regression suite۔ **SHA `487a8165118cefd72ede018d817d63268d99b8be` پر Baseline #1575، Full #626، Final #380 کامیاب** | Hostinger origin/CDN 403/404، حقیقی OS/permissions، cross-user direct URL denial |
+| **V12.1-DB-SHAPE-02** | `SPDB_Operations_Schema::verify()` دس عملی جدولوں کی موجودگی/انجن جانچتا تھا مگر ضروری columns/indexes نہیں؛ جزوی migration درست ظاہر ہوسکتی تھی | تمام ۱۰ CREATE TABLE definitions سے `requirements()`، `SHOW COLUMNS/INDEX`، missing-field/index fail-closed؛ same-version drift پر غیرمنظور admin-init dbDelta بند۔ `v12-1-operations-schema-structure-tests.php` | Exact final-head CI/QA؛ حقیقی Hostinger DB/schema/migration parity اور File20 attestation |
+
+**کامیاب source-only WP-00 پیش رفت:** `tools/file23-readonly-host-evidence.php` نصب شدہ bytes/header/schema/options کی مجاز CLI سے **read-only observation** کے لیے تیار؛ `tests/v12-1-readonly-host-evidence-tests.php` میں byte drift، schema mismatch، symlink/inactive plugin اور false-attestation denial۔ **SHA `25081380d9467322e18edb0df13806788fb86463` پر Baseline #1576، Full #627، Final #381 کامیاب**۔ یہ script File20 trusted attestation provider **نہیں** اور Hostinger پر چلایا **نہیں** گیا۔ اصل site connector (Jetpack) disconnect اور WPVibe site unconnected ہونے سے live-state freeze ابھی blocked ہے۔
+
+**نیا سورس نقائص شمار:** ۲ دریافت؛ ۲ کی اصلاح کا code موجود؛ پہلے source download fix کی CI green؛ DB structural patch کے final SHA کی CI علیحدہ لازم۔ Test-fixture prefix mismatch کو **code defect نہیں** شمار کیا جائے۔ بیرونی روکے ہوئے gates: File23 #30 + File20 #45 (واقعی نصب bytes/schema/migration attestation)، File23 #31 (real 20,001+ Hostinger erasure + expiry)، ۱۰ owner-contract/runtime checks اور ۱۳ known operational limits۔ WP-14/15 staging/live ابھی نامکمل۔
+
+**حوالہ جاتی تفصیل:** `docs/AUDIT-V12.1-FILE23-SOURCE-REVIEWS-2026-11-13.md`، `docs/V12.1-FILE23-HOSTINGER-READONLY-PARITY-HANDOFF-2026-11-13.md`، اور `docs/RELEASE-SIGNOFF.md`۔ پچھلی جدولیں تاریخی frozen snapshots ہیں؛ تازہ حقائق اس حصے سے پڑھے جائیں۔
+
 ## تازہ عملی پیش رفت — ۱۲ نومبر ۲۰۲۶ء، فائل 23 سورس آڈٹ (بعد از ابتدائی رجسٹر)
 
 **اطلاق:** اس رجسٹر کی اصل تاریخی snapshot ذیل میں برقرار ہے۔ یہ حصہ اس کے بعد کے source commits کی تازہ تکمیل اور باقی رکاوٹوں کو شمار کرتا ہے۔ GitHub PR #29 اسی Version 1.3.0 candidate کا Draft child ہے؛ `main`، Hostinger اور DB کو اس رپورٹ سے ہرگز تبدیل شدہ یا verified نہ سمجھیں۔
