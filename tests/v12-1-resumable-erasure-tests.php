@@ -32,7 +32,7 @@ class SPDB_Resumable_Erase_DB {
 		$found = array();
 		foreach ( $this->rows as $row ) {
 			if ( (int) $row['owner_user_id'] === $this->user_id && (int) $row['id'] > $this->after_id ) {
-				$found[] = array( 'id' => (int) $row['id'], 'storage_ref' => (string) $row['storage_ref'] );
+				$found[] = array( 'id' => (int) $row['id'], 'storage_ref' => (string) $row['storage_ref'], 'export_id' => '' !== (string) $row['storage_ref'] ? substr( (string) $row['storage_ref'], 0, -5 ) : 'export_' . str_repeat( '0', 32 ) );
 			}
 			if ( count( $found ) >= $this->limit ) { break; }
 		}
