@@ -370,7 +370,7 @@ final class SPDB_Export_Service {
 		$finished = false;
 		for ( $batch = 0; $batch < 100; ++$batch ) {
 			$rows = $wpdb->get_results(
-				$wpdb->prepare( "SELECT id, export_id, storage_ref FROM {$table} WHERE expires_at_gmt <= %s AND id > %d ORDER BY id ASC LIMIT 200", $now, $cursor ),
+				$wpdb->prepare( "SELECT id, export_id, storage_ref, status FROM {$table} WHERE expires_at_gmt <= %s AND id > %d ORDER BY id ASC LIMIT 200", $now, $cursor ),
 				defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
 			);
 			if ( ! is_array( $rows ) ) {
@@ -386,6 +386,9 @@ final class SPDB_Export_Service {
 					return self::error( 'spdb_export_cleanup_cursor_invalid', __( 'Expired export artifacts could not be enumerated in a safe order.', 'sabri-publishing-dashboard' ), 409 );
 				}
 				$cursor = $id;
+				if ( in_array( (string) ( $row['status'] ?? '' ), array( 'queued', 'processing' ), true ) ) {
+					return self::error( 'spdb_export_cleanup_active_job', __( 'An expired export job is still active; cleanup is deferred.', 'sabri-publishing-dashboard' ), 409 );
+				}
 				$storage_ref = (string) ( $row['storage_ref'] ?? '' );
 				if ( '' === $storage_ref ) {
 					continue;
@@ -636,7 +639,7 @@ final class SPDB_Export_Service {
 				if ( false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) ) {
 					return self::error( 'spdb_export_erase_path_invalid', __( 'A private export artifact failed containment verification.', 'sabri-publishing-dashboard' ), 409 );
 				}
-				if ( ! unlink( $real ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Erase a verified File 23-owned encrypted export.
+				if ( ! unlink( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove only the validated named artifact; never unlink a previously resolved target.
 					return self::error( 'spdb_export_erase_delete_failed', __( 'Private export deletion failed; metadata erasure is deferred for retry.', 'sabri-publishing-dashboard' ), 500 );
 				}
 				++$deleted;
