@@ -4,6 +4,14 @@
 **حاکم منصوبہ:** «صابری سوشل ہومیوپیتھی پلیٹ فارم — جامع مرکزی ماسٹر پلان V12.1»، ۱۰ نومبر ۲۰۲۶ء، بالخصوص باب ۱۲ (صفحہ ۲۱۹–۲۲۷)۔  
 **اس دستاویز کا کام:** مذکورہ **اسی ۱۶ ورک پیکیجز** والے منصوبے کا قابلِ تجدید، ثبوتی «بقایا کوڈنگ و قبولیت» ضمیمہ۔ پرانا منصوبہ منسوخ یا متوازی مادر منصوبہ نہیں بنتا۔
 
+## 13 نومبر 2026ء — مزید آخری کام: Calendar اور Deployment ZIP پیمائش، PDF کا کھلا نقص
+
+**اس عملی نشست کی موجودہ صورت:** پہلے درج 4 حفاظتی/رازداری سورس اصلاحات کے ساتھ **V12.1-ICS-RFC5545-05** بھی درست ہوگیا: `render_ics()` اور `ics_escape()` میں نئی سطروں کی اصل RFC 5545 escaping اور اردو UTF-8 کی 75-octet folding؛ 13 نئے source assertions کامیاب۔ دو الگ read-only tools اب دستیاب ہیں: installed plugin-tree observation اور approved ZIP-tree observation؛ نئے ZIP unit tests 12 کامیاب۔ یہ tools File20 کے trusted Hostinger attestor کا بدل نہیں۔
+
+**نئی غیر حل شدہ سورس خرابی:** **GitHub Issue #32**، `render_pdf()` میں 120 row/5 column کی خاموش کٹائی اور اردو/عربی کا سوالیہ نشان بن جانا۔ مکمل Unicode-capable PDF یا بانی کی صریح منظورشدہ summary-only پالیسی کے بغیر اسے بند نہ کریں۔ یہ سابقہ 13 عملی limits سے الگ **1 open source gap** ہے۔
+
+**نئے اس نشست کے اعداد:** 5 سورس خرابیاں اصلاحی code+tests تک پہنچی ہیں؛ 1 مزید سورس نقص (#32) کھلا؛ **5 نئی standalone test files میں 61 assertions**۔ سابقہ 8 سورس اصلاحات کا شمار الگ تاریخی مرحلہ ہے؛ دونوں مراحل کا ماخذی اصلاحی مجموعہ 13 بنتا ہے، مگر live-verified fixes اب بھی 0 ہیں۔ WP-00 اور WP-14/15 پر حقیقی File20/Hostinger attestation، DB migration، cache/origin deny، اصل 20,001+ rows، مستقل دو آزاد reviews اور Founder sign-off باقی ہیں۔ نئی تفصیل `docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md` میں ہے۔
+
 ## 13 نومبر 2026ء — تازہ V12.1 WP-04/WP-12 سورس اصلاحات اور باقی قبولیتی ثبوت
 
 **اس نئی نشست کا الگ شمار:** 4 نئے source defects دریافت، 4 source-code candidate corrections؛ 3 نئی executable test فائلوں میں **36** synthetic assertions۔ ان میں پہلے سے موجود/سابقہ 8 مسائل شامل نہیں؛ اس لیے دونوں نشستوں کے شمار کو ملاتے ہوئے 12 سورس findings کی تاریخی پیش رفت ہے، مگر **0 live defect resolutions** ثابت ہوئے ہیں۔ ہر سورس اصلاح کے بعد exact-head CI کی لازمی تصدیق اور Hostinger الگ قبولیت رہے گی۔
