@@ -77,6 +77,19 @@ try {
 		$assert( 'outside unchanged' === file_get_contents( $outside ), 'Probe never follows/writes symlink destination.' );
 		unlink( $plugin_root . '/includes/hostile-link.php' );
 	}
+	// Symlinked *directories* must be detected too, not only symlinked
+	// files; the private operator must never scan outside installed bytes.
+	$outside_dir = ABSPATH . 'outside-tree';
+	mkdir( $outside_dir, 0700, true );
+	file_put_contents( $outside_dir . '/must-not-follow.php', '<?php // outside fixture' );
+	if ( function_exists( 'symlink' ) && @symlink( $outside_dir, $plugin_root . '/includes/hostile-directory' ) ) {
+		$dir_link = $probe();
+		$assert( $dir_link['nonregular_file_count'] > 0 && in_array( 'nonregular_or_unreadable_installed_file', $dir_link['errors'] ?? array(), true ), 'Linked directories invalidate full installed-file inventory.' );
+		$assert( 2 === $dir_link['file_count'], 'Operator inventory never follows external directory contents.' );
+		unlink( $plugin_root . '/includes/hostile-directory' );
+	}
+	@unlink( $outside_dir . '/must-not-follow.php' );
+	@rmdir( $outside_dir );
 	$GLOBALS['spdb_probe_active'] = false;
 	$inactive = $probe();
 	$assert( in_array( 'file23_plugin_not_active', $inactive['errors'] ?? array(), true ), 'Inactive plugin explicitly reported.' );
