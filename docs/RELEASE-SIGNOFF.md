@@ -57,6 +57,13 @@ This form must remain **Pending** until every required evidence field is complet
 - [ ] Real DB query plan, lock latency, 10k+ performance, backup/restore of old progress options, private-file HTTP denial through Hostinger/CDN and durable audit reviewed; attached dated test evidence required.
 - [ ] File23 issue #31 not closed from source CI alone; File20/#45 and File23/#30 deployed artifact parity still pending.
 
+## 13 November 2026 — Collections schema drift and preferences read acceptance
+
+- [ ] With recorded Collections Schema Version `4`, intentionally remove one required table/column/index from a **disposable staging clone**; `SPDB_Collections_Schema::maybe_upgrade()` must fail closed with `spdb_collections_schema_drift`, log cause, and **not** execute dbDelta/ALTER during an unrelated admin request.
+- [ ] On real staging MySQL, a missing preferences row produces legitimate defaults while a real preferences `get_row()` SQL failure returns `spdb_privacy_preferences_read_failed` through the registered WordPress personal-data exporter. Test both cases, with restored data and audit receipts.
+- [ ] Verify WordPress admin privacy exporter actually stops (Ajax error) on any File23 WP_Error; no partial export may be emailed or silently reported completed. Record synthetic request ID, PHP/WP versions, DB rollback and cache behavior, without exposing personal data.
+- [ ] File23 Issue #30 / File20 #45 real deployed-byte/schema attestation must still be independently completed; no source fixture, GitHub artifact, or operator probe itself may set `verified=true`.
+
 ## 13 November 2026 — Privacy, portability, relational delete and retention acceptance
 
 The five new source defects have candidate fixes and green source CI at `52b61c858c624d5cc71fc71e5ae7d77dd5c23366`, **not** live proof. These additional release criteria are mandatory:
