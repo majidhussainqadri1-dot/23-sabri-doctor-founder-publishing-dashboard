@@ -19,6 +19,11 @@ final class SPDB_Report_Pdf_Renderer {
 
 	/** @param array<string,mixed> $model @return string|WP_Error */
 	public static function render( array $model ) {
+		// The sanitization and UTF-8 validation below use mbstring; without
+		// it WordPress must receive a retryable error, never a PHP fatal.
+		if ( ! function_exists( 'mb_check_encoding' ) || ! extension_loaded( 'gd' ) ) {
+			return self::error( 'spdb_pdf_dependency_unavailable', __( 'The approved Unicode PDF runtime extensions are unavailable.', 'sabri-publishing-dashboard' ), 503 );
+		}
 		$markup = self::build_html( $model );
 		if ( is_wp_error( $markup ) ) {
 			return $markup;
