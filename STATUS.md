@@ -112,6 +112,20 @@ Until those external gates pass, File 23 is **not staging-accepted, live-deploye
 - **Open release dependencies:** File23 #30 / File20 #45 (trusted exact deployed-byte/schema/migration attestor); File23 #31 (real 20,001+ Hostinger personal erasure/retention, backup, concurrency and Cron); 13 prior operational limits and staging/live WP-14/15.
 - **Release decision:** Version 1.3.0 candidate is source-coded, packaged and GitHub-QA green within the reviewed scope. Draft PR #29 and parent PR #26 remain unmerged. **No staging acceptance, deployment, DB change, live smoke, parity confirmation or permission for a production rollout** is claimed.
 
+## 13 November 2026 — Additional exact File23 retention, storage and portability source checkpoint
+
+**New work-session source ledger:** **4 newly confirmed source defects, 4 corrective source patches, 3 new regression suites, 36 executable assertions** (25 exact export-ID binding, 5 directory symlink/containment, 6 deep privacy exporter pages). The prior 8 same-day source issues remain separately documented below. Historical 8 + these distinct 4 = **12 source-level issues addressed across these two sessions**; **0 actual Hostinger live incidents/repairs verified**.
+
+- `V12.1-EXPORT-ERASURE-ID-01`: exact export-ID-to-artifact filename match now gates legacy and paged retention/erasure for all 4 paths; synthetic second-owner ciphertext remains intact.
+- `V12.1-LEGACY-RETENTION-ACTIVE-02`: legacy cleanup now rejects expired `queued/processing` jobs. Legacy owner erasure unlinks its validated original pathname rather than an earlier resolved target.
+- `V12.1-PRIVATE-DIR-SYMLINK-03`: private export directory must be normal, not a linked outside folder; realpath must equal the expected direct WordPress uploads child before chmod/guard creation.
+- `V12.1-PRIVACY-PAGE-CLAMP-04`: WordPress data portability does not clamp page 10001 back to 10000; prevents offset overflow before any SQL.
+- Synthetic fixture improvements in existing `v12-1-resumable-erasure`, `v12-1-resumable-expiry`, `v12-1-expired-export-retention`, `v12-1-personal-erasure-safety` and `v12-1-retention-continuation-chain` tests reflect the native `export_id` database column.
+- **Verified source-only test SHA before documentation:** `7d94697326c7e98111a0bbea8a8dbf0e99fe6ade`; Baseline Integrity **#1629**, Full Plan Completion **#680**, Final Release Candidate **#434** all SUCCESS, PHP 8.0–8.3 as covered. **Exact final SHA after later documentation requires a new all-green CI check**.
+- Source QA documentation: `docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md`; 128-item V12.1 gap ledger, 17 STO/ACT evidence map and release signoff updated. Internal A/B lenses are not two independent human reviews.
+- **Open:** File23 #30 + File20 #45 (trusted actual Hostinger installed-byte/source/ZIP/DB/schema/migration attestor); File23 #31 (real >20,001 row deletion/retention, real DB rollback, cron, concurrency and host load); 10 external owner-contract checks, 13 known operational limits, File24 review, two independent reviewers and Founder staging approval.
+- **Release decision: NO-GO for merge/deployment/live claim.** Parent PR #26 and `main` unmerged; child PR #29 remains Draft. Site connectors previously unavailable; source checks are not deployed observations.
+
 ## 13 November 2026 — Latest source review: eighth source-level identity defect corrected
 
 - **V12.1-PORTABILITY-CONTRIBUTOR-08:** The previous WordPress personal-data export authorization check used `array_map('intval', contributors)` on institutional parent collection and item metadata. `"7spoof"` would convert to integer 7 and could wrongly authorize a different user's export. Both checks now require strict JSON integer identity `in_array($user_id, contributors, true)`.
