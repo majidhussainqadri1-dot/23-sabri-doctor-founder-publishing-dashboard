@@ -45,6 +45,14 @@ File 23 does not copy native publication bodies, drafts, profiles, knowledge obj
 
 Provider and resolver acceptance is File 23-controlled and default-denied. Production writes remain disabled until the relevant real provider, staging, rollback and Founder acceptance gates are recorded.
 
+== Unicode PDF report requirements ==
+
+File 23 candidate Version 1.3.0 has a Composer-locked mPDF 8.3.1 renderer for complete privacy-filtered PDF report projections, including authorized rows/columns and Urdu/Arabic UTF-8 shaping. Unlike the previous source-only ASCII writer, it does not silently truncate report rows after 120 or columns after 5 or replace non-ASCII text with question marks.
+
+The canonical installable ZIP includes the locked vendor runtime (not downloaded on the hosting server), the relevant Unicode fonts, licenses, and composer.lock. PHP extensions mbstring and GD are required for this PDF feature; the renderer returns an explicit error if required extensions, the pinned renderer, private temporary storage or verified output are unavailable. PDF rendering uses a random private mode-0700 temporary directory outside the WordPress public document root and refuses to mark a report complete if temporary content cannot be removed.
+
+Source-level acceptance: two PDF suites (complete 121x7 model and genuine 125x7 PDF), Poppler PDF Unicode extraction and embedded-font check on the release job; and a disposable 20,002-row MariaDB 11.4 integration test. These CI simulations do not constitute the real Hostinger installation, browser RTL/typography, server origin/CDN private report denial, real database migration, Cron, or Founder staging acceptance. GitHub issues #30, #31 and #32 remain open until their respective evidence and approvals exist.
+
 == Installation ==
 
 1. Install the canonical ZIP on a backed-up staging site first.
