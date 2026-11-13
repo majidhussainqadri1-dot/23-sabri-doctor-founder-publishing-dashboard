@@ -4,6 +4,16 @@
 **حاکم منصوبہ:** «صابری سوشل ہومیوپیتھی پلیٹ فارم — جامع مرکزی ماسٹر پلان V12.1»، ۱۰ نومبر ۲۰۲۶ء، بالخصوص باب ۱۲ (صفحہ ۲۱۹–۲۲۷)۔  
 **اس دستاویز کا کام:** مذکورہ **اسی ۱۶ ورک پیکیجز** والے منصوبے کا قابلِ تجدید، ثبوتی «بقایا کوڈنگ و قبولیت» ضمیمہ۔ پرانا منصوبہ منسوخ یا متوازی مادر منصوبہ نہیں بنتا۔
 
+## 13 نومبر 2026ء — موجودہ تازہ PDF source candidate اور حقیقی MariaDB source QA
+
+**V12.1 WP-04/WP-08، Issue #32:** سابقہ PDF renderer میں 120 ریکارڈ، 5 کالم اور اردو/عربی کو `?` بنانے کی سورس خرابی، نئی `class-spdb-report-pdf-renderer.php` سے اصلاحی حالت میں منتقل ہوگئی ہے۔ Composer lock میں mPDF 8.3.1 اور متعلقہ انحصارات متعین ہیں، قابلِ تنصیب ZIP میں runtime، Unicode/Urdu fonts اور لائسنس بند کیے گئے؛ `render_pdf()` اب بغیر Unicode renderer کے خالی/نامکمل فائل نہیں بناتا۔ source test میں 121×7 مکمل جدول اور real mPDF میں 125×7، PDF text extraction، Unicode NFKC عربی مطابقت اور multi-page/embedded-font verification موجود ہے۔ **#32 اب source patch candidate ہے، مگر حقیقی Hostinger RTL visual/accessibility/size/performance/installer تصدیق نہ ہونے سے issue کھلا رہے گا؛ live fixed نہیں۔**
+
+**V12.1 WP-12، Issue #31:** نئی جدا `file23-mariadb-source-integration.yml` میں disposable MariaDB 11.4/InnoDB پر **20,002** مصنوعی rows، 2 owners، owner-erasure کے 101 + verification کے 101 pages، frozen expiry کے 101 + verification کے 101 pages، expired active-job denial، 406 اصل SQL read requests اور Rollback امتحان کا اضافہ۔ **566 executable checks کامیاب (MariaDB run #2)**؛ اس سے Hostinger کی اصل DB/migration، Cron، concurrency، real rollback اور بانی کی قبولیت ثابت نہیں، اس لیے #31 کھلا رہے گا۔
+
+**اس نشست کا علیحدہ شمار:** پیش رو 5 حفاظتی/Calendar source corrections کے بعد **PDF #32 کی 1 مزید source correction**؛ تین نشستوں کا تاریخی source candidate fixes شمار 14، live-verified repairs 0۔ نئے PDF source+real integration suites، pinned Composer runtime اور real MariaDB test source میں محفوظ ہیں۔ File23 #30/File20 #45 trusted deployed attestation، File23 #31 real host load، File23 #32 real PDF قبولیت، 10 بیرونی contract gates، 13 معروف عملی حدود، دو آزاد reviewers، Founder approval اور WP-15 live parity باقی۔
+
+**تفصیلی نیا آڈٹ:** `docs/AUDIT-V12.1-UNICODE-PDF-AND-MARIADB-2026-11-13.md`۔ ذیل کا #32 کھلا سورس نقص لکھنے والا سابقہ تاریخی مرحلہ ہے؛ اسے تازہ source candidate اور live unverified حالت کے خلاف پڑھنا درست نہیں۔ Final exact HEAD CI بعد از دستاویزات لازم ہے۔
+
 ## 13 نومبر 2026ء — مزید آخری کام: Calendar اور Deployment ZIP پیمائش، PDF کا کھلا نقص
 
 **اس عملی نشست کی موجودہ صورت:** پہلے درج 4 حفاظتی/رازداری سورس اصلاحات کے ساتھ **V12.1-ICS-RFC5545-05** بھی درست ہوگیا: `render_ics()` اور `ics_escape()` میں نئی سطروں کی اصل RFC 5545 escaping اور اردو UTF-8 کی 75-octet folding؛ 13 نئے source assertions کامیاب۔ دو الگ read-only tools اب دستیاب ہیں: installed plugin-tree observation اور approved ZIP-tree observation؛ نئے ZIP unit tests 12 کامیاب۔ یہ tools File20 کے trusted Hostinger attestor کا بدل نہیں۔
