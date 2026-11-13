@@ -15,11 +15,16 @@ if ( ! function_exists( 'get_user_by' ) ) {
 class SPDB_Privacy_Export_Failure_DB {
 	public string $prefix = 'wp_test_';
 	public string $fail_on = '';
+	public bool $fail_preferences = false;
+	public string $last_error = '';
 	public function prepare( string $sql, ...$args ): string { return $sql; }
 	public function get_results( string $sql, $format = null ) {
 		return '' !== $this->fail_on && false !== strpos( $sql, $this->fail_on ) ? false : array();
 	}
-	public function get_row( string $sql, $format = null ) { return null; }
+	public function get_row( string $sql, $format = null ) {
+		$this->last_error = $this->fail_preferences && false !== strpos( $sql, 'spdb_preferences' ) ? 'synthetic database error' : '';
+		return null;
+	}
 	public function esc_like( string $s ): string { return $s; }
 }
 $GLOBALS['wpdb'] = new SPDB_Privacy_Export_Failure_DB();
@@ -50,6 +55,12 @@ foreach ( $scenarios as $case ) {
 	$assert( is_wp_error( $callback ) && $case['code'] === $callback->get_error_code(), 'WordPress privacy callback propagates WP_Error: ' . $case['table'] );
 }
 $GLOBALS['wpdb']->fail_on = '';
+$GLOBALS['wpdb']->fail_preferences = true;
+$preferences_failed = $repo->privacy_export( 7, 1, 100 );
+$assert( is_wp_error( $preferences_failed ) && 'spdb_privacy_preferences_read_failed' === $preferences_failed->get_error_code(), 'Preferences SQL error is not treated as an absent preferences row.' );
+$callback_failed = $integration->export_personal_data( 'privacy@test.invalid', 1 );
+$assert( is_wp_error( $callback_failed ) && 'spdb_privacy_preferences_read_failed' === $callback_failed->get_error_code(), 'WordPress exporter propagates preferences SQL errors.' );
+$GLOBALS['wpdb']->fail_preferences = false;
 $empty = $repo->privacy_export( 7, 1, 100 );
 $assert( is_array( $empty ) && true === ( $empty['_done'] ?? false ), 'Valid empty database returns a complete, not erroneous, page.' );
 if ( $failed ) { fwrite( STDERR, "{$failed} of {$tests} V12.1 privacy-export read failures tests failed.\n" ); exit( 1 ); }
