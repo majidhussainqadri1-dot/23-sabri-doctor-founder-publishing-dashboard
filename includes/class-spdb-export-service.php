@@ -370,7 +370,7 @@ final class SPDB_Export_Service {
 		$finished = false;
 		for ( $batch = 0; $batch < 100; ++$batch ) {
 			$rows = $wpdb->get_results(
-				$wpdb->prepare( "SELECT id, storage_ref FROM {$table} WHERE expires_at_gmt <= %s AND id > %d ORDER BY id ASC LIMIT 200", $now, $cursor ),
+				$wpdb->prepare( "SELECT id, export_id, storage_ref FROM {$table} WHERE expires_at_gmt <= %s AND id > %d ORDER BY id ASC LIMIT 200", $now, $cursor ),
 				defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
 			);
 			if ( ! is_array( $rows ) ) {
@@ -390,7 +390,7 @@ final class SPDB_Export_Service {
 				if ( '' === $storage_ref ) {
 					continue;
 				}
-				if ( 1 !== preg_match( '/^export_[a-z0-9]{32}\\.spdb$/', $storage_ref ) ) {
+				if ( ! self::storage_reference_matches_export_row( $row ) ) {
 					return self::error( 'spdb_export_cleanup_reference_invalid', __( 'An expired export storage reference failed validation.', 'sabri-publishing-dashboard' ), 409 );
 				}
 				$path = trailingslashit( $directory ) . $storage_ref;
@@ -449,7 +449,7 @@ final class SPDB_Export_Service {
 		global $wpdb;
 		$table = SPDB_Operations_Schema::table( 'export_jobs' );
 		$rows = $wpdb->get_results(
-			$wpdb->prepare( "SELECT id, storage_ref, status FROM {$table} WHERE expires_at_gmt <= %s AND id > %d AND id <= %d ORDER BY id ASC LIMIT %d", $cutoff, $after_id, $max_id, $limit ),
+			$wpdb->prepare( "SELECT id, export_id, storage_ref, status FROM {$table} WHERE expires_at_gmt <= %s AND id > %d AND id <= %d ORDER BY id ASC LIMIT %d", $cutoff, $after_id, $max_id, $limit ),
 			defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
 		);
 		if ( ! is_array( $rows ) ) {
@@ -470,7 +470,7 @@ final class SPDB_Export_Service {
 			if ( '' === $storage_ref ) {
 				continue;
 			}
-			if ( 1 !== preg_match( '/^export_[a-z0-9]{32}\\.spdb$/', $storage_ref ) ) {
+			if ( ! self::storage_reference_matches_export_row( $row ) ) {
 				return self::error( 'spdb_export_cleanup_reference_invalid', __( 'An expired export storage reference is invalid.', 'sabri-publishing-dashboard' ), 409 );
 			}
 			$path = trailingslashit( $directory ) . $storage_ref;
@@ -525,7 +525,7 @@ final class SPDB_Export_Service {
 		global $wpdb;
 		$table = SPDB_Operations_Schema::table( 'export_jobs' );
 		$rows = $wpdb->get_results(
-			$wpdb->prepare( "SELECT id, storage_ref FROM {$table} WHERE owner_user_id = %d AND id > %d ORDER BY id ASC LIMIT %d", $user_id, $after_id, $limit ),
+			$wpdb->prepare( "SELECT id, export_id, storage_ref FROM {$table} WHERE owner_user_id = %d AND id > %d ORDER BY id ASC LIMIT %d", $user_id, $after_id, $limit ),
 			defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
 		);
 		if ( ! is_array( $rows ) ) {
@@ -543,7 +543,7 @@ final class SPDB_Export_Service {
 			if ( '' === $storage_ref ) {
 				continue; // Queued, incomplete or failed job has no published ciphertext reference.
 			}
-			if ( 1 !== preg_match( '/^export_[a-z0-9]{32}\\.spdb$/', $storage_ref ) ) {
+			if ( ! self::storage_reference_matches_export_row( $row ) ) {
 				return self::error( 'spdb_export_erase_reference_invalid', __( 'A private export metadata reference is invalid.', 'sabri-publishing-dashboard' ), 409 );
 			}
 			$path = trailingslashit( $directory ) . $storage_ref;
@@ -601,7 +601,7 @@ final class SPDB_Export_Service {
 		$finished = false;
 		for ( $batch = 0; $batch < 100; ++$batch ) {
 			$rows = $wpdb->get_results(
-				$wpdb->prepare( "SELECT id, storage_ref FROM {$table} WHERE owner_user_id = %d AND id > %d ORDER BY id ASC LIMIT 200", $user_id, $cursor ),
+				$wpdb->prepare( "SELECT id, export_id, storage_ref FROM {$table} WHERE owner_user_id = %d AND id > %d ORDER BY id ASC LIMIT 200", $user_id, $cursor ),
 				defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
 			);
 			if ( ! is_array( $rows ) ) {
@@ -622,7 +622,7 @@ final class SPDB_Export_Service {
 				if ( '' === $storage_ref ) {
 					continue;
 				}
-				if ( 1 !== preg_match( '/^export_[a-z0-9]{32}\\.spdb$/', $storage_ref ) ) {
+				if ( ! self::storage_reference_matches_export_row( $row ) ) {
 					return self::error( 'spdb_export_erase_reference_invalid', __( 'Private export storage has an invalid reference.', 'sabri-publishing-dashboard' ), 409 );
 				}
 				$path = trailingslashit( $directory ) . $storage_ref;
@@ -739,6 +739,23 @@ final class SPDB_Export_Service {
 	private function fail_processing( string $export_id, WP_Error $cause ): WP_Error {
 		$transition = $this->repository->fail_export_job( $export_id, $cause->get_error_code() );
 		return is_wp_error( $transition ) ? $transition : $cause;
+	}
+
+	/**
+	 * A valid-looking private artifact name is not sufficient authorization
+	 * to delete it: a stale/tampered job row may refer to another owner's
+	 * valid private file in the same directory. Enforce exact job binding on
+	 * every legacy and paginated retention/erasure path before unlink().
+	 *
+	 * @param array<string,mixed> $row
+	 */
+	private static function storage_reference_matches_export_row( array $row ): bool {
+		$export_id = $row['export_id'] ?? null;
+		$storage_ref = $row['storage_ref'] ?? null;
+		return is_string( $export_id )
+			&& 1 === preg_match( '/^export_[a-z0-9]{32}$/', $export_id )
+			&& is_string( $storage_ref )
+			&& hash_equals( $export_id . '.spdb', $storage_ref );
 	}
 
 	/** @return string|WP_Error */
