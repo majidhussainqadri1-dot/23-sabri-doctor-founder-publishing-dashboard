@@ -55,3 +55,13 @@ A/B دونوں **داخلی تحلیلی نظرثانیاں** ہیں، دو آز
 **مستقل رکاوٹیں:** File23 #30 / File20 #45 trusted deployed attestor؛ File23 #31 real Hostinger >20,001 mixed-owner SQL/cron/restore/rollback؛ 10 cross-module contracts، 13 known limitations، staging اصل URL-origin/CDN denial، دو آزاد reviews، Founder approval۔ Hostinger WordPress.com Jetpack disconnect اور WPVibe کے 530 response سے نہ actual deployed source ثابت ہوتا ہے نہ site-down root cause۔
 
 **NO-GO:** ماخذی ٹیسٹ اور پیکیج تیار ہونا live deploy/approval نہیں۔ بانی کی الگ منظوری سے پہلے کوئی merge/deploy/DB migration نہیں۔  
+
+## 13 November 2026 — Additional source review
+
+**Calendar export (V12.1-ICS-RFC5545-05).** The File23 ICS text escape sequence was not preserving logical line breaks consistently, and long content lines were not folded. The corrected implementation follows RFC 5545 section 3.1 and section 3.3.11: original text delimiters are escaped before logical newlines, and the line folding preserves valid UTF-8 characters. The new test suite `tests/v12-1-ics-rfc5545-folding-tests.php` passed **13 assertions** at source commit `4d9d2d453e10b9078a1eaf04918157b31506ddf8` (Baseline #1636, Full #687, Final #441). Real client interoperability remains unverified.
+
+**Deployment comparison utility (WP-00).** The additional read-only `tools/file23-approved-zip-inventory.php` measures an installable plugin ZIP using the same installed-file inventory digest algorithm as the previously added operator-only Hostinger observation probe. It refuses malformed archive structure, unexpected root paths and linked entries. `tests/v12-1-approved-zip-inventory-tests.php` passed **12 synthetic assertions** at source commit `1b4d5f5dd7c70b2dc0522a3cbabcca5ea1cf8040` (Baseline #1638, Full #689, Final #443). It reports **verified=false** and **is_attestation=false**; only File20/Hostinger can establish approved build provenance and actual installed-byte/schema parity.
+
+**Unresolved source finding:** File23 GitHub Issue **#32** records PDF export data loss: report rows beyond 120, columns beyond 5 and Urdu/Arabic Unicode conversion to question marks. No correction is asserted. Owner-approved full Unicode PDF rendering or explicitly approved summary-only semantics require separate completion and testing.
+
+**Current-session source ledger:** 5 source fixes (including earlier four privacy/storage changes and this ICS repair), 1 newly opened source problem (#32), plus 1 added measurement tool. Five new executable suites contain **61** assertions in total (25 + 5 + 6 + 13 + 12). None proves a live incident or live resolution. External attestor #30/#45, Hostinger scale #31, PDF #32, independent reviews and Founder approval remain open.
