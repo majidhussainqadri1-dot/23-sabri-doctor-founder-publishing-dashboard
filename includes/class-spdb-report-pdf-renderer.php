@@ -43,6 +43,7 @@ final class SPDB_Report_Pdf_Renderer {
 		if ( is_wp_error( $temp ) ) {
 			return $temp;
 		}
+		$result = null;
 		try {
 			$columns = $model['columns'];
 			$mpdf = new \Mpdf\Mpdf(
@@ -58,21 +59,26 @@ final class SPDB_Report_Pdf_Renderer {
 			);
 			$mpdf->WriteHTML( $markup );
 			$pdf = $mpdf->Output( '', 'S' );
-			if (
+			$result = (
 				! is_string( $pdf ) || ! str_starts_with( $pdf, '%PDF-' ) ||
 				strlen( $pdf ) > self::MAX_PDF_BYTES ||
 				false === strpos( substr( $pdf, -2048 ), '%%EOF' )
-			) {
-				return self::error( 'spdb_pdf_output_invalid', __( 'The PDF renderer returned an invalid or oversized document.', 'sabri-publishing-dashboard' ), 500 );
-			}
-			return $pdf;
+			)
+				? self::error( 'spdb_pdf_output_invalid', __( 'The PDF renderer returned an invalid or oversized document.', 'sabri-publishing-dashboard' ), 500 )
+				: $pdf;
 		} catch ( \Throwable $exception ) {
 			// Do not expose file paths, HTML, private report values, or stack
 			// traces in WordPress/user-visible errors.
-			return self::error( 'spdb_pdf_render_failed', __( 'The private PDF report could not be rendered safely.', 'sabri-publishing-dashboard' ), 500 );
+			$result = self::error( 'spdb_pdf_render_failed', __( 'The private PDF report could not be rendered safely.', 'sabri-publishing-dashboard' ), 500 );
 		} finally {
 			self::remove_private_temp_directory( $temp );
 		}
+		if ( is_dir( $temp ) || is_link( $temp ) ) {
+			// A leftover cache may contain sensitive render intermediates.
+			// Never report a completed PDF until private cache removal works.
+			return self::error( 'spdb_pdf_temp_cleanup_failed', __( 'Private PDF temporary files could not be removed completely.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		return $result;
 	}
 
 	/** @param array<string,mixed> $model @return string|WP_Error */
