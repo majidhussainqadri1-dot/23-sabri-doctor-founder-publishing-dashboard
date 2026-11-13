@@ -4,6 +4,24 @@
 **حاکم منصوبہ:** «صابری سوشل ہومیوپیتھی پلیٹ فارم — جامع مرکزی ماسٹر پلان V12.1»، ۱۰ نومبر ۲۰۲۶ء، بالخصوص باب ۱۲ (صفحہ ۲۱۹–۲۲۷)۔  
 **اس دستاویز کا کام:** مذکورہ **اسی ۱۶ ورک پیکیجز** والے منصوبے کا قابلِ تجدید، ثبوتی «بقایا کوڈنگ و قبولیت» ضمیمہ۔ پرانا منصوبہ منسوخ یا متوازی مادر منصوبہ نہیں بنتا۔
 
+## ۱۳ نومبر ۲۰۲۶ء — اضافی ۵ اصلاحات، ۵ تجرباتی ٹیسٹ فائلیں اور قبولیتی قرض
+
+**حاکم مفہوم:** ۱۶ WP اور ۱۲۸ تقاضے وہی برقرار ہیں؛ نئی سطور ان کی تازہ سورس جانچ ہیں، کوئی نیا فرضی مجموعی تکمیلی فی صد نہیں۔ Source-only کو لائیو یا staging acceptance نہ سمجھیں۔
+
+| شناخت | ثابت شدہ ماخذی نقص | GitHub candidate اصلاح اور تجرباتی جانچ | الگ باقی قبولیت |
+|---|---|---|---|
+| **V12.1-RETENTION-PROOF-01** | `cleanup_retention()` کے default args تصدیق شدہ cutoff اور max-id کے بغیر expired export metadata delete کرسکتے تھے | Unfenced DELETE branch حذف؛ cutoff/max-ID لازم؛ ۹ منفی ٹیسٹ | اصل فائلوں کی صفائی اور DB transaction/rollback کا Hostinger ثبوت |
+| **V12.1-INSTITUTIONAL-PRIVACY-02** | ادارہ جاتی contributors کی صفائی `LIMIT 5000` پر ختم ہوکر مکمل رپورٹ ہوسکتی تھی؛ خراب JSON کو `[]` بنایا جاسکتا تھا | ۲۰۰ والی keyset pages، strict JSON، false-positive ID denial، ۵۰۰۱ ریکارڈ کی ۱۱ آزمائشیں | حقیقی بڑے مجموعوں پر میموری، DB locks، +۲۰k جاری رکھنے کی حکمت |
+| **V12.1-OWN-COLLECTION-SCALE-03** | ذاتی مجموعوں کے تمام IDs کو PHP میں جمع کرکے بےحد `IN(...)` DELETE کی جاتی تھی | One-shot owner+scope-bound JOIN DELETE، ۱۱ آزمائشیں | اصلی MariaDB/MySQL transactional deletion اور rollback |
+| **V12.1-PORTABILITY-PAGING-04** | WordPress Privacy Export میں ایک مجموعے کے آئٹمز صرف پہلے ۵۰۰۰ تک | تمام مجاز آئٹمز کی علیحدہ ۱۰۰ فی صفحہ ترتیب؛ ۶۰۰۱ owned + 7/17 رد کی ۶۱۲۸ آزمائشیں | حقیقی WordPress exporter + concurrent source updates |
+| **V12.1-PORTABILITY-READ-05** | ناکام SELECT کو خالی نتیجہ بناکر export completed ہوسکتا تھا | ۸ query sources سے WP_Error WordPress تک؛ ۱۷ آزمائشیں | اصل SQL failure injection اور privacy core Ajax قبولیت |
+
+**آج کی نئی شمار:** ۵ بنیادی source defects ملے؛ ۵ source-code candidate repairs؛ ۵ نئی executable regression suites، مجموعی **۶۱۷۶ unit assertions**؛ بیچ میں ایک test-fixture constant کی خامی درست، اسے production defect نہ شمار کریں۔ Backend/host پر ان نقائص کی موجودگی اس طرح ثابت نہیں ہوئی۔ **Exact source+test HEAD `52b61c858c624d5cc71fc71e5ae7d77dd5c23366`: Baseline #1592، Full #643، Final #397 — تینوں کامیاب۔** اس کے بعد آنے والی دستاویزی تبدیلیوں کے لیے آخری HEAD کی CI دوبارہ درکار ہے۔
+
+**اگلی بنیادی رکاوٹیں:** File23 Issue #30 اور File20 Issue #45 (واقعی نصب bytes/schema/migration کا trusted attestor)، File23 Issue #31 (اصل ۲۰۰۰۱+ Hostinger recovery/concurrency/retention)، ۱۰ بیرونی contract gates، ۱۳ known limitations، دو آزاد reviews، Founder staging sign-off، backup/restore، WordPress/MariaDB real test، live post-deploy parity۔ اصل Hostinger تک مجاز read-only connector کی کمی برقرار ہے۔ 
+
+**تفصیلی داخلی A/B سورس جائزہ:** `docs/AUDIT-V12.1-FILE23-PRIVACY-RETENTION-2026-11-13.md`۔ یہ دو آزاد انسانی سکیورٹی reviews یا لائیو deployment verification نہیں۔
+
 ## ۱۳ نومبر ۲۰۲۶ء — V12.1 اگلی کوڈنگ اور باقی کام کا تازہ رجسٹر
 
 **قابلِ تصدیق source audit:** فائل ۲۳ کے GitHub child Draft PR #29 میں پچھلی source-candidate V1.3.0 حفاظتی و WP-12 اصلاحات کے بعد دو نئی source-level کمزوریاں دریافت ہوئیں:
