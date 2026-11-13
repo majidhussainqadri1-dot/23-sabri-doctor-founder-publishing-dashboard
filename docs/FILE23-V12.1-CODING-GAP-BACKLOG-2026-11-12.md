@@ -4,6 +4,12 @@
 **حاکم منصوبہ:** «صابری سوشل ہومیوپیتھی پلیٹ فارم — جامع مرکزی ماسٹر پلان V12.1»، ۱۰ نومبر ۲۰۲۶ء، بالخصوص باب ۱۲ (صفحہ ۲۱۹–۲۲۷)۔  
 **اس دستاویز کا کام:** مذکورہ **اسی ۱۶ ورک پیکیجز** والے منصوبے کا قابلِ تجدید، ثبوتی «بقایا کوڈنگ و قبولیت» ضمیمہ۔ پرانا منصوبہ منسوخ یا متوازی مادر منصوبہ نہیں بنتا۔
 
+## ۱۳ نومبر ۲۰۲۶ء — رازداری کے اضافی سورس نقص کے بعد موجودہ شمار: ۸
+
+**V12.1-PORTABILITY-CONTRIBUTOR-08:** `privacy_collection_export()` کے parent collection اور item-parent دونوں اجازت ناموں میں `array_map('intval', $contributors)` خراب JSON `"7spoof"` کو ۷ بناسکتا تھا؛ اس سے دوسرے مالک کے meta-data کا غیر مجاز data portability export ہوسکتا تھا۔ سورس میں دونوں جگہ exact native integer `in_array($user_id, $contributors, true)` نافذ؛ `tests/v12-1-privacy-collection-export-pagination-tests.php` میں غیر مالک parent اور child دونوں کے منفی ٹیسٹ شامل۔ **دو نئے assertions**، مذکورہ suite **۶۱۳۰**، اس نشست کی ۶ نئی suites **۶۱۸۴**۔ یہ سورس میں ثابت اجازت کی خامی ہے، نہ کہ مشاہدہ شدہ Hostinger پر حملہ۔
+
+**موجودہ اصلاحی حساب:** ۸ منفرد source defects؛ ۸ source candidate patches، ۶ نئی executable suites + preexisting Hostinger read-only probe کے ۲ مزید hardening tests۔ اصل صارف ڈیٹا، نصب شدہ ZIP، DB، staging اور live کی آزمائش ابھی غیر مصدقہ؛ مستقل ۱۶ WP، ۱۲۸ planning/acceptance items اور Release NO-GO برقرار۔ Full evidence `docs/AUDIT-V12.1-FILE23-PRIVACY-RETENTION-2026-11-13.md`؛ exact final-head CI is mandatory before green claim.
+
 ## ۱۳ نومبر ۲۰۲۶ء — دوسری نظرثانی کے بعد تازہ شمار: ۷ سورس اصلاحات
 
 **اس نشست کا موجودہ ماخذی شمار:** ۷ تصدیق شدہ source-level defects اور ۷ اصلاحی کوڈ امیدوار (اس سے ذیل کی تاریخی ۵ اصلاحات والی snapshot غیر موجودہ شمار نہیں بنتی)؛ ۶ نئی test suites، **۶۱۸۲** assertions۔ اضافی دو درج ذیل ہیں:
