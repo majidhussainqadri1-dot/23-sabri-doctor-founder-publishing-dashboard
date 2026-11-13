@@ -202,6 +202,14 @@ jobs:
           composer validate --no-check-publish --strict
           composer install --no-dev --no-interaction --no-plugins --no-scripts --prefer-dist --no-progress
           composer check-platform-reqs
+      - name: Verify real Unicode PDF extraction from fully bundled mPDF
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils >/dev/null
+          command -v pdftotext
+          FILE23_REQUIRE_PDF_TEXT_EXTRACT=1 php -d display_errors=1 -d error_reporting=E_ALL tests/v12-1-pdf-mpdf-integration-tests.php
       - name: Run release-critical regressions and final-deliverables gate
         shell: bash
         run: |
