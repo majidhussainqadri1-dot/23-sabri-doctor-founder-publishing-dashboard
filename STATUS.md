@@ -112,6 +112,20 @@ Until those external gates pass, File 23 is **not staging-accepted, live-deploye
 - **Open release dependencies:** File23 #30 / File20 #45 (trusted exact deployed-byte/schema/migration attestor); File23 #31 (real 20,001+ Hostinger personal erasure/retention, backup, concurrency and Cron); 13 prior operational limits and staging/live WP-14/15.
 - **Release decision:** Version 1.3.0 candidate is source-coded, packaged and GitHub-QA green within the reviewed scope. Draft PR #29 and parent PR #26 remain unmerged. **No staging acceptance, deployment, DB change, live smoke, parity confirmation or permission for a production rollout** is claimed.
 
+## 13 November 2026 — Follow-up: V12.1 privacy/retention five-defect source hardening
+
+**Dated checkpoint (GitHub source only; supersedes older source-gap snapshots for these functions):**
+
+- **Five newly verified source defects** in this working session: (1) File23 retention metadata purge allowed default unfenced SQL, (2) institutional contributor pseudonymization silently truncated after 5k and could overwrite malformed JSON, (3) unbounded private collection ID materialization for own item erasure, (4) portable privacy export silently truncated collection items beyond 5k, and (5) DB read failures silently converted to completed empty privacy export.
+- **Five source repairs coded** on child Draft PR #29 with five executable regression suites `tests/v12-1-retention-proof-boundary-tests.php`, `v12-1-institutional-privacy-pagination-tests.php`, `v12-1-owned-collection-erasure-tests.php`, `v12-1-privacy-collection-export-pagination-tests.php`, `v12-1-privacy-export-db-failure-tests.php`.
+- **61,176? No — exact arithmetic is 9 + 11 + 11 + 6128 + 17 = 6176 assertions**, all green in the source/test checkpoint `52b61c858c624d5cc71fc71e5ae7d77dd5c23366`; GitHub Baseline #1592, Full Plan Completion #643, Final Release Candidate #397. Never count 6,128 loop-level positive assertions as 6,128 independent deployment scenarios.
+- **One new test-fixture dependency fault** (missing WordPress constant in isolated PHP test) was fixed separately; not classified as a live/source product bug.
+- Additional internal A/B audit: `docs/AUDIT-V12.1-FILE23-PRIVACY-RETENTION-2026-11-13.md`; plan crosswalk and release acceptance updated. No external independent review has been claimed.
+- **Environment reality:** Repository `main` unmerged, parent PR #26 unmerged, child PR #29 Draft; exact deployed plugin files/version, DB/schema/migration, File20 attestator and Hostinger origin/CDN private storage denial remain UNVERIFIED. WordPress.com connector disconnected; WPVibe initial Hostinger connection returned HTTP 530. This is not evidence the public site is down.
+- **Still open:** File23 #30 / File20 #45 trusted installed-artifact attestation, File23 #31 large-volume real Hostinger staging acceptance, 10 external integration contracts, 13 known limitations, 2 external independent reviews, Founder staging approval, rollback and live post-deploy retest.
+
+**No merge, staging deploy, production deployment or live fix claimed.** Release sign-off remains unchecked; source QA does not prove deployment parity. Exact final HEAD CI after these docs is mandatory.
+
 ## Live-reality register
 
 - Repository candidate: Version `1.3.0` on the branch above; exact final SHA must be recorded after the last code/review change.
