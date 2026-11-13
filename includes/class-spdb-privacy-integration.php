@@ -40,7 +40,7 @@ final class SPDB_Privacy_Integration {
 	}
 
 	/** @return array<string,mixed> */
-	public function export_personal_data( string $email_address, int $page = 1 ): array {
+	public function export_personal_data( string $email_address, int $page = 1 ) {
 		$page = max( 1, $page );
 		$user = get_user_by( 'email', $email_address );
 		if ( ! $user instanceof WP_User ) {
@@ -48,6 +48,12 @@ final class SPDB_Privacy_Integration {
 		}
 		$per_page = 100;
 		$data      = $this->repository->privacy_export( (int) $user->ID, $page, $per_page );
+		// WordPress core accepts WP_Error from an exporter callback and
+		// aborts the export Ajax request. Never serialize an incomplete
+		// File23 SQL read as a successful empty privacy export.
+		if ( is_wp_error( $data ) ) {
+			return $data;
+		}
 		$receipts  = SPDB_Operational_Mutation_Guard::privacy_export_receipts( (int) $user->ID, $page, $per_page );
 		$done      = true === ( $data['_done'] ?? false ) && count( $receipts ) < $per_page;
 		unset( $data['_done'] );
