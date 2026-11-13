@@ -62,7 +62,11 @@ if ( is_string( $pdf ) ) {
 			$assert( is_string( $text ) && str_contains( $text, 'السلام' ), 'Real generated PDF preserves extractable Arabic glyph mapping.' );
 			$assert( is_string( $text ) && ! str_contains( $text, '???' ), 'Urdu/Arabic is not replaced by the old ASCII question-mark fallback.' );
 		} else {
-			fwrite( STDERR, "NOTICE: pdftotext unavailable: binary PDF produced but Unicode extraction remains unverified in this environment.\n" );
+			if ( '1' === getenv( 'FILE23_REQUIRE_PDF_TEXT_EXTRACT' ) ) {
+				$assert( false, 'Release-candidate PDF acceptance requires real pdftotext Unicode extraction.' );
+			} else {
+				fwrite( STDERR, "NOTICE: pdftotext unavailable: binary PDF produced but Unicode extraction remains unverified in this environment.\n" );
+			}
 		}
 	} finally {
 		@unlink( $raw );
