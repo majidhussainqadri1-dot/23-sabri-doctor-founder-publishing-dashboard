@@ -12,6 +12,9 @@ $assert = static function ( bool $ok, string $msg ) use ( &$tests, &$failed ): v
 };
 $assert( method_exists( SPDB_Operations_Schema::class, 'requirements' ), 'Operational schema structural manifest is required.' );
 if ( ! method_exists( SPDB_Operations_Schema::class, 'requirements' ) ) { exit( 1 ); }
+// Derive the manifest under the same synthetic WordPress table prefix
+// that the fake database uses; otherwise the fixture tests wrong names.
+$GLOBALS['wpdb'] = (object) array( 'prefix' => 'wp_test_' );
 $manifest = SPDB_Operations_Schema::requirements();
 
 class SPDB_Operations_Shape_Test_DB {
