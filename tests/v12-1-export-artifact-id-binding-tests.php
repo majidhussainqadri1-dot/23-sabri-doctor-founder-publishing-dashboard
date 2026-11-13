@@ -64,6 +64,18 @@ try {
 		$assert( is_file( $directory . '/' . $filename_b ), $case['name'] . ' leaves another job ciphertext untouched.' );
 	}
 
+	$GLOBALS['wpdb']->row['export_id'] = substr( $filename_a, 0, -5 );
+	$GLOBALS['wpdb']->row['status'] = 'processing';
+	$GLOBALS['wpdb']->row['storage_ref'] = $filename_a;
+	file_put_contents( $directory . '/' . $filename_a, 'ACTIVE JOB DATA' );
+	$active = $service->cleanup_expired_files();
+	$assert( is_wp_error( $active ) && 'spdb_export_cleanup_active_job' === $active->get_error_code(), 'Legacy cleanup refuses an expired job still marked processing.' );
+	$assert( 'ACTIVE JOB DATA' === file_get_contents( $directory . '/' . $filename_a ), 'An in-progress export cannot be deleted by legacy retention cleanup.' );
+	$GLOBALS['wpdb']->row['status'] = 'ready';
+	@unlink( $directory . '/' . $filename_a );
+	$source = (string) file_get_contents( dirname( __DIR__ ) . '/includes/class-spdb-export-service.php' );
+	$assert( false === strpos( $source, 'unlink( $real )' ), 'Legacy erasure never unlinks a previously resolved path after a symlink race.' );
+
 	$GLOBALS['wpdb']->row['export_id'] = 'export_' . str_repeat( 'c', 32 );
 	$GLOBALS['wpdb']->row['storage_ref'] = $filename_a;
 	$result = $service->erase_user_files_page( 7, 0, 200, true );
