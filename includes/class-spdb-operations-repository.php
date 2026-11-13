@@ -1381,26 +1381,11 @@ final class SPDB_Operations_Repository {
 				if ( false === $result ) { return self::error( 'spdb_privacy_pseudonymize_failed', __( 'Institutional knowledge-link references could not be pseudonymized.', 'sabri-publishing-dashboard' ), 500 ); }
 				$pseudonymized += (int) $result;
 
-				$pattern = '%' . $wpdb->esc_like( (string) $user_id ) . '%';
-				$rows = $wpdb->get_results( $wpdb->prepare( "SELECT collection_id, owner_user_id, contributors_json FROM {$collections_table} WHERE scope = 'institution' AND (owner_user_id = %d OR contributors_json LIKE %s) LIMIT 5000", $user_id, $pattern ), self::array_output() );
-				if ( ! is_array( $rows ) ) { return self::error( 'spdb_privacy_collection_read_failed', __( 'Institutional collection references could not be inspected.', 'sabri-publishing-dashboard' ), 500 ); }
-				foreach ( $rows as $row ) {
-					$contributors = self::decode_object( $row['contributors_json'] ?? '' );
-					if ( self::is_list_array( $contributors ) ) {
-						$contributors = array_values( array_filter( array_map( 'intval', $contributors ), static fn( int $id ): bool => $id > 0 && $id !== $user_id ) );
-					} else {
-						$contributors = array();
-					}
-					$encoded = self::encode_json( $contributors );
-					if ( is_wp_error( $encoded ) ) { return $encoded; }
-					$result = $wpdb->update(
-						$collections_table,
-						array( 'owner_user_id' => (int) ( $row['owner_user_id'] ?? 0 ) === $user_id ? 0 : (int) $row['owner_user_id'], 'contributors_json' => $encoded, 'updated_at_gmt' => $now ),
-						array( 'collection_id' => (string) $row['collection_id'], 'scope' => 'institution' )
-					);
-					if ( false === $result ) { return self::error( 'spdb_privacy_pseudonymize_failed', __( 'Institutional collection references could not be pseudonymized.', 'sabri-publishing-dashboard' ), 500 ); }
-					$pseudonymized += (int) $result;
+				$institutional = $this->pseudonymize_institutional_collections( $user_id, $now );
+				if ( is_wp_error( $institutional ) ) {
+					return $institutional;
 				}
+				$pseudonymized += $institutional;
 
 				$audit = $this->append_audit( 0, 'privacy_erasure_completed', 'user:' . $user_id, array( 'deleted_personal_rows' => $deleted, 'pseudonymized_rows' => $pseudonymized ) );
 				if ( is_wp_error( $audit ) ) {
@@ -1410,6 +1395,88 @@ final class SPDB_Operations_Repository {
 			},
 			'privacy_erase'
 		);
+	}
+
+	/**
+	 * Pseudonymize every institutional collection referencing this owner in
+	 * bounded, monotonically ordered pages. The previous fixed LIMIT 5000
+	 * could silently leave identity references behind while the parent
+	 * privacy transaction reported full success. A failed page returns
+	 * WP_Error so the enclosing InnoDB transaction rolls back.
+	 *
+	 * @return int|WP_Error Number of changed institutional rows.
+	 */
+	private function pseudonymize_institutional_collections( int $user_id, string $now ) {
+		global $wpdb;
+		$collections = SPDB_Collections_Schema::collections_table();
+		$pattern = '%' . $wpdb->esc_like( (string) $user_id ) . '%';
+		$cursor = 0;
+		$pseudonymized = 0;
+		$finished = false;
+		for ( $page = 0; $page < 100; ++$page ) {
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT id, collection_id, owner_user_id, contributors_json FROM {$collections} WHERE scope = 'institution' AND id > %d AND (owner_user_id = %d OR contributors_json LIKE %s) ORDER BY id ASC LIMIT %d",
+					$cursor, $user_id, $pattern, 200
+				),
+				self::array_output()
+			);
+			if ( ! is_array( $rows ) ) {
+				return self::error( 'spdb_privacy_collection_read_failed', __( 'Institutional collection references could not be inspected.', 'sabri-publishing-dashboard' ), 500 );
+			}
+			if ( ! $rows ) {
+				$finished = true;
+				break;
+			}
+			foreach ( $rows as $row ) {
+				$id = (int) ( $row['id'] ?? 0 );
+				if ( $id <= $cursor ) {
+					return self::error( 'spdb_privacy_collection_cursor_invalid', __( 'Institutional collection references were not ordered safely.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				$cursor = $id;
+				$raw = $row['contributors_json'] ?? null;
+				$contributors = is_string( $raw ) ? json_decode( $raw, true, 32 ) : null;
+				if ( ! is_array( $contributors ) || ! self::is_list_array( $contributors ) || JSON_ERROR_NONE !== json_last_error() ) {
+					return self::error( 'spdb_privacy_contributors_invalid', __( 'An institutional contributor record is malformed and must not be overwritten.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				foreach ( $contributors as $contributor_id ) {
+					if ( ! is_int( $contributor_id ) || $contributor_id < 1 ) {
+						return self::error( 'spdb_privacy_contributors_invalid', __( 'An institutional contributor reference has an unsafe type.', 'sabri-publishing-dashboard' ), 409 );
+					}
+				}
+				$owner = (int) ( $row['owner_user_id'] ?? 0 );
+				if ( $owner !== $user_id && ! in_array( $user_id, $contributors, true ) ) {
+					// LIKE is a broad SQL prefilter: 7 must not modify owner 17.
+					continue;
+				}
+				$remaining = array_values( array_filter( $contributors, static fn( int $id ): bool => $id !== $user_id ) );
+				$encoded = self::encode_json( $remaining );
+				if ( is_wp_error( $encoded ) ) {
+					return $encoded;
+				}
+				$result = $wpdb->update(
+					$collections,
+					array(
+						'owner_user_id' => $owner === $user_id ? 0 : $owner,
+						'contributors_json' => $encoded,
+						'updated_at_gmt' => $now,
+					),
+					array( 'collection_id' => (string) ( $row['collection_id'] ?? '' ), 'scope' => 'institution' )
+				);
+				if ( false === $result ) {
+					return self::error( 'spdb_privacy_pseudonymize_failed', __( 'Institutional collection references could not be pseudonymized.', 'sabri-publishing-dashboard' ), 500 );
+				}
+				$pseudonymized += (int) $result;
+			}
+			if ( count( $rows ) < 200 ) {
+				$finished = true;
+				break;
+			}
+		}
+		if ( ! $finished ) {
+			return self::error( 'spdb_privacy_collection_batch_incomplete', __( 'Institutional collection erasure reached its safe traversal limit; metadata erasure was not completed.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		return $pseudonymized;
 	}
 
 	/**
