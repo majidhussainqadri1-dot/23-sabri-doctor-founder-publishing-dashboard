@@ -708,8 +708,20 @@ final class SPDB_Export_Service {
 			return self::error( 'spdb_export_storage_unavailable', __( 'Private export storage is unavailable.', 'sabri-publishing-dashboard' ), 500 );
 		}
 		$directory = trailingslashit( (string) $upload['basedir'] ) . 'spdb-private-exports';
+		// A linked private directory may redirect guard-file writes and chmod
+		// into a different filesystem tree. Validate *before* wp_mkdir_p and
+		// again after creation; never follow a child-directory symlink.
+		if ( is_link( $directory ) ) {
+			return self::error( 'spdb_export_storage_path_invalid', __( 'The private export storage directory is a symlink.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		if ( ! wp_mkdir_p( $directory ) ) {
 			return self::error( 'spdb_export_storage_unavailable', __( 'Private export storage could not be created.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$real_base = realpath( (string) $upload['basedir'] );
+		$real_private = realpath( $directory );
+		if ( is_link( $directory ) || false === $real_base || false === $real_private || ! is_dir( $real_private )
+			|| ! hash_equals( trailingslashit( $real_base ) . 'spdb-private-exports', $real_private ) ) {
+			return self::error( 'spdb_export_storage_path_invalid', __( 'Private export storage could not be verified within the WordPress uploads root.', 'sabri-publishing-dashboard' ), 500 );
 		}
 		@chmod( $directory, 0700 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Best-effort private-directory hardening.
 		$guards = array(
