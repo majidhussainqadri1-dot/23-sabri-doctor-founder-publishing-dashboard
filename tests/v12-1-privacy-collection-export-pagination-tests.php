@@ -29,12 +29,12 @@ class SPDB_Privacy_Export_Pages_DB {
 		if ( strpos( $sql, 'INNER JOIN' ) !== false && strpos( $sql, 'spdb_collection_items' ) !== false ) {
 			++$this->item_queries;
 			$rows = array();
-			for ( $id = $offset + 1; $id <= min( $offset + $limit, 6003 ); ++$id ) {
+			for ( $id = $offset + 1; $id <= min( $offset + $limit, 6004 ); ++$id ) {
 				$owner = $id <= 6001 ? 7 : 8;
 				$rows[] = array(
 					'id' => $id, 'item_id' => 'item_' . $id, 'collection_id' => 'owned_collection',
 					'parent_owner_user_id' => $owner,
-					'parent_contributors_json' => $owner === 7 ? '[7,8]' : '[17,8]',
+					'parent_contributors_json' => $owner === 7 ? '[7,8]' : ( 6004 === $id ? '["7spoof",8]' : '[17,8]' ),
 				);
 			}
 			return $rows;
@@ -70,6 +70,7 @@ $assert( 6001 === count( array_unique( $seen ) ) && max( $seen ) === 6001, 'Item
 $assert( 62 === $GLOBALS['wpdb']->item_queries, 'Every 100-row item page bounded at the same WordPress privacy callback page.' );
 $assert( false === $last['has_more'], 'Export has finite completion after last item/false-positive candidate page.' );
 $assert( ! in_array( 6002, $seen, true ) && ! in_array( 6003, $seen, true ), 'Foreign owner 8 with contributor 17 is not leaked to user 7.' );
+$assert( ! in_array( 6004, $seen, true ), 'Malformed string contributor 7spoof must never be coerced into integer authority 7.' );
 
 if ( $failed ) { fwrite( STDERR, "{$failed} of {$tests} V12.1 privacy data portability tests failed.\n" ); exit( 1 ); }
 echo "All {$tests} V12.1 privacy data portability tests passed.\n";
