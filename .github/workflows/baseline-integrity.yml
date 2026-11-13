@@ -28,7 +28,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: gd, mbstring, xml, zlib
+          extensions: gd, mbstring, xml, zlib, intl
           coverage: none
       - name: Verify locked PDF dependencies
         shell: bash
