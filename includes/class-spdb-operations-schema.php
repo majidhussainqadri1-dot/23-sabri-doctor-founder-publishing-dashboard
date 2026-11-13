@@ -28,8 +28,18 @@ final class SPDB_Operations_Schema {
 			if ( true === $verified ) {
 				return true;
 			}
+			// Same-version missing columns/indexes can indicate a deferred,
+			// partial or manually altered production migration. Never treat
+			// this as permission to run invasive dbDelta automatically on
+			// admin_init. Freeze the exact deployed DB before a controlled fix.
+			return new WP_Error(
+				'spdb_operations_schema_drift',
+				__( 'The installed File 23 operations schema differs from its recorded version; operator-controlled migration verification is required.', 'sabri-publishing-dashboard' ),
+				array( 'status' => 409, 'cause' => is_wp_error( $verified ) ? $verified->get_error_code() : 'unknown' )
+			);
 		}
 
+		// Normal, explicit new-version install or version upgrade path.
 		return self::install();
 	}
 
