@@ -41,7 +41,10 @@ class SPDB_Erasure_Test_DB {
 			$start = ( $this->reads - 1 ) * 200 + 1;
 			return array_map( static fn( int $id ): array => array( 'id' => $id, 'storage_ref' => '' ), range( $start, $start + 199 ) );
 		}
-		return $this->rows;
+		return array_map( static function ( array $row ): array {
+			$row['export_id'] = '' !== (string) ( $row['storage_ref'] ?? '' ) ? substr( (string) $row['storage_ref'], 0, -5 ) : 'export_' . str_repeat( '0', 32 );
+			return $row;
+		}, $this->rows );
 	}
 }
 $GLOBALS['wpdb'] = new SPDB_Erasure_Test_DB();
