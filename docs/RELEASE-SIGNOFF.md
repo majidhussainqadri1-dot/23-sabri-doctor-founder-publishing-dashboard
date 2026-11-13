@@ -57,6 +57,16 @@ This form must remain **Pending** until every required evidence field is complet
 - [ ] Real DB query plan, lock latency, 10k+ performance, backup/restore of old progress options, private-file HTTP denial through Hostinger/CDN and durable audit reviewed; attached dated test evidence required.
 - [ ] File23 issue #31 not closed from source CI alone; File20/#45 and File23/#30 deployed artifact parity still pending.
 
+## 13 November 2026 — Unicode PDF and disposable MariaDB acceptance amendment (source candidate, no-go live)
+
+- [ ] File23 Draft PR #29 exact source commit has Composer-locked `mpdf/mpdf 8.3.1` and transitive dependencies with `gd` and `mbstring`. Its deterministic INSTALLABLE ZIP (not source archive) must contain vendor autoload, mPDF runtime, DejaVuSans, XB Riyaz, mPDF LICENSE and Composer lock. Verify installed Hostinger PHP extensions, memory limits, disk quota, upload-size limits and no unsupported dynamic Composer retrieval.
+- [ ] Real PHP 8.0–8.3 and final canonical release CI must pass `tests/v12-1-pdf-unicode-source-contract-tests.php` and `tests/v12-1-pdf-mpdf-integration-tests.php`, including Poppler extraction of row 125/column 7, normalized Arabic and joined Urdu, PDF page count and embedded-font ToUnicode map. A source test double alone is insufficient.
+- [ ] With actual Hostinger staging permissions and synthetic records, compare Unicode PDF vs CSV/JSON source 1:1 across 121+ rows/7+ columns, LTR+RTL/harakat, ligatures, long cell values, downloadable owner-only AES-GCM file, revoked session/MFA, anonymous direct URL denial at CDN and origin, concurrent export+erasure and quarantine/retention.
+- [ ] File23 PDF uses a random private cache outside the public site; validate 0700 permissions, no leftover plaintext after success/failure, symlink refusal and cleanup. Renderer failure/Unicode invalid/oversized cases must return typed errors and must not mark a report ready.
+- [ ] License review for `mpdf/mpdf` (GPL-2.0-only), File23 plugin (GPL-2.0-or-later), included fonts and other Composer dependencies must be signed by the responsible owner; source CI is not a legal review.
+- [ ] New source-only MariaDB workflow `.github/workflows/file23-mariadb-source-integration.yml` uses a disposable CI DB of 20,002 synthetic records, owner+expiry 101+101 deletion/verification pages, wrong-job ID denial, owner-8 untouched and InnoDB rollback. **Real Hostinger** File23 #31 20k+ load, replica/cutoff recovery and Cron verification are separately mandatory.
+- [ ] Keep #32 open until actual Urdu/Arabic visual, export completeness and installer parity acceptance; keep File23 #30/File20 #45 attestor and File23 #31 host recovery open. Two independent reviewers, File24 security assurance and Founder sign-off remain mandatory; no PR merge or live deploy as a shortcut.
+
 ## 13 November 2026 — Calendar, ZIP parity and PDF fidelity release gates
 
 - [ ] Source `tests/v12-1-ics-rfc5545-folding-tests.php` passes 13 RFC 5545 negative/positive checks on final exact HEAD (TEXT delimiters/newlines, 75-octet folded content lines, UTF-8 integrity, CRLF). Real approved Apple/Google/Outlook calendar import and Urdu/Arabic rendering must be tested separately on staging.
