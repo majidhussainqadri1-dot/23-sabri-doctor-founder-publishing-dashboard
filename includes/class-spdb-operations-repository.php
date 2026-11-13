@@ -1262,17 +1262,22 @@ final class SPDB_Operations_Repository {
 	 *
 	 * @return array<string,mixed>
 	 */
-	public function privacy_export( int $user_id, int $page = 1, int $per_page = 100 ): array {
+	public function privacy_export( int $user_id, int $page = 1, int $per_page = 100 ) {
 		global $wpdb;
 		$page     = min( 10000, max( 1, $page ) );
 		$per_page = min( 200, max( 1, $per_page ) );
 		$offset   = ( $page - 1 ) * $per_page;
 
 		$tasks = $this->list_tasks( $user_id, false, $page, $per_page );
-		$tasks = is_array( $tasks ) ? $tasks : array();
+		if ( is_wp_error( $tasks ) ) {
+			return $tasks;
+		}
 
 		$saved_table = SPDB_Operations_Schema::table( 'saved_views' );
 		$saved_rows  = $wpdb->get_results( $wpdb->prepare( "SELECT view_id, label, filters_json, version, created_at_gmt, updated_at_gmt FROM {$saved_table} WHERE owner_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $per_page, $offset ), self::array_output() );
+				if ( ! is_array( $saved_rows ) ) {
+			return self::error( 'spdb_privacy_export_read_failed', __( 'The private File 23 data export could not read all required records.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$saved_views = array();
 		foreach ( is_array( $saved_rows ) ? $saved_rows : array() as $row ) {
 			$saved_views[] = array(
@@ -1287,17 +1292,29 @@ final class SPDB_Operations_Repository {
 
 		$delegation_table = SPDB_Operations_Schema::table( 'delegations' );
 		$delegation_rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$delegation_table} WHERE principal_user_id = %d OR delegate_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $user_id, $per_page, $offset ), self::array_output() );
+				if ( ! is_array( $delegation_rows ) ) {
+			return self::error( 'spdb_privacy_export_read_failed', __( 'The private File 23 data export could not read all required records.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$delegations = array_map( array( $this, 'normalize_delegation_row' ), is_array( $delegation_rows ) ? $delegation_rows : array() );
 
 		$rule_table = SPDB_Operations_Schema::table( 'automation_rules' );
 		$rule_rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$rule_table} WHERE owner_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $per_page, $offset ), self::array_output() );
+				if ( ! is_array( $rule_rows ) ) {
+			return self::error( 'spdb_privacy_export_read_failed', __( 'The private File 23 data export could not read all required records.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$rules = array_map( array( $this, 'normalize_rule_row' ), is_array( $rule_rows ) ? $rule_rows : array() );
 
 		$export_table = SPDB_Operations_Schema::table( 'export_jobs' );
 		$export_rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$export_table} WHERE owner_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $per_page, $offset ), self::array_output() );
+				if ( ! is_array( $export_rows ) ) {
+			return self::error( 'spdb_privacy_export_read_failed', __( 'The private File 23 data export could not read all required records.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$exports = array_map( array( $this, 'normalize_export_row' ), is_array( $export_rows ) ? $export_rows : array() );
 
 		$collection_page = $this->privacy_collection_export( $user_id, $page, $per_page );
+		if ( is_wp_error( $collection_page ) ) {
+			return $collection_page;
+		}
 		$preferences     = 1 === $page ? $this->get_preferences( $user_id ) : array();
 		$counts = array( count( $tasks ), count( $saved_views ), count( $delegations ), count( $rules ), count( $exports ) );
 		$has_more = in_array( $per_page, $counts, true ) || true === ( $collection_page['has_more'] ?? false );
@@ -1560,7 +1577,7 @@ final class SPDB_Operations_Repository {
 	}
 
 	/** @return array<string,mixed> */
-	private function privacy_collection_export( int $user_id, int $page, int $per_page ): array {
+	private function privacy_collection_export( int $user_id, int $page, int $per_page ) {
 		global $wpdb;
 		$collections_table = SPDB_Collections_Schema::collections_table();
 		$items_table       = SPDB_Collections_Schema::items_table();
@@ -1568,7 +1585,9 @@ final class SPDB_Operations_Repository {
 		$pattern           = '%' . $wpdb->esc_like( (string) $user_id ) . '%';
 		$offset            = ( $page - 1 ) * $per_page;
 		$raw = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$collections_table} WHERE owner_user_id = %d OR contributors_json LIKE %s ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $pattern, $per_page, $offset ), self::array_output() );
-		$raw = is_array( $raw ) ? $raw : array();
+		if ( ! is_array( $raw ) ) {
+			return self::error( 'spdb_privacy_collection_read_failed', __( 'Personal collection references could not be read.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$collections = array_values( array_filter( $raw, static function ( array $row ) use ( $user_id ): bool {
 			if ( (int) ( $row['owner_user_id'] ?? 0 ) === $user_id ) { return true; }
 			$contributors = self::decode_object( $row['contributors_json'] ?? '' );
@@ -1585,8 +1604,11 @@ final class SPDB_Operations_Repository {
 			),
 			self::array_output()
 		);
+		if ( ! is_array( $raw_items ) ) {
+			return self::error( 'spdb_privacy_collection_read_failed', __( 'Personal collection item references could not be read.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$items = array();
-		foreach ( is_array( $raw_items ) ? $raw_items : array() as $item ) {
+		foreach ( $raw_items as $item ) {
 			$parent_owner = (int) ( $item['parent_owner_user_id'] ?? 0 );
 			$contributors = self::decode_object( $item['parent_contributors_json'] ?? '' );
 			if ( $parent_owner !== $user_id && ! in_array( $user_id, array_map( 'intval', $contributors ), true ) ) {
@@ -1596,6 +1618,9 @@ final class SPDB_Operations_Repository {
 			$items[] = $item;
 		}
 		$links = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$links_table} WHERE owner_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $per_page, $offset ), self::array_output() );
+		if ( ! is_array( $links ) ) {
+			return self::error( 'spdb_privacy_collection_read_failed', __( 'Personal knowledge-link references could not be read.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		return array(
 			'data' => array( 'collections' => $collections, 'items' => $items, 'knowledge_links' => is_array( $links ) ? $links : array() ),
 			'has_more' => count( $raw ) === $per_page || ( is_array( $raw_items ) && count( $raw_items ) === $per_page ) || ( is_array( $links ) && count( $links ) === $per_page ),
