@@ -287,11 +287,13 @@ final class SPDB_Export_Service {
 		if ( is_wp_error( $directory ) ) {
 			wp_die( esc_html__( 'The export storage is unavailable.', 'sabri-publishing-dashboard' ), esc_html__( 'Export unavailable', 'sabri-publishing-dashboard' ), array( 'response' => 500 ) );
 		}
-		$filename = basename( (string) $job['storage_ref'] );
-		$path     = trailingslashit( $directory ) . $filename;
-		$real_dir = realpath( $directory );
-		$real     = realpath( $path );
-		if ( false === $real_dir || false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) || ! hash_equals( (string) $job['file_hash'], (string) hash_file( 'sha256', $real ) ) ) {
+		$real = $this->resolve_ciphertext_download_path(
+			$directory,
+			$export_id,
+			(string) $job['storage_ref'],
+			(string) $job['file_hash']
+		);
+		if ( is_wp_error( $real ) ) {
 			wp_die( esc_html__( 'The export file failed integrity verification.', 'sabri-publishing-dashboard' ), esc_html__( 'Export unavailable', 'sabri-publishing-dashboard' ), array( 'response' => 409 ) );
 		}
 		$sealed = file_get_contents( $real ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Verified private generated file.
@@ -309,6 +311,41 @@ final class SPDB_Export_Service {
 		exit;
 	}
 
+
+	/**
+	 * Resolve exactly this export's private ciphertext without basename()
+	 * normalization or symlink following. The previous basename()+realpath()
+	 * flow could accept a different raw storage reference or same-directory
+	 * symlink if its bytes matched the stored hash.
+	 *
+	 * @return string|WP_Error
+	 */
+	private function resolve_ciphertext_download_path( string $directory, string $export_id, string $storage_ref, string $expected_hash ) {
+		if (
+			1 !== preg_match( '/^export_[a-z0-9]{32}$/', $export_id )
+			|| $storage_ref !== $export_id . '.spdb'
+			|| 1 !== preg_match( '/^[a-f0-9]{64}$/', $expected_hash )
+		) {
+			return self::error( 'spdb_export_download_reference_invalid', __( 'Private export reference or checksum is invalid.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		$real_dir = realpath( $directory );
+		if ( false === $real_dir || ! is_dir( $real_dir ) ) {
+			return self::error( 'spdb_export_download_storage_invalid', __( 'Private export storage could not be resolved.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		$path = trailingslashit( $real_dir ) . $storage_ref;
+		if ( is_link( $path ) || ! is_file( $path ) || ! is_readable( $path ) ) {
+			return self::error( 'spdb_export_download_path_invalid', __( 'Private export ciphertext is unavailable or unsafe.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		$real = realpath( $path );
+		if ( false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) || ! is_readable( $real ) ) {
+			return self::error( 'spdb_export_download_path_invalid', __( 'Private export ciphertext failed containment.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		$actual_hash = hash_file( 'sha256', $real );
+		if ( ! is_string( $actual_hash ) || ! hash_equals( $expected_hash, $actual_hash ) ) {
+			return self::error( 'spdb_export_download_hash_invalid', __( 'Private export ciphertext failed checksum verification.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		return $real;
+	}
 
 	/**
 	 * Delete expired encrypted export artifacts before their metadata rows are purged.
