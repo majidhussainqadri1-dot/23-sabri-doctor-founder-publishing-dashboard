@@ -57,6 +57,12 @@ This form must remain **Pending** until every required evidence field is complet
 - [ ] Real DB query plan, lock latency, 10k+ performance, backup/restore of old progress options, private-file HTTP denial through Hostinger/CDN and durable audit reviewed; attached dated test evidence required.
 - [ ] File23 issue #31 not closed from source CI alone; File20/#45 and File23/#30 deployed artifact parity still pending.
 
+## 13 November 2026 — Strict contributor-identity privacy export release check
+
+- [ ] WordPress personal-data exporter must never treat a malformed collection contributor ID string such as `"7spoof"`, `"07"` or `"7abc"` as native integer user ID `7` for **either** parent collection metadata or joined collection-item metadata.
+- [ ] Synthetic staging data with unrelated owner `8`, contributor integer `17`, malformed contributor `"7spoof"`, and legitimate contributor integer `7` must export **only** exact authorized records. The normal owner and correct contributor records remain visible.
+- [ ] Repeat the exact-identity check through the real File23 WordPress Privacy Export callback and actual MySQL JSON columns, authenticated session, backup restoration and File00 revoked-role test; keep all staging fixtures synthetic.
+
 ## 13 November 2026 — Collections schema drift and preferences read acceptance
 
 - [ ] With recorded Collections Schema Version `4`, intentionally remove one required table/column/index from a **disposable staging clone**; `SPDB_Collections_Schema::maybe_upgrade()` must fail closed with `spdb_collections_schema_drift`, log cause, and **not** execute dbDelta/ALTER during an unrelated admin request.
