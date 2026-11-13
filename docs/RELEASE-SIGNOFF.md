@@ -57,6 +57,17 @@ This form must remain **Pending** until every required evidence field is complet
 - [ ] Real DB query plan, lock latency, 10k+ performance, backup/restore of old progress options, private-file HTTP denial through Hostinger/CDN and durable audit reviewed; attached dated test evidence required.
 - [ ] File23 issue #31 not closed from source CI alone; File20/#45 and File23/#30 deployed artifact parity still pending.
 
+## 13 November 2026 — Exact export artifact identity, private directory and deep-page release requirements
+
+- [ ] On **real Hostinger staging** seed 2 different owners/jobs with valid-looking `export_A.spdb`, `export_B.spdb`; corrupt *one* owned metadata `storage_ref` to the other's filename in a disposable/restore-only dataset. Both legacy and paged expiry/erasure must return `spdb_export_(cleanup|erase)_reference_invalid` **before any other ciphertext is deleted**. Repeat with fully matched owner/job/filename and confirm only that ciphertext is deleted.
+- [ ] Expired `queued` and `processing` exports must be retained by **both** legacy and paged cleanup, with retry/lock contention and synthetic concurrency. Legacy `unlink` must use the validated original pathname, not a resolved target path.
+- [ ] A symlinked `wp-content/uploads/spdb-private-exports` directory into an outside disposable staging folder must be rejected **before** File23 writes guard files or chmods the target. Verify restored regular directory, permissions, ownership, exact local containment and all mandatory guard contents. Prove Hostinger origin/CDN GET+HEAD independently deny direct private artifact URLs.
+- [ ] WordPress personal-data exporter must complete a synthetic page **10001** without replaying page 10000, and safely reject `PHP_INT_MAX` page overflow before SQL. Check actual WP Ajax behavior and pagination with >1 million **synthetic** item metadata rows when feasible, with load/memory timings and no live user data.
+- [ ] Source-only test files `tests/v12-1-export-artifact-id-binding-tests.php` (25), `tests/v12-1-private-storage-directory-binding-tests.php` (5), `tests/v12-1-privacy-deep-page-tests.php` (6) must pass **at exact final source HEAD** on PHP 8.0–8.3, alongside all original V12.1 regression suites and canonical package job. Internal A/B notes are not independent external assurance.
+- [ ] Independently approved File20 attestation (actual deployed bytes, ZIP fingerprint, source commit, schema and migration), real File23 #31 scale/recovery, File24 security review and Founder staging approval must be attached. **No GitHub CI success can substitute for any of these gates.**
+
+**Source review:** `docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md`. **Release state:** No-go until the external conditions above are evidenced, independent reviews signed and exact installed Version 1.3.0 verified.
+
 ## 13 November 2026 — Strict contributor-identity privacy export release check
 
 - [ ] WordPress personal-data exporter must never treat a malformed collection contributor ID string such as `"7spoof"`, `"07"` or `"7abc"` as native integer user ID `7` for **either** parent collection metadata or joined collection-item metadata.
