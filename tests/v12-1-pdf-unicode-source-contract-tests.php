@@ -8,9 +8,18 @@ namespace Mpdf {
 		public static array $config = array();
 		public static string $html = '';
 		public static bool $fail = false;
+		public static string $externalLinkTarget = '';
 		public function __construct( array $config ) { self::$config = $config; }
 		public function WriteHTML( string $html ): void {
 			self::$html = $html;
+			$private = (string) ( self::$config['tempDir'] ?? '' );
+			if ( '' !== $private ) {
+				mkdir( $private . '/nested', 0700 );
+				file_put_contents( $private . '/nested/intermediate.txt', 'SYNTHETIC PRIVATE PDF CACHE' );
+				if ( '' !== self::$externalLinkTarget && function_exists( 'symlink' ) ) {
+					@symlink( self::$externalLinkTarget, $private . '/nested/linked' );
+				}
+			}
 			if ( self::$fail ) { throw new \RuntimeException( 'synthetic mPDF failure' ); }
 		}
 		public function Output( string $name = '', string $dest = '' ): string {
@@ -42,6 +51,9 @@ namespace {
 	$rows[120]['col_g'] = 'LastColumnValue_121';
 	$rows[0]['col_g'] = '<script>alert("unsafe")</script>';
 	$model = array( 'report_key' => 'publication_history', 'columns' => $columns, 'rows' => $rows, 'limitations' => 'Privacy-filtered. Complete bounded report.', 'generated_at_gmt' => '2026-11-13T00:00:00+00:00' );
+	$outside = sys_get_temp_dir() . '/spdb-pdf-external-' . bin2hex( random_bytes( 7 ) );
+	file_put_contents( $outside, 'EXTERNAL SHOULD REMAIN UNTOUCHED' );
+	\Mpdf\Mpdf::$externalLinkTarget = $outside;
 	$pdf = $render->invoke( $service, $model );
 	$html = \Mpdf\Mpdf::$html;
 
@@ -53,6 +65,8 @@ namespace {
 	$assert( ! str_contains( $html, '<script>' ) && str_contains( $html, '&lt;script&gt;'), 'Provider text is HTML escaped, not active markup.' );
 	$assert( true === (bool) ( \Mpdf\Mpdf::$config['autoScriptToLang'] ?? false ) && true === (bool) ( \Mpdf\Mpdf::$config['autoLangToFont'] ?? false ), 'PDF renderer requests Arabic/Urdu automatic font selection.' );
 	$assert( isset( \Mpdf\Mpdf::$config['tempDir'] ) && ! is_dir( \Mpdf\Mpdf::$config['tempDir'] ), 'Private temporary mPDF cache is removed after generation.' );
+	$assert( 'EXTERNAL SHOULD REMAIN UNTOUCHED' === file_get_contents( $outside ), 'Private PDF cleanup never follows a symlink to an external target.' );
+	@unlink( $outside );
 	$assert( ! str_contains( $html, 'http://' ) && ! str_contains( $html, 'https://'), 'PDF HTML has no remote stylesheet, image, or resource references.' );
 
 	$rows[0]['col_a'] = array( 'nested' => 'sensitive' );
