@@ -4,6 +4,21 @@
 **حاکم منصوبہ:** «صابری سوشل ہومیوپیتھی پلیٹ فارم — جامع مرکزی ماسٹر پلان V12.1»، ۱۰ نومبر ۲۰۲۶ء، بالخصوص باب ۱۲ (صفحہ ۲۱۹–۲۲۷)۔  
 **اس دستاویز کا کام:** مذکورہ **اسی ۱۶ ورک پیکیجز** والے منصوبے کا قابلِ تجدید، ثبوتی «بقایا کوڈنگ و قبولیت» ضمیمہ۔ پرانا منصوبہ منسوخ یا متوازی مادر منصوبہ نہیں بنتا۔
 
+## 13 نومبر 2026ء — تازہ V12.1 WP-04/WP-12 سورس اصلاحات اور باقی قبولیتی ثبوت
+
+**اس نئی نشست کا الگ شمار:** 4 نئے source defects دریافت، 4 source-code candidate corrections؛ 3 نئی executable test فائلوں میں **36** synthetic assertions۔ ان میں پہلے سے موجود/سابقہ 8 مسائل شامل نہیں؛ اس لیے دونوں نشستوں کے شمار کو ملاتے ہوئے 12 سورس findings کی تاریخی پیش رفت ہے، مگر **0 live defect resolutions** ثابت ہوئے ہیں۔ ہر سورس اصلاح کے بعد exact-head CI کی لازمی تصدیق اور Hostinger الگ قبولیت رہے گی۔
+
+| نقص ID | اصل سورس خرابی | اصلاح | باقی حد |
+|---|---|---|---|
+| **V12.1-EXPORT-ERASURE-ID-01** | 4 legacy/paged deletion راستے فائل نام کی شکل تو پرکھتے تھے، مگر اسے اصل `export_id` سے نہیں ملاتے تھے | 4 SQL استعلامات میں `export_id`؛ `storage_reference_matches_export_row()` کی عین شناخت؛ 25 synthetic assertions | اصل Hostinger mixed-owner DB refs، package+schema attestation |
+| **V12.1-LEGACY-RETENTION-ACTIVE-02** | legacy expiry cleanup status `queued/processing` کے باوجود deletion کرسکتا تھا | active job fail closed؛ legacy erasure میں resolve کردہ `$real` کے بجائے اصل `$path` unlink | real SQL lock, cron, retry, symlink/TOCTOU acceptance |
+| **V12.1-PRIVATE-DIR-SYMLINK-03** | private storage directory خود symlink ہونے سے guard writes/chmod بیرونی directory میں جاسکتے تھے | pre/post create symlink denial؛ resolved uploads-root child equivalence؛ 5 synthetic assertions | Hostinger filesystem ownership، Nginx/LiteSpeed/CDN direct HTTP deny |
+| **V12.1-PRIVACY-PAGE-CLAMP-04** | WordPress privacy export page 10001 کو 10000 پر clamp کرتا تھا | اصل page برقرار، صرف unrepresentable integer offset error؛ 6 synthetic assertions | million-row MariaDB test، concurrent edit snapshots، real WP Ajax |
+
+**قابلِ عمل بقایا:** V12.1 WP-00 actual deployed artifact checksum+schema/migration؛ WP-02 File00/02/04/20/24 native-owner contract proofs؛ WP-12 اصل 20,001+ erasure/retention performance اور restore؛ WP-14 staging/founder sign-off؛ WP-15 live deploy+retest۔ 10 external checks، 13 known limits اور دو آزاد reviews اب بھی باقی ہیں۔ نہ child Draft PR #29 merge ہوا، نہ live/staging DB یا plugin بدلا گیا۔
+
+**تفصیلی تنقیح:** `docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md`۔ اس سے نیچے سابقہ 8-source-fix snapshot اسی تاریخ کا پچھلا مرحلہ ہے، موجودہ آخری QA کا بدل نہیں۔
+
 ## ۱۳ نومبر ۲۰۲۶ء — رازداری کے اضافی سورس نقص کے بعد موجودہ شمار: ۸
 
 **V12.1-PORTABILITY-CONTRIBUTOR-08:** `privacy_collection_export()` کے parent collection اور item-parent دونوں اجازت ناموں میں `array_map('intval', $contributors)` خراب JSON `"7spoof"` کو ۷ بناسکتا تھا؛ اس سے دوسرے مالک کے meta-data کا غیر مجاز data portability export ہوسکتا تھا۔ سورس میں دونوں جگہ exact native integer `in_array($user_id, $contributors, true)` نافذ؛ `tests/v12-1-privacy-collection-export-pagination-tests.php` میں غیر مالک parent اور child دونوں کے منفی ٹیسٹ شامل۔ **دو نئے assertions**، مذکورہ suite **۶۱۳۰**، اس نشست کی ۶ نئی suites **۶۱۸۴**۔ یہ سورس میں ثابت اجازت کی خامی ہے، نہ کہ مشاہدہ شدہ Hostinger پر حملہ۔
