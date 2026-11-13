@@ -958,7 +958,7 @@ final class SPDB_Export_Service {
 			$lines[] = 'END:VEVENT';
 		}
 		$lines[] = 'END:VCALENDAR';
-		return implode( "\r\n", $lines ) . "\r\n";
+		return implode( "\r\n", array_map( static fn( $line ): string => self::ics_fold_line( (string) $line ), $lines ) ) . "\r\n";
 	}
 
 	/** @param array<string,mixed> $filters @return array<string,mixed> */
@@ -981,8 +981,37 @@ final class SPDB_Export_Service {
 	}
 
 	private static function ics_escape( string $value ): string {
-		$value = preg_replace( '/[\r\n]+/', '\\n', $value );
-		return str_replace( array( '\\', ';', ',' ), array( '\\\\', '\\;', '\\,' ), (string) $value );
+		// RFC 5545 3.3.11: escape original delimiters/backslashes FIRST.
+		// Escaping the inserted \n afterward used to double the logical
+		// newline sequence, making some clients show literal "\n".
+		$escaped = str_replace(
+			array( '\\', ';', ',' ),
+			array( '\\\\', '\\;', '\\,' ),
+			$value
+		);
+		return str_replace( array( "\r\n", "\r", "\n" ), '\\n', $escaped );
+	}
+
+	/** Fold long RFC 5545 content lines at <=75 octets without splitting UTF-8 codepoints. */
+	private static function ics_fold_line( string $line ): string {
+		$characters = preg_split( '//u', $line, -1, PREG_SPLIT_NO_EMPTY );
+		if ( ! is_array( $characters ) ) {
+			// Invalid UTF-8 cannot be folded by character boundaries;
+			// retain legacy byte-safe behavior rather than throwing.
+			$characters = str_split( $line );
+		}
+		$out = '';
+		$column_octets = 0;
+		foreach ( $characters as $character ) {
+			$octets = strlen( $character );
+			if ( $column_octets + $octets > 75 ) {
+				$out .= "\r\n ";
+				$column_octets = 1;
+			}
+			$out .= $character;
+			$column_octets += $octets;
+		}
+		return $out;
 	}
 
 	private function mime_type( string $format ): string {
