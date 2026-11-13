@@ -28,8 +28,18 @@ final class SPDB_Operations_Schema {
 			if ( true === $verified ) {
 				return true;
 			}
+			// Same-version missing columns/indexes can indicate a deferred,
+			// partial or manually altered production migration. Never treat
+			// this as permission to run invasive dbDelta automatically on
+			// admin_init. Freeze the exact deployed DB before a controlled fix.
+			return new WP_Error(
+				'spdb_operations_schema_drift',
+				__( 'The installed File 23 operations schema differs from its recorded version; operator-controlled migration verification is required.', 'sabri-publishing-dashboard' ),
+				array( 'status' => 409, 'cause' => is_wp_error( $verified ) ? $verified->get_error_code() : 'unknown' )
+			);
 		}
 
+		// Normal, explicit new-version install or version upgrade path.
 		return self::install();
 	}
 
@@ -293,7 +303,7 @@ final class SPDB_Operations_Schema {
 			);
 		}
 
-		foreach ( self::table_names() as $table ) {
+		foreach ( self::requirements() as $table => $requirement ) {
 			$found = $wpdb->get_var(
 				$wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) )
 			);
@@ -310,9 +320,76 @@ final class SPDB_Operations_Schema {
 					__( 'A required File 23 operational metadata table is not using InnoDB.', 'sabri-publishing-dashboard' )
 				);
 			}
+			$columns = self::column_names( $table );
+			if ( is_wp_error( $columns ) ) {
+				return $columns;
+			}
+			if ( array_diff( $requirement['columns'], $columns ) ) {
+				return self::error( 'spdb_operations_schema_column_missing', __( 'A required File 23 operational metadata column is missing.', 'sabri-publishing-dashboard' ) );
+			}
+			$indexes = self::index_names( $table );
+			if ( is_wp_error( $indexes ) ) {
+				return $indexes;
+			}
+			if ( array_diff( $requirement['indexes'], $indexes ) ) {
+				return self::error( 'spdb_operations_schema_index_missing', __( 'A required File 23 operational metadata index is missing.', 'sabri-publishing-dashboard' ) );
+			}
 		}
 
 		return true;
+	}
+
+	/**
+	 * Exact MySQL column and index contract for every File23-owned operational
+	 * metadata table. A version option and table-engine check alone cannot
+	 * certify that an interrupted dbDelta/migration installed every field.
+	 *
+	 * @return array<string,array{columns:string[],indexes:string[]}>
+	 */
+	public static function requirements(): array {
+		$tables = self::table_names();
+		return array(
+			$tables['preferences'] => array(
+				'columns' => array( 'user_id', 'preferences_json', 'version', 'updated_at_gmt' ),
+				'indexes' => array( 'PRIMARY' ),
+			),
+			$tables['saved_views'] => array(
+				'columns' => array( 'id', 'view_id', 'owner_user_id', 'label', 'filters_json', 'version', 'created_at_gmt', 'updated_at_gmt' ),
+				'indexes' => array( 'PRIMARY', 'view_id', 'owner_updated' ),
+			),
+			$tables['tasks'] => array(
+				'columns' => array( 'id', 'task_id', 'owner_user_id', 'assignee_user_id', 'scope', 'provider_key', 'object_type', 'object_id', 'title', 'description', 'priority', 'status', 'due_at_gmt', 'version', 'created_by', 'audit_reason', 'created_at_gmt', 'updated_at_gmt', 'completed_at_gmt' ),
+				'indexes' => array( 'PRIMARY', 'task_id', 'assignee_status', 'owner_status', 'due_at_gmt', 'native_ref' ),
+			),
+			$tables['delegations'] => array(
+				'columns' => array( 'id', 'delegation_id', 'principal_user_id', 'delegate_user_id', 'scope_json', 'status', 'requires_mfa', 'starts_at_gmt', 'expires_at_gmt', 'version', 'created_by', 'reason', 'created_at_gmt', 'revoked_at_gmt' ),
+				'indexes' => array( 'PRIMARY', 'delegation_id', 'principal_status', 'delegate_status', 'expires_at_gmt' ),
+			),
+			$tables['automation_rules'] => array(
+				'columns' => array( 'id', 'rule_id', 'owner_user_id', 'rule_type', 'event_key', 'condition_json', 'action_json', 'status', 'version', 'last_run_at_gmt', 'next_run_at_gmt', 'created_by', 'audit_reason', 'created_at_gmt', 'updated_at_gmt' ),
+				'indexes' => array( 'PRIMARY', 'rule_id', 'owner_status', 'event_status', 'next_run_at_gmt' ),
+			),
+			$tables['metric_snapshots'] => array(
+				'columns' => array( 'id', 'snapshot_id', 'provider_key', 'metric_key', 'scope', 'owner_user_id', 'period_start_gmt', 'period_end_gmt', 'definition_hash', 'value_json', 'cohort_count', 'privacy_threshold', 'generated_at_gmt', 'expires_at_gmt' ),
+				'indexes' => array( 'PRIMARY', 'snapshot_id', 'metric_period', 'expires_at_gmt' ),
+			),
+			$tables['export_jobs'] => array(
+				'columns' => array( 'id', 'export_id', 'owner_user_id', 'report_key', 'format', 'scope', 'status', 'filters_json', 'storage_ref', 'file_hash', 'row_count', 'error_code', 'created_at_gmt', 'updated_at_gmt', 'expires_at_gmt' ),
+				'indexes' => array( 'PRIMARY', 'export_id', 'owner_status', 'expires_at_gmt' ),
+			),
+			$tables['adapter_health'] => array(
+				'columns' => array( 'provider_key', 'maturity_state', 'health_json', 'checked_at_gmt', 'expires_at_gmt' ),
+				'indexes' => array( 'PRIMARY', 'expires_at_gmt' ),
+			),
+			$tables['background_jobs'] => array(
+				'columns' => array( 'id', 'job_id', 'job_type', 'owner_user_id', 'payload_json', 'status', 'attempts', 'max_attempts', 'available_at_gmt', 'locked_at_gmt', 'lock_token', 'last_error_code', 'idempotency_key', 'created_at_gmt', 'updated_at_gmt', 'finished_at_gmt' ),
+				'indexes' => array( 'PRIMARY', 'job_id', 'type_idempotency', 'status_available', 'owner_status' ),
+			),
+			$tables['dashboard_audit'] => array(
+				'columns' => array( 'id', 'event_id', 'actor_user_id', 'event_key', 'object_ref_hash', 'payload_json', 'previous_hash', 'event_hash', 'created_at_gmt' ),
+				'indexes' => array( 'PRIMARY', 'event_id', 'actor_created', 'event_created' ),
+			),
+		);
 	}
 
 	/** @return string[] */
@@ -372,12 +449,39 @@ final class SPDB_Operations_Schema {
 		return is_array( $row ) ? (string) ( $row['Engine'] ?? '' ) : '';
 	}
 
+	/** @return string[]|WP_Error */
+	private static function column_names( string $table ) {
+		if ( 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $table ) ) {
+			return self::error( 'spdb_operations_schema_identifier_invalid', __( 'An operational table identifier is invalid.', 'sabri-publishing-dashboard' ) );
+		}
+		global $wpdb;
+		$rows = $wpdb->get_results( "SHOW COLUMNS FROM `{$table}`", defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A' ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Strictly allowlisted table identifier.
+		if ( ! is_array( $rows ) ) {
+			return self::error( 'spdb_operations_schema_inspection_failed', __( 'The operational schema column inspection failed.', 'sabri-publishing-dashboard' ) );
+		}
+		return array_values( array_unique( array_filter( array_map( static fn( $row ) => is_array( $row ) ? (string) ( $row['Field'] ?? '' ) : '', $rows ) ) ) );
+	}
+
+	/** @return string[]|WP_Error */
+	private static function index_names( string $table ) {
+		if ( 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $table ) ) {
+			return self::error( 'spdb_operations_schema_identifier_invalid', __( 'An operational table identifier is invalid.', 'sabri-publishing-dashboard' ) );
+		}
+		global $wpdb;
+		$rows = $wpdb->get_results( "SHOW INDEX FROM `{$table}`", defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A' ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Strictly allowlisted table identifier.
+		if ( ! is_array( $rows ) ) {
+			return self::error( 'spdb_operations_schema_inspection_failed', __( 'The operational schema index inspection failed.', 'sabri-publishing-dashboard' ) );
+		}
+		return array_values( array_unique( array_filter( array_map( static fn( $row ) => is_array( $row ) ? (string) ( $row['Key_name'] ?? '' ) : '', $rows ) ) ) );
+	}
+
 	private static function database_available(): bool {
 		global $wpdb;
 		return is_object( $wpdb )
 			&& isset( $wpdb->prefix )
 			&& method_exists( $wpdb, 'get_var' )
 			&& method_exists( $wpdb, 'get_row' )
+			&& method_exists( $wpdb, 'get_results' )
 			&& method_exists( $wpdb, 'prepare' )
 			&& method_exists( $wpdb, 'esc_like' );
 	}

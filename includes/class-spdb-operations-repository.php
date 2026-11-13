@@ -1262,17 +1262,29 @@ final class SPDB_Operations_Repository {
 	 *
 	 * @return array<string,mixed>
 	 */
-	public function privacy_export( int $user_id, int $page = 1, int $per_page = 100 ): array {
+	public function privacy_export( int $user_id, int $page = 1, int $per_page = 100 ) {
 		global $wpdb;
-		$page     = min( 10000, max( 1, $page ) );
+		$page     = max( 1, $page );
 		$per_page = min( 200, max( 1, $per_page ) );
+		// WordPress personal-data portability is not a UI list with a fixed
+		// 10,000-page horizon. Clamping page 10,001 to 10,000 can make core
+		// repeat/export the same records forever when the previous page
+		// remains full. Reject only a mathematically unrepresentable offset.
+		if ( $page - 1 > intdiv( PHP_INT_MAX, $per_page ) ) {
+			return self::error( 'spdb_privacy_page_overflow', __( 'The requested privacy export page is outside the safe database offset range.', 'sabri-publishing-dashboard' ), 400 );
+		}
 		$offset   = ( $page - 1 ) * $per_page;
 
 		$tasks = $this->list_tasks( $user_id, false, $page, $per_page );
-		$tasks = is_array( $tasks ) ? $tasks : array();
+		if ( is_wp_error( $tasks ) ) {
+			return $tasks;
+		}
 
 		$saved_table = SPDB_Operations_Schema::table( 'saved_views' );
 		$saved_rows  = $wpdb->get_results( $wpdb->prepare( "SELECT view_id, label, filters_json, version, created_at_gmt, updated_at_gmt FROM {$saved_table} WHERE owner_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $per_page, $offset ), self::array_output() );
+				if ( ! is_array( $saved_rows ) ) {
+			return self::error( 'spdb_privacy_export_read_failed', __( 'The private File 23 data export could not read all required records.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$saved_views = array();
 		foreach ( is_array( $saved_rows ) ? $saved_rows : array() as $row ) {
 			$saved_views[] = array(
@@ -1287,18 +1299,36 @@ final class SPDB_Operations_Repository {
 
 		$delegation_table = SPDB_Operations_Schema::table( 'delegations' );
 		$delegation_rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$delegation_table} WHERE principal_user_id = %d OR delegate_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $user_id, $per_page, $offset ), self::array_output() );
+				if ( ! is_array( $delegation_rows ) ) {
+			return self::error( 'spdb_privacy_export_read_failed', __( 'The private File 23 data export could not read all required records.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$delegations = array_map( array( $this, 'normalize_delegation_row' ), is_array( $delegation_rows ) ? $delegation_rows : array() );
 
 		$rule_table = SPDB_Operations_Schema::table( 'automation_rules' );
 		$rule_rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$rule_table} WHERE owner_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $per_page, $offset ), self::array_output() );
+				if ( ! is_array( $rule_rows ) ) {
+			return self::error( 'spdb_privacy_export_read_failed', __( 'The private File 23 data export could not read all required records.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$rules = array_map( array( $this, 'normalize_rule_row' ), is_array( $rule_rows ) ? $rule_rows : array() );
 
 		$export_table = SPDB_Operations_Schema::table( 'export_jobs' );
 		$export_rows  = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$export_table} WHERE owner_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $per_page, $offset ), self::array_output() );
+				if ( ! is_array( $export_rows ) ) {
+			return self::error( 'spdb_privacy_export_read_failed', __( 'The private File 23 data export could not read all required records.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$exports = array_map( array( $this, 'normalize_export_row' ), is_array( $export_rows ) ? $export_rows : array() );
 
 		$collection_page = $this->privacy_collection_export( $user_id, $page, $per_page );
+		if ( is_wp_error( $collection_page ) ) {
+			return $collection_page;
+		}
 		$preferences     = 1 === $page ? $this->get_preferences( $user_id ) : array();
+		// get_preferences() preserves its ordinary UI contract (missing row
+		// means defaults), but WordPress privacy portability must distinguish
+		// a real SELECT failure from a legitimately absent preferences row.
+		if ( 1 === $page && is_object( $wpdb ) && ! empty( $wpdb->last_error ) ) {
+			return self::error( 'spdb_privacy_preferences_read_failed', __( 'Private dashboard preferences could not be read completely.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$counts = array( count( $tasks ), count( $saved_views ), count( $delegations ), count( $rules ), count( $exports ) );
 		$has_more = in_array( $per_page, $counts, true ) || true === ( $collection_page['has_more'] ?? false );
 
@@ -1362,15 +1392,14 @@ final class SPDB_Operations_Repository {
 				$collections_table = SPDB_Collections_Schema::collections_table();
 				$items_table       = SPDB_Collections_Schema::items_table();
 				$links_table       = SPDB_Collections_Schema::links_table();
-				$own_ids = $wpdb->get_col( $wpdb->prepare( "SELECT collection_id FROM {$collections_table} WHERE scope = 'own' AND owner_user_id = %d", $user_id ) );
-				if ( ! is_array( $own_ids ) ) { return self::error( 'spdb_privacy_collection_read_failed', __( 'Personal collections could not be inspected.', 'sabri-publishing-dashboard' ), 500 ); }
-				$own_ids = array_values( array_filter( array_map( 'strval', $own_ids ) ) );
-				if ( $own_ids ) {
-					$placeholders = implode( ',', array_fill( 0, count( $own_ids ), '%s' ) );
-					$result = $wpdb->query( $wpdb->prepare( "DELETE FROM {$items_table} WHERE collection_id IN ({$placeholders})", ...$own_ids ) );
-					if ( false === $result ) { return self::error( 'spdb_privacy_collection_erase_failed', __( 'Personal collection items could not be erased.', 'sabri-publishing-dashboard' ), 500 ); }
-					$deleted += (int) $result;
+				// A single owner/scope-bound relational DELETE avoids loading
+				// every collection ID into PHP and building an unbounded IN list.
+				// The enclosing privacy_erase transaction rolls back on failure.
+				$own_items = $this->erase_owned_collection_items( $user_id );
+				if ( is_wp_error( $own_items ) ) {
+					return $own_items;
 				}
+				$deleted += $own_items;
 				$result = $wpdb->query( $wpdb->prepare( "DELETE FROM {$collections_table} WHERE scope = 'own' AND owner_user_id = %d", $user_id ) );
 				if ( false === $result ) { return self::error( 'spdb_privacy_collection_erase_failed', __( 'Personal collections could not be erased.', 'sabri-publishing-dashboard' ), 500 ); }
 				$deleted += (int) $result;
@@ -1381,26 +1410,11 @@ final class SPDB_Operations_Repository {
 				if ( false === $result ) { return self::error( 'spdb_privacy_pseudonymize_failed', __( 'Institutional knowledge-link references could not be pseudonymized.', 'sabri-publishing-dashboard' ), 500 ); }
 				$pseudonymized += (int) $result;
 
-				$pattern = '%' . $wpdb->esc_like( (string) $user_id ) . '%';
-				$rows = $wpdb->get_results( $wpdb->prepare( "SELECT collection_id, owner_user_id, contributors_json FROM {$collections_table} WHERE scope = 'institution' AND (owner_user_id = %d OR contributors_json LIKE %s) LIMIT 5000", $user_id, $pattern ), self::array_output() );
-				if ( ! is_array( $rows ) ) { return self::error( 'spdb_privacy_collection_read_failed', __( 'Institutional collection references could not be inspected.', 'sabri-publishing-dashboard' ), 500 ); }
-				foreach ( $rows as $row ) {
-					$contributors = self::decode_object( $row['contributors_json'] ?? '' );
-					if ( self::is_list_array( $contributors ) ) {
-						$contributors = array_values( array_filter( array_map( 'intval', $contributors ), static fn( int $id ): bool => $id > 0 && $id !== $user_id ) );
-					} else {
-						$contributors = array();
-					}
-					$encoded = self::encode_json( $contributors );
-					if ( is_wp_error( $encoded ) ) { return $encoded; }
-					$result = $wpdb->update(
-						$collections_table,
-						array( 'owner_user_id' => (int) ( $row['owner_user_id'] ?? 0 ) === $user_id ? 0 : (int) $row['owner_user_id'], 'contributors_json' => $encoded, 'updated_at_gmt' => $now ),
-						array( 'collection_id' => (string) $row['collection_id'], 'scope' => 'institution' )
-					);
-					if ( false === $result ) { return self::error( 'spdb_privacy_pseudonymize_failed', __( 'Institutional collection references could not be pseudonymized.', 'sabri-publishing-dashboard' ), 500 ); }
-					$pseudonymized += (int) $result;
+				$institutional = $this->pseudonymize_institutional_collections( $user_id, $now );
+				if ( is_wp_error( $institutional ) ) {
+					return $institutional;
 				}
+				$pseudonymized += $institutional;
 
 				$audit = $this->append_audit( 0, 'privacy_erasure_completed', 'user:' . $user_id, array( 'deleted_personal_rows' => $deleted, 'pseudonymized_rows' => $pseudonymized ) );
 				if ( is_wp_error( $audit ) ) {
@@ -1413,19 +1427,144 @@ final class SPDB_Operations_Repository {
 	}
 
 	/**
+	 * Set-based erasure of the canonical File23 collection-item pointers that
+	 * belong to this user's own-scope collections. No external content or
+	 * cross-owner/institutional rows may be deleted by this helper.
+	 *
+	 * This must be called within the parent's InnoDB privacy transaction.
+	 *
+	 * @return int|WP_Error
+	 */
+	private function erase_owned_collection_items( int $user_id ) {
+		if ( $user_id < 1 ) {
+			return self::error( 'spdb_privacy_user_invalid', __( 'The privacy-erasure owner is invalid.', 'sabri-publishing-dashboard' ), 400 );
+		}
+		global $wpdb;
+		$items = SPDB_Collections_Schema::items_table();
+		$collections = SPDB_Collections_Schema::collections_table();
+		if ( 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $items ) || 1 !== preg_match( '/^[A-Za-z0-9_]+$/', $collections ) ) {
+			return self::error( 'spdb_privacy_collection_table_invalid', __( 'The File23 collection table identifiers are invalid.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$query = $wpdb->prepare(
+			"DELETE item_rows FROM `{$items}` AS item_rows INNER JOIN `{$collections}` AS own_col ON item_rows.collection_id = own_col.collection_id WHERE own_col.scope = 'own' AND own_col.owner_user_id = %d",
+			$user_id
+		);
+		$result = $wpdb->query( $query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Both table names are strict local schema identifiers, owner bound by prepare().
+		return false === $result
+			? self::error( 'spdb_privacy_collection_erase_failed', __( 'Personal collection items could not be erased.', 'sabri-publishing-dashboard' ), 500 )
+			: (int) $result;
+	}
+
+	/**
+	 * Pseudonymize every institutional collection referencing this owner in
+	 * bounded, monotonically ordered pages. The previous fixed LIMIT 5000
+	 * could silently leave identity references behind while the parent
+	 * privacy transaction reported full success. A failed page returns
+	 * WP_Error so the enclosing InnoDB transaction rolls back.
+	 *
+	 * @return int|WP_Error Number of changed institutional rows.
+	 */
+	private function pseudonymize_institutional_collections( int $user_id, string $now ) {
+		global $wpdb;
+		$collections = SPDB_Collections_Schema::collections_table();
+		$pattern = '%' . $wpdb->esc_like( (string) $user_id ) . '%';
+		$cursor = 0;
+		$pseudonymized = 0;
+		$finished = false;
+		for ( $page = 0; $page < 100; ++$page ) {
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT id, collection_id, owner_user_id, contributors_json FROM {$collections} WHERE scope = 'institution' AND id > %d AND (owner_user_id = %d OR contributors_json LIKE %s) ORDER BY id ASC LIMIT %d",
+					$cursor, $user_id, $pattern, 200
+				),
+				self::array_output()
+			);
+			if ( ! is_array( $rows ) ) {
+				return self::error( 'spdb_privacy_collection_read_failed', __( 'Institutional collection references could not be inspected.', 'sabri-publishing-dashboard' ), 500 );
+			}
+			if ( ! $rows ) {
+				$finished = true;
+				break;
+			}
+			foreach ( $rows as $row ) {
+				$id = (int) ( $row['id'] ?? 0 );
+				if ( $id <= $cursor ) {
+					return self::error( 'spdb_privacy_collection_cursor_invalid', __( 'Institutional collection references were not ordered safely.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				$cursor = $id;
+				$raw = $row['contributors_json'] ?? null;
+				$contributors = is_string( $raw ) ? json_decode( $raw, true, 32 ) : null;
+				if ( ! is_array( $contributors ) || ! self::is_list_array( $contributors ) || JSON_ERROR_NONE !== json_last_error() ) {
+					return self::error( 'spdb_privacy_contributors_invalid', __( 'An institutional contributor record is malformed and must not be overwritten.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				foreach ( $contributors as $contributor_id ) {
+					if ( ! is_int( $contributor_id ) || $contributor_id < 1 ) {
+						return self::error( 'spdb_privacy_contributors_invalid', __( 'An institutional contributor reference has an unsafe type.', 'sabri-publishing-dashboard' ), 409 );
+					}
+				}
+				$owner = (int) ( $row['owner_user_id'] ?? 0 );
+				if ( $owner !== $user_id && ! in_array( $user_id, $contributors, true ) ) {
+					// LIKE is a broad SQL prefilter: 7 must not modify owner 17.
+					continue;
+				}
+				$remaining = array_values( array_filter( $contributors, static fn( int $id ): bool => $id !== $user_id ) );
+				$encoded = self::encode_json( $remaining );
+				if ( is_wp_error( $encoded ) ) {
+					return $encoded;
+				}
+				$result = $wpdb->update(
+					$collections,
+					array(
+						'owner_user_id' => $owner === $user_id ? 0 : $owner,
+						'contributors_json' => $encoded,
+						'updated_at_gmt' => $now,
+					),
+					array( 'collection_id' => (string) ( $row['collection_id'] ?? '' ), 'scope' => 'institution' )
+				);
+				if ( false === $result ) {
+					return self::error( 'spdb_privacy_pseudonymize_failed', __( 'Institutional collection references could not be pseudonymized.', 'sabri-publishing-dashboard' ), 500 );
+				}
+				$pseudonymized += (int) $result;
+			}
+			if ( count( $rows ) < 200 ) {
+				$finished = true;
+				break;
+			}
+		}
+		if ( ! $finished ) {
+			return self::error( 'spdb_privacy_collection_batch_incomplete', __( 'Institutional collection erasure reached its safe traversal limit; metadata erasure was not completed.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		return $pseudonymized;
+	}
+
+	/**
 	 * Delete expired temporary rows and stale completed jobs.
 	 *
 	 * @return array<string,int>|WP_Error
 	 */
-	public function cleanup_retention( array $settings ) {
+	public function cleanup_retention( array $settings, ?string $export_cutoff = null, ?int $export_max_id = null ) {
+		// File23 must never purge encrypted-export references without the
+		// frozen expiry cutoff and the independently verified row-ID fence.
+		// A direct call with omitted arguments is NOT deletion authorization.
+		if ( null === $export_cutoff || null === $export_max_id ) {
+			return self::error( 'spdb_retention_proof_required', __( 'Verified export artifact cleanup cutoff and row fence are required before metadata retention purge.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		$now = current_time( 'mysql', true );
+		$cutoff = $export_cutoff;
+		if ( $export_max_id < 0 ) {
+			return self::error( 'spdb_retention_max_id_invalid', __( 'The export retention row fence is invalid.', 'sabri-publishing-dashboard' ), 400 );
+		}
+		if ( 1 !== preg_match( '/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/', $cutoff ) || false === strtotime( $cutoff . ' UTC' ) || $cutoff > $now ) {
+			return self::error( 'spdb_retention_cutoff_invalid', __( 'An invalid or future File 23 export retention cutoff was supplied.', 'sabri-publishing-dashboard' ), 400 );
+		}
 		return $this->atomic(
-			function () use ( $settings ) {
+			function () use ( $settings, $cutoff, $export_max_id ) {
 				global $wpdb;
 				$now = current_time( 'mysql', true );
 				$deleted = array( 'metrics' => 0, 'exports' => 0, 'jobs' => 0, 'tasks' => 0, 'health' => 0 );
 				$queries = array(
 					'metrics' => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'metric_snapshots' ) . ' WHERE expires_at_gmt <= %s', $now ),
-					'exports' => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'export_jobs' ) . ' WHERE expires_at_gmt <= %s', $now ),
+					'exports' => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'export_jobs' ) . ' WHERE expires_at_gmt <= %s AND id <= %d', $cutoff, $export_max_id ),
 					'health'  => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'adapter_health' ) . ' WHERE expires_at_gmt <= %s', $now ),
 					'jobs'    => $wpdb->prepare(
 						'DELETE FROM ' . SPDB_Operations_Schema::table( 'background_jobs' ) . " WHERE status IN ('completed','dead_letter') AND updated_at_gmt < %s",
@@ -1451,7 +1590,7 @@ final class SPDB_Operations_Repository {
 	}
 
 	/** @return array<string,mixed> */
-	private function privacy_collection_export( int $user_id, int $page, int $per_page ): array {
+	private function privacy_collection_export( int $user_id, int $page, int $per_page ) {
 		global $wpdb;
 		$collections_table = SPDB_Collections_Schema::collections_table();
 		$items_table       = SPDB_Collections_Schema::items_table();
@@ -1459,23 +1598,45 @@ final class SPDB_Operations_Repository {
 		$pattern           = '%' . $wpdb->esc_like( (string) $user_id ) . '%';
 		$offset            = ( $page - 1 ) * $per_page;
 		$raw = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$collections_table} WHERE owner_user_id = %d OR contributors_json LIKE %s ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $pattern, $per_page, $offset ), self::array_output() );
-		$raw = is_array( $raw ) ? $raw : array();
+		if ( ! is_array( $raw ) ) {
+			return self::error( 'spdb_privacy_collection_read_failed', __( 'Personal collection references could not be read.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$collections = array_values( array_filter( $raw, static function ( array $row ) use ( $user_id ): bool {
 			if ( (int) ( $row['owner_user_id'] ?? 0 ) === $user_id ) { return true; }
 			$contributors = self::decode_object( $row['contributors_json'] ?? '' );
-			return in_array( $user_id, array_map( 'intval', $contributors ), true );
+			return in_array( $user_id, $contributors, true );
 		} ) );
-		$ids = array_values( array_filter( array_map( static fn( array $row ): string => (string) ( $row['collection_id'] ?? '' ), $collections ) ) );
+		// Item pointers are a separate bounded privacy-export stream. The
+		// previous LIMIT 5000 was scoped to each page of collections: one
+		// collection with 6000 items could silently omit the final 1000.
+		// Page items directly over a stable item-id ordering instead.
+		$raw_items = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT item_rows.*, parent.owner_user_id AS parent_owner_user_id, parent.contributors_json AS parent_contributors_json FROM {$items_table} AS item_rows INNER JOIN {$collections_table} AS parent ON item_rows.collection_id = parent.collection_id WHERE (parent.owner_user_id = %d OR parent.contributors_json LIKE %s) ORDER BY item_rows.id ASC LIMIT %d OFFSET %d",
+				$user_id, $pattern, $per_page, $offset
+			),
+			self::array_output()
+		);
+		if ( ! is_array( $raw_items ) ) {
+			return self::error( 'spdb_privacy_collection_read_failed', __( 'Personal collection item references could not be read.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$items = array();
-		if ( $ids ) {
-			$placeholders = implode( ',', array_fill( 0, count( $ids ), '%s' ) );
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$items_table} WHERE collection_id IN ({$placeholders}) ORDER BY id ASC LIMIT 5000", ...$ids ), self::array_output() );
-			$items = is_array( $rows ) ? $rows : array();
+		foreach ( $raw_items as $item ) {
+			$parent_owner = (int) ( $item['parent_owner_user_id'] ?? 0 );
+			$contributors = self::decode_object( $item['parent_contributors_json'] ?? '' );
+			if ( $parent_owner !== $user_id && ! in_array( $user_id, $contributors, true ) ) {
+				continue; // Avoid leaking false-positive SQL LIKE hits (7 versus 17).
+			}
+			unset( $item['parent_owner_user_id'], $item['parent_contributors_json'] );
+			$items[] = $item;
 		}
 		$links = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$links_table} WHERE owner_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $per_page, $offset ), self::array_output() );
+		if ( ! is_array( $links ) ) {
+			return self::error( 'spdb_privacy_collection_read_failed', __( 'Personal knowledge-link references could not be read.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		return array(
 			'data' => array( 'collections' => $collections, 'items' => $items, 'knowledge_links' => is_array( $links ) ? $links : array() ),
-			'has_more' => count( $raw ) === $per_page || ( is_array( $links ) && count( $links ) === $per_page ),
+			'has_more' => count( $raw ) === $per_page || ( is_array( $raw_items ) && count( $raw_items ) === $per_page ) || ( is_array( $links ) && count( $links ) === $per_page ),
 		);
 	}
 

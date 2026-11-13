@@ -141,7 +141,6 @@ final class SPDB_Export_Service {
 			return $this->fail_processing( $export_id, $directory );
 		}
 		$filename = $export_id . '.spdb';
-		$path     = trailingslashit( $directory ) . $filename;
 		$content  = $this->render( $job['format'], $model );
 		if ( is_wp_error( $content ) ) {
 			return $this->fail_processing( $export_id, $content );
@@ -150,22 +149,115 @@ final class SPDB_Export_Service {
 		if ( is_wp_error( $sealed ) ) {
 			return $this->fail_processing( $export_id, $sealed );
 		}
-		if ( false === file_put_contents( $path, $sealed, LOCK_EX ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Protected generated artifact directory.
-			return $this->fail_processing( $export_id, self::error( 'spdb_export_file_write_failed', __( 'The export file could not be written.', 'sabri-publishing-dashboard' ), 500 ) );
+		global $wpdb;
+		if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'get_var' ) || ! method_exists( $wpdb, 'prepare' ) ) {
+			return self::error( 'spdb_export_owner_lock_unavailable', __( 'Owner export coordination is unavailable; the job remains retryable.', 'sabri-publishing-dashboard' ), 503 );
 		}
-		@chmod( $path, 0640 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Best-effort hardening.
-		$hash = hash_file( 'sha256', $path );
-		if ( ! is_string( $hash ) || 64 !== strlen( $hash ) ) {
-			@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Cleanup generated file.
-			return $this->fail_processing( $export_id, self::error( 'spdb_export_hash_failed', __( 'The export file could not be verified.', 'sabri-publishing-dashboard' ), 500 ) );
+		// A late background job and a WordPress privacy eraser must not
+		// race across owner metadata deletion and ciphertext generation.
+		$lock_name = self::privacy_erasure_lock_name( $owner_user_id );
+		$locked = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $lock_name ) );
+		if ( '1' !== (string) $locked ) {
+			return self::error( 'spdb_export_owner_lock_busy', __( 'An owner export/erasure operation is already running; retry later.', 'sabri-publishing-dashboard' ), 503 );
 		}
-		$row_count = isset( $model['rows'] ) && is_array( $model['rows'] ) ? count( $model['rows'] ) : ( isset( $model['events'] ) && is_array( $model['events'] ) ? count( $model['events'] ) : 0 );
-		$completed = $this->repository->complete_export_job( $export_id, $filename, $hash, $row_count );
-		if ( is_wp_error( $completed ) ) {
-			@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove an uncommitted generated artifact.
-			return $completed;
+		try {
+			// The owner and native job might have been erased or revoked
+			// while this job was rendering provider projections.
+			$fresh = $this->repository->get_export_job( $export_id, 0, true );
+			if ( is_wp_error( $fresh ) || ! is_array( $fresh ) ||
+				'processing' !== ( $fresh['status'] ?? '' ) ||
+				$owner_user_id !== (int) ( $fresh['owner_user_id'] ?? 0 ) ||
+				! $this->user_can_export( $owner_user_id ) ||
+				( 'institution' === (string) ( $fresh['scope'] ?? '' ) && ! $this->is_institutional( $owner_user_id ) ) ) {
+				return $this->fail_processing( $export_id, self::error( 'spdb_export_authorization_revoked', __( 'The export job or owner authorization changed during generation.', 'sabri-publishing-dashboard' ), 403 ) );
+			}
+		// A job can expire while the provider is rendering; do not write
+			// new ciphertext for an already expired retention-bound export.
+			if ( '' !== $job['expires_at_gmt'] && strtotime( $job['expires_at_gmt'] . ' UTC' ) <= time() ) {
+				return $this->fail_processing( $export_id, self::error( 'spdb_export_expired', __( 'The export expired before its file could be written.', 'sabri-publishing-dashboard' ), 410 ) );
+			}
+			// An erasure can begin while a queued job is rendering. Re-check
+			// the durable owner lock immediately before any ciphertext write.
+			if ( self::privacy_erasure_pending( $owner_user_id ) ) {
+				return $this->fail_processing( $export_id, self::error( 'spdb_export_erasure_pending', __( 'Owner privacy erasure blocks export generation.', 'sabri-publishing-dashboard' ), 409 ) );
+			}
+			// Exclusive create prevents retry/symlink overwrite of an existing
+			// ciphertext path. The host must still independently deny HTTP access.
+			$path = $this->write_ciphertext_exclusive( $directory, $filename, $sealed );
+			if ( is_wp_error( $path ) ) {
+				return $this->fail_processing( $export_id, $path );
+			}
+			// A privacy eraser may set its lock between the pre-write check
+			// and the exclusive create. Do not publish or retain that artifact.
+			if ( self::privacy_erasure_pending( $owner_user_id ) ) {
+				@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Prevent new ciphertext while erasure is pending.
+				return $this->fail_processing( $export_id, self::error( 'spdb_export_erasure_pending', __( 'Owner privacy erasure blocks export generation.', 'sabri-publishing-dashboard' ), 409 ) );
+			}
+			if ( '' !== $job['expires_at_gmt'] && strtotime( $job['expires_at_gmt'] . ' UTC' ) <= time() ) {
+				@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Prevent a late-generated expired ciphertext.
+				return $this->fail_processing( $export_id, self::error( 'spdb_export_expired', __( 'The export expired while generating its private file.', 'sabri-publishing-dashboard' ), 410 ) );
+			}
+			$hash = hash_file( 'sha256', $path );
+			if ( ! is_string( $hash ) || 64 !== strlen( $hash ) ) {
+				@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Cleanup generated file.
+				return $this->fail_processing( $export_id, self::error( 'spdb_export_hash_failed', __( 'The export file could not be verified.', 'sabri-publishing-dashboard' ), 500 ) );
+			}
+			$row_count = isset( $model['rows'] ) && is_array( $model['rows'] ) ? count( $model['rows'] ) : ( isset( $model['events'] ) && is_array( $model['events'] ) ? count( $model['events'] ) : 0 );
+			$completed = $this->repository->complete_export_job( $export_id, $filename, $hash, $row_count );
+			if ( is_wp_error( $completed ) ) {
+				@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove an uncommitted generated artifact.
+				return $completed;
+			}
+			return true;
+		} finally {
+			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
 		}
-		return true;
+	}
+
+	/**
+	 * Create new encrypted report bytes without following an existing symlink
+	 * or replacing an existing export. A normal fopen/write mode would overwrite
+	 * files under a reused export ID and could follow a hostile filesystem link.
+	 *
+	 * @return string|WP_Error Absolute verified artifact path.
+	 */
+	private function write_ciphertext_exclusive( string $directory, string $filename, string $content ) {
+		if ( 1 !== preg_match( '/^export_[a-z0-9]{32}\\.spdb$/', $filename ) ) {
+			return self::error( 'spdb_export_file_name_invalid', __( 'The private export filename is invalid.', 'sabri-publishing-dashboard' ), 400 );
+		}
+		$real_dir = realpath( $directory );
+		if ( false === $real_dir || ! is_dir( $real_dir ) ) {
+			return self::error( 'spdb_export_storage_unavailable', __( 'The private export directory is unavailable.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$path = trailingslashit( $real_dir ) . $filename;
+		if ( is_link( $path ) || file_exists( $path ) ) {
+			return self::error( 'spdb_export_file_exists', __( 'An export artifact already exists; overwrite is forbidden.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		$stream = @fopen( $path, 'xb' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- Atomic exclusive local encrypted artifact creation.
+		if ( false === $stream ) {
+			return self::error( 'spdb_export_file_write_failed', __( 'The encrypted export artifact could not be created exclusively.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$size = strlen( $content );
+		$offset = 0;
+		while ( $offset < $size ) {
+			$written = @fwrite( $stream, substr( $content, $offset ) ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- Verify partial write count.
+			if ( ! is_int( $written ) || $written <= 0 ) {
+				break;
+			}
+			$offset += $written;
+		}
+		$flushed = @fflush( $stream ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Verify generated encrypted file is flushed.
+		$closed = @fclose( $stream ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- Verify generated encrypted file is closed.
+		if ( $offset !== $size || ! $flushed || ! $closed || ! @chmod( $path, 0600 ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Fail closed if private permissions cannot be set.
+			@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove incomplete private export.
+			return self::error( 'spdb_export_file_write_failed', __( 'The encrypted export could not be stored safely.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$real = realpath( $path );
+		if ( false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) ) {
+			@unlink( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged,WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove invalid private export.
+			return self::error( 'spdb_export_file_path_invalid', __( 'The encrypted export path failed containment verification.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		return $real;
 	}
 
 	/** Download only through an authenticated, owner-bound, expiring signature. */
@@ -195,11 +287,13 @@ final class SPDB_Export_Service {
 		if ( is_wp_error( $directory ) ) {
 			wp_die( esc_html__( 'The export storage is unavailable.', 'sabri-publishing-dashboard' ), esc_html__( 'Export unavailable', 'sabri-publishing-dashboard' ), array( 'response' => 500 ) );
 		}
-		$filename = basename( (string) $job['storage_ref'] );
-		$path     = trailingslashit( $directory ) . $filename;
-		$real_dir = realpath( $directory );
-		$real     = realpath( $path );
-		if ( false === $real_dir || false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) || ! hash_equals( (string) $job['file_hash'], (string) hash_file( 'sha256', $real ) ) ) {
+		$real = $this->resolve_ciphertext_download_path(
+			$directory,
+			$export_id,
+			(string) $job['storage_ref'],
+			(string) $job['file_hash']
+		);
+		if ( is_wp_error( $real ) ) {
 			wp_die( esc_html__( 'The export file failed integrity verification.', 'sabri-publishing-dashboard' ), esc_html__( 'Export unavailable', 'sabri-publishing-dashboard' ), array( 'response' => 409 ) );
 		}
 		$sealed = file_get_contents( $real ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Verified private generated file.
@@ -219,6 +313,41 @@ final class SPDB_Export_Service {
 
 
 	/**
+	 * Resolve exactly this export's private ciphertext without basename()
+	 * normalization or symlink following. The previous basename()+realpath()
+	 * flow could accept a different raw storage reference or same-directory
+	 * symlink if its bytes matched the stored hash.
+	 *
+	 * @return string|WP_Error
+	 */
+	private function resolve_ciphertext_download_path( string $directory, string $export_id, string $storage_ref, string $expected_hash ) {
+		if (
+			1 !== preg_match( '/^export_[a-z0-9]{32}$/', $export_id )
+			|| $storage_ref !== $export_id . '.spdb'
+			|| 1 !== preg_match( '/^[a-f0-9]{64}$/', $expected_hash )
+		) {
+			return self::error( 'spdb_export_download_reference_invalid', __( 'Private export reference or checksum is invalid.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		$real_dir = realpath( $directory );
+		if ( false === $real_dir || ! is_dir( $real_dir ) ) {
+			return self::error( 'spdb_export_download_storage_invalid', __( 'Private export storage could not be resolved.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		$path = trailingslashit( $real_dir ) . $storage_ref;
+		if ( is_link( $path ) || ! is_file( $path ) || ! is_readable( $path ) ) {
+			return self::error( 'spdb_export_download_path_invalid', __( 'Private export ciphertext is unavailable or unsafe.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		$real = realpath( $path );
+		if ( false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) || ! is_readable( $real ) ) {
+			return self::error( 'spdb_export_download_path_invalid', __( 'Private export ciphertext failed containment.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		$actual_hash = hash_file( 'sha256', $real );
+		if ( ! is_string( $actual_hash ) || ! hash_equals( $expected_hash, $actual_hash ) ) {
+			return self::error( 'spdb_export_download_hash_invalid', __( 'Private export ciphertext failed checksum verification.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		return $real;
+	}
+
+	/**
 	 * Delete expired encrypted export artifacts before their metadata rows are purged.
 	 * Returning an error deliberately prevents metadata deletion so the cleanup can retry.
 	 *
@@ -234,31 +363,45 @@ final class SPDB_Export_Service {
 			return self::error( 'spdb_export_cleanup_storage_invalid', __( 'The private export directory could not be resolved for retention cleanup.', 'sabri-publishing-dashboard' ), 500 );
 		}
 		global $wpdb;
-		$table   = SPDB_Operations_Schema::table( 'export_jobs' );
-		$deleted = 0;
-		$cursor  = 0;
-		$now     = current_time( 'mysql', true );
+		$table    = SPDB_Operations_Schema::table( 'export_jobs' );
+		$deleted  = 0;
+		$cursor   = 0;
+		$now      = current_time( 'mysql', true );
+		$finished = false;
 		for ( $batch = 0; $batch < 100; ++$batch ) {
 			$rows = $wpdb->get_results(
-				$wpdb->prepare( "SELECT id, storage_ref FROM {$table} WHERE expires_at_gmt <= %s AND id > %d ORDER BY id ASC LIMIT 200", $now, $cursor ),
+				$wpdb->prepare( "SELECT id, export_id, storage_ref, status FROM {$table} WHERE expires_at_gmt <= %s AND id > %d ORDER BY id ASC LIMIT 200", $now, $cursor ),
 				defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
 			);
 			if ( ! is_array( $rows ) ) {
 				return self::error( 'spdb_export_cleanup_read_failed', __( 'Expired export artifacts could not be enumerated safely.', 'sabri-publishing-dashboard' ), 500 );
 			}
 			if ( ! $rows ) {
+				$finished = true;
 				break;
 			}
 			foreach ( $rows as $row ) {
-				$cursor   = max( $cursor, (int) ( $row['id'] ?? 0 ) );
-				$filename = basename( (string) ( $row['storage_ref'] ?? '' ) );
-				if ( '' === $filename ) {
+				$id = (int) ( $row['id'] ?? 0 );
+				if ( $id <= $cursor ) {
+					return self::error( 'spdb_export_cleanup_cursor_invalid', __( 'Expired export artifacts could not be enumerated in a safe order.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				$cursor = $id;
+				if ( in_array( (string) ( $row['status'] ?? '' ), array( 'queued', 'processing' ), true ) ) {
+					return self::error( 'spdb_export_cleanup_active_job', __( 'An expired export job is still active; cleanup is deferred.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				$storage_ref = (string) ( $row['storage_ref'] ?? '' );
+				if ( '' === $storage_ref ) {
 					continue;
 				}
-				if ( 1 !== preg_match( '/^export_[a-z0-9]{32}\.spdb$/', $filename ) ) {
+				if ( ! self::storage_reference_matches_export_row( $row ) ) {
 					return self::error( 'spdb_export_cleanup_reference_invalid', __( 'An expired export storage reference failed validation.', 'sabri-publishing-dashboard' ), 409 );
 				}
-				$path = trailingslashit( $directory ) . $filename;
+				$path = trailingslashit( $directory ) . $storage_ref;
+				// realpath() follows symlinks: unlinking the resolved target could
+				// delete another export instead of this expired reference.
+				if ( is_link( $path ) ) {
+					return self::error( 'spdb_export_cleanup_path_invalid', __( 'An expired export artifact failed path containment validation.', 'sabri-publishing-dashboard' ), 409 );
+				}
 				if ( ! file_exists( $path ) ) {
 					continue;
 				}
@@ -266,53 +409,248 @@ final class SPDB_Export_Service {
 				if ( false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) ) {
 					return self::error( 'spdb_export_cleanup_path_invalid', __( 'An expired export artifact failed path containment validation.', 'sabri-publishing-dashboard' ), 409 );
 				}
-				if ( ! unlink( $real ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- File 23-owned encrypted expiring artifact.
+				if ( ! unlink( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Delete only the validated File23 ciphertext path, never a resolved symlink target.
 					return self::error( 'spdb_export_cleanup_delete_failed', __( 'An expired export artifact could not be deleted; metadata retention cleanup was stopped for retry.', 'sabri-publishing-dashboard' ), 500 );
 				}
 				++$deleted;
 			}
 			if ( count( $rows ) < 200 ) {
+				$finished = true;
 				break;
 			}
+		}
+		if ( ! $finished ) {
+			return self::error( 'spdb_export_cleanup_batch_incomplete', __( 'Expired export cleanup reached its safe batch limit; metadata retention cleanup must not run before a controlled continuation.', 'sabri-publishing-dashboard' ), 409 );
 		}
 		return $deleted;
 	}
 
-	/** Remove generated temporary export files owned by one user. */
-	public function erase_user_files( int $user_id ): int {
-		if ( $user_id < 1 ) {
-			return 0;
+	/**
+	 * Bounded expiry cleanup for a frozen UTC cutoff; caller keeps the
+	 * continuation cursor in a server-owned background-job payload.
+	 *
+	 * This method never deletes the corresponding database rows. The caller
+	 * MUST complete an independent verification pass with the exact same
+	 * cutoff and MUST NOT run metadata retention cleanup on partial state.
+	 *
+	 * @return array{deleted:int,next_cursor:int,done:bool}|WP_Error
+	 */
+	public function cleanup_expired_files_page( string $cutoff, int $after_id = 0, int $limit = 200, bool $verify_only = false, int $max_id = PHP_INT_MAX ) {
+		if ( $after_id < 0 || $max_id < 0 || $after_id > $max_id || $limit < 1 || $limit > 200 ||
+			1 !== preg_match( '/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/', $cutoff ) ||
+			false === strtotime( $cutoff . ' UTC' ) || $cutoff > current_time( 'mysql', true ) ) {
+			return self::error( 'spdb_export_cleanup_page_invalid', __( 'The expired-export cleanup checkpoint is invalid.', 'sabri-publishing-dashboard' ), 400 );
 		}
 		$directory = $this->private_directory();
 		if ( is_wp_error( $directory ) ) {
-			return 0;
+			return $directory;
+		}
+		$real_dir = realpath( $directory );
+		if ( false === $real_dir || ! is_dir( $real_dir ) ) {
+			return self::error( 'spdb_export_cleanup_storage_invalid', __( 'The private export directory is unavailable.', 'sabri-publishing-dashboard' ), 500 );
 		}
 		global $wpdb;
-		$table   = SPDB_Operations_Schema::table( 'export_jobs' );
+		$table = SPDB_Operations_Schema::table( 'export_jobs' );
+		$rows = $wpdb->get_results(
+			$wpdb->prepare( "SELECT id, export_id, storage_ref, status FROM {$table} WHERE expires_at_gmt <= %s AND id > %d AND id <= %d ORDER BY id ASC LIMIT %d", $cutoff, $after_id, $max_id, $limit ),
+			defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
+		);
+		if ( ! is_array( $rows ) ) {
+			return self::error( 'spdb_export_cleanup_read_failed', __( 'Expired export rows could not be inspected.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		$deleted = 0;
-		$cursor  = 0;
+		$cursor = $after_id;
+		foreach ( $rows as $row ) {
+			$id = (int) ( $row['id'] ?? 0 );
+			if ( $id <= $cursor ) {
+				return self::error( 'spdb_export_cleanup_cursor_invalid', __( 'Expired export rows have an invalid cursor order.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			$cursor = $id;
+			if ( in_array( (string) ( $row['status'] ?? '' ), array( 'queued', 'processing' ), true ) ) {
+				return self::error( 'spdb_export_cleanup_active_job', __( 'An expired export job is still active; metadata retention is deferred.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			$storage_ref = (string) ( $row['storage_ref'] ?? '' );
+			if ( '' === $storage_ref ) {
+				continue;
+			}
+			if ( ! self::storage_reference_matches_export_row( $row ) ) {
+				return self::error( 'spdb_export_cleanup_reference_invalid', __( 'An expired export storage reference is invalid.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			$path = trailingslashit( $directory ) . $storage_ref;
+			if ( is_link( $path ) ) {
+				return self::error( 'spdb_export_cleanup_path_invalid', __( 'An expired export artifact is a symlink.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			if ( ! file_exists( $path ) ) {
+				continue;
+			}
+			$real = realpath( $path );
+			if ( false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) ) {
+				return self::error( 'spdb_export_cleanup_path_invalid', __( 'An expired export artifact failed private-path containment.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			if ( $verify_only ) {
+				return self::error( 'spdb_export_cleanup_verification_failed', __( 'An expired export artifact remains after cleanup.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			if ( ! unlink( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Only remove validated expired File23 ciphertext path.
+				return self::error( 'spdb_export_cleanup_delete_failed', __( 'An expired export file could not be deleted.', 'sabri-publishing-dashboard' ), 500 );
+			}
+			++$deleted;
+		}
+		return array(
+			'deleted' => $deleted,
+			'next_cursor' => $cursor,
+			'done' => count( $rows ) < $limit,
+		);
+	}
+
+	/**
+	 * Bounded owner-specific ciphertext erasure or independent verification.
+	 *
+	 * Unlike the legacy one-call method, this returns a server-owned
+	 * continuation cursor so WordPress privacy erasure can span >20,000 rows
+	 * without deleting metadata prematurely. The caller MUST complete a
+	 * second verification pass from cursor zero before deleting job records.
+	 * The owner-scoped cursor is only an offset; it grants no authority.
+	 *
+	 * @return array{deleted:int,next_cursor:int,done:bool}|WP_Error
+	 */
+	public function erase_user_files_page( int $user_id, int $after_id = 0, int $limit = 200, bool $verify_only = false ) {
+		if ( $user_id < 1 || $after_id < 0 || $limit < 1 || $limit > 200 ) {
+			return self::error( 'spdb_export_erase_page_invalid', __( 'Private export erasure pagination is invalid.', 'sabri-publishing-dashboard' ), 400 );
+		}
+		$directory = $this->private_directory();
+		if ( is_wp_error( $directory ) ) {
+			return self::error( 'spdb_export_erase_storage_unavailable', __( 'Private export storage could not be inspected for erasure.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$real_dir = realpath( $directory );
+		if ( false === $real_dir || ! is_dir( $real_dir ) ) {
+			return self::error( 'spdb_export_erase_storage_unavailable', __( 'Private export storage could not be resolved for erasure.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		global $wpdb;
+		$table = SPDB_Operations_Schema::table( 'export_jobs' );
+		$rows = $wpdb->get_results(
+			$wpdb->prepare( "SELECT id, export_id, storage_ref FROM {$table} WHERE owner_user_id = %d AND id > %d ORDER BY id ASC LIMIT %d", $user_id, $after_id, $limit ),
+			defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
+		);
+		if ( ! is_array( $rows ) ) {
+			return self::error( 'spdb_export_erase_read_failed', __( 'Private export metadata could not be enumerated.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$deleted = 0;
+		$cursor = $after_id;
+		foreach ( $rows as $row ) {
+			$id = (int) ( $row['id'] ?? 0 );
+			if ( $id <= $cursor ) {
+				return self::error( 'spdb_export_erase_cursor_invalid', __( 'Private export metadata did not maintain a strict owner-specific cursor.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			$cursor = $id;
+			$storage_ref = (string) ( $row['storage_ref'] ?? '' );
+			if ( '' === $storage_ref ) {
+				continue; // Queued, incomplete or failed job has no published ciphertext reference.
+			}
+			if ( ! self::storage_reference_matches_export_row( $row ) ) {
+				return self::error( 'spdb_export_erase_reference_invalid', __( 'A private export metadata reference is invalid.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			$path = trailingslashit( $directory ) . $storage_ref;
+			if ( is_link( $path ) ) {
+				return self::error( 'spdb_export_erase_path_invalid', __( 'A private export artifact is a symlink.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			if ( ! file_exists( $path ) ) {
+				continue; // Already removed file: safe to retry or verify.
+			}
+			$real = realpath( $path );
+			if ( false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) ) {
+				return self::error( 'spdb_export_erase_path_invalid', __( 'A private export artifact failed containment verification.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			if ( $verify_only ) {
+				return self::error( 'spdb_export_erase_verification_failed', __( 'A private export artifact still exists after the erasure pass.', 'sabri-publishing-dashboard' ), 409 );
+			}
+			if ( ! unlink( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Delete only a validated File23 ciphertext path, never a resolved symlink target.
+				return self::error( 'spdb_export_erase_delete_failed', __( 'Private export deletion failed and metadata must be retained.', 'sabri-publishing-dashboard' ), 500 );
+			}
+			++$deleted;
+		}
+		return array(
+			'deleted' => $deleted,
+			'next_cursor' => $cursor,
+			'done' => count( $rows ) < $limit,
+		);
+	}
+
+	/**
+	 * Erase generated ciphertext files for exactly one owner, before the
+	 * corresponding metadata is removed by the WordPress privacy eraser.
+	 *
+	 * Returning zero for a storage/DB/delete failure is unsafe: the caller
+	 * would erase the only remaining reference to an orphaned ciphertext.
+	 * Never delete metadata unless this enumeration completed successfully.
+	 *
+	 * @return int|WP_Error
+	 */
+	public function erase_user_files( int $user_id ) {
+		if ( $user_id < 1 ) {
+			return self::error( 'spdb_export_erase_user_invalid', __( 'The export erasure account is invalid.', 'sabri-publishing-dashboard' ), 400 );
+		}
+		$directory = $this->private_directory();
+		if ( is_wp_error( $directory ) ) {
+			return self::error( 'spdb_export_erase_storage_unavailable', __( 'Private export storage could not be inspected for erasure.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$real_dir = realpath( $directory );
+		if ( false === $real_dir ) {
+			return self::error( 'spdb_export_erase_storage_unavailable', __( 'Private export storage could not be resolved for erasure.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		global $wpdb;
+		$table    = SPDB_Operations_Schema::table( 'export_jobs' );
+		$deleted  = 0;
+		$cursor   = 0;
+		$finished = false;
 		for ( $batch = 0; $batch < 100; ++$batch ) {
 			$rows = $wpdb->get_results(
-				$wpdb->prepare( "SELECT id, storage_ref FROM {$table} WHERE owner_user_id = %d AND id > %d ORDER BY id ASC LIMIT 200", $user_id, $cursor ),
+				$wpdb->prepare( "SELECT id, export_id, storage_ref FROM {$table} WHERE owner_user_id = %d AND id > %d ORDER BY id ASC LIMIT 200", $user_id, $cursor ),
 				defined( 'ARRAY_A' ) ? ARRAY_A : 'ARRAY_A'
 			);
-			if ( ! is_array( $rows ) || ! $rows ) {
+			if ( ! is_array( $rows ) ) {
+				return self::error( 'spdb_export_erase_read_failed', __( 'Private export metadata could not be inspected for erasure.', 'sabri-publishing-dashboard' ), 500 );
+			}
+			if ( ! $rows ) {
+				$finished = true;
 				break;
 			}
 			foreach ( $rows as $row ) {
-				$cursor   = max( $cursor, (int) ( $row['id'] ?? 0 ) );
-				$filename = basename( (string) ( $row['storage_ref'] ?? '' ) );
-				if ( '' === $filename || 1 !== preg_match( '/^export_[a-z0-9]{32}\.spdb$/', $filename ) ) {
+				$id = (int) ( $row['id'] ?? 0 );
+				if ( $id <= $cursor ) {
+					return self::error( 'spdb_export_erase_cursor_invalid', __( 'Private export metadata could not be enumerated safely.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				$cursor = $id;
+				$storage_ref = (string) ( $row['storage_ref'] ?? '' );
+				// Empty reference means a queued/failed export has no artifact.
+				if ( '' === $storage_ref ) {
 					continue;
 				}
-				$path = trailingslashit( $directory ) . $filename;
-				if ( is_file( $path ) && unlink( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Deleting File 23-owned encrypted temporary export only.
-					++$deleted;
+				if ( ! self::storage_reference_matches_export_row( $row ) ) {
+					return self::error( 'spdb_export_erase_reference_invalid', __( 'Private export storage has an invalid reference.', 'sabri-publishing-dashboard' ), 409 );
 				}
+				$path = trailingslashit( $directory ) . $storage_ref;
+				if ( is_link( $path ) ) {
+					return self::error( 'spdb_export_erase_path_invalid', __( 'A private export artifact failed containment verification.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				if ( ! file_exists( $path ) ) {
+					continue;
+				}
+				$real = realpath( $path );
+				if ( false === $real || 0 !== strpos( $real, trailingslashit( $real_dir ) ) || ! is_file( $real ) ) {
+					return self::error( 'spdb_export_erase_path_invalid', __( 'A private export artifact failed containment verification.', 'sabri-publishing-dashboard' ), 409 );
+				}
+				if ( ! unlink( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- Remove only the validated named artifact; never unlink a previously resolved target.
+					return self::error( 'spdb_export_erase_delete_failed', __( 'Private export deletion failed; metadata erasure is deferred for retry.', 'sabri-publishing-dashboard' ), 500 );
+				}
+				++$deleted;
 			}
 			if ( count( $rows ) < 200 ) {
+				$finished = true;
 				break;
 			}
+		}
+		if ( ! $finished ) {
+			return self::error( 'spdb_export_erase_batch_incomplete', __( 'Private export erasure reached its safe batch limit and requires another pass before metadata deletion.', 'sabri-publishing-dashboard' ), 409 );
 		}
 		return $deleted;
 	}
@@ -339,6 +677,7 @@ final class SPDB_Export_Service {
 			&& strtotime( $job['expires_at_gmt'] . ' UTC' ) > time()
 			&& $viewer_user_id > 0
 			&& $viewer_user_id === (int) $job['owner_user_id']
+			&& ! self::privacy_erasure_pending( $viewer_user_id )
 		) {
 			$out['download_url'] = $this->download_url( $job['export_id'], $viewer_user_id );
 		}
@@ -369,8 +708,20 @@ final class SPDB_Export_Service {
 			return self::error( 'spdb_export_storage_unavailable', __( 'Private export storage is unavailable.', 'sabri-publishing-dashboard' ), 500 );
 		}
 		$directory = trailingslashit( (string) $upload['basedir'] ) . 'spdb-private-exports';
+		// A linked private directory may redirect guard-file writes and chmod
+		// into a different filesystem tree. Validate *before* wp_mkdir_p and
+		// again after creation; never follow a child-directory symlink.
+		if ( is_link( $directory ) ) {
+			return self::error( 'spdb_export_storage_path_invalid', __( 'The private export storage directory is a symlink.', 'sabri-publishing-dashboard' ), 500 );
+		}
 		if ( ! wp_mkdir_p( $directory ) ) {
 			return self::error( 'spdb_export_storage_unavailable', __( 'Private export storage could not be created.', 'sabri-publishing-dashboard' ), 500 );
+		}
+		$real_base = realpath( (string) $upload['basedir'] );
+		$real_private = realpath( $directory );
+		if ( is_link( $directory ) || false === $real_base || false === $real_private || ! is_dir( $real_private )
+			|| ! hash_equals( trailingslashit( $real_base ) . 'spdb-private-exports', $real_private ) ) {
+			return self::error( 'spdb_export_storage_path_invalid', __( 'Private export storage could not be verified within the WordPress uploads root.', 'sabri-publishing-dashboard' ), 500 );
 		}
 		@chmod( $directory, 0700 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Best-effort private-directory hardening.
 		$guards = array(
@@ -380,8 +731,20 @@ final class SPDB_Export_Service {
 		);
 		foreach ( $guards as $file => $content ) {
 			$path = trailingslashit( $directory ) . $file;
+			// A pre-existing, replaced or symlinked guard is not evidence of
+			// protection. Fail closed instead of serving private export data.
+			if ( is_link( $path ) ) {
+				return self::error( 'spdb_export_storage_guard_invalid', __( 'Private export storage has an invalid protection file.', 'sabri-publishing-dashboard' ), 500 );
+			}
 			if ( ! file_exists( $path ) && false === file_put_contents( $path, $content, LOCK_EX ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Required private directory guard.
 				return self::error( 'spdb_export_storage_guard_failed', __( 'Private export storage could not be guarded.', 'sabri-publishing-dashboard' ), 500 );
+			}
+			if ( ! is_file( $path ) || ! is_readable( $path ) ) {
+				return self::error( 'spdb_export_storage_guard_invalid', __( 'Private export storage has an invalid protection file.', 'sabri-publishing-dashboard' ), 500 );
+			}
+			$actual = file_get_contents( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Verify the installed server guard exactly.
+			if ( ! is_string( $actual ) || ! hash_equals( $content, $actual ) ) {
+				return self::error( 'spdb_export_storage_guard_invalid', __( 'Private export storage has an invalid protection file.', 'sabri-publishing-dashboard' ), 500 );
 			}
 		}
 		return $directory;
@@ -391,6 +754,23 @@ final class SPDB_Export_Service {
 	private function fail_processing( string $export_id, WP_Error $cause ): WP_Error {
 		$transition = $this->repository->fail_export_job( $export_id, $cause->get_error_code() );
 		return is_wp_error( $transition ) ? $transition : $cause;
+	}
+
+	/**
+	 * A valid-looking private artifact name is not sufficient authorization
+	 * to delete it: a stale/tampered job row may refer to another owner's
+	 * valid private file in the same directory. Enforce exact job binding on
+	 * every legacy and paginated retention/erasure path before unlink().
+	 *
+	 * @param array<string,mixed> $row
+	 */
+	private static function storage_reference_matches_export_row( array $row ): bool {
+		$export_id = $row['export_id'] ?? null;
+		$storage_ref = $row['storage_ref'] ?? null;
+		return is_string( $export_id )
+			&& 1 === preg_match( '/^export_[a-z0-9]{32}$/', $export_id )
+			&& is_string( $storage_ref )
+			&& hash_equals( $export_id . '.spdb', $storage_ref );
 	}
 
 	/** @return string|WP_Error */
@@ -505,60 +885,14 @@ final class SPDB_Export_Service {
 		return $html . '</tbody></table></body></html>';
 	}
 
-	/** @param array<string,mixed> $model */
-	private function render_pdf( array $model ): string {
-		$lines   = array( 'Sabri Social Homeopathy Platform', 'File 23 Report: ' . ucwords( str_replace( '_', ' ', (string) ( $model['report_key'] ?? 'report' ) ) ), 'Generated: ' . (string) ( $model['generated_at_gmt'] ?? gmdate( 'c' ) ), '' );
-		$columns = is_array( $model['columns'] ?? null ) ? $model['columns'] : array();
-		$rows    = is_array( $model['rows'] ?? null ) ? $model['rows'] : array();
-		foreach ( array_slice( $rows, 0, 120 ) as $row ) {
-			$parts = array();
-			foreach ( array_slice( $columns, 0, 5 ) as $column ) {
-				$value = is_array( $row ) && is_scalar( $row[ $column ] ?? '' ) ? (string) $row[ $column ] : '';
-				$parts[] = ucwords( str_replace( '_', ' ', (string) $column ) ) . ': ' . $value;
-			}
-			$lines[] = implode( ' | ', $parts );
-		}
-		$pages = array_chunk( $lines, 45 );
-		$objects = array();
-		$page_ids = array();
-		$font_id = 3;
-		$next_id = 4;
-		foreach ( $pages as $page_lines ) {
-			$content_id = $next_id++;
-			$page_id    = $next_id++;
-			$page_ids[] = $page_id;
-			$stream = "BT\n/F1 10 Tf\n50 790 Td\n";
-			foreach ( $page_lines as $index => $line ) {
-				$line = preg_replace( '/[^\x20-\x7E]/', '?', (string) $line );
-				$line = substr( (string) $line, 0, 120 );
-				if ( $index > 0 ) {
-					$stream .= "0 -16 Td\n";
-				}
-				$stream .= '(' . str_replace( array( '\\', '(', ')' ), array( '\\\\', '\\(', '\\)' ), $line ) . ") Tj\n";
-			}
-			$stream .= "ET\n";
-			$objects[ $content_id ] = "<< /Length " . strlen( $stream ) . " >>\nstream\n{$stream}endstream";
-			$objects[ $page_id ] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 {$font_id} 0 R >> >> /Contents {$content_id} 0 R >>";
-		}
-		$objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
-		$kids = implode( ' ', array_map( static function ( $id ) { return $id . ' 0 R'; }, $page_ids ) );
-		$objects[2] = "<< /Type /Pages /Kids [{$kids}] /Count " . count( $page_ids ) . ' >>';
-		$objects[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
-		ksort( $objects );
-		$pdf = "%PDF-1.4\n";
-		$offsets = array( 0 );
-		$max_id = max( array_keys( $objects ) );
-		for ( $id = 1; $id <= $max_id; $id++ ) {
-			$offsets[ $id ] = strlen( $pdf );
-			$pdf .= $id . " 0 obj\n" . ( $objects[ $id ] ?? '<<>>' ) . "\nendobj\n";
-		}
-		$xref = strlen( $pdf );
-		$pdf .= "xref\n0 " . ( $max_id + 1 ) . "\n0000000000 65535 f \n";
-		for ( $id = 1; $id <= $max_id; $id++ ) {
-			$pdf .= sprintf( "%010d 00000 n \n", $offsets[ $id ] );
-		}
-		$pdf .= "trailer\n<< /Size " . ( $max_id + 1 ) . " /Root 1 0 R >>\nstartxref\n{$xref}\n%%EOF\n";
-		return $pdf;
+	/** @param array<string,mixed> $model @return string|WP_Error */
+	private function render_pdf( array $model ) {
+		// The previous handcrafted Helvetica PDF silently cut off row 121+,
+		// column 6+ and replaced every Urdu/Arabic glyph with '?'.
+		// Preserve complete authorized projections; fail closed if the pinned
+		// Unicode PDF runtime cannot be verified/loaded from this plugin.
+		require_once __DIR__ . '/class-spdb-report-pdf-renderer.php';
+		return SPDB_Report_Pdf_Renderer::render( $model );
 	}
 
 	/** @param array<string,mixed> $model */
@@ -578,7 +912,7 @@ final class SPDB_Export_Service {
 			$lines[] = 'END:VEVENT';
 		}
 		$lines[] = 'END:VCALENDAR';
-		return implode( "\r\n", $lines ) . "\r\n";
+		return implode( "\r\n", array_map( static fn( $line ): string => self::ics_fold_line( (string) $line ), $lines ) ) . "\r\n";
 	}
 
 	/** @param array<string,mixed> $filters @return array<string,mixed> */
@@ -601,8 +935,37 @@ final class SPDB_Export_Service {
 	}
 
 	private static function ics_escape( string $value ): string {
-		$value = preg_replace( '/[\r\n]+/', '\\n', $value );
-		return str_replace( array( '\\', ';', ',' ), array( '\\\\', '\\;', '\\,' ), (string) $value );
+		// RFC 5545 3.3.11: escape original delimiters/backslashes FIRST.
+		// Escaping the inserted \n afterward used to double the logical
+		// newline sequence, making some clients show literal "\n".
+		$escaped = str_replace(
+			array( '\\', ';', ',' ),
+			array( '\\\\', '\\;', '\\,' ),
+			$value
+		);
+		return str_replace( array( "\r\n", "\r", "\n" ), '\\n', $escaped );
+	}
+
+	/** Fold long RFC 5545 content lines at <=75 octets without splitting UTF-8 codepoints. */
+	private static function ics_fold_line( string $line ): string {
+		$characters = preg_split( '//u', $line, -1, PREG_SPLIT_NO_EMPTY );
+		if ( ! is_array( $characters ) ) {
+			// Invalid UTF-8 cannot be folded by character boundaries;
+			// retain legacy byte-safe behavior rather than throwing.
+			$characters = str_split( $line );
+		}
+		$out = '';
+		$column_octets = 0;
+		foreach ( $characters as $character ) {
+			$octets = strlen( $character );
+			if ( $column_octets + $octets > 75 ) {
+				$out .= "\r\n ";
+				$column_octets = 1;
+			}
+			$out .= $character;
+			$column_octets += $octets;
+		}
+		return $out;
 	}
 
 	private function mime_type( string $format ): string {
@@ -610,6 +973,22 @@ final class SPDB_Export_Service {
 		return $types[ $format ] ?? 'application/octet-stream';
 	}
 
+
+	/** Durable, File23-only owner-specific erasure checkpoint. No browser controls this key. */
+	public static function privacy_erasure_checkpoint_key( int $user_id ): string {
+		return 'spdb_export_erase_progress_v1_' . max( 0, $user_id );
+	}
+
+	/** MySQL advisory-lock identifier shared by owner erasure request pages. */
+	public static function privacy_erasure_lock_name( int $user_id ): string {
+		return 'spdb_privacy_' . substr( hash( 'sha256', 'file23|export|owner|' . max( 0, $user_id ) ), 0, 40 );
+	}
+
+	/** The presence of any checkpoint blocks new/queued private report generation. */
+	public static function privacy_erasure_pending( int $user_id ): bool {
+		return $user_id > 0 && function_exists( 'get_option' )
+			&& false !== get_option( self::privacy_erasure_checkpoint_key( $user_id ), false );
+	}
 
 	private function current_user_can_export(): bool {
 		if ( ! function_exists( 'get_current_user_id' ) ) {
@@ -619,7 +998,7 @@ final class SPDB_Export_Service {
 	}
 
 	private function user_can_export( int $user_id, bool $require_session_two_factor = false ): bool {
-		if ( $user_id < 1 || ! class_exists( 'SPDB_Membership_Guard' ) || ! class_exists( 'SPDB_Capabilities' ) ) {
+		if ( $user_id < 1 || self::privacy_erasure_pending( $user_id ) || ! class_exists( 'SPDB_Membership_Guard' ) || ! class_exists( 'SPDB_Capabilities' ) ) {
 			return false;
 		}
 		$assertions = SPDB_Membership_Guard::assertions( $user_id );

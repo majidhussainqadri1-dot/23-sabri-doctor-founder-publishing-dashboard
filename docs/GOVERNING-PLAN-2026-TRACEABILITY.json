@@ -200,5 +200,240 @@
     "governing_addendum": "docs/FUTURE-PUBLISHING-INTELLIGENCE-24-ADDENDUM-2026-08-10.md",
     "canonical_write_authority": false,
     "advisory_or_projection": true
+  },
+  "v12_1_amendment": {
+    "document": "SSH MASTER 12.1 — 2026-11-10, Chapter 12",
+    "mapping_date": "2026-11-12",
+    "applies_to": "File 23 consumer responsibilities only; owner modules remain authoritative",
+    "baseline_source_head": "df59cb2be8c1a69dc3539bc7e0a58d5d79125ac3",
+    "release_proof": "none; source mapping and child-PR patch are not staging/live evidence",
+    "storage_owner": "CF04; File23 owns only its own encrypted report export artifacts",
+    "identity_owner": "File00 membership and File02 login/Account Safety",
+    "assurance_owner": "File24",
+    "runtime_status": "unverified",
+    "deployed_version": "unverified",
+    "deployed_checksum": "unverified",
+    "db_schema_version": "unverified",
+    "migration_state": "unverified",
+    "security_scope_note": "Do not create shadow media/clinical/security/account backends in File23.",
+    "requirements": [
+      {
+        "id": "V12.1-STO-01",
+        "canonical_owner": "CF04/domain owner",
+        "file23_boundary": "approved media references; no direct File23 upload grants",
+        "source_evidence": [
+          "includes/class-spdb-module-manifest.php"
+        ],
+        "source_status": "external-owner-contract-pending",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-STO-02",
+        "canonical_owner": "CF04",
+        "file23_boundary": "quarantine/pending media not promoted by File23",
+        "source_evidence": [
+          "includes/class-spdb-role-workspace-service.php"
+        ],
+        "source_status": "external-owner-contract-pending",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-STO-03",
+        "canonical_owner": "CF04",
+        "file23_boundary": "scanner unavailable must fail closed; File23 only consumes readiness",
+        "source_evidence": [
+          "includes/class-spdb-adapter-acceptance.php"
+        ],
+        "source_status": "external-owner-contract-pending",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-STO-04",
+        "canonical_owner": "CF04",
+        "file23_boundary": "consume approved media derivatives; no File23 conversion service",
+        "source_evidence": [
+          "includes/class-spdb-module-manifest.php"
+        ],
+        "source_status": "external-owner-contract-pending",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-STO-05",
+        "canonical_owner": "CF04/File23 own exports",
+        "file23_boundary": "File23 AES-GCM encrypted report artifacts with SHA-256 integrity verification",
+        "source_evidence": [
+          "includes/class-spdb-export-service.php",
+          "includes/class-spdb-report-pdf-renderer.php",
+          "composer.json",
+          "composer.lock",
+          "tests/v12-1-pdf-unicode-source-contract-tests.php",
+          "tests/v12-1-pdf-mpdf-integration-tests.php",
+          "docs/AUDIT-V12.1-UNICODE-PDF-AND-MARIADB-2026-11-13.md"
+        ],
+        "source_status": "source-reviewed-hosting-unverified",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-STO-06",
+        "canonical_owner": "CF04/domain owner",
+        "file23_boundary": "no canonical media state transition in File23",
+        "source_evidence": [
+          "docs/DATA-OWNERSHIP-MATRIX.md"
+        ],
+        "source_status": "external-owner-contract-pending",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-STO-07",
+        "canonical_owner": "CF04/File23 own exports",
+        "file23_boundary": "current approved owner/MFA, expiring HMAC, exact export-ID/reference and SHA-256 checks, explicit symlink refusal and webserver-guard validation; Hostinger origin/CDN still unverified",
+        "source_evidence": [
+          "includes/class-spdb-export-service.php",
+          "tests/v12-1-export-guard-integrity-tests.php",
+          "tests/v12-1-strict-private-download-path-tests.php",
+          "tests/v12-1-private-storage-directory-binding-tests.php",
+          "tests/v12-1-export-artifact-id-binding-tests.php",
+          "docs/AUDIT-V12.1-FILE23-SOURCE-REVIEWS-2026-11-13.md",
+          "docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md",
+          "includes/class-spdb-report-pdf-renderer.php",
+          "tests/v12-1-pdf-mpdf-integration-tests.php",
+          "tools/build-final-release.sh"
+        ],
+        "source_status": "source-reviewed-hosting-unverified",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-STO-08",
+        "canonical_owner": "CF04/File23 own exports",
+        "file23_boundary": "export integrity and error reporting, external storage controls unverified",
+        "source_evidence": [
+          "includes/class-spdb-export-service.php",
+          "includes/class-spdb-module-manifest.php"
+        ],
+        "source_status": "source-reviewed-hosting-unverified",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-STO-09",
+        "canonical_owner": "CF04/domain owner; File23 own exports",
+        "file23_boundary": "File23-owned ciphertext deletion, two-pass verified retention/erasure and frozen expiry plus max-row fence must precede export metadata cleanup; foreign tombstone ownership remains CF04; actual Hostinger DB/cron still unverified",
+        "source_evidence": [
+          "includes/class-spdb-background-jobs.php",
+          "includes/class-spdb-export-service.php",
+          "includes/class-spdb-operations-repository.php",
+          "includes/class-spdb-privacy-integration.php",
+          "tests/v12-1-retention-proof-boundary-tests.php",
+          "tests/v12-1-institutional-privacy-pagination-tests.php",
+          "tests/v12-1-export-artifact-id-binding-tests.php",
+          "tests/v12-1-privacy-deep-page-tests.php",
+          "docs/AUDIT-V12.1-FILE23-PRIVACY-RETENTION-2026-11-13.md",
+          "docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md",
+          "tests/v12-1-mariadb-private-erasure-integration.php",
+          ".github/workflows/file23-mariadb-source-integration.yml",
+          "docs/AUDIT-V12.1-UNICODE-PDF-AND-MARIADB-2026-11-13.md"
+        ],
+        "source_status": "source-reviewed-hosting-unverified",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-STO-10",
+        "canonical_owner": "Infrastructure/CF04/domain owner",
+        "file23_boundary": "staging restoration and canonical permission/tombstone checks need real evidence",
+        "source_evidence": [
+          "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md"
+        ],
+        "source_status": "external-restore-evidence-pending",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-ACT-01",
+        "canonical_owner": "File02",
+        "file23_boundary": "File23 never stores passwords, OTP or recovery secrets",
+        "source_evidence": [
+          "docs/THREAT-MODEL.md"
+        ],
+        "source_status": "external-owner-contract-pending",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-ACT-02",
+        "canonical_owner": "File02/File24/File20",
+        "file23_boundary": "honor approved same-origin native account-safety links",
+        "source_evidence": [
+          "includes/class-spdb-safe-destination.php"
+        ],
+        "source_status": "external-owner-contract-pending",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-ACT-03",
+        "canonical_owner": "File02/File00",
+        "file23_boundary": "current session state and revocation rechecked for privileged operations",
+        "source_evidence": [
+          "includes/class-spdb-membership-guard.php"
+        ],
+        "source_status": "source-reviewed-runtime-unverified",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-ACT-04",
+        "canonical_owner": "CF01/File08/CF04",
+        "file23_boundary": "no patient chart in File23 publishing snapshots, analytics or exports",
+        "source_evidence": [
+          "includes/class-spdb-projection-validator.php",
+          "includes/class-spdb-export-service.php"
+        ],
+        "source_status": "source-reviewed-runtime-unverified",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-ACT-05",
+        "canonical_owner": "File02/File24/CF02",
+        "file23_boundary": "consumer-only Account Safety/report routes; no second session backend",
+        "source_evidence": [
+          "includes/class-spdb-module-manifest.php"
+        ],
+        "source_status": "external-owner-contract-pending",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-ACT-06",
+        "canonical_owner": "File02/File00",
+        "file23_boundary": "consume current File00 session_two_factor for sensitive exports",
+        "source_evidence": [
+          "includes/class-spdb-export-service.php",
+          "includes/class-spdb-membership-guard.php"
+        ],
+        "source_status": "source-reviewed-runtime-unverified",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      },
+      {
+        "id": "V12.1-ACT-07",
+        "canonical_owner": "File02/File00",
+        "file23_boundary": "versioned acknowledgement is separate from MFA/account recovery/consent ledger",
+        "source_evidence": [
+          "docs/DATA-OWNERSHIP-MATRIX.md"
+        ],
+        "source_status": "external-owner-contract-pending",
+        "staging_acceptance": "pending",
+        "live_verification": "unverified"
+      }
+    ]
   }
 }

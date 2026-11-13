@@ -28,7 +28,16 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
+          extensions: gd, mbstring, xml, zlib, intl
           coverage: none
+      - name: Verify locked PDF dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          composer validate --no-check-publish --strict
+          composer install --no-dev --no-interaction --no-plugins --no-scripts --prefer-dist --no-progress
+          composer check-platform-reqs
+          test -s vendor/autoload.php
       - name: Verify source and tests
         shell: bash
         run: |

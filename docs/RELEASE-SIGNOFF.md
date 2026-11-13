@@ -5,9 +5,10 @@ This form must remain **Pending** until every required evidence field is complet
 ## Artifact identity
 
 - Release version: `1.3.0`
-- Governing plan revision represented: `2026-08-10`
+- Governing plan revision represented: `2026-08-10` (original Version 1.3.0 baseline; preserve historical test/source truth)
+- Additive governing V12.1 amendment: `2026-11-10` (File23 consumer mapping; not deployed/live acceptance)
 - Exact Git head: ________________________________
-- Base/main head reviewed: `a8a8c805f4730998ccb44bd95c87591836561759`
+- Source baseline main (12 Nov 2026): `dcae138e6073f4d0ff596623deb05b9940b8271b`; parent PR #26 head: `df59cb2be8c1a69dc3539bc7e0a58d5d79125ac3`; re-verify before sign-off
 - Installable ZIP: `23-sabri-doctor-founder-publishing-dashboard-1.3.0.zip`
 - Installable ZIP SHA-256: _________________________
 - Complete-source ZIP: `23-Doctor-Founder-Publishing-Dashboard-Source-1.3.0.zip`
@@ -46,14 +47,101 @@ This form must remain **Pending** until every required evidence field is complet
 - [ ] Deterministic installable/source packages and checksums generated from the exact accepted repository head.
 - [ ] Zero unresolved repository blocker/critical defects; any residual risk explicitly documented.
 
+## WP-12 V12.1 large-volume source QA and staging acceptance gates
+
+- [ ] Source HEAD, SHA, CI and **two independent external reviews** of the final WP-12 implementation recorded; internal A/B review passes do not substitute for external approval.
+- [ ] Live Hostinger/MySQL staging clone with >20,001 synthetic encrypted export rows proves that repeated WordPress privacy erasure pages resume with owner-specific signed checkpoints, DELETE/VERIFY passes and metadata deletion only at the end.
+- [ ] Repeated and concurrent eraser requests, forged cursor, missing/modified HMAC, missing File00 authorization, MySQL GET_LOCK contention, unavailable SQL/filesystem and malicious symlink produce fail-closed outcomes with recoverable owner records.
+- [ ] Export generators that have already rendered content may not publish ciphertext after an owner's privacy erasure starts; test critical-section locking and current owner/job reauthorization with genuine concurrent PHP workers.
+- [ ] Retention job chain survives >20,001 rows, missed cron, retries, idempotent requeue, exception, dead-letter and backup/restore; frozen cutoff **and max SQL row ID** prevent later inserted rows (even earlier-expired ones) entering old deletion work.
+- [ ] Real DB query plan, lock latency, 10k+ performance, backup/restore of old progress options, private-file HTTP denial through Hostinger/CDN and durable audit reviewed; attached dated test evidence required.
+- [ ] File23 issue #31 not closed from source CI alone; File20/#45 and File23/#30 deployed artifact parity still pending.
+
+## 13 November 2026 — Unicode PDF and disposable MariaDB acceptance amendment (source candidate, no-go live)
+
+- [ ] File23 Draft PR #29 exact source commit has Composer-locked `mpdf/mpdf 8.3.1` and transitive dependencies with `gd` and `mbstring`. Its deterministic INSTALLABLE ZIP (not source archive) must contain vendor autoload, mPDF runtime, DejaVuSans, XB Riyaz, mPDF LICENSE and Composer lock. Verify installed Hostinger PHP extensions, memory limits, disk quota, upload-size limits and no unsupported dynamic Composer retrieval.
+- [ ] Real PHP 8.0–8.3 and final canonical release CI must pass `tests/v12-1-pdf-unicode-source-contract-tests.php` and `tests/v12-1-pdf-mpdf-integration-tests.php`, including Poppler extraction of row 125/column 7, normalized Arabic and joined Urdu, PDF page count and embedded-font ToUnicode map. A source test double alone is insufficient.
+- [ ] With actual Hostinger staging permissions and synthetic records, compare Unicode PDF vs CSV/JSON source 1:1 across 121+ rows/7+ columns, LTR+RTL/harakat, ligatures, long cell values, downloadable owner-only AES-GCM file, revoked session/MFA, anonymous direct URL denial at CDN and origin, concurrent export+erasure and quarantine/retention.
+- [ ] File23 PDF uses a random private cache outside the public site; validate 0700 permissions, no leftover plaintext after success/failure, symlink refusal and cleanup. Renderer failure/Unicode invalid/oversized cases must return typed errors and must not mark a report ready.
+- [ ] License review for `mpdf/mpdf` (GPL-2.0-only), File23 plugin (GPL-2.0-or-later), included fonts and other Composer dependencies must be signed by the responsible owner; source CI is not a legal review.
+- [ ] New source-only MariaDB workflow `.github/workflows/file23-mariadb-source-integration.yml` uses a disposable CI DB of 20,002 synthetic records, owner+expiry 101+101 deletion/verification pages, wrong-job ID denial, owner-8 untouched and InnoDB rollback. **Real Hostinger** File23 #31 20k+ load, replica/cutoff recovery and Cron verification are separately mandatory.
+- [ ] Keep #32 open until actual Urdu/Arabic visual, export completeness and installer parity acceptance; keep File23 #30/File20 #45 attestor and File23 #31 host recovery open. Two independent reviewers, File24 security assurance and Founder sign-off remain mandatory; no PR merge or live deploy as a shortcut.
+
+## 13 November 2026 — Calendar, ZIP parity and PDF fidelity release gates
+
+- [ ] Source `tests/v12-1-ics-rfc5545-folding-tests.php` passes 13 RFC 5545 negative/positive checks on final exact HEAD (TEXT delimiters/newlines, 75-octet folded content lines, UTF-8 integrity, CRLF). Real approved Apple/Google/Outlook calendar import and Urdu/Arabic rendering must be tested separately on staging.
+- [ ] Source `tests/v12-1-approved-zip-inventory-tests.php` passes 12 ZIP measurement checks on final HEAD. On a trusted operator host, collect outputs from `tools/file23-approved-zip-inventory.php` for a **separately approved exact installable ZIP** and `tools/file23-readonly-host-evidence.php` for the actual installed File23 tree. Compare their inventory hashes, archive/build SHA, plugin header/runtime version and verified database schema/migration state; never treat either output as a signed attestation.
+- [ ] File20 trusted/deployment operator issues a fresh independently signed or otherwise authentically trusted `file23_deployed_artifact_v1` contract tied to source commit, package bytes, environment, migration and revocation. File23 Issue #30 and File20 Issue #45 stay open until real Hostinger verification.
+- [ ] **File23 Issue #32 is OPEN:** PDF report silently caps 120 rows and 5 columns, replacing Urdu/Arabic non-ASCII with question marks. No release sign-off until complete bounded Unicode/RTL PDF data fidelity is coded and verified, or the Founder explicitly approves a prominently labeled summary-only PDF instead. Record the policy change and demonstrate no silent omissions.
+- [ ] All 5 newly added regression suites and 61 checks pass on the last exact HEAD after all documentation; two independent external reviewers and Founder staging authorization still required.
+
+## 13 November 2026 — Exact export artifact identity, private directory and deep-page release requirements
+
+- [ ] On **real Hostinger staging** seed 2 different owners/jobs with valid-looking `export_A.spdb`, `export_B.spdb`; corrupt *one* owned metadata `storage_ref` to the other's filename in a disposable/restore-only dataset. Both legacy and paged expiry/erasure must return `spdb_export_(cleanup|erase)_reference_invalid` **before any other ciphertext is deleted**. Repeat with fully matched owner/job/filename and confirm only that ciphertext is deleted.
+- [ ] Expired `queued` and `processing` exports must be retained by **both** legacy and paged cleanup, with retry/lock contention and synthetic concurrency. Legacy `unlink` must use the validated original pathname, not a resolved target path.
+- [ ] A symlinked `wp-content/uploads/spdb-private-exports` directory into an outside disposable staging folder must be rejected **before** File23 writes guard files or chmods the target. Verify restored regular directory, permissions, ownership, exact local containment and all mandatory guard contents. Prove Hostinger origin/CDN GET+HEAD independently deny direct private artifact URLs.
+- [ ] WordPress personal-data exporter must complete a synthetic page **10001** without replaying page 10000, and safely reject `PHP_INT_MAX` page overflow before SQL. Check actual WP Ajax behavior and pagination with >1 million **synthetic** item metadata rows when feasible, with load/memory timings and no live user data.
+- [ ] Source-only test files `tests/v12-1-export-artifact-id-binding-tests.php` (25), `tests/v12-1-private-storage-directory-binding-tests.php` (5), `tests/v12-1-privacy-deep-page-tests.php` (6) must pass **at exact final source HEAD** on PHP 8.0–8.3, alongside all original V12.1 regression suites and canonical package job. Internal A/B notes are not independent external assurance.
+- [ ] Independently approved File20 attestation (actual deployed bytes, ZIP fingerprint, source commit, schema and migration), real File23 #31 scale/recovery, File24 security review and Founder staging approval must be attached. **No GitHub CI success can substitute for any of these gates.**
+
+**Source review:** `docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md`. **Release state:** No-go until the external conditions above are evidenced, independent reviews signed and exact installed Version 1.3.0 verified.
+
+## 13 November 2026 — Strict contributor-identity privacy export release check
+
+- [ ] WordPress personal-data exporter must never treat a malformed collection contributor ID string such as `"7spoof"`, `"07"` or `"7abc"` as native integer user ID `7` for **either** parent collection metadata or joined collection-item metadata.
+- [ ] Synthetic staging data with unrelated owner `8`, contributor integer `17`, malformed contributor `"7spoof"`, and legitimate contributor integer `7` must export **only** exact authorized records. The normal owner and correct contributor records remain visible.
+- [ ] Repeat the exact-identity check through the real File23 WordPress Privacy Export callback and actual MySQL JSON columns, authenticated session, backup restoration and File00 revoked-role test; keep all staging fixtures synthetic.
+
+## 13 November 2026 — Collections schema drift and preferences read acceptance
+
+- [ ] With recorded Collections Schema Version `4`, intentionally remove one required table/column/index from a **disposable staging clone**; `SPDB_Collections_Schema::maybe_upgrade()` must fail closed with `spdb_collections_schema_drift`, log cause, and **not** execute dbDelta/ALTER during an unrelated admin request.
+- [ ] On real staging MySQL, a missing preferences row produces legitimate defaults while a real preferences `get_row()` SQL failure returns `spdb_privacy_preferences_read_failed` through the registered WordPress personal-data exporter. Test both cases, with restored data and audit receipts.
+- [ ] Verify WordPress admin privacy exporter actually stops (Ajax error) on any File23 WP_Error; no partial export may be emailed or silently reported completed. Record synthetic request ID, PHP/WP versions, DB rollback and cache behavior, without exposing personal data.
+- [ ] File23 Issue #30 / File20 #45 real deployed-byte/schema attestation must still be independently completed; no source fixture, GitHub artifact, or operator probe itself may set `verified=true`.
+
+## 13 November 2026 — Privacy, portability, relational delete and retention acceptance
+
+The five new source defects have candidate fixes and green source CI at `52b61c858c624d5cc71fc71e5ae7d77dd5c23366`, **not** live proof. These additional release criteria are mandatory:
+
+- [ ] Retention metadata deletion rejects **both** missing frozen cutoff and missing ID upper fence. Hostinger staging shows old ciphertext removed and independently verified before a scoped transactional metadata deletion; failed cleanup retains all metadata.
+- [ ] Owner erasure scans institutional collections beyond 5,000, preserves unrelated contributors under broad LIKE (user 7 vs 17), and fails/rolls back for malformed JSON, invalid cursor, SQL update/read failure, more than its controlled per-call limit.
+- [ ] Owner's collection-item metadata is removed by exact owner/scope-bound relational JOIN, with no unbounded all-ID PHP/SQL IN-list. Verify on real MariaDB/MySQL, with rollback injected at the next statement.
+- [ ] WordPress privacy exporter includes a 6,001-item synthetic collection across separate bounded item pages, does not leak unrelated user metadata, strips internal parent authorization fields and terminates correctly without duplicates.
+- [ ] For tasks, saved views, delegations, automation rules, exports, collections, collection items and knowledge links, a failed SQL SELECT propagates `WP_Error` to WordPress core Ajax and **does not** produce a completed empty export.
+- [ ] Hostinger staging verifies WordPress core callback behavior, real owner permissions, 10k+ records, DB consistency during concurrent writes, retention holds, backup/restore and the privacy log. Real user data must not be used in test fixtures.
+- [ ] Two independent external reviewers approve these source changes, separate from A/B analytical review notes, then Founder records staging acceptance. No merge/production deployment until explicitly authorized.
+
+**Code/test evidence:** `docs/AUDIT-V12.1-FILE23-PRIVACY-RETENTION-2026-11-13.md`; test files `v12-1-retention-proof-boundary-tests.php`, `v12-1-institutional-privacy-pagination-tests.php`, `v12-1-owned-collection-erasure-tests.php`, `v12-1-privacy-collection-export-pagination-tests.php`, `v12-1-privacy-export-db-failure-tests.php`. Real installed-package and DB attestation still blocked on File20 Issue #45 / File23 #30; Hostinger scale acceptance still File23 #31.
+
+## 13 November 2026 — Additional V12.1 WP-00/STO-07/schema validation gates
+
+- [ ] Source exact final SHA passes all new `tests/v12-1-strict-private-download-path-tests.php`, `tests/v12-1-readonly-host-evidence-tests.php`, and `tests/v12-1-operations-schema-structure-tests.php` on PHP 8.0–8.3 where offered, **after** all follow-up commits.
+- [ ] Strict private ciphertext download resolves only `export_ID.spdb` for that exact authorized job, refuses raw path normalization, malformed hash and same-directory symlinks, and refuses corrupted or missing bytes.
+- [ ] All **ten operations tables** have actually measured required columns and indexes, not merely name/InnoDB/version-option equality. `SPDB_Operations_Schema::requirements()` must match current install DDL.
+- [ ] Same-version recorded schema drift does **not** silently execute dbDelta on unrelated admin requests; exact deployed state/database snapshot preserved before any authorized migration repair.
+- [ ] File23 read-only operator tool `tools/file23-readonly-host-evidence.php` is executed under authenticated **staging WP-CLI** only, not through HTTP; the output is stored privately with source helper checksum and operator identity.
+- [ ] Measured installed tree fingerprint from the operator tool is independently compared with the **exact approved installable ZIP extraction** using the same relative-path+size+SHA-256 algorithm. Tool output `is_attestation=false` is not promoted to a verified attestation by assumption.
+- [ ] Real DB tables/columns/indexes/type/collation, schema versions `1.1.0`/`4`, migration row state and deployment package match the File20 trusted measured provider; partial/failed migration blocks stage acceptance.
+- [ ] Direct Hostinger **origin and CDN** unauthenticated GET and HEAD for synthetic ciphertext return 403/404 and no bytes; URL revocation, per-user cache and permission reversal are separately recorded.
+- [ ] Two genuinely independent post-source reviews and Founder approval are attached. Internal analytical A/B notes are **not** a substitute.
+- [ ] File23 #30 and File20 #45 remain unresolved until real trusted owner-attestation implementation, staging/live exact-byte parity and Founder sign-off; File23 #31 remains unresolved until real 20k+ staging/restore proof.
+
+**Source handoffs:** `docs/AUDIT-V12.1-FILE23-SOURCE-REVIEWS-2026-11-13.md` and `docs/V12.1-FILE23-HOSTINGER-READONLY-PARITY-HANDOFF-2026-11-13.md`. These source files do not prove that a disconnected Jetpack site or an unconnected WPVibe account has access to deployed plugin bytes.
+
 ## Staging / deployment acceptance evidence
 
 - [ ] Exact package/checksum installed; deployed-source parity verified.
+- [ ] Direct unauthenticated access to File 23 private export ciphertext URLs is denied by the actual Hostinger origin and any CDN/proxy (do not infer from .htaccess contents).
+- [ ] Same-version package/code replacement invalidates acceptance unless a trusted exact deployed-code attestation and DB/migration parity remain verified (see issue #30).
 - [ ] Fresh install and supported upgrades pass; migration state verified.
 - [ ] Founder/Doctor/Teacher/Admin/Reviewer/Pending/Suspended journeys pass for roles/capabilities actually present.
 - [ ] File 19/20/21/22/24/25/26 and required companion integrations pass with real plugins.
 - [ ] File 26 remains Search/Discovery/Ranking owner; no File 23 duplicate search/ranking backend exists.
 - [ ] IDOR/CSRF/replay/concurrency/export/privacy/security negative tests pass.
+- [ ] V12.1-STO-09: File 23 personal privacy erasure **retains export metadata** on storage/DB/invalid-reference/unlink/partial-batch failure; all deleted artifacts are confirmed before owner records are removed. Test real Hostinger permission failures and idempotent retries.
+- [ ] V12.1-STO-09: expired export retention rejects symlinks and malformed references; never unlinks another owner's resolved target; never purges metadata on truncated 20,000-row cleanup.
+- [ ] V12.1-STO-05/07: report ciphertext generated only after AES-GCM seal, created exclusively (no overwrite/symlink follow), chmod 0600 and checked for real-path containment; failed/retried jobs and interrupted artifacts have an operational reconciliation plan.
+- [ ] Owner File20/Hostinger deployment attestor contract is independently implemented and tested (File20 issue #45, File23 issue #30); zero accepted staging state without real versioned source/package/schema/migration parity.
 - [ ] LiteSpeed cross-user cache isolation passes.
 - [ ] Mobile/tablet/desktop, RTL/LTR, keyboard, screen-reader, 200% zoom, contrast, reduced-motion and low-bandwidth tests pass.
 - [ ] Real 10,000+ object performance/SLO evidence is accepted.
@@ -75,6 +163,8 @@ This form must remain **Pending** until every required evidence field is complet
 - Security/privacy review: _________________________
 - Fresh Review A: _________________________________
 - Fresh Review B: _________________________________
+- V12.1 source Review A/B/C (same-author passes, not independent approvals): `docs/AUDIT-V12.1-STORAGE-EXPORT-REVIEW-2026-11-12.md`
+- Independent post-change external reviews (two): **PENDING**
 - Defect register and retests: ______________________
 - Historical forty-round audit: `docs/AUDIT-40-ROUND-REVIEW-AND-CORRECTIONS-2026-08-04.md`
 - Current eighty-round audit: `docs/AUDIT-80-ROUND-REVIEW-AND-CORRECTIONS-2026-08-10.md`

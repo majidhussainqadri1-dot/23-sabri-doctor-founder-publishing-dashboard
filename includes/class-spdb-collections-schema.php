@@ -13,9 +13,21 @@ final class SPDB_Collections_Schema {
 
 	/** @return true|WP_Error */
 	public static function maybe_upgrade() {
-		$verified = self::verify();
-		if ( self::VERSION === (string) get_option( self::OPTION_KEY, '' ) && true === $verified ) {
-			return true;
+		$recorded = (string) get_option( self::OPTION_KEY, '' );
+		if ( self::VERSION === $recorded ) {
+			$verified = self::verify();
+			if ( true === $verified ) {
+				return true;
+			}
+			// A recorded current version with absent columns, indexes or
+			// tables is a partial/altered deployment, NOT an invitation to
+			// execute dbDelta on an unrelated admin request. Freeze DB and
+			// deployment evidence before any operator-approved repair.
+			return new WP_Error(
+				'spdb_collections_schema_drift',
+				__( 'The installed File23 collections schema differs from its recorded version; operator-controlled migration verification is required.', 'sabri-publishing-dashboard' ),
+				array( 'status' => 409, 'cause' => is_wp_error( $verified ) ? $verified->get_error_code() : 'unknown' )
+			);
 		}
 		return self::install();
 	}
