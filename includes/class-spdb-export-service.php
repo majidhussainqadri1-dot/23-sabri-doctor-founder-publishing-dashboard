@@ -885,60 +885,14 @@ final class SPDB_Export_Service {
 		return $html . '</tbody></table></body></html>';
 	}
 
-	/** @param array<string,mixed> $model */
-	private function render_pdf( array $model ): string {
-		$lines   = array( 'Sabri Social Homeopathy Platform', 'File 23 Report: ' . ucwords( str_replace( '_', ' ', (string) ( $model['report_key'] ?? 'report' ) ) ), 'Generated: ' . (string) ( $model['generated_at_gmt'] ?? gmdate( 'c' ) ), '' );
-		$columns = is_array( $model['columns'] ?? null ) ? $model['columns'] : array();
-		$rows    = is_array( $model['rows'] ?? null ) ? $model['rows'] : array();
-		foreach ( array_slice( $rows, 0, 120 ) as $row ) {
-			$parts = array();
-			foreach ( array_slice( $columns, 0, 5 ) as $column ) {
-				$value = is_array( $row ) && is_scalar( $row[ $column ] ?? '' ) ? (string) $row[ $column ] : '';
-				$parts[] = ucwords( str_replace( '_', ' ', (string) $column ) ) . ': ' . $value;
-			}
-			$lines[] = implode( ' | ', $parts );
-		}
-		$pages = array_chunk( $lines, 45 );
-		$objects = array();
-		$page_ids = array();
-		$font_id = 3;
-		$next_id = 4;
-		foreach ( $pages as $page_lines ) {
-			$content_id = $next_id++;
-			$page_id    = $next_id++;
-			$page_ids[] = $page_id;
-			$stream = "BT\n/F1 10 Tf\n50 790 Td\n";
-			foreach ( $page_lines as $index => $line ) {
-				$line = preg_replace( '/[^\x20-\x7E]/', '?', (string) $line );
-				$line = substr( (string) $line, 0, 120 );
-				if ( $index > 0 ) {
-					$stream .= "0 -16 Td\n";
-				}
-				$stream .= '(' . str_replace( array( '\\', '(', ')' ), array( '\\\\', '\\(', '\\)' ), $line ) . ") Tj\n";
-			}
-			$stream .= "ET\n";
-			$objects[ $content_id ] = "<< /Length " . strlen( $stream ) . " >>\nstream\n{$stream}endstream";
-			$objects[ $page_id ] = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 {$font_id} 0 R >> >> /Contents {$content_id} 0 R >>";
-		}
-		$objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
-		$kids = implode( ' ', array_map( static function ( $id ) { return $id . ' 0 R'; }, $page_ids ) );
-		$objects[2] = "<< /Type /Pages /Kids [{$kids}] /Count " . count( $page_ids ) . ' >>';
-		$objects[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
-		ksort( $objects );
-		$pdf = "%PDF-1.4\n";
-		$offsets = array( 0 );
-		$max_id = max( array_keys( $objects ) );
-		for ( $id = 1; $id <= $max_id; $id++ ) {
-			$offsets[ $id ] = strlen( $pdf );
-			$pdf .= $id . " 0 obj\n" . ( $objects[ $id ] ?? '<<>>' ) . "\nendobj\n";
-		}
-		$xref = strlen( $pdf );
-		$pdf .= "xref\n0 " . ( $max_id + 1 ) . "\n0000000000 65535 f \n";
-		for ( $id = 1; $id <= $max_id; $id++ ) {
-			$pdf .= sprintf( "%010d 00000 n \n", $offsets[ $id ] );
-		}
-		$pdf .= "trailer\n<< /Size " . ( $max_id + 1 ) . " /Root 1 0 R >>\nstartxref\n{$xref}\n%%EOF\n";
-		return $pdf;
+	/** @param array<string,mixed> $model @return string|WP_Error */
+	private function render_pdf( array $model ) {
+		// The previous handcrafted Helvetica PDF silently cut off row 121+,
+		// column 6+ and replaced every Urdu/Arabic glyph with '?'.
+		// Preserve complete authorized projections; fail closed if the pinned
+		// Unicode PDF runtime cannot be verified/loaded from this plugin.
+		require_once __DIR__ . '/class-spdb-report-pdf-renderer.php';
+		return SPDB_Report_Pdf_Renderer::render( $model );
 	}
 
 	/** @param array<string,mixed> $model */
