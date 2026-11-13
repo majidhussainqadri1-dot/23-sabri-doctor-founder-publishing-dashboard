@@ -312,10 +312,15 @@
       {
         "id": "V12.1-STO-09",
         "canonical_owner": "CF04/domain owner; File23 own exports",
-        "file23_boundary": "expire File23 ciphertext before metadata cleanup, no foreign tombstone ownership",
+        "file23_boundary": "File23-owned ciphertext deletion, two-pass verified retention/erasure and frozen expiry plus max-row fence must precede export metadata cleanup; foreign tombstone ownership remains CF04; actual Hostinger DB/cron still unverified",
         "source_evidence": [
           "includes/class-spdb-background-jobs.php",
-          "includes/class-spdb-export-service.php"
+          "includes/class-spdb-export-service.php",
+          "includes/class-spdb-operations-repository.php",
+          "includes/class-spdb-privacy-integration.php",
+          "tests/v12-1-retention-proof-boundary-tests.php",
+          "tests/v12-1-institutional-privacy-pagination-tests.php",
+          "docs/AUDIT-V12.1-FILE23-PRIVACY-RETENTION-2026-11-13.md"
         ],
         "source_status": "source-reviewed-hosting-unverified",
         "staging_acceptance": "pending",
