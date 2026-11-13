@@ -1574,17 +1574,31 @@ final class SPDB_Operations_Repository {
 			$contributors = self::decode_object( $row['contributors_json'] ?? '' );
 			return in_array( $user_id, array_map( 'intval', $contributors ), true );
 		} ) );
-		$ids = array_values( array_filter( array_map( static fn( array $row ): string => (string) ( $row['collection_id'] ?? '' ), $collections ) ) );
+		// Item pointers are a separate bounded privacy-export stream. The
+		// previous LIMIT 5000 was scoped to each page of collections: one
+		// collection with 6000 items could silently omit the final 1000.
+		// Page items directly over a stable item-id ordering instead.
+		$raw_items = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT item_rows.*, parent.owner_user_id AS parent_owner_user_id, parent.contributors_json AS parent_contributors_json FROM {$items_table} AS item_rows INNER JOIN {$collections_table} AS parent ON item_rows.collection_id = parent.collection_id WHERE (parent.owner_user_id = %d OR parent.contributors_json LIKE %s) ORDER BY item_rows.id ASC LIMIT %d OFFSET %d",
+				$user_id, $pattern, $per_page, $offset
+			),
+			self::array_output()
+		);
 		$items = array();
-		if ( $ids ) {
-			$placeholders = implode( ',', array_fill( 0, count( $ids ), '%s' ) );
-			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$items_table} WHERE collection_id IN ({$placeholders}) ORDER BY id ASC LIMIT 5000", ...$ids ), self::array_output() );
-			$items = is_array( $rows ) ? $rows : array();
+		foreach ( is_array( $raw_items ) ? $raw_items : array() as $item ) {
+			$parent_owner = (int) ( $item['parent_owner_user_id'] ?? 0 );
+			$contributors = self::decode_object( $item['parent_contributors_json'] ?? '' );
+			if ( $parent_owner !== $user_id && ! in_array( $user_id, array_map( 'intval', $contributors ), true ) ) {
+				continue; // Avoid leaking false-positive SQL LIKE hits (7 versus 17).
+			}
+			unset( $item['parent_owner_user_id'], $item['parent_contributors_json'] );
+			$items[] = $item;
 		}
 		$links = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$links_table} WHERE owner_user_id = %d ORDER BY id ASC LIMIT %d OFFSET %d", $user_id, $per_page, $offset ), self::array_output() );
 		return array(
 			'data' => array( 'collections' => $collections, 'items' => $items, 'knowledge_links' => is_array( $links ) ? $links : array() ),
-			'has_more' => count( $raw ) === $per_page || ( is_array( $links ) && count( $links ) === $per_page ),
+			'has_more' => count( $raw ) === $per_page || ( is_array( $raw_items ) && count( $raw_items ) === $per_page ) || ( is_array( $links ) && count( $links ) === $per_page ),
 		);
 	}
 
