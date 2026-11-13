@@ -4,6 +4,17 @@
 **حاکم منصوبہ:** «صابری سوشل ہومیوپیتھی پلیٹ فارم — جامع مرکزی ماسٹر پلان V12.1»، ۱۰ نومبر ۲۰۲۶ء، بالخصوص باب ۱۲ (صفحہ ۲۱۹–۲۲۷)۔  
 **اس دستاویز کا کام:** مذکورہ **اسی ۱۶ ورک پیکیجز** والے منصوبے کا قابلِ تجدید، ثبوتی «بقایا کوڈنگ و قبولیت» ضمیمہ۔ پرانا منصوبہ منسوخ یا متوازی مادر منصوبہ نہیں بنتا۔
 
+## ۱۳ نومبر ۲۰۲۶ء — دوسری نظرثانی کے بعد تازہ شمار: ۷ سورس اصلاحات
+
+**اس نشست کا موجودہ ماخذی شمار:** ۷ تصدیق شدہ source-level defects اور ۷ اصلاحی کوڈ امیدوار (اس سے ذیل کی تاریخی ۵ اصلاحات والی snapshot غیر موجودہ شمار نہیں بنتی)؛ ۶ نئی test suites، **۶۱۸۲** assertions۔ اضافی دو درج ذیل ہیں:
+
+- **V12.1-COLLECTIONS-SCHEMA-DRIFT-06:** Collections Schema کا recorded version `4` ہونے کے باوجود missing column/index/table کی صورت میں `admin_init` سے `dbDelta` چلنے کا امکان ختم؛ `spdb_collections_schema_drift` کی Fail-closed خطا، بغیر غیر منظورشدہ SQL مرمت۔ ۴ آزمائشیں۔
+- **V12.1-PREFERENCES-EXPORT-07:** WordPress privacy export کے دوران غائب Preferences ریکارڈ اور حقیقی SQL read failure میں امتیاز؛ latter پر `WP_Error`، دو اضافی آزمائشیں۔
+
+**مستقل باقی:** File23 #30/File20 #45 واقعی نصب source/package/schema/migration attestation؛ File23 #31 حقیقی Hostinger 20k+ privacy/retention staging؛ ۱۰ source-owner contract acceptance checks، ۱۳ external limits، دو آزاد reviews، Founder approval، اصل DB recovery/rollback، host/CDN private-file denial اور live parity۔ یہ تمام عینی شواہد GitHub کا سبز CI مہیا نہیں کرتا۔
+
+**تفصیلی ثبوت:** `docs/AUDIT-V12.1-FILE23-PRIVACY-RETENTION-2026-11-13.md` اور `docs/RELEASE-SIGNOFF.md`۔ کوئی Merge/Deploy نہیں کیا گیا۔
+
 ## ۱۳ نومبر ۲۰۲۶ء — اضافی ۵ اصلاحات، ۵ تجرباتی ٹیسٹ فائلیں اور قبولیتی قرض
 
 **حاکم مفہوم:** ۱۶ WP اور ۱۲۸ تقاضے وہی برقرار ہیں؛ نئی سطور ان کی تازہ سورس جانچ ہیں، کوئی نیا فرضی مجموعی تکمیلی فی صد نہیں۔ Source-only کو لائیو یا staging acceptance نہ سمجھیں۔
