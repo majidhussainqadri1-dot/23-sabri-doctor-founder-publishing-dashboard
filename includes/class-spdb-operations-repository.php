@@ -1418,9 +1418,15 @@ final class SPDB_Operations_Repository {
 	 * @return array<string,int>|WP_Error
 	 */
 	public function cleanup_retention( array $settings, ?string $export_cutoff = null, ?int $export_max_id = null ) {
+		// File23 must never purge encrypted-export references without the
+		// frozen expiry cutoff and the independently verified row-ID fence.
+		// A direct call with omitted arguments is NOT deletion authorization.
+		if ( null === $export_cutoff || null === $export_max_id ) {
+			return self::error( 'spdb_retention_proof_required', __( 'Verified export artifact cleanup cutoff and row fence are required before metadata retention purge.', 'sabri-publishing-dashboard' ), 409 );
+		}
 		$now = current_time( 'mysql', true );
-		$cutoff = null === $export_cutoff ? $now : $export_cutoff;
-		if ( null !== $export_max_id && $export_max_id < 0 ) {
+		$cutoff = $export_cutoff;
+		if ( $export_max_id < 0 ) {
 			return self::error( 'spdb_retention_max_id_invalid', __( 'The export retention row fence is invalid.', 'sabri-publishing-dashboard' ), 400 );
 		}
 		if ( 1 !== preg_match( '/^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}$/', $cutoff ) || false === strtotime( $cutoff . ' UTC' ) || $cutoff > $now ) {
@@ -1433,9 +1439,7 @@ final class SPDB_Operations_Repository {
 				$deleted = array( 'metrics' => 0, 'exports' => 0, 'jobs' => 0, 'tasks' => 0, 'health' => 0 );
 				$queries = array(
 					'metrics' => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'metric_snapshots' ) . ' WHERE expires_at_gmt <= %s', $now ),
-					'exports' => null === $export_max_id
-						? $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'export_jobs' ) . ' WHERE expires_at_gmt <= %s', $cutoff )
-						: $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'export_jobs' ) . ' WHERE expires_at_gmt <= %s AND id <= %d', $cutoff, $export_max_id ),
+					'exports' => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'export_jobs' ) . ' WHERE expires_at_gmt <= %s AND id <= %d', $cutoff, $export_max_id ),
 					'health'  => $wpdb->prepare( 'DELETE FROM ' . SPDB_Operations_Schema::table( 'adapter_health' ) . ' WHERE expires_at_gmt <= %s', $now ),
 					'jobs'    => $wpdb->prepare(
 						'DELETE FROM ' . SPDB_Operations_Schema::table( 'background_jobs' ) . " WHERE status IN ('completed','dead_letter') AND updated_at_gmt < %s",
