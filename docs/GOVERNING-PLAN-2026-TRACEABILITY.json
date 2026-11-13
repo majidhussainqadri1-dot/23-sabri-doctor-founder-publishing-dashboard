@@ -266,7 +266,13 @@
         "canonical_owner": "CF04/File23 own exports",
         "file23_boundary": "File23 AES-GCM encrypted report artifacts with SHA-256 integrity verification",
         "source_evidence": [
-          "includes/class-spdb-export-service.php"
+          "includes/class-spdb-export-service.php",
+          "includes/class-spdb-report-pdf-renderer.php",
+          "composer.json",
+          "composer.lock",
+          "tests/v12-1-pdf-unicode-source-contract-tests.php",
+          "tests/v12-1-pdf-mpdf-integration-tests.php",
+          "docs/AUDIT-V12.1-UNICODE-PDF-AND-MARIADB-2026-11-13.md"
         ],
         "source_status": "source-reviewed-hosting-unverified",
         "staging_acceptance": "pending",
@@ -294,7 +300,10 @@
           "tests/v12-1-private-storage-directory-binding-tests.php",
           "tests/v12-1-export-artifact-id-binding-tests.php",
           "docs/AUDIT-V12.1-FILE23-SOURCE-REVIEWS-2026-11-13.md",
-          "docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md"
+          "docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md",
+          "includes/class-spdb-report-pdf-renderer.php",
+          "tests/v12-1-pdf-mpdf-integration-tests.php",
+          "tools/build-final-release.sh"
         ],
         "source_status": "source-reviewed-hosting-unverified",
         "staging_acceptance": "pending",
@@ -326,7 +335,10 @@
           "tests/v12-1-export-artifact-id-binding-tests.php",
           "tests/v12-1-privacy-deep-page-tests.php",
           "docs/AUDIT-V12.1-FILE23-PRIVACY-RETENTION-2026-11-13.md",
-          "docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md"
+          "docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md",
+          "tests/v12-1-mariadb-private-erasure-integration.php",
+          ".github/workflows/file23-mariadb-source-integration.yml",
+          "docs/AUDIT-V12.1-UNICODE-PDF-AND-MARIADB-2026-11-13.md"
         ],
         "source_status": "source-reviewed-hosting-unverified",
         "staging_acceptance": "pending",
