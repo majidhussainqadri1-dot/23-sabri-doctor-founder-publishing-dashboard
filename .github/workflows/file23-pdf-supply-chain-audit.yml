@@ -1,0 +1,43 @@
+name: File23 V12.1 Locked PDF Runtime Supply Chain
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: file23-pdf-supply-chain-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-security-and-license:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+          extensions: gd, mbstring, xml, zlib, intl
+          coverage: none
+      - name: Verify exact compatible Composer lock and install
+        shell: bash
+        run: |
+          set -euo pipefail
+          composer validate --strict --no-check-publish
+          composer install --no-dev --no-interaction --no-plugins --no-scripts --prefer-dist --no-progress
+          composer check-platform-reqs
+          test -s vendor/mpdf/mpdf/LICENSE.txt
+          test -s vendor/mpdf/mpdf/ttfonts/DejaVuSans.ttf
+          test -s vendor/mpdf/mpdf/ttfonts/XB\ Riyaz.ttf
+      - name: Fail if Composer reports a known security advisory for locked production dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          composer audit --locked --no-interaction --format=plain
+          echo 'Composer locked dependencies have no advisories returned by this source CI audit.'
