@@ -41,7 +41,10 @@ class SPDB_Privacy_Export_Pages_DB {
 		}
 		if ( strpos( $sql, 'FROM wp_test_spdb_collections WHERE' ) !== false ) {
 			return $offset === 0
-				? array( array( 'id' => 1, 'collection_id' => 'owned_collection', 'owner_user_id' => 7, 'contributors_json' => '[7,8]' ) )
+				? array(
+					array( 'id' => 1, 'collection_id' => 'owned_collection', 'owner_user_id' => 7, 'contributors_json' => '[7,8]' ),
+					array( 'id' => 2, 'collection_id' => 'not_owned_collection', 'owner_user_id' => 8, 'contributors_json' => '["7spoof",8]' ),
+				)
 				: array();
 		}
 		if ( strpos( $sql, 'FROM wp_test_spdb_knowledge_links WHERE' ) !== false ) { return array(); }
@@ -56,6 +59,9 @@ $seen = array();
 $last = array();
 for ( $page = 1; $page <= 62; ++$page ) {
 	$last = $method->invoke( $repo, 7, $page, 100 );
+	if ( 1 === $page ) {
+		$assert( 1 === count( $last['data']['collections'] ?? array() ) && 'owned_collection' === ( $last['data']['collections'][0]['collection_id'] ?? '' ), 'String 7spoof cannot authorize foreign parent collection export.' );
+	}
 	$assert( is_array( $last ) && isset( $last['data']['items'] ) && is_array( $last['data']['items'] ), 'Collection item page returns an array.' );
 	foreach ( $last['data']['items'] as $item ) {
 		$assert( ! isset( $item['parent_owner_user_id'] ) && ! isset( $item['parent_contributors_json'] ), 'Internal parent authority fields are not serialized into exported data.' );
