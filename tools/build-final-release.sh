@@ -45,6 +45,9 @@ unzip -p "$package_name" sabri-publishing-dashboard/sabri-publishing-dashboard.p
 unzip -p "$package_name" sabri-publishing-dashboard/readme.txt | grep -Fq 'Stable tag: 1.3.0'
 unzip -Z1 "$package_name" | grep -Fxq 'sabri-publishing-dashboard/vendor/autoload.php'
 unzip -Z1 "$package_name" | grep -Fxq 'sabri-publishing-dashboard/vendor/mpdf/mpdf/src/Mpdf.php'
+unzip -Z1 "$package_name" | grep -Fxq 'sabri-publishing-dashboard/vendor/mpdf/mpdf/ttfonts/DejaVuSans.ttf'
+unzip -Z1 "$package_name" | grep -Fxq 'sabri-publishing-dashboard/vendor/mpdf/mpdf/ttfonts/XB Riyaz.ttf'
+unzip -Z1 "$package_name" | grep -Fxq 'sabri-publishing-dashboard/vendor/mpdf/mpdf/LICENSE.txt'
 unzip -p "$package_name" sabri-publishing-dashboard/composer.lock | grep -Fq '"name": "mpdf/mpdf"'
 sha256sum "$package_name" > "$package_name.sha256"
 (
