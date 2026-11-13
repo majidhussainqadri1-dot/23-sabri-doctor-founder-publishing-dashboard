@@ -286,12 +286,14 @@
       {
         "id": "V12.1-STO-07",
         "canonical_owner": "CF04/File23 own exports",
-        "file23_boundary": "current user/MFA, expiring HMAC, own export only; webserver guard validation child fix",
+        "file23_boundary": "current approved owner/MFA, expiring HMAC, exact export-ID/reference and SHA-256 checks, explicit symlink refusal and webserver-guard validation; Hostinger origin/CDN still unverified",
         "source_evidence": [
           "includes/class-spdb-export-service.php",
-          "tests/v12-1-export-guard-integrity-tests.php"
+          "tests/v12-1-export-guard-integrity-tests.php",
+          "tests/v12-1-strict-private-download-path-tests.php",
+          "docs/AUDIT-V12.1-FILE23-SOURCE-REVIEWS-2026-11-13.md"
         ],
-        "source_status": "source-patch-awaiting-exact-head-ci",
+        "source_status": "source-reviewed-hosting-unverified",
         "staging_acceptance": "pending",
         "live_verification": "unverified"
       },
