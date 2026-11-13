@@ -24,7 +24,7 @@ $invalid = array(
 	array( 'args' => array( $settings, null, 100 ), 'label' => 'row fence without a cutoff' ),
 	array( 'args' => array( $settings, '2026-01-01 00:00:00', -1 ), 'label' => 'negative row fence' ),
 	array( 'args' => array( $settings, 'invalid', 100 ), 'label' => 'malformed cutoff' ),
-	array( 'args' => array( $settings, gmdate( 'Y-m-d H:i:s', time() + DAY_IN_SECONDS ), 100 ), 'label' => 'future cutoff' ),
+	array( 'args' => array( $settings, gmdate( 'Y-m-d H:i:s', time() + 86400 ), 100 ), 'label' => 'future cutoff' ),
 );
 foreach ( $invalid as $test ) {
 	$result = $repository->cleanup_retention( ...$test['args'] );
