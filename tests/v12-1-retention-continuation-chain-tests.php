@@ -43,7 +43,7 @@ class SPDB_Continuation_Test_DB {
 		$rows = array();
 		foreach ( $this->exports as $row ) {
 			if ( $row['expires_at_gmt'] <= $cutoff && $row['id'] > $cursor && $row['id'] <= $max_id ) {
-				$rows[] = array( 'id' => $row['id'], 'storage_ref' => $row['storage_ref'], 'status' => $row['status'] );
+				$rows[] = array( 'id' => $row['id'], 'storage_ref' => $row['storage_ref'], 'export_id' => '' !== $row['storage_ref'] ? substr( $row['storage_ref'], 0, -5 ) : 'export_' . str_repeat( '0', 32 ), 'status' => $row['status'] );
 			}
 			if ( count( $rows ) >= $limit ) { break; }
 		}
