@@ -57,6 +57,20 @@ This form must remain **Pending** until every required evidence field is complet
 - [ ] Real DB query plan, lock latency, 10k+ performance, backup/restore of old progress options, private-file HTTP denial through Hostinger/CDN and durable audit reviewed; attached dated test evidence required.
 - [ ] File23 issue #31 not closed from source CI alone; File20/#45 and File23/#30 deployed artifact parity still pending.
 
+## 13 November 2026 — Privacy, portability, relational delete and retention acceptance
+
+The five new source defects have candidate fixes and green source CI at `52b61c858c624d5cc71fc71e5ae7d77dd5c23366`, **not** live proof. These additional release criteria are mandatory:
+
+- [ ] Retention metadata deletion rejects **both** missing frozen cutoff and missing ID upper fence. Hostinger staging shows old ciphertext removed and independently verified before a scoped transactional metadata deletion; failed cleanup retains all metadata.
+- [ ] Owner erasure scans institutional collections beyond 5,000, preserves unrelated contributors under broad LIKE (user 7 vs 17), and fails/rolls back for malformed JSON, invalid cursor, SQL update/read failure, more than its controlled per-call limit.
+- [ ] Owner's collection-item metadata is removed by exact owner/scope-bound relational JOIN, with no unbounded all-ID PHP/SQL IN-list. Verify on real MariaDB/MySQL, with rollback injected at the next statement.
+- [ ] WordPress privacy exporter includes a 6,001-item synthetic collection across separate bounded item pages, does not leak unrelated user metadata, strips internal parent authorization fields and terminates correctly without duplicates.
+- [ ] For tasks, saved views, delegations, automation rules, exports, collections, collection items and knowledge links, a failed SQL SELECT propagates `WP_Error` to WordPress core Ajax and **does not** produce a completed empty export.
+- [ ] Hostinger staging verifies WordPress core callback behavior, real owner permissions, 10k+ records, DB consistency during concurrent writes, retention holds, backup/restore and the privacy log. Real user data must not be used in test fixtures.
+- [ ] Two independent external reviewers approve these source changes, separate from A/B analytical review notes, then Founder records staging acceptance. No merge/production deployment until explicitly authorized.
+
+**Code/test evidence:** `docs/AUDIT-V12.1-FILE23-PRIVACY-RETENTION-2026-11-13.md`; test files `v12-1-retention-proof-boundary-tests.php`, `v12-1-institutional-privacy-pagination-tests.php`, `v12-1-owned-collection-erasure-tests.php`, `v12-1-privacy-collection-export-pagination-tests.php`, `v12-1-privacy-export-db-failure-tests.php`. Real installed-package and DB attestation still blocked on File20 Issue #45 / File23 #30; Hostinger scale acceptance still File23 #31.
+
 ## 13 November 2026 — Additional V12.1 WP-00/STO-07/schema validation gates
 
 - [ ] Source exact final SHA passes all new `tests/v12-1-strict-private-download-path-tests.php`, `tests/v12-1-readonly-host-evidence-tests.php`, and `tests/v12-1-operations-schema-structure-tests.php` on PHP 8.0–8.3 where offered, **after** all follow-up commits.
