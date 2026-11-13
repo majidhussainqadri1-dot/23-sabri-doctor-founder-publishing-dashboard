@@ -59,6 +59,13 @@ if ( is_string( $pdf ) ) {
 			$assert( is_string( $text ) && str_contains( $text, 'LAST_COLUMN_125_125' ), 'Real PDF text extraction includes the seventh column of last (125th) row.' );
 			$assert( is_string( $text ) && str_contains( $text, 'Source row 120' ), 'Rows before the former 120-row cap remain extractable.' );
 			$assert( is_string( $text ) && str_contains( $text, 'اردو' ), 'Real generated PDF preserves extractable Urdu glyph mapping.' );
+			if ( is_string( $text ) && ! str_contains( $text, 'السلام' ) ) {
+				$at = mb_strpos( $text, 'اردو' );
+				$sample = mb_substr( $text, false === $at ? 0 : max( 0, $at - 40 ), 180 );
+				$raw_extraction = shell_exec( escapeshellarg( $command ) . ' -raw -enc UTF-8 ' . escapeshellarg( $raw ) . ' - 2>/dev/null' );
+				fwrite( STDERR, "Synthetic Arabic PDF extraction sample (layout): " . json_encode( $sample, JSON_UNESCAPED_UNICODE ) . "\n" );
+				fwrite( STDERR, "Synthetic Arabic PDF extraction sample (raw): " . json_encode( mb_substr( (string) $raw_extraction, 0, 210 ), JSON_UNESCAPED_UNICODE ) . "\n" );
+			}
 			$assert( is_string( $text ) && str_contains( $text, 'السلام' ), 'Real generated PDF preserves extractable Arabic glyph mapping.' );
 			$assert( is_string( $text ) && ! str_contains( $text, '???' ), 'Urdu/Arabic is not replaced by the old ASCII question-mark fallback.' );
 		} else {
