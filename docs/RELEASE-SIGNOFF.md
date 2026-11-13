@@ -57,6 +57,14 @@ This form must remain **Pending** until every required evidence field is complet
 - [ ] Real DB query plan, lock latency, 10k+ performance, backup/restore of old progress options, private-file HTTP denial through Hostinger/CDN and durable audit reviewed; attached dated test evidence required.
 - [ ] File23 issue #31 not closed from source CI alone; File20/#45 and File23/#30 deployed artifact parity still pending.
 
+## 13 November 2026 — Calendar, ZIP parity and PDF fidelity release gates
+
+- [ ] Source `tests/v12-1-ics-rfc5545-folding-tests.php` passes 13 RFC 5545 negative/positive checks on final exact HEAD (TEXT delimiters/newlines, 75-octet folded content lines, UTF-8 integrity, CRLF). Real approved Apple/Google/Outlook calendar import and Urdu/Arabic rendering must be tested separately on staging.
+- [ ] Source `tests/v12-1-approved-zip-inventory-tests.php` passes 12 ZIP measurement checks on final HEAD. On a trusted operator host, collect outputs from `tools/file23-approved-zip-inventory.php` for a **separately approved exact installable ZIP** and `tools/file23-readonly-host-evidence.php` for the actual installed File23 tree. Compare their inventory hashes, archive/build SHA, plugin header/runtime version and verified database schema/migration state; never treat either output as a signed attestation.
+- [ ] File20 trusted/deployment operator issues a fresh independently signed or otherwise authentically trusted `file23_deployed_artifact_v1` contract tied to source commit, package bytes, environment, migration and revocation. File23 Issue #30 and File20 Issue #45 stay open until real Hostinger verification.
+- [ ] **File23 Issue #32 is OPEN:** PDF report silently caps 120 rows and 5 columns, replacing Urdu/Arabic non-ASCII with question marks. No release sign-off until complete bounded Unicode/RTL PDF data fidelity is coded and verified, or the Founder explicitly approves a prominently labeled summary-only PDF instead. Record the policy change and demonstrate no silent omissions.
+- [ ] All 5 newly added regression suites and 61 checks pass on the last exact HEAD after all documentation; two independent external reviewers and Founder staging authorization still required.
+
 ## 13 November 2026 — Exact export artifact identity, private directory and deep-page release requirements
 
 - [ ] On **real Hostinger staging** seed 2 different owners/jobs with valid-looking `export_A.spdb`, `export_B.spdb`; corrupt *one* owned metadata `storage_ref` to the other's filename in a disposable/restore-only dataset. Both legacy and paged expiry/erasure must return `spdb_export_(cleanup|erase)_reference_invalid` **before any other ciphertext is deleted**. Repeat with fully matched owner/job/filename and confirm only that ciphertext is deleted.
