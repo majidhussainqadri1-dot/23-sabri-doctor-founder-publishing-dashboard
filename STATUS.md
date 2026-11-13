@@ -112,6 +112,20 @@ Until those external gates pass, File 23 is **not staging-accepted, live-deploye
 - **Open release dependencies:** File23 #30 / File20 #45 (trusted exact deployed-byte/schema/migration attestor); File23 #31 (real 20,001+ Hostinger personal erasure/retention, backup, concurrency and Cron); 13 prior operational limits and staging/live WP-14/15.
 - **Release decision:** Version 1.3.0 candidate is source-coded, packaged and GitHub-QA green within the reviewed scope. Draft PR #29 and parent PR #26 remain unmerged. **No staging acceptance, deployment, DB change, live smoke, parity confirmation or permission for a production rollout** is claimed.
 
+## 13 November 2026 — Latest source code and open-defect ledger
+
+**This extended work session:** 6 File23 source issues identified; **5 candidate source corrections coded and tested** (strict job/artifact identity, legacy active-job retention, storage-directory symlink/containment, privacy page 10001+ handling, RFC5545 iCalendar escaping/folding); **1 new open source defect, Issue #32** (PDF report 120-row/5-column truncation and Urdu/Arabic fidelity loss). Pathname unlink safety was also strengthened without counting an extra incident. Historical 8 earlier source fixes plus this session's 5 = **13 candidate source corrections** across separate sessions; **0 live incident resolutions verified**.
+
+**New source regression evidence:** 5 new standalone PHP files with **61 assertions**: `v12-1-export-artifact-id-binding-tests.php` (25), `v12-1-private-storage-directory-binding-tests.php` (5), `v12-1-privacy-deep-page-tests.php` (6), `v12-1-ics-rfc5545-folding-tests.php` (13) and `v12-1-approved-zip-inventory-tests.php` (12). All suites passed in their latest tested source commits, together with the full existing File23 PHP 8.0–8.3 source CI.
+
+**WP-00 parity-tool extension:** `tools/file23-approved-zip-inventory.php` independently measures the candidate installable ZIP's byte-by-byte inventory in the same format as the existing authorized WP-CLI installed-plugin probe. Both explicitly return `verified=false`/`is_attestation=false`; they neither certify CI provenance nor inspect Hostinger. Trusted owner attestation requires File20 #45 / File23 #30 and real DB/migration parity.
+
+**Release blockers unchanged plus PDF:** File23 #30/File20 #45 installed trust, File23 #31 real >20,001-row Hostinger MySQL/cron/concurrency/recovery, File23 #32 PDF Unicode/completeness, 10 cross-owner contracts, 13 previously listed operational limitations, File24 independent review, two independent reviewers, real staging and Founder approval. Do not conflate these with source CI.
+
+**Source evidence:** `docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md`, current 16-WP V12.1 backlog, traceability and `docs/RELEASE-SIGNOFF.md`. **Exact final HEAD CI after this status change is still required.**
+
+**Live-reality register:** Repository = child Draft PR #29 (fetch exact HEAD); deployed plugin/build = UNVERIFIED; DB/schema = UNVERIFIED; migration = UNVERIFIED; staging acceptance = PENDING; live verification = NOT VERIFIED. Parent PR #26/main remain unmerged, no authorized deployment or live retest conducted. **NO-GO**.
+
 ## 13 November 2026 — Additional exact File23 retention, storage and portability source checkpoint
 
 **New work-session source ledger:** **4 newly confirmed source defects, 4 corrective source patches, 3 new regression suites, 36 executable assertions** (25 exact export-ID binding, 5 directory symlink/containment, 6 deep privacy exporter pages). The prior 8 same-day source issues remain separately documented below. Historical 8 + these distinct 4 = **12 source-level issues addressed across these two sessions**; **0 actual Hostinger live incidents/repairs verified**.
