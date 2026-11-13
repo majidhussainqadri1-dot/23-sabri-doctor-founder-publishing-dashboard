@@ -101,6 +101,17 @@ Until those external gates pass, File 23 is **not staging-accepted, live-deploye
 - Source issue #31 remains open pending **real 20k+ Hostinger staging** and acceptance. Separate installed-attestor issues File23 #30 / File20 #45 remain open. Existing 13 operations limitations are **not 13 demonstrated live bugs**.
 - **No merge, no staging/live deploy, no mutation to Hostinger DB, no Founder signoff.** Only GitHub Draft PR #29 changed.
 
+## 13 November 2026 — V12.1 full-source acceptance and Hostinger evidence checkpoint
+
+- **Last complete exact-head source QA before this status-only update:** `66485016b276a8471f80d49e581bf2f6706b017e`; GitHub Actions **Baseline Integrity #1580**, **Full Plan Completion #631**, **Final Release Candidate #385** all **SUCCESS**, including PHP 8.0–8.3 matrix where applicable. After this status update, require one fresh exact-head run.
+- **2 new confirmed source issues found and fixed in this review:** strict job/ref/symlink/hash binding of private report download (`V12.1-STO07-DOWNLOAD-01`); incomplete structural verification of ten operations schema tables and unsafe same-version auto-repair (`V12.1-DB-SHAPE-02`). **0 live incidents** diagnosed or fixed.
+- **3 new executable regression suites**: `tests/v12-1-strict-private-download-path-tests.php` (11), `tests/v12-1-readonly-host-evidence-tests.php` (14), `tests/v12-1-operations-schema-structure-tests.php` (41): **66 assertions**, source CI green. A synthetic schema test fixture table-prefix defect was corrected separately and not counted as a production bug.
+- **New WP-00 read-only tooling:** `tools/file23-readonly-host-evidence.php` measures installed plugin-tree file hashes, version, schema and options only from authorized staging WP-CLI. It **does not** produce or verify the trusted File20 attestation, migrate DB, install a plugin or run on Hostinger by itself.
+- **Staging/live access obstacle verified:** WordPress.com listed `www.sabrihomeopathy.com` with Jetpack `site_disconnected`; WPVibe reported no registered sites and its attempted link returned HTTP **530**. This does **not** identify the failing hop or prove that the public website is down. Exact installed plugin/source, DB, migrations, origin/CDN protections and HTTP behavior **remain unknown**.
+- **Two internal analytical source review lenses** are documented in `docs/AUDIT-V12.1-FILE23-SOURCE-REVIEWS-2026-11-13.md` and the operator handoff `docs/V12.1-FILE23-HOSTINGER-READONLY-PARITY-HANDOFF-2026-11-13.md`. Two genuinely independent external reviews and Founder staging approval **remain pending**.
+- **Open release dependencies:** File23 #30 / File20 #45 (trusted exact deployed-byte/schema/migration attestor); File23 #31 (real 20,001+ Hostinger personal erasure/retention, backup, concurrency and Cron); 13 prior operational limits and staging/live WP-14/15.
+- **Release decision:** Version 1.3.0 candidate is source-coded, packaged and GitHub-QA green within the reviewed scope. Draft PR #29 and parent PR #26 remain unmerged. **No staging acceptance, deployment, DB change, live smoke, parity confirmation or permission for a production rollout** is claimed.
+
 ## Live-reality register
 
 - Repository candidate: Version `1.3.0` on the branch above; exact final SHA must be recorded after the last code/review change.
