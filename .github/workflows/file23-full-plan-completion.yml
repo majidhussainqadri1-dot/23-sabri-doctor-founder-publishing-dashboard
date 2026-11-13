@@ -38,7 +38,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: gd, mbstring, xml, zlib
+          extensions: gd, mbstring, xml, zlib, intl
           coverage: none
       - name: Verify locked Unicode PDF runtime
         shell: bash
@@ -155,7 +155,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: gd, mbstring, xml, zlib
+          extensions: gd, mbstring, xml, zlib, intl
           coverage: none
       - name: Verify locked File23 PDF runtime for real contracts
         shell: bash
@@ -238,7 +238,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: gd, mbstring, xml, zlib
+          extensions: gd, mbstring, xml, zlib, intl
           coverage: none
       - name: Verify locked File23 PDF runtime for canonical packaging
         shell: bash
