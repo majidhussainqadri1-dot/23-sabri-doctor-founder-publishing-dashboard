@@ -4,8 +4,8 @@
   "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
   "separate_realities": true,
   "counting": {
-    "confirmed_new_source_findings": 5,
-    "source_fixes_on_work_branch": 5,
+    "confirmed_new_source_findings": 6,
+    "source_fixes_on_work_branch": 6,
     "negative_test_red_checkpoint": "4d3e7ca1979632b39ead1be08dff2b87db6f8030",
     "confirmed_red_ci": "Baseline Integrity #43592646413 (PHP 8.0/8.1/8.2/8.3 failures from new negative test)",
     "source_ci_green_checkpoint": "ac9dae742de2648659abed873a67ec63e79bfe56",
@@ -15,7 +15,7 @@
     "live_verified_fixes": 0,
     "numeric_text_red_sha": "da158d144c72f94d69fe06467b161b411f95288d",
     "numeric_text_red_ci": "Baseline Integrity #43593459926; known failure on text leading-zero assertion",
-    "new_2026_11_14_source_fixes": 2,
+    "new_2026_11_14_source_fixes": 3,
     "previous_2026_11_14_source_fixes": 3,
     "boolean_text_red_sha": "0c9a4718f2ae61952f9b5ba7a0f35e8a5114edfa",
     "boolean_text_red_ci": {
@@ -39,6 +39,16 @@
       "full_plan_run": 43598643967,
       "final_release_run": 43598643980,
       "baseline_run": 43598643973
+    },
+    "task_pagination_red_sha": "cfd030867f9451139cf76f3a83285ff7187876cb",
+    "task_pagination_red_ci": "Baseline Integrity run 43598996313 failed the PHP_INT_MAX page case before fix",
+    "task_pagination_green_sha": "95c9aeb16c25e3d8da7c2eef7322b2feb109b935",
+    "task_pagination_green_ci": {
+      "Baseline Integrity": 43599096953,
+      "File 23 Full Plan Completion": 43599096820,
+      "File 23 Final Release Candidate": 43599096809,
+      "File23 V12.1 Real MariaDB Source Integration": 43599096811,
+      "File23 V12.1 Locked PDF Runtime Supply Chain": 43599096868
     }
   },
   "records": [
@@ -143,6 +153,19 @@
       ],
       "source_green_checkpoint": "e242784c116c706bad68e463acd264780b9469c4",
       "live_verification": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-006",
+      "kind": "source-database-pagination-integer-overflow",
+      "severity": "P2",
+      "status": "source-fixed-five-ci-green-at-checkpoint-hostinger-unverified",
+      "finding": "list_tasks() multiplied unbounded page indices by per_page; PHP_INT_MAX page overflows offset before calling wpdb, potentially invalid/out-of-range SQL pagination.",
+      "evidence": "includes/class-spdb-operations-repository.php; negative source test failed on Baseline Integrity run 43598996313 for SHA cfd030867f9451139cf76f3a83285ff7187876cb",
+      "root_cause": "No integer-safe upper bound before computing paginated SQL OFFSET.",
+      "patch": "includes/class-spdb-operations-repository.php adds PHP_INT_MAX/per_page bound and typed WP_Error before SQL.",
+      "test": "tests/v12-3-task-pagination-tests.php",
+      "green_source_checkpoint": "95c9aeb16c25e3d8da7c2eef7322b2feb109b935",
+      "host_acceptance": "pending"
     }
   ],
   "separate_findings": {
@@ -174,6 +197,7 @@
     "no_merge": true,
     "live_verified_fixes": 0,
     "latest_source_green_checkpoint": "e242784c116c706bad68e463acd264780b9469c4",
-    "requirement_census": 187
+    "requirement_census": 187,
+    "source_fixed_total_on_draft_pr_33": 6
   }
 }
