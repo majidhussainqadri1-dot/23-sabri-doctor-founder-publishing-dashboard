@@ -259,7 +259,16 @@ final class SPDB_Adapter_Registry {
 			return;
 		}
 		$record_environment = sanitize_key( (string) ( $record['environment'] ?? '' ) );
-		if ( self::ACCEPTANCE_STAGING_ACCEPTED === $state && 'production' === $record_environment ) {
+		// Production grant provenance is a security boundary: never promote
+		// a staging/development/missing-origin acceptance from a restored
+		// wp_options record into effective production write authority.
+		if ( self::ACCEPTANCE_PRODUCTION_ACCEPTED === $state && 'production' !== $record_environment ) {
+			return;
+		}
+		if (
+			self::ACCEPTANCE_STAGING_ACCEPTED === $state
+			&& ! in_array( $record_environment, array( 'staging', 'development', 'local' ), true )
+		) {
 			return;
 		}
 		$this->acceptance_states[ $provider_key ] = $state;

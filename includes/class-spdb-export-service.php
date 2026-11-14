@@ -110,6 +110,13 @@ final class SPDB_Export_Service {
 			return true;
 		}
 		$owner_user_id = max( 0, (int) ( $job['owner_user_id'] ?? 0 ) );
+		// File23's background worker impersonates the queued job owner.
+		// Never render under one WordPress user and seal a different user's
+		// export record: a mismatched queue/export ID must fail before any
+		// status update, native provider read or ciphertext file operation.
+		if ( $owner_user_id < 1 || get_current_user_id() !== $owner_user_id ) {
+			return self::error( 'spdb_export_job_owner_mismatch', __( 'The queued export does not match its current authorized account context.', 'sabri-publishing-dashboard' ), 403 );
+		}
 		if ( ! $this->user_can_export( $owner_user_id ) ) {
 			return $this->fail_processing( $export_id, self::error( 'spdb_export_authorization_revoked', __( 'Export authorization is no longer valid for the requesting account.', 'sabri-publishing-dashboard' ), 403 ) );
 		}
@@ -848,12 +855,23 @@ final class SPDB_Export_Service {
 		}
 		$columns = is_array( $model['columns'] ?? null ) ? $model['columns'] : array();
 		$rows    = is_array( $model['rows'] ?? null ) ? $model['rows'] : array();
-		fputcsv( $stream, $columns );
+		// HTML/PDF display report limitations and JSON keeps the model fields.
+		// CSV needs a machine-readable, first-row-visible warning as well:
+		// never output a partial provider page as an indistinguishable full CSV.
+		$partial = 'partial' === ( $model['completeness'] ?? '' );
+		$csv_headers = $columns;
+		if ( $partial ) {
+			$csv_headers[] = 'report_completeness_PARTIAL';
+		}
+		fputcsv( $stream, $csv_headers );
 		foreach ( $rows as $row ) {
 			$line = array();
 			foreach ( $columns as $column ) {
 				$value  = is_array( $row ) ? ( $row[ $column ] ?? '' ) : '';
 				$line[] = is_scalar( $value ) ? self::spreadsheet_safe( (string) $value ) : '';
+			}
+			if ( $partial ) {
+				$line[] = 'INCOMPLETE_REPORT';
 			}
 			fputcsv( $stream, $line );
 		}

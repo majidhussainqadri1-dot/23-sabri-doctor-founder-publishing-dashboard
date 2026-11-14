@@ -63,13 +63,38 @@ final class SPDB_Automation_Engine {
 		}
 		$payload = is_array( $job['payload'] ?? null ) ? $job['payload'] : array();
 		$rule_id = sanitize_key( (string) ( $payload['rule_id'] ?? '' ) );
-		$expected_version = max( 1, (int) ( $payload['rule_version'] ?? 0 ) );
+		$raw_version = $payload['rule_version'] ?? null;
+		// JSON-persisted background rule revisions must be canonical positive
+		// integers. Coercion would turn "3spoof", "03" or 3.5 into revision 3
+		// (and a missing version into revision 1), bypassing stale-job denial.
+		if ( ! is_int( $raw_version ) || $raw_version < 1 ) {
+			return $this->error( 'spdb_automation_job_invalid', __( 'The queued rule version is invalid.', 'sabri-publishing-dashboard' ), 400 );
+		}
+		$expected_version = $raw_version;
 		if ( '' === $rule_id ) {
 			return $this->error( 'spdb_automation_job_invalid', __( 'The automation job is invalid.', 'sabri-publishing-dashboard' ), 400 );
 		}
 		$rule = $this->repository->get_rule( $rule_id, 0, true );
 		if ( is_wp_error( $rule ) ) {
 			return $rule;
+		}
+		// A queued job is not an enduring authority grant. Revalidate the
+		// immutable job owner, the native File 23 rule owner and the actual
+		// WordPress execution identity before invoking external filters.
+		$owner_user_id = $job['owner_user_id'] ?? null;
+		$rule_owner_id = $rule['owner_user_id'] ?? null;
+		if (
+			! is_int( $owner_user_id ) || $owner_user_id < 1
+			|| ! is_int( $rule_owner_id ) || $rule_owner_id !== $owner_user_id
+			|| get_current_user_id() !== $owner_user_id
+		) {
+			return $this->error( 'spdb_automation_owner_mismatch', __( 'The queued job no longer matches its authorized automation owner.', 'sabri-publishing-dashboard' ), 403 );
+		}
+		if ( ! SPDB_Membership_Guard::is_user_approved( $owner_user_id ) ) {
+			return $this->error( 'spdb_automation_owner_unapproved', __( 'The automation owner is no longer an approved platform account.', 'sabri-publishing-dashboard' ), 403 );
+		}
+		if ( ! SPDB_Capabilities::current_user_can( 'spdb_manage_automation_rules' ) ) {
+			return $this->error( 'spdb_automation_capability_revoked', __( 'The automation owner no longer holds the required permission.', 'sabri-publishing-dashboard' ), 403 );
 		}
 		if ( 'enabled' !== ( $rule['status'] ?? '' ) || (int) $rule['version'] !== $expected_version ) {
 			return $this->error( 'spdb_automation_rule_stale', __( 'The automation rule changed or was disabled before execution.', 'sabri-publishing-dashboard' ), 409 );

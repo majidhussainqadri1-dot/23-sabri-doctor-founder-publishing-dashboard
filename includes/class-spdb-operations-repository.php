@@ -202,6 +202,12 @@ final class SPDB_Operations_Repository {
 		$table    = SPDB_Operations_Schema::table( 'tasks' );
 		$page     = max( 1, $page );
 		$per_page = min( 100, max( 1, $per_page ) );
+		// A caller may supply PHP_INT_MAX after REST integer coercion. Do not
+		// overflow OFFSET into a floating-point value or send an unbounded
+		// invalid pagination request to the database.
+		if ( $page > intdiv( PHP_INT_MAX, $per_page ) ) {
+			return self::error( 'spdb_tasks_page_invalid', __( 'The requested task page exceeds the safe pagination range.', 'sabri-publishing-dashboard' ), 422 );
+		}
 		$offset   = ( $page - 1 ) * $per_page;
 
 		if ( $institution ) {
@@ -929,7 +935,7 @@ final class SPDB_Operations_Repository {
 			self::array_output()
 		);
 		if ( is_array( $existing ) ) {
-			return $this->normalize_job_row( $existing );
+			return $this->validated_existing_job_reuse( $existing, $owner_user_id, $json );
 		}
 
 		$now = current_time( 'mysql', true );
@@ -956,11 +962,34 @@ final class SPDB_Operations_Repository {
 				self::array_output()
 			);
 			if ( is_array( $existing ) ) {
-				return $this->normalize_job_row( $existing );
+				return $this->validated_existing_job_reuse( $existing, $owner_user_id, $json );
 			}
 			return self::error( 'spdb_job_enqueue_failed', __( 'The background job could not be queued.', 'sabri-publishing-dashboard' ), 500 );
 		}
 		return $this->get_job( (string) $row['job_id'] );
+	}
+
+	/**
+	 * An idempotency key is not a cross-owner job lookup credential. Only the
+	 * same owner and byte-identical encoded action may reuse the queued item.
+	 * Apply this gate to both initial SELECT and INSERT-unique-key race paths.
+	 *
+	 * @param array<string,mixed> $existing Existing SQL row.
+	 * @return array<string,mixed>|WP_Error
+	 */
+	private function validated_existing_job_reuse( array $existing, int $owner_user_id, string $payload_json ) {
+		$stored_owner = $existing['owner_user_id'] ?? null;
+		if (
+			! ( is_string( $stored_owner ) || is_int( $stored_owner ) )
+			|| ! hash_equals( (string) $owner_user_id, (string) $stored_owner )
+		) {
+			return self::error( 'spdb_job_owner_conflict', __( 'A background job key belongs to another account.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		$stored_payload = $existing['payload_json'] ?? null;
+		if ( ! is_string( $stored_payload ) || ! hash_equals( $payload_json, $stored_payload ) ) {
+			return self::error( 'spdb_job_idempotency_payload_conflict', __( 'A background job key is already bound to another action.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		return $this->normalize_job_row( $existing );
 	}
 
 	/** @return array<string,mixed>|WP_Error */
@@ -1197,8 +1226,20 @@ final class SPDB_Operations_Repository {
 		}
 
 		try {
-			$previous = $wpdb->get_var( "SELECT event_hash FROM {$table} ORDER BY id DESC LIMIT 1 FOR UPDATE" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Static allowlisted table.
-			$previous = is_string( $previous ) && 64 === strlen( $previous ) ? $previous : str_repeat( '0', 64 );
+			$previous_raw = $wpdb->get_var( "SELECT event_hash FROM {$table} ORDER BY id DESC LIMIT 1 FOR UPDATE" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Static allowlisted table.
+			// A SELECT failure and a truly empty append-only ledger both
+			// return null from wpdb->get_var(). SQL error status is therefore
+			// part of the integrity precondition, not an optional diagnostic.
+			if ( ! empty( $wpdb->last_error ) ) {
+				return self::error( 'spdb_audit_previous_read_failed', __( 'The previous dashboard audit event could not be verified.', 'sabri-publishing-dashboard' ), 503 );
+			}
+			if ( null === $previous_raw ) {
+				$previous = str_repeat( '0', 64 );
+			} elseif ( is_string( $previous_raw ) && 1 === preg_match( '/\\A[a-f0-9]{64}\\z/', $previous_raw ) ) {
+				$previous = $previous_raw;
+			} else {
+				return self::error( 'spdb_audit_previous_hash_invalid', __( 'The stored previous audit hash is malformed; appending is disabled.', 'sabri-publishing-dashboard' ), 500 );
+			}
 			$event_id = self::id( 'audit' );
 			$created  = current_time( 'mysql', true );
 			$object_hash = hash( 'sha256', $object_reference );
@@ -1227,34 +1268,72 @@ final class SPDB_Operations_Repository {
 	/** @return array<string,mixed> */
 	public function audit_health(): array {
 		global $wpdb;
-		$table = SPDB_Operations_Schema::table( 'dashboard_audit' );
-		$rows  = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY id ASC", self::array_output() ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Static allowlisted table and query.
-		if ( ! is_array( $rows ) ) {
+		if ( ! is_object( $wpdb ) || ! method_exists( $wpdb, 'prepare' ) || ! method_exists( $wpdb, 'get_results' ) ) {
 			return array( 'healthy' => false, 'events' => 0, 'code' => 'read_failed' );
 		}
+
+		$table = SPDB_Operations_Schema::table( 'dashboard_audit' );
 		$previous = str_repeat( '0', 64 );
-		foreach ( $rows as $row ) {
-			$expected = hash(
-				'sha256',
-				implode(
-					'|',
-					array(
-						(string) ( $row['event_id'] ?? '' ),
-						(string) max( 0, (int) ( $row['actor_user_id'] ?? 0 ) ),
-						(string) ( $row['event_key'] ?? '' ),
-						(string) ( $row['object_ref_hash'] ?? '' ),
-						(string) ( $row['payload_json'] ?? '' ),
-						$previous,
-						(string) ( $row['created_at_gmt'] ?? '' ),
-					)
-				)
+		$cursor = 0;
+		$verified = 0;
+		// The legacy SELECT * read the entire append-only audit table into
+		// PHP in one call. Keep an indexed, bounded keyset working set and
+		// fail closed if a request cannot finish within its scan budget.
+		$batch_size = 500;
+		$max_batches = 200;
+		for ( $batch = 0; $batch <= $max_batches; ++$batch ) {
+			// A final one-row probe distinguishes exactly 100,000 verified
+			// events from an incomplete scan without loading another batch.
+			$limit = $batch === $max_batches ? 1 : $batch_size;
+			$sql = $wpdb->prepare(
+				"SELECT * FROM {$table} WHERE id > %d ORDER BY id ASC LIMIT %d",
+				$cursor,
+				$limit
 			);
-			if ( ! hash_equals( $previous, (string) ( $row['previous_hash'] ?? '' ) ) || ! hash_equals( $expected, (string) ( $row['event_hash'] ?? '' ) ) ) {
-				return array( 'healthy' => false, 'events' => count( $rows ), 'code' => 'chain_invalid' );
+			$rows = $wpdb->get_results( $sql, self::array_output() );
+			if ( ! is_array( $rows ) || ! empty( $wpdb->last_error ) ) {
+				return array( 'healthy' => false, 'events' => $verified, 'code' => 'read_failed' );
 			}
-			$previous = (string) $row['event_hash'];
+			if ( $batch === $max_batches ) {
+				return array(
+					'healthy' => empty( $rows ),
+					'events' => $verified,
+					'code' => empty( $rows ) ? 'ready' : 'scan_budget_exceeded',
+				);
+			}
+			foreach ( $rows as $row ) {
+				$raw_id = (string) ( $row['id'] ?? '' );
+				$id = ctype_digit( $raw_id ) ? (int) $raw_id : 0;
+				if ( $id <= $cursor ) {
+					return array( 'healthy' => false, 'events' => $verified, 'code' => 'chain_invalid' );
+				}
+				$expected = hash(
+					'sha256',
+					implode(
+						'|',
+						array(
+							(string) ( $row['event_id'] ?? '' ),
+							(string) max( 0, (int) ( $row['actor_user_id'] ?? 0 ) ),
+							(string) ( $row['event_key'] ?? '' ),
+							(string) ( $row['object_ref_hash'] ?? '' ),
+							(string) ( $row['payload_json'] ?? '' ),
+							$previous,
+							(string) ( $row['created_at_gmt'] ?? '' ),
+						)
+					)
+				);
+				if ( ! hash_equals( $previous, (string) ( $row['previous_hash'] ?? '' ) ) || ! hash_equals( $expected, (string) ( $row['event_hash'] ?? '' ) ) ) {
+					return array( 'healthy' => false, 'events' => $verified, 'code' => 'chain_invalid' );
+				}
+				$previous = (string) $row['event_hash'];
+				$cursor = $id;
+				++$verified;
+			}
+			if ( count( $rows ) < $batch_size ) {
+				return array( 'healthy' => true, 'events' => $verified, 'code' => 'ready' );
+			}
 		}
-		return array( 'healthy' => true, 'events' => count( $rows ), 'code' => 'ready' );
+		return array( 'healthy' => false, 'events' => $verified, 'code' => 'scan_budget_exceeded' );
 	}
 
 	/**

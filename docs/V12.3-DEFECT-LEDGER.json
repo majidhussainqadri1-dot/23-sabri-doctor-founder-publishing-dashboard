@@ -1,0 +1,547 @@
+{
+  "schema": "file23-v12.3-defect-ledger-v1",
+  "date": "2026-11-14",
+  "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
+  "separate_realities": true,
+  "counting": {
+    "confirmed_new_source_findings": 20,
+    "source_fixes_on_work_branch": 20,
+    "negative_test_red_checkpoint": "4d3e7ca1979632b39ead1be08dff2b87db6f8030",
+    "confirmed_red_ci": "Baseline Integrity #43592646413 (PHP 8.0/8.1/8.2/8.3 failures from new negative test)",
+    "source_ci_green_checkpoint": "ac9dae742de2648659abed873a67ec63e79bfe56",
+    "green_workflows_at_checkpoint": 5,
+    "new_v12_3_crosswalk_mapping_errors_corrected": 8,
+    "unresolved_external_file23_issues": 3,
+    "live_verified_fixes": 0,
+    "numeric_text_red_sha": "da158d144c72f94d69fe06467b161b411f95288d",
+    "numeric_text_red_ci": "Baseline Integrity #43593459926; known failure on text leading-zero assertion",
+    "new_2026_11_14_source_fixes": 3,
+    "previous_2026_11_14_source_fixes": 3,
+    "boolean_text_red_sha": "0c9a4718f2ae61952f9b5ba7a0f35e8a5114edfa",
+    "boolean_text_red_ci": {
+      "baseline_run": 43597751670,
+      "full_plan_run": 43597751676,
+      "final_release_run": 43597751665
+    },
+    "gmt_red_sha": "6f795fd0f09a6a7280938be1d3d1af154933526e",
+    "gmt_red_ci": {
+      "baseline_run": 43598007224,
+      "full_plan_run": 43598007186,
+      "final_release_run": 43598007241
+    },
+    "latest_source_green_checkpoint": "7df2d117db6e512892bb851710b63d54d62dc677",
+    "latest_source_green_workflows": 5,
+    "php80_test_harness_errors_corrected": 1,
+    "v12_3_chapter10_omitted_ids_detected_and_mapped": 10,
+    "v12_3_crosswalk_current_distinct_mapped_ids": 210,
+    "v12_3_crosswalk_red_test_sha": "b2ddb1c5dadf23ab9b8bd47ce2340c58d4962264",
+    "v12_3_crosswalk_red_ci": {
+      "full_plan_run": 43598643967,
+      "final_release_run": 43598643980,
+      "baseline_run": 43598643973
+    },
+    "task_pagination_red_sha": "cfd030867f9451139cf76f3a83285ff7187876cb",
+    "task_pagination_red_ci": "Baseline Integrity run 43598996313 failed the PHP_INT_MAX page case before fix",
+    "task_pagination_green_sha": "95c9aeb16c25e3d8da7c2eef7322b2feb109b935",
+    "task_pagination_green_ci": {
+      "Baseline Integrity": 43599096953,
+      "File 23 Full Plan Completion": 43599096820,
+      "File 23 Final Release Candidate": 43599096809,
+      "File23 V12.1 Real MariaDB Source Integration": 43599096811,
+      "File23 V12.1 Locked PDF Runtime Supply Chain": 43599096868
+    },
+    "account_ids_red_sha": "a88e10f7a4457a52a01f11a9494b3a7ba3305440",
+    "account_ids_red_ci": {
+      "baseline_run": 43599454728,
+      "final_release_run": 43599454740
+    },
+    "account_ids_source_fix_sha": "682de37092aa3c6b71fc3201d631bddbc0c58ed5",
+    "account_ids_source_ci_green_checkpoint": "5aa13820a58ac5f61c1a2700bde759ef64b7eff0",
+    "account_ids_green_baseline": 43599643838,
+    "account_ids_green_final_release": 43599643840,
+    "fpi24_structural_source_audit_added": true,
+    "fpi24_structural_source_test_pending_final_ci": true,
+    "studio_false_empty_red_sha": "cc219a2c673bbbb1f5607ac7583b3d45acb1dfcf",
+    "studio_false_empty_red_ci": {
+      "baseline_run": 43600099487,
+      "full_plan_run": 43600099572,
+      "final_release_run": 43600099526
+    },
+    "studio_false_empty_green_sha": "a82bbab73da079b3f8718a5fa39eb315e0ba9fff",
+    "studio_false_empty_green_ci": {
+      "Baseline Integrity": 43600226663,
+      "File 23 Full Plan Completion": 43600226688,
+      "File 23 Final Release Candidate": 43600226616,
+      "File23 V12.1 Real MariaDB Source Integration": 43600226700,
+      "File23 V12.1 Locked PDF Runtime Supply Chain": 43600226635
+    },
+    "latest_red_freshness_run": 43604084327,
+    "last_new_source_corrective_sha": "6d6878ebfad6958d89f709c41d3414bf1361e066",
+    "last_source_correction_sha": "002f694a825ebf1ce14d48ed2423a6742cce2123",
+    "audit_bounded_red_sha": "6d4b84fddb4631ee738789f460e1f43f7d159cc8",
+    "audit_bounded_green_sha": "eee9a558bee43b0e58b7c57d6fcfad36f07da94d",
+    "audit_bounded_green_workflows": 5,
+    "projection_completeness_red_sha": "822f345bdcc1dc2209ec73b9de96ea0c11ee6c9c",
+    "projection_completeness_fix_sha": "c5af61665d713d7150fcdf3d45c048086541977e",
+    "v12_3_central_policies_mapped": 20,
+    "v12_2_g01_g12_retained_mapped": 12,
+    "crosswalk_first_pass_not_feature_acceptance": true,
+    "external_gates_unchanged": true
+  },
+  "records": [
+    {
+      "id": "F23-V12.3-DEF-001",
+      "kind": "source-client-security",
+      "severity": "P2",
+      "status": "fixed-in-source-checkpoint-ci-passed-live-unverified",
+      "finding": "Browser form mutation generated a supposedly high-entropy idempotency key with Math.random when secure CSPRNG was absent",
+      "evidence": "assets/js/operations.js at f44ac45169c8c84c442184b5be2cb838adf12dae; negative test initially failed in CI",
+      "root_cause": "non-cryptographic fallback behind window.crypto guard",
+      "patch": "assets/js/operations.js; fail closed without window.crypto.getRandomValues or if it throws",
+      "test": "tests/v12-3-browser-mutation-regression.js",
+      "blocking_live": "Actual deployed code and real user journey unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-002",
+      "kind": "source-client-concurrency",
+      "severity": "P2",
+      "status": "fixed-in-source-checkpoint-ci-passed-live-unverified",
+      "finding": "Multiple submit events could dispatch overlapping requests while initial request was in-flight despite disabled button",
+      "evidence": "assets/js/operations.js original submit handler lacked data-spdb-submitting early return",
+      "root_cause": "disabled button did not guard programmatic/keyboard duplicate submit events",
+      "patch": "assets/js/operations.js; deny duplicate while submitting and preserve idempotency key during logical operation",
+      "test": "tests/v12-3-browser-mutation-regression.js",
+      "blocking_live": "UI real browser/assistive tech confirmation pending"
+    },
+    {
+      "id": "F23-V12.3-EXT-030",
+      "kind": "external-attestation-gate",
+      "severity": "P0-for-release",
+      "status": "open",
+      "github_issue": "File23 #30 and File20 #45",
+      "root_cause": "real trusted deployed artifact/schema/migration attestation contract not yet executed on Hostinger",
+      "needed": "File20 owner+operator attests actual installed bytes, DB/schema, migrations and environment; negative drift tests",
+      "not_a_live_bug_proof": true
+    },
+    {
+      "id": "F23-V12.3-EXT-031",
+      "kind": "external-runtime-acceptance",
+      "severity": "P1-for-release",
+      "status": "open",
+      "github_issue": "File23 #31",
+      "root_cause": "20,001+ workload source model does not prove real Hostinger Cron, concurrency, hold, backup restore",
+      "needed": "real staging 20,001+ mixed owner rows, interrupted resumable cleanup, rollback, cron",
+      "not_a_live_bug_proof": true
+    },
+    {
+      "id": "F23-V12.3-EXT-032",
+      "kind": "external-runtime-acceptance",
+      "severity": "P1-for-release",
+      "status": "open",
+      "github_issue": "File23 #32",
+      "root_cause": "candidate Unicode PDF renderer/CI does not prove Hostinger visual/copy-paste/limits/permissions",
+      "needed": "actual deployed PDF-vs-CSV parity, Urdu+Arabic RTL, renderer, origin/CDN privacy and rights license",
+      "not_a_live_bug_proof": true
+    },
+    {
+      "id": "F23-V12.3-DEF-003",
+      "kind": "source-client-data-integrity",
+      "severity": "P2",
+      "status": "source-fixed-final-ci-pending",
+      "finding": "Generic operational form serializer passed every /^-?\\d+$/ string through Number(), stripping leading zeros and rounding integers larger than 2^53",
+      "evidence": "assets/js/operations.js original scalarValue() and negative CI at da158d144c72f94d69fe06467b161b411f95288d",
+      "root_cause": "Global numeric coercion applied to untyped text input instead of schema-aware native REST validation",
+      "patch": "assets/js/operations.js preserves digit-only text; boolean true/false remain explicit",
+      "test": "tests/v12-3-browser-mutation-regression.js validates task title 0000123, 9007199254740993 description, audit reason 0007",
+      "live": "not tested"
+    },
+    {
+      "id": "F23-V12.3-DEF-004",
+      "kind": "source-client-data-integrity",
+      "severity": "P2",
+      "status": "fixed-in-source-exact-head-ci-passed-live-unverified",
+      "finding": "Generic FormData scalarValue() globally converted text 'true' and 'false' to booleans even in task title/description/audit reason",
+      "root_cause": "Unconditional Boolean coercion instead of per-control typed serialization",
+      "red_test": "tests/v12-3-browser-mutation-regression.js (CI red at 0c9a4718f2ae61952f9b5ba7a0f35e8a5114edfa)",
+      "patch": "assets/js/operations.js, keep input text verbatim and normalize actual checkboxes only",
+      "negative_tests": [
+        "'true' text title preserved as text",
+        "'false' description/audit preserved as text",
+        "checked/unchecked checkbox still Boolean"
+      ],
+      "source_green_checkpoint": "e242784c116c706bad68e463acd264780b9469c4",
+      "live_verification": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-005",
+      "kind": "source-timezone-and-calendar-integrity",
+      "severity": "P2",
+      "status": "fixed-in-source-exact-head-ci-passed-live-unverified",
+      "finding": "Naive GMT-labelled datetime-local strings are parsed in mutable PHP default timezone; blank required dates resolve to current time; impossible dates silently roll forward",
+      "root_cause": "DateTimeImmutable($value) without explicit UTC and without strict date/parse warning validation",
+      "red_test": "tests/v12-3-gmt-datetime-tests.php (CI red at 6f795fd0f09a6a7280938be1d3d1af154933526e)",
+      "patch": "includes/class-spdb-governance-service.php explicit UTC for naive labels, format allowlist, reject blank and invalid dates, preserve explicit offsets",
+      "negative_tests": [
+        "non-UTC PHP default Asia/Karachi",
+        "explicit +05:00 offset",
+        "blank required",
+        "February 31",
+        "Z/nullable behavior"
+      ],
+      "source_green_checkpoint": "e242784c116c706bad68e463acd264780b9469c4",
+      "live_verification": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-006",
+      "kind": "source-database-pagination-integer-overflow",
+      "severity": "P2",
+      "status": "source-fixed-five-ci-green-at-checkpoint-hostinger-unverified",
+      "finding": "list_tasks() multiplied unbounded page indices by per_page; PHP_INT_MAX page overflows offset before calling wpdb, potentially invalid/out-of-range SQL pagination.",
+      "evidence": "includes/class-spdb-operations-repository.php; negative source test failed on Baseline Integrity run 43598996313 for SHA cfd030867f9451139cf76f3a83285ff7187876cb",
+      "root_cause": "No integer-safe upper bound before computing paginated SQL OFFSET.",
+      "patch": "includes/class-spdb-operations-repository.php adds PHP_INT_MAX/per_page bound and typed WP_Error before SQL.",
+      "test": "tests/v12-3-task-pagination-tests.php",
+      "green_source_checkpoint": "95c9aeb16c25e3d8da7c2eef7322b2feb109b935",
+      "host_acceptance": "pending"
+    },
+    {
+      "id": "F23-V12.3-DEF-007",
+      "kind": "source-identity-validation-canonicalization",
+      "severity": "P1",
+      "status": "source-fixed-baseline-and-final-release-green-at-checkpoint-live-unverified",
+      "finding": "Task assignee and delegation account IDs accepted noncanonical request values such as 7spoof, 07, floating 7.5 and oversized string through (int) coercion, potentially changing target user identity.",
+      "root_cause": "Raw nontrusted JSON account identifiers were cast to integer before authorization instead of being validated as canonical positive integer identities.",
+      "red_test": "tests/v12-3-strict-account-ids-tests.php red CI at a88e10f7a4457a52a01f11a9494b3a7ba3305440 Baseline #43599454728",
+      "patch": "includes/class-spdb-governance-service.php strict_positive_user_id; applied to task create/update and delegation create; reject noncanonical and overflow values before DB.",
+      "positive_control": "Valid canonical integer 7 reaches a synthetic fake repository; malformed task/delegation IDs deny with typed WP_Error and 0 writes.",
+      "green_source_checkpoint": "5aa13820a58ac5f61c1a2700bde759ef64b7eff0; Baseline #43599643838 and Final #43599643840 passed; full-plan run cancelled by newer push, not a failure",
+      "host_acceptance": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-008",
+      "kind": "source-data-health-false-empty-state",
+      "severity": "P1",
+      "status": "source-fixed-five-ci-green-at-checkpoint-live-unverified",
+      "finding": "SPDB_Governance_Service::snapshot() converted SQL WP_Error/unavailable task, delegation and automation rule queries to empty arrays without signaling read failure; tasks UI inaccurately said 'No eligible tasks'.",
+      "root_cause": "Repository read failure was normalized to empty presentation arrays without source-state metadata or accessible error output.",
+      "red_test": "tests/v12-3-studio-source-health-tests.php, Baseline red on SHA cc219a2c673bbbb1f5607ac7583b3d45acb1dfcf run 43600099487",
+      "patch": "Source-health per-list ready/unavailable, privacy-safe typed codes, data_complete false; templates/tasks.php announces unavailability instead of false-empty states in tasks/delegations/rules.",
+      "test": "Synthetic database get_results failures and expected source-health status; CI checkpoint a82bbab73da079b3f8718a5fa39eb315e0ba9fff all five successful workflows.",
+      "host_acceptance": "pending"
+    },
+    {
+      "id": "F23-V12.3-DEF-009",
+      "kind": "provider-projection-truth",
+      "severity": "P1",
+      "status": "fixed-in-source-source-ci-green-at-checkpoint-live-unverified",
+      "finding": "On SQL cached-metric read failure, analytics silently returned an empty live_provider response; a failing native operational provider was misreported as nonexistent/no eligible items",
+      "root_cause": "WP_Error from list_metric_snapshots was swallowed and default source was live_provider; empty_reason considered only successful providers",
+      "red_test_sha": "c31c83a310a03338b86fc49b2acc0c3f52a7365c",
+      "red_ci": "File23 Full Plan Completion #43603229920 and Final Release Candidate #43603229961 (5 of 8 source assertions failed)",
+      "source_correction_sha": "dd1d5792dedf67b523a651563bb07f99d3328a07",
+      "fix_paths": [
+        "includes/class-spdb-operations-service.php",
+        "templates/operations.php",
+        "templates/analytics.php"
+      ],
+      "tests": [
+        "tests/v12-3-provider-truth-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-010",
+      "kind": "export-report-completeness",
+      "severity": "P1",
+      "status": "fixed-in-source-candidate-hostinger-unverified",
+      "finding": "A provider error or native has_more true could produce a purported report without explicit partial/completeness or rows-remaining metadata; partial CSV was indistinguishable from complete results",
+      "root_cause": "report() silently converted first limited provider page into report rows and render_csv discarded limitations fields",
+      "red_test_sha": "9d9fe29b700e7a428ff43193f55a2fa18ddc60af",
+      "red_ci": "File 23 Full Plan Completion #43603572742 (4 of 13 report truth checks failed)",
+      "source_correction_sha": "6619e7c7035bbb3224da1fe51ccbfa52861281b0",
+      "fix_paths": [
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-export-service.php"
+      ],
+      "tests": [
+        "tests/v12-3-provider-truth-tests.php"
+      ],
+      "remaining": "Real Hostinger CSV/PDF/HTML/JSON/ICS acceptance; CSV schema adds a partial-status column when incomplete; any previously consuming integration must review it",
+      "staging": "pending",
+      "live": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-011",
+      "kind": "cached-analytics-freshness",
+      "severity": "P1",
+      "status": "fixed-in-source-baseline-ci-green-staging-unverified",
+      "finding": "An absent or impossible cached generated_at_gmt timestamp was silently replaced with the current wall-clock time or normalized to a different date, creating fabricated freshness",
+      "root_cause": "gmdate('c', strtotime(invalid) ?: time()) lacked strict UTC validation",
+      "red_test_sha": "d0f71aa181c10797e2400ade05ea246747f72690",
+      "red_ci": "File 23 Final Release Candidate #43604084327 failed 2 of 20 freshness checks before correction",
+      "source_correction_sha": "6d6878ebfad6958d89f709c41d3414bf1361e066",
+      "fix_paths": [
+        "includes/class-spdb-operations-service.php"
+      ],
+      "tests": [
+        "tests/v12-3-provider-truth-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-012",
+      "kind": "aggregate-federation-completeness",
+      "severity": "P1",
+      "status": "source-corrected-exact-head-ci-pending",
+      "finding": "After six privacy-safe native sources supplied 600 valid metrics, the dashboard silently returned the first 500 while marking data_complete=true and no more_metrics_available flag",
+      "root_cause": "array_slice($metrics,0,500) applied without provenance/completeness calculation; analytics UI had no partial-limit alert",
+      "red_test_sha": "38863c9e2c78e008d74b78c3a0510949c16435ab",
+      "red_ci": "File 23 Final Release Candidate run #43604592503 — three expected failed assertions with 6 synthetic feeds and 600 metrics",
+      "fix_paths": [
+        "includes/class-spdb-operations-service.php",
+        "templates/analytics.php"
+      ],
+      "source_correction_sha": "002f694a825ebf1ce14d48ed2423a6742cce2123",
+      "tests": [
+        "tests/v12-3-provider-truth-tests.php"
+      ],
+      "acceptance": "Retain 500 aggregate limit; expose more_metrics_available true and data_complete false, propagate incompleteness into reports; display cached source timestamps",
+      "staging": "pending",
+      "live": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-013",
+      "kind": "audit-chain-scale-and-read-boundary",
+      "severity": "P1",
+      "status": "fixed-in-source-five-ci-green-staging-unverified",
+      "finding": "SPDB_Operations_Repository::audit_health() loaded the entire append-only audit table via unbounded SELECT * ORDER BY id ASC, risking exhaustion for long-lived File23 audit records.",
+      "root_cause": "Unbounded materialization before hash-chain verification; no continuation cap or result budget.",
+      "red_test_sha": "6d4b84fddb4631ee738789f460e1f43f7d159cc8",
+      "red_ci": "Baseline Integrity run #43604866872 failed 6 of 7 source QA checks before repair",
+      "source_correction_sha": "eee9a558bee43b0e58b7c57d6fcfad36f07da94d",
+      "green_ci": {
+        "baseline": 43604987679,
+        "full_plan": 43604987724,
+        "final_release": 43604987646,
+        "mariadb": 43604987609,
+        "pdf": 43604987660
+      },
+      "fixes": [
+        "500-row keyset bounded SQL",
+        "carry previous/event hash through every page",
+        "reject altered event in later page",
+        "stop safely on later SQL error",
+        "200-page bounded verification plus final one-row completeness probe"
+      ],
+      "limits": [
+        "At most 100,000 audit events verified per invocation; larger tables return scan_budget_exceeded, not a forged healthy state",
+        "Concurrent append/retention and exact staging SQL isolation not yet tested",
+        "No real Hostinger audit table, backup or migration evidence"
+      ],
+      "source_paths": [
+        "includes/class-spdb-operations-repository.php",
+        "tests/v12-3-bounded-audit-health-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-014",
+      "kind": "native-projection-page-truth",
+      "severity": "P2",
+      "status": "source-corrected-baseline-and-fullplan-green-final-release-in-progress",
+      "finding": "Native projection returned has_more=true but data_complete=true whenever no source error and at least one compatible provider was recorded, falsely certifying an intermediate page as complete.",
+      "root_cause": "Projection data_complete computed using only provider count and errors, ignoring has_more returned by native provider or File23 cap.",
+      "red_test_sha": "822f345bdcc1dc2209ec73b9de96ea0c11ee6c9c",
+      "red_ci": "File 23 Full Plan Completion run #43605207692 failed exactly 1 of 32 V12.3 provider truth assertions before patch; all four PHP matrix jobs exposed failure.",
+      "source_correction_sha": "c5af61665d713d7150fcdf3d45c048086541977e",
+      "fix_paths": [
+        "includes/class-spdb-operations-service.php",
+        "tests/v12-3-provider-truth-tests.php"
+      ],
+      "acceptance": "data_complete=false whenever provider reports has_more=true, keeping a separate has_more notification; no silent full-result claim.",
+      "remaining": "Real native-provider pagination/cursor and Hostinger acceptance not tested.",
+      "staging": "pending",
+      "live": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-015",
+      "kind": "queued-automation-authorization",
+      "severity": "P1",
+      "status": "candidate-source-fix-ci-5of5-green-hostinger-unverified",
+      "finding": "Queued automation could execute under a different WP current user and rule/job owner or after File00 approval/automation capability revocation.",
+      "root_cause": "Queued automation could execute under a different WP current user and rule/job owner or after File00 approval/automation capability revocation.",
+      "patch": "Fresh owner id equality across rule/job/current session and File00 approval + current spdb_manage_automation_rules permission before native action dispatch.",
+      "red_test_sha": "3087cd2f1d18888b2d7e871267547f6c48259586",
+      "red_ci": "Baseline Integrity #43607051949 (9/10 failed)",
+      "corrective_sha": "548ab6a79446bde445dd94d5e4e4655c2384ae64",
+      "source_paths": [
+        "includes/class-spdb-automation-engine.php",
+        "tests/v12-3-automation-owner-revocation-tests.php"
+      ],
+      "test_paths": [
+        "tests/v12-3-automation-owner-revocation-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified",
+      "live_verified": false
+    },
+    {
+      "id": "F23-V12.3-DEF-016",
+      "kind": "automation-queued-version-integrity",
+      "severity": "P1",
+      "status": "candidate-source-fix-ci-5of5-green-hostinger-unverified",
+      "finding": "Queued automation rule_version cast (int) accepted '3spoof', '03', 3.5 and missing version coerced to 1.",
+      "root_cause": "Queued automation rule_version cast (int) accepted '3spoof', '03', 3.5 and missing version coerced to 1.",
+      "patch": "Require actual positive integer rule_version rather than default/inexact coercion.",
+      "red_test_sha": "4b4193f7825efa759460a839510bc225f5d044b7",
+      "red_ci": "Full Plan #43607254016 (10/20 negative assertions failed)",
+      "corrective_sha": "8d833c9818d57eb4bafed5cd94b347ef31682a3b",
+      "source_paths": [
+        "includes/class-spdb-automation-engine.php",
+        "tests/v12-3-automation-owner-revocation-tests.php"
+      ],
+      "test_paths": [
+        "tests/v12-3-automation-owner-revocation-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified",
+      "live_verified": false
+    },
+    {
+      "id": "F23-V12.3-DEF-017",
+      "kind": "append-only-audit-integrity",
+      "severity": "P1",
+      "status": "candidate-source-fix-ci-5of5-green-hostinger-unverified",
+      "finding": "Prior audit event SELECT failure or malformed stored event_hash could be mistaken for empty ledger and restart hash chain.",
+      "root_cause": "Prior audit event SELECT failure or malformed stored event_hash could be mistaken for empty ledger and restart hash chain.",
+      "patch": "Fail-closed when wpdb last_error is set; allow genesis only for truly empty table; reject malformed prior SHA256 digest.",
+      "red_test_sha": "9cf4bcf90da2f21c2e658a6f8eb9cc8f2ca8f75f",
+      "red_ci": "Baseline #43607461404 (5/10 audit checks failed)",
+      "corrective_sha": "8fc1d1d5fd99c439f15fc5f24f7994fea627962d",
+      "source_paths": [
+        "includes/class-spdb-operations-repository.php",
+        "tests/v12-3-audit-append-truth-tests.php"
+      ],
+      "test_paths": [
+        "tests/v12-3-audit-append-truth-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified",
+      "live_verified": false
+    },
+    {
+      "id": "F23-V12.3-DEF-018",
+      "kind": "production-provider-acceptance-boundary",
+      "severity": "P1",
+      "status": "candidate-source-fix-ci-5of5-green-hostinger-unverified",
+      "finding": "Staging/development/missing-origin acceptance record with state production_accepted could be read as production write authority, and staging instance could mint production acceptance.",
+      "root_cause": "Staging/development/missing-origin acceptance record with state production_accepted could be read as production write authority, and staging instance could mint production acceptance.",
+      "patch": "Enforce origin environment at both acceptance binding (registry) and acceptance production record creation.",
+      "red_test_sha": "91e8fef842f008e408d8d11a6a224e0df8842022;0f40fbada4b7e154401d22043b5a60e59fd87969",
+      "red_ci": "Final Release #43608407267 (4/7 failed); Full Plan #43608634867 (4/6 failed)",
+      "corrective_sha": "b750f228daa8272e59a58dc0dc9db6e9bbc54321;c842458d151293a4dd29a463a96b25f09149dcd3",
+      "source_paths": [
+        "includes/class-spdb-adapter-registry.php",
+        "includes/class-spdb-adapter-acceptance.php",
+        "tests/v12-3-provider-acceptance-environment-tests.php",
+        "tests/v12-3-provider-acceptance-producer-tests.php"
+      ],
+      "test_paths": [
+        "tests/v12-3-provider-acceptance-environment-tests.php",
+        "tests/v12-3-provider-acceptance-producer-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified",
+      "live_verified": false
+    },
+    {
+      "id": "F23-V12.3-DEF-019",
+      "kind": "private-export-background-owner-binding",
+      "severity": "P1",
+      "status": "candidate-source-fix-ci-5of5-green-hostinger-unverified",
+      "finding": "Export processing could read a private owner export using a different WP-Cron current-user context, without a direct context/owner equality check.",
+      "root_cause": "Export processing could read a private owner export using a different WP-Cron current-user context, without a direct context/owner equality check.",
+      "patch": "Deny before report read, status change or ciphertext when get_current_user_id differs from canonical export owner.",
+      "red_test_sha": "fd8f068c897da57629778df034434926bbb9b4de",
+      "red_ci": "Baseline #43609001154 (5/6 failed)",
+      "corrective_sha": "310e4878fbd155bc23eb61204823af622e824056",
+      "source_paths": [
+        "includes/class-spdb-export-service.php",
+        "tests/v12-3-export-job-owner-tests.php"
+      ],
+      "test_paths": [
+        "tests/v12-3-export-job-owner-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified",
+      "live_verified": false
+    },
+    {
+      "id": "F23-V12.3-DEF-020",
+      "kind": "background-job-idempotency-scope",
+      "severity": "P1",
+      "status": "candidate-source-fix-ci-5of5-green-hostinger-unverified",
+      "finding": "A matching (job_type,idempotency_key) reused an existing foreign-owner job or conflicting payload, including after insert uniqueness race.",
+      "root_cause": "A matching (job_type,idempotency_key) reused an existing foreign-owner job or conflicting payload, including after insert uniqueness race.",
+      "patch": "Require exact owner ID and byte-identical stored payload in both initial lookup and post-conflict SELECT; reject cross-owner or changed action.",
+      "red_test_sha": "062443d9e0aa261f39cc818ff413c5077a1b6cf0",
+      "red_ci": "Baseline #43609255391 (4/8 failed)",
+      "corrective_sha": "7df2d117db6e512892bb851710b63d54d62dc677",
+      "source_paths": [
+        "includes/class-spdb-operations-repository.php",
+        "tests/v12-3-job-idempotency-scope-tests.php"
+      ],
+      "test_paths": [
+        "tests/v12-3-job-idempotency-scope-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified",
+      "live_verified": false
+    }
+  ],
+  "separate_findings": {
+    "crosswalk_initial_mission_qa_link_errors": 8,
+    "corrected_in": "docs/V12.3-REQUIREMENT-CROSSWALK.json",
+    "classification": "new plan-map authoring correction, not existing File23 application bug",
+    "php80_reflection_test_harness_compatibility": {
+      "count": 1,
+      "category": "test-fixture-error-not-application-bug",
+      "fix": "ReflectionMethod::setAccessible(true) for PHP8.0",
+      "sha": "e242784c116c706bad68e463acd264780b9469c4"
+    },
+    "v12_3_chapter_10_mapping_gap": {
+      "classification": "documentation-requirement-coverage-omission-not-runtime-bug",
+      "count": 10,
+      "original_scope": "V12.3-01..V12.3-10 from Master Plan Ch.10",
+      "result": "All ten added as owner-scoped, source-unverified, staging-pending, live-unverified records; no functionality claimed",
+      "test": "tests/v12-3-source-crosswalk-tests.php"
+    },
+    "fpi24_source_mapping": {
+      "feature_count": 24,
+      "P0": 12,
+      "P1": 10,
+      "P2": 2,
+      "source_path": "docs/V12.3-FPI24-SOURCE-AUDIT.json",
+      "test": "tests/v12-3-fpi24-source-audit-tests.php",
+      "classification": "24 individual static source catalogue/evaluator mappings; not provider runtime/staging/live acceptance"
+    }
+  },
+  "release": {
+    "main_changed": false,
+    "production_changed": false,
+    "staging_changed": false,
+    "external_independent_review_1": "pending",
+    "external_independent_review_2": "pending",
+    "founder_signoff": "pending",
+    "go_no_go": "NO-GO",
+    "no_merge": true,
+    "live_verified_fixes": 0,
+    "latest_source_green_checkpoint": "e242784c116c706bad68e463acd264780b9469c4",
+    "requirement_census": 187,
+    "source_fixed_total_on_draft_pr_33": 8,
+    "verified_source_green_checkpoint": "a82bbab73da079b3f8718a5fa39eb315e0ba9fff"
+  }
+}

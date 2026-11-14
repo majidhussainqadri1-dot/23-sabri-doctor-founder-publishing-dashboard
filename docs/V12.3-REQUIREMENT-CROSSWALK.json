@@ -1,0 +1,4741 @@
+{
+  "schema": "file23-v12.3-crosswalk-v1",
+  "created_on": "2026-11-14",
+  "governing_source": "Sabri-Website-Master-Plan-V12.3.docx, pp.4-7,48,77-80,114-115,198-199,257-261",
+  "baseline_source": "docs/GOVERNING-PLAN-2026-TRACEABILITY.json; additive rather than destructive",
+  "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
+  "rule": "187 distinct mapped in-scope/owner-relationship requirement identities, not 187 fully coded features; per-ID source/staging/live proof pending.",
+  "census": {
+    "total_mapped": 210,
+    "by_kind": {
+      "inherited_cv": 70,
+      "inherited_aj": 16,
+      "fpi": 24,
+      "file23_central": 1,
+      "retained_sto_act": 17,
+      "v12_3_mission": 12,
+      "v12_3_acceptance": 10,
+      "ux_retained": 14,
+      "v12_3_central_policy": 20,
+      "retained_decision": 4,
+      "v12_3_chapter_10_correction": 10,
+      "v12_2_governance_retained": 12
+    },
+    "individually_tested_accepted": null,
+    "source_completion_denominator": null,
+    "source_completion_percent": null,
+    "staging_pass": 0,
+    "live_pass": 0
+  },
+  "reality": {
+    "main_version": "1.2.0",
+    "candidate_version": "1.3.0",
+    "deployed_version": "unverified",
+    "deployed_checksum": "unverified",
+    "db_version": "unverified",
+    "migration_state": "unverified",
+    "live_verification": "unverified",
+    "release_decision": "NO-GO"
+  },
+  "requirements": [
+    {
+      "id": "AJ-06",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "AJ-09",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "AJ-10",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "AJ-24",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "AJ-25",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "AJ-26",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "AJ-31",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "AJ-32",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "AJ-33",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "AJ-34",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "AJ-35",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "AJ-36",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "AJ-37",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "AJ-38",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "AJ-39",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "AJ-40",
+      "kind": "inherited_aj",
+      "source": "Inherited V12.1 AJ/ V12.3 Ch.8",
+      "canonical_owner": "Native owner by journey; File23 consumer",
+      "file23_consumer_boundary": "Owner runtime authority and File23 projection; no separate canonical state",
+      "source_evidence": [
+        "tests/full-plan-completion-tests.php"
+      ],
+      "qa_refs": [],
+      "source_status": "real-provider-journey-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-ACC-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B2617",
+      "canonical_owner": "File24/File25",
+      "file23_consumer_boundary": "File23 role studio requires keyboard, focus, assistive technology, 200–400% zoom/reflow, RTL/LTR, low-bandwidth and stale-state disclosure",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-16",
+        "QA-22"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-AGE-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 pp.259-261",
+      "canonical_owner": "File00/02",
+      "file23_consumer_boundary": "guardian/minor policy",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-23",
+        "QA-24"
+      ],
+      "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-BIZ-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B2617",
+      "canonical_owner": "File18 / Founder policy",
+      "file23_consumer_boundary": "A single free access tier; File23 must not create Pro/Premium analytics, creator paywall or paid visibility",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-23"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-BRAND-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 pp.259-261",
+      "canonical_owner": "File25",
+      "file23_consumer_boundary": "Sabri Green primary",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-23",
+        "QA-24"
+      ],
+      "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-DON-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B2617",
+      "canonical_owner": "File18 donations",
+      "file23_consumer_boundary": "Donations may not alter File23 ranking, operational priority, support, reach or creator access; no recurring preselection",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-20",
+        "QA-23"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-GOV-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B2617",
+      "canonical_owner": "Founder / File01",
+      "file23_consumer_boundary": "File23 source/projection/release follows the approved current governing hierarchy, without inferring live status from a document",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-24"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-MED-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 pp.259-261",
+      "canonical_owner": "File08/16",
+      "file23_consumer_boundary": "clinical safeguards and human approval",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-23",
+        "QA-24"
+      ],
+      "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-NAV-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 pp.259-261",
+      "canonical_owner": "File20",
+      "file23_consumer_boundary": "single global shell/navigation",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-23",
+        "QA-24"
+      ],
+      "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-NUM-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B21210",
+      "canonical_owner": "File26 / platform governance",
+      "file23_consumer_boundary": "Keep File26 canonical; CF01–CF06 remain planning identifiers until independently activated, not new File23-owned modules",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-24"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-OWN-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B2617",
+      "canonical_owner": "Native domain owners / File01",
+      "file23_consumer_boundary": "File23 is a view/consumer only; each business fact and workflow has exactly one canonical owner and no parallel table write",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-18",
+        "QA-23"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-PRI-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 pp.259-261",
+      "canonical_owner": "File24",
+      "file23_consumer_boundary": "no surveillance, purpose limitation",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-23",
+        "QA-24"
+      ],
+      "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-PRIV-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B21210",
+      "canonical_owner": "File24 privacy governance",
+      "file23_consumer_boundary": "No covert user health-interest profiling, cross-context tracking, donor-biased prioritization or sale of data through publishing analytics",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-20",
+        "QA-23"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-PUB-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 pp.259-261",
+      "canonical_owner": "File00/21/22",
+      "file23_consumer_boundary": "current publishing permission, no admin bypass",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-23",
+        "QA-24"
+      ],
+      "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-RANK-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 pp.259-261",
+      "canonical_owner": "File26",
+      "file23_consumer_boundary": "no donation-driven ranking",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-23",
+        "QA-24"
+      ],
+      "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-REL-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 pp.259-261",
+      "canonical_owner": "File24",
+      "file23_consumer_boundary": "no active known P0/P1; two reviews and live retest",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-23",
+        "QA-24"
+      ],
+      "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-REV-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B21210",
+      "canonical_owner": "Founder / File24 change governance",
+      "file23_consumer_boundary": "Changed scope, native owner, data, API, retention, ranking or finance requires a dated request, impact, migration/rollback and acceptance",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-24"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-SAFE-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B21210",
+      "canonical_owner": "File08/File16 clinical and Islamic safety",
+      "file23_consumer_boundary": "No File23 AI/analytics auto-diagnosis, prescription, potency/dose, emergency replacement or prohibited-content transaction",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-21",
+        "QA-23"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-SEARCH-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B2617",
+      "canonical_owner": "File26 search",
+      "file23_consumer_boundary": "File23 consumes fresh ACL/rights-aware native search projections, preserves canonical routes and never fabricates a zero result",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-18",
+        "QA-23"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-SHELL-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B21210",
+      "canonical_owner": "File20 global shell",
+      "file23_consumer_boundary": "File23 supplies embedded role routes only and never duplicates the global application shell/navigation",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-22"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-STATUS-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 pp.259-261",
+      "canonical_owner": "All",
+      "file23_consumer_boundary": "status stages are independent",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-23",
+        "QA-24"
+      ],
+      "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-050",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File21/File22 plus native content/review/source/media owners",
+      "file23_consumer_boundary": "federated creation/review/calendar/source/rights/accessibility/translation/revision consumer; no draft/content truth copy",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "assets/css/dashboard-corrections.css"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-051",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File21/File22 plus native content/review/source/media owners",
+      "file23_consumer_boundary": "federated creation/review/calendar/source/rights/accessibility/translation/revision consumer; no draft/content truth copy",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "assets/css/dashboard-corrections.css"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-052",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File21/File22 plus native content/review/source/media owners",
+      "file23_consumer_boundary": "federated creation/review/calendar/source/rights/accessibility/translation/revision consumer; no draft/content truth copy",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "assets/css/dashboard-corrections.css"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-053",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File21/File22 plus native content/review/source/media owners",
+      "file23_consumer_boundary": "federated creation/review/calendar/source/rights/accessibility/translation/revision consumer; no draft/content truth copy",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "assets/css/dashboard-corrections.css"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-054",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File21/File22 plus native content/review/source/media owners",
+      "file23_consumer_boundary": "federated creation/review/calendar/source/rights/accessibility/translation/revision consumer; no draft/content truth copy",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "assets/css/dashboard-corrections.css"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-055",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File21/File22 plus native content/review/source/media owners",
+      "file23_consumer_boundary": "federated creation/review/calendar/source/rights/accessibility/translation/revision consumer; no draft/content truth copy",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "assets/css/dashboard-corrections.css"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-056",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File21/File22 plus native content/review/source/media owners",
+      "file23_consumer_boundary": "federated creation/review/calendar/source/rights/accessibility/translation/revision consumer; no draft/content truth copy",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "assets/css/dashboard-corrections.css"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-057",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File21/File22 plus native content/review/source/media owners",
+      "file23_consumer_boundary": "federated creation/review/calendar/source/rights/accessibility/translation/revision consumer; no draft/content truth copy",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "assets/css/dashboard-corrections.css"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-058",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File21/File22 plus native content/review/source/media owners",
+      "file23_consumer_boundary": "federated creation/review/calendar/source/rights/accessibility/translation/revision consumer; no draft/content truth copy",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "assets/css/dashboard-corrections.css"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-059",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File21/File22 plus native content/review/source/media owners",
+      "file23_consumer_boundary": "federated creation/review/calendar/source/rights/accessibility/translation/revision consumer; no draft/content truth copy",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "assets/css/dashboard-corrections.css"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-060",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File21/File22 plus native content/review/source/media owners",
+      "file23_consumer_boundary": "federated creation/review/calendar/source/rights/accessibility/translation/revision consumer; no draft/content truth copy",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "assets/css/dashboard-corrections.css"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-061",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File21/File22 plus native content/review/source/media owners",
+      "file23_consumer_boundary": "federated creation/review/calendar/source/rights/accessibility/translation/revision consumer; no draft/content truth copy",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "assets/css/dashboard-corrections.css"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-062",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File21/File22 plus native content/review/source/media owners",
+      "file23_consumer_boundary": "federated creation/review/calendar/source/rights/accessibility/translation/revision consumer; no draft/content truth copy",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "assets/css/dashboard-corrections.css"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-229",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File23 plus domain owners",
+      "file23_consumer_boundary": "role studios, calendar, provider analytics, privacy-thresholded queues/delegation/reports/operational evidence; provider-grounded rather than fabricated",
+      "source_evidence": [
+        "includes/class-spdb-workspace-resolver.php",
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-governance-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-export-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-230",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File23 plus domain owners",
+      "file23_consumer_boundary": "role studios, calendar, provider analytics, privacy-thresholded queues/delegation/reports/operational evidence; provider-grounded rather than fabricated",
+      "source_evidence": [
+        "includes/class-spdb-workspace-resolver.php",
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-governance-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-export-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-231",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File23 plus domain owners",
+      "file23_consumer_boundary": "role studios, calendar, provider analytics, privacy-thresholded queues/delegation/reports/operational evidence; provider-grounded rather than fabricated",
+      "source_evidence": [
+        "includes/class-spdb-workspace-resolver.php",
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-governance-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-export-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-232",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File23 plus domain owners",
+      "file23_consumer_boundary": "role studios, calendar, provider analytics, privacy-thresholded queues/delegation/reports/operational evidence; provider-grounded rather than fabricated",
+      "source_evidence": [
+        "includes/class-spdb-workspace-resolver.php",
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-governance-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-export-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-233",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File23 plus domain owners",
+      "file23_consumer_boundary": "role studios, calendar, provider analytics, privacy-thresholded queues/delegation/reports/operational evidence; provider-grounded rather than fabricated",
+      "source_evidence": [
+        "includes/class-spdb-workspace-resolver.php",
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-governance-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-export-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-234",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File23 plus domain owners",
+      "file23_consumer_boundary": "role studios, calendar, provider analytics, privacy-thresholded queues/delegation/reports/operational evidence; provider-grounded rather than fabricated",
+      "source_evidence": [
+        "includes/class-spdb-workspace-resolver.php",
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-governance-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-export-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-235",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File23 plus domain owners",
+      "file23_consumer_boundary": "role studios, calendar, provider analytics, privacy-thresholded queues/delegation/reports/operational evidence; provider-grounded rather than fabricated",
+      "source_evidence": [
+        "includes/class-spdb-workspace-resolver.php",
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-governance-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-export-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-236",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File23 plus domain owners",
+      "file23_consumer_boundary": "role studios, calendar, provider analytics, privacy-thresholded queues/delegation/reports/operational evidence; provider-grounded rather than fabricated",
+      "source_evidence": [
+        "includes/class-spdb-workspace-resolver.php",
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-governance-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-export-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-237",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File23 plus domain owners",
+      "file23_consumer_boundary": "role studios, calendar, provider analytics, privacy-thresholded queues/delegation/reports/operational evidence; provider-grounded rather than fabricated",
+      "source_evidence": [
+        "includes/class-spdb-workspace-resolver.php",
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-governance-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-export-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-238",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File23 plus domain owners",
+      "file23_consumer_boundary": "role studios, calendar, provider analytics, privacy-thresholded queues/delegation/reports/operational evidence; provider-grounded rather than fabricated",
+      "source_evidence": [
+        "includes/class-spdb-workspace-resolver.php",
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-review-calendar-service.php",
+        "includes/class-spdb-governance-service.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-export-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-239",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File20/File25 plus every surface owner",
+      "file23_consumer_boundary": "local RTL/LTR, WCAG, reflow, reduced-motion/reduced-data and localization-compatible consumption; no second shell/PWA",
+      "source_evidence": [
+        "assets/css/dashboard.css",
+        "assets/css/dashboard-corrections.css",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-240",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File20/File25 plus every surface owner",
+      "file23_consumer_boundary": "local RTL/LTR, WCAG, reflow, reduced-motion/reduced-data and localization-compatible consumption; no second shell/PWA",
+      "source_evidence": [
+        "assets/css/dashboard.css",
+        "assets/css/dashboard-corrections.css",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-241",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File20/File25 plus every surface owner",
+      "file23_consumer_boundary": "local RTL/LTR, WCAG, reflow, reduced-motion/reduced-data and localization-compatible consumption; no second shell/PWA",
+      "source_evidence": [
+        "assets/css/dashboard.css",
+        "assets/css/dashboard-corrections.css",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-242",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File20/File25 plus every surface owner",
+      "file23_consumer_boundary": "local RTL/LTR, WCAG, reflow, reduced-motion/reduced-data and localization-compatible consumption; no second shell/PWA",
+      "source_evidence": [
+        "assets/css/dashboard.css",
+        "assets/css/dashboard-corrections.css",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-243",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File20/File25 plus every surface owner",
+      "file23_consumer_boundary": "local RTL/LTR, WCAG, reflow, reduced-motion/reduced-data and localization-compatible consumption; no second shell/PWA",
+      "source_evidence": [
+        "assets/css/dashboard.css",
+        "assets/css/dashboard-corrections.css",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-244",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File20/File25 plus every surface owner",
+      "file23_consumer_boundary": "local RTL/LTR, WCAG, reflow, reduced-motion/reduced-data and localization-compatible consumption; no second shell/PWA",
+      "source_evidence": [
+        "assets/css/dashboard.css",
+        "assets/css/dashboard-corrections.css",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-245",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File20/File25 plus every surface owner",
+      "file23_consumer_boundary": "local RTL/LTR, WCAG, reflow, reduced-motion/reduced-data and localization-compatible consumption; no second shell/PWA",
+      "source_evidence": [
+        "assets/css/dashboard.css",
+        "assets/css/dashboard-corrections.css",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-246",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File20/File25 plus every surface owner",
+      "file23_consumer_boundary": "local RTL/LTR, WCAG, reflow, reduced-motion/reduced-data and localization-compatible consumption; no second shell/PWA",
+      "source_evidence": [
+        "assets/css/dashboard.css",
+        "assets/css/dashboard-corrections.css",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-247",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File20/File25 plus every surface owner",
+      "file23_consumer_boundary": "local RTL/LTR, WCAG, reflow, reduced-motion/reduced-data and localization-compatible consumption; no second shell/PWA",
+      "source_evidence": [
+        "assets/css/dashboard.css",
+        "assets/css/dashboard-corrections.css",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-248",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File20/File25 plus every surface owner",
+      "file23_consumer_boundary": "local RTL/LTR, WCAG, reflow, reduced-motion/reduced-data and localization-compatible consumption; no second shell/PWA",
+      "source_evidence": [
+        "assets/css/dashboard.css",
+        "assets/css/dashboard-corrections.css",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-249",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File20/File25 plus every surface owner",
+      "file23_consumer_boundary": "local RTL/LTR, WCAG, reflow, reduced-motion/reduced-data and localization-compatible consumption; no second shell/PWA",
+      "source_evidence": [
+        "assets/css/dashboard.css",
+        "assets/css/dashboard-corrections.css",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-250",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24 plus relevant domain owners",
+      "file23_consumer_boundary": "medical-safety/trust/moderation projection and guarded native actions; no autonomous diagnosis, no patient chart, no duplicate moderation truth",
+      "source_evidence": [
+        "includes/class-spdb-workspace-projection-validator.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-governance-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-251",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24 plus relevant domain owners",
+      "file23_consumer_boundary": "medical-safety/trust/moderation projection and guarded native actions; no autonomous diagnosis, no patient chart, no duplicate moderation truth",
+      "source_evidence": [
+        "includes/class-spdb-workspace-projection-validator.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-governance-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-252",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24 plus relevant domain owners",
+      "file23_consumer_boundary": "medical-safety/trust/moderation projection and guarded native actions; no autonomous diagnosis, no patient chart, no duplicate moderation truth",
+      "source_evidence": [
+        "includes/class-spdb-workspace-projection-validator.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-governance-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-253",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24 plus relevant domain owners",
+      "file23_consumer_boundary": "medical-safety/trust/moderation projection and guarded native actions; no autonomous diagnosis, no patient chart, no duplicate moderation truth",
+      "source_evidence": [
+        "includes/class-spdb-workspace-projection-validator.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-governance-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-254",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24 plus relevant domain owners",
+      "file23_consumer_boundary": "medical-safety/trust/moderation projection and guarded native actions; no autonomous diagnosis, no patient chart, no duplicate moderation truth",
+      "source_evidence": [
+        "includes/class-spdb-workspace-projection-validator.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-governance-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-255",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24 plus relevant domain owners",
+      "file23_consumer_boundary": "medical-safety/trust/moderation projection and guarded native actions; no autonomous diagnosis, no patient chart, no duplicate moderation truth",
+      "source_evidence": [
+        "includes/class-spdb-workspace-projection-validator.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-governance-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-256",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24 plus relevant domain owners",
+      "file23_consumer_boundary": "medical-safety/trust/moderation projection and guarded native actions; no autonomous diagnosis, no patient chart, no duplicate moderation truth",
+      "source_evidence": [
+        "includes/class-spdb-workspace-projection-validator.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-governance-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-257",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24 plus relevant domain owners",
+      "file23_consumer_boundary": "medical-safety/trust/moderation projection and guarded native actions; no autonomous diagnosis, no patient chart, no duplicate moderation truth",
+      "source_evidence": [
+        "includes/class-spdb-workspace-projection-validator.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-governance-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-258",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24 plus relevant domain owners",
+      "file23_consumer_boundary": "medical-safety/trust/moderation projection and guarded native actions; no autonomous diagnosis, no patient chart, no duplicate moderation truth",
+      "source_evidence": [
+        "includes/class-spdb-workspace-projection-validator.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-governance-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-259",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24 plus relevant domain owners",
+      "file23_consumer_boundary": "medical-safety/trust/moderation projection and guarded native actions; no autonomous diagnosis, no patient chart, no duplicate moderation truth",
+      "source_evidence": [
+        "includes/class-spdb-workspace-projection-validator.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-governance-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-260",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24 plus relevant domain owners",
+      "file23_consumer_boundary": "medical-safety/trust/moderation projection and guarded native actions; no autonomous diagnosis, no patient chart, no duplicate moderation truth",
+      "source_evidence": [
+        "includes/class-spdb-workspace-projection-validator.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-governance-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-261",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24 plus relevant domain owners",
+      "file23_consumer_boundary": "medical-safety/trust/moderation projection and guarded native actions; no autonomous diagnosis, no patient chart, no duplicate moderation truth",
+      "source_evidence": [
+        "includes/class-spdb-workspace-projection-validator.php",
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-governance-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-262",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-263",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-264",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-265",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-266",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-267",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-268",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-269",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-270",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-271",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-272",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-273",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-274",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-275",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-276",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-277",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-278",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-279",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-280",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-281",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-282",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-283",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-284",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CV-285",
+      "kind": "inherited_cv",
+      "source": "V12.3 pp.114-120 and related",
+      "canonical_owner": "File24/release governance plus every native owner",
+      "file23_consumer_boundary": "File23-local zero-trust, audit, privacy-minimized analytics, graceful degradation, migration/release evidence and owner-bound assurance; global assurance remains File24",
+      "source_evidence": [
+        "includes/class-spdb-capabilities.php",
+        "includes/class-spdb-operational-mutation-guard.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-module-manifest.php",
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md",
+        "tests/forty-round-review-gate-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "group-path-only-not-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-CEN-01",
+      "kind": "file23_central",
+      "source": "V12.3 p.198",
+      "canonical_owner": "File23 (operational projection)",
+      "file23_consumer_boundary": "No direct File21/22/domain canonical tables",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-23"
+      ],
+      "source_status": "source-mapped-runtime-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-01",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-02",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-03",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-04",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-05",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-06",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-07",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-08",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-09",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-10",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-11",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-12",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-13",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-14",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-15",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-16",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-17",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-18",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-19",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-20",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-21",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-22",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-23",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "F23-FPI-24",
+      "kind": "fpi",
+      "source": "V12.3 pp.198-199",
+      "canonical_owner": "File23 advisory / native owners retain canonical data",
+      "file23_consumer_boundary": "No automatic publishing, ranking, diagnosis, search indexing or raw data writes",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "tests/publishing-intelligence-24-tests.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-21"
+      ],
+      "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G01",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File14/Founder/Medical editorial approval",
+      "file23_consumer_boundary": "File23 must not change public medical/evidence claims without approved editorial context",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-21",
+        "QA-23"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G02",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File22 general-private notes; File23 view",
+      "file23_consumer_boundary": "File23 may project authorized pending tasks but must not own File22 general nonclinical notes or native versions",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-23"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G03",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File22/CF04 media lifecycle",
+      "file23_consumer_boundary": "File23 consumes owner media scan/rights/grant status; no duplicate public media clearance or binary store",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-20",
+        "QA-22"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G04",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File20/24 deployment evidence",
+      "file23_consumer_boundary": "Do not infer exact deployed code/schema/migration/runtime from GitHub; File23 staging and live provenance need trusted attestations",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-24"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G05",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File24 assurance / native owners",
+      "file23_consumer_boundary": "File23 ID-to-route-to-policy-to-owner-to-test trace; live permalink, deployed version and actual acceptance remain distinct",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-24"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G06",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File20 menu registry",
+      "file23_consumer_boundary": "File23 embedded role views use only File20 canonical navigation/back/home, across RTL/LTR and mobile",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-16"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G07",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File25 design/visual QA",
+      "file23_consumer_boundary": "Dashboard responsive light/dark/RTL/LTR/role/state design requires real visual acceptance on exact build",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-16"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G08",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File20 settings / File23 local settings",
+      "file23_consumer_boundary": "File23 local controls must expose effective owner state and errors; avoid duplicating File20 global settings",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-24"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G09",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File24 UX research",
+      "file23_consumer_boundary": "First impression and task success from actual users/devices, not source screenshots or synthetic only",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-16"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G10",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File24 performance / File23 local routes",
+      "file23_consumer_boundary": "Source lab budgets separated from real origin/mobile/desktop field p75; no fabricated performance",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-17",
+        "QA-24"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G11",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "CF06 locale / File21 translations",
+      "file23_consumer_boundary": "Canonical owner of original and nine unique locales; File23 locale projection without extra translator truth or fabricated completion",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-18",
+        "QA-23"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G12",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File24/25 accessibility and UX",
+      "file23_consumer_boundary": "File23 studio role/locale/keyboard/screen-reader/assistive-tech and failure-state journeys must be measured on active deployed version",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-16",
+        "QA-24"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "M01",
+      "kind": "v12_3_mission",
+      "source": "V12.3 Ch.1 pp.4-7",
+      "canonical_owner": "File20",
+      "file23_consumer_boundary": "browser and fallback",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-15"
+      ],
+      "source_status": "plan-mapped-not-executed",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "M02",
+      "kind": "v12_3_mission",
+      "source": "V12.3 Ch.1 pp.4-7",
+      "canonical_owner": "File24/File25",
+      "file23_consumer_boundary": "accessibility",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-16"
+      ],
+      "source_status": "plan-mapped-not-executed",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "M03",
+      "kind": "v12_3_mission",
+      "source": "V12.3 Ch.1 pp.4-7",
+      "canonical_owner": "File24/File23",
+      "file23_consumer_boundary": "lab and field performance",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-17"
+      ],
+      "source_status": "plan-mapped-not-executed",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "M04",
+      "kind": "v12_3_mission",
+      "source": "V12.3 Ch.1 pp.4-7",
+      "canonical_owner": "File26/CF06",
+      "file23_consumer_boundary": "locale and search projection",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-18"
+      ],
+      "source_status": "plan-mapped-not-executed",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "M05",
+      "kind": "v12_3_mission",
+      "source": "V12.3 Ch.1 pp.4-7",
+      "canonical_owner": "File21/22",
+      "file23_consumer_boundary": "source/correction projection",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-18"
+      ],
+      "source_status": "plan-mapped-not-executed",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "M06",
+      "kind": "v12_3_mission",
+      "source": "V12.3 Ch.1 pp.4-7",
+      "canonical_owner": "File00/02",
+      "file23_consumer_boundary": "fresh session MFA/revocation",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-19"
+      ],
+      "source_status": "plan-mapped-not-executed",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "M07",
+      "kind": "v12_3_mission",
+      "source": "V12.3 Ch.1 pp.4-7",
+      "canonical_owner": "File23/24/CF04",
+      "file23_consumer_boundary": "privacy retention exports",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-20"
+      ],
+      "source_status": "plan-mapped-not-executed",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "M08",
+      "kind": "v12_3_mission",
+      "source": "V12.3 Ch.1 pp.4-7",
+      "canonical_owner": "File16/08",
+      "file23_consumer_boundary": "governed AI and safety",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-21"
+      ],
+      "source_status": "plan-mapped-not-executed",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "M09",
+      "kind": "v12_3_mission",
+      "source": "V12.3 Ch.1 pp.4-7",
+      "canonical_owner": "File19/17/CF04",
+      "file23_consumer_boundary": "messaging and media projections",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-22"
+      ],
+      "source_status": "plan-mapped-not-executed",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "M10",
+      "kind": "v12_3_mission",
+      "source": "V12.3 Ch.1 pp.4-7",
+      "canonical_owner": "File20",
+      "file23_consumer_boundary": "no private offline cache",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-22"
+      ],
+      "source_status": "plan-mapped-not-executed",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "M11",
+      "kind": "v12_3_mission",
+      "source": "V12.3 Ch.1 pp.4-7",
+      "canonical_owner": "File20/24",
+      "file23_consumer_boundary": "deployment attestation/rollback",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-24"
+      ],
+      "source_status": "plan-mapped-not-executed",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "M12",
+      "kind": "v12_3_mission",
+      "source": "V12.3 Ch.1 pp.4-7",
+      "canonical_owner": "File18",
+      "file23_consumer_boundary": "free and donor-neutral",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-23"
+      ],
+      "source_status": "plan-mapped-not-executed",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "QA-15",
+      "kind": "v12_3_acceptance",
+      "source": "V12.3 Ch.8 pp.78-80",
+      "canonical_owner": "Native owner and File23 authorized portion",
+      "file23_consumer_boundary": "browser/320-1440",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md",
+        "docs/RELEASE-SIGNOFF.md"
+      ],
+      "qa_refs": [
+        "QA-15"
+      ],
+      "source_status": "real-staging-and-live-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "QA-16",
+      "kind": "v12_3_acceptance",
+      "source": "V12.3 Ch.8 pp.78-80",
+      "canonical_owner": "Native owner and File23 authorized portion",
+      "file23_consumer_boundary": "WCAG 2.2 AA",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md",
+        "docs/RELEASE-SIGNOFF.md"
+      ],
+      "qa_refs": [
+        "QA-16"
+      ],
+      "source_status": "real-staging-and-live-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "QA-17",
+      "kind": "v12_3_acceptance",
+      "source": "V12.3 Ch.8 pp.78-80",
+      "canonical_owner": "Native owner and File23 authorized portion",
+      "file23_consumer_boundary": "lab and field p75",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md",
+        "docs/RELEASE-SIGNOFF.md"
+      ],
+      "qa_refs": [
+        "QA-17"
+      ],
+      "source_status": "real-staging-and-live-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "QA-18",
+      "kind": "v12_3_acceptance",
+      "source": "V12.3 Ch.8 pp.78-80",
+      "canonical_owner": "Native owner and File23 authorized portion",
+      "file23_consumer_boundary": "provenance/locales",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md",
+        "docs/RELEASE-SIGNOFF.md"
+      ],
+      "qa_refs": [
+        "QA-18"
+      ],
+      "source_status": "real-staging-and-live-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "QA-19",
+      "kind": "v12_3_acceptance",
+      "source": "V12.3 Ch.8 pp.78-80",
+      "canonical_owner": "Native owner and File23 authorized portion",
+      "file23_consumer_boundary": "role/MFA/revocation",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md",
+        "docs/RELEASE-SIGNOFF.md"
+      ],
+      "qa_refs": [
+        "QA-19"
+      ],
+      "source_status": "real-staging-and-live-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "QA-20",
+      "kind": "v12_3_acceptance",
+      "source": "V12.3 Ch.8 pp.78-80",
+      "canonical_owner": "Native owner and File23 authorized portion",
+      "file23_consumer_boundary": "consent/export/erasure",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md",
+        "docs/RELEASE-SIGNOFF.md"
+      ],
+      "qa_refs": [
+        "QA-20"
+      ],
+      "source_status": "real-staging-and-live-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "QA-21",
+      "kind": "v12_3_acceptance",
+      "source": "V12.3 Ch.8 pp.78-80",
+      "canonical_owner": "Native owner and File23 authorized portion",
+      "file23_consumer_boundary": "AI/clinical safety",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md",
+        "docs/RELEASE-SIGNOFF.md"
+      ],
+      "qa_refs": [
+        "QA-21"
+      ],
+      "source_status": "real-staging-and-live-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "QA-22",
+      "kind": "v12_3_acceptance",
+      "source": "V12.3 Ch.8 pp.78-80",
+      "canonical_owner": "Native owner and File23 authorized portion",
+      "file23_consumer_boundary": "notifications/media/offline",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md",
+        "docs/RELEASE-SIGNOFF.md"
+      ],
+      "qa_refs": [
+        "QA-22"
+      ],
+      "source_status": "real-staging-and-live-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "QA-23",
+      "kind": "v12_3_acceptance",
+      "source": "V12.3 Ch.8 pp.78-80",
+      "canonical_owner": "Native owner and File23 authorized portion",
+      "file23_consumer_boundary": "publishing/free tier",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md",
+        "docs/RELEASE-SIGNOFF.md"
+      ],
+      "qa_refs": [
+        "QA-23"
+      ],
+      "source_status": "real-staging-and-live-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "QA-24",
+      "kind": "v12_3_acceptance",
+      "source": "V12.3 Ch.8 pp.78-80",
+      "canonical_owner": "Native owner and File23 authorized portion",
+      "file23_consumer_boundary": "attestation/migration/rollback",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md",
+        "docs/RELEASE-SIGNOFF.md"
+      ],
+      "qa_refs": [
+        "QA-24"
+      ],
+      "source_status": "real-staging-and-live-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "RCD-014",
+      "kind": "retained_decision",
+      "source": "V12.3 Ch.12 pp.257-258",
+      "canonical_owner": "File21/22",
+      "file23_consumer_boundary": "public professional publishing permission",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md"
+      ],
+      "qa_refs": [
+        "QA-21",
+        "QA-23"
+      ],
+      "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "RCD-015",
+      "kind": "retained_decision",
+      "source": "V12.3 Ch.12 pp.257-258",
+      "canonical_owner": "File00/21/22",
+      "file23_consumer_boundary": "latest publishing hold/delegation",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md"
+      ],
+      "qa_refs": [
+        "QA-21",
+        "QA-23"
+      ],
+      "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "RCD-017",
+      "kind": "retained_decision",
+      "source": "V12.3 Ch.12 pp.257-258",
+      "canonical_owner": "File08/16",
+      "file23_consumer_boundary": "no emergency online case",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md"
+      ],
+      "qa_refs": [
+        "QA-21",
+        "QA-23"
+      ],
+      "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "RCD-020",
+      "kind": "retained_decision",
+      "source": "V12.3 Ch.12 pp.257-258",
+      "canonical_owner": "File18",
+      "file23_consumer_boundary": "single free tier and superseded payment drafts",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md"
+      ],
+      "qa_refs": [
+        "QA-21",
+        "QA-23"
+      ],
+      "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "UX-01",
+      "kind": "ux_retained",
+      "source": "V12.3 Ch.8 pp.77-78",
+      "canonical_owner": "Native workflow owner; File23 only where relevant",
+      "file23_consumer_boundary": "End-to-end UX route and state; no File23 shadow owner",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [],
+      "source_status": "journey-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "UX-02",
+      "kind": "ux_retained",
+      "source": "V12.3 Ch.8 pp.77-78",
+      "canonical_owner": "Native workflow owner; File23 only where relevant",
+      "file23_consumer_boundary": "End-to-end UX route and state; no File23 shadow owner",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [],
+      "source_status": "journey-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "UX-03",
+      "kind": "ux_retained",
+      "source": "V12.3 Ch.8 pp.77-78",
+      "canonical_owner": "Native workflow owner; File23 only where relevant",
+      "file23_consumer_boundary": "End-to-end UX route and state; no File23 shadow owner",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [],
+      "source_status": "journey-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "UX-04",
+      "kind": "ux_retained",
+      "source": "V12.3 Ch.8 pp.77-78",
+      "canonical_owner": "Native workflow owner; File23 only where relevant",
+      "file23_consumer_boundary": "End-to-end UX route and state; no File23 shadow owner",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [],
+      "source_status": "journey-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "UX-05",
+      "kind": "ux_retained",
+      "source": "V12.3 Ch.8 pp.77-78",
+      "canonical_owner": "Native workflow owner; File23 only where relevant",
+      "file23_consumer_boundary": "End-to-end UX route and state; no File23 shadow owner",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [],
+      "source_status": "journey-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "UX-06",
+      "kind": "ux_retained",
+      "source": "V12.3 Ch.8 pp.77-78",
+      "canonical_owner": "Native workflow owner; File23 only where relevant",
+      "file23_consumer_boundary": "End-to-end UX route and state; no File23 shadow owner",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [],
+      "source_status": "journey-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "UX-07",
+      "kind": "ux_retained",
+      "source": "V12.3 Ch.8 pp.77-78",
+      "canonical_owner": "Native workflow owner; File23 only where relevant",
+      "file23_consumer_boundary": "End-to-end UX route and state; no File23 shadow owner",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [],
+      "source_status": "journey-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "UX-08",
+      "kind": "ux_retained",
+      "source": "V12.3 Ch.8 pp.77-78",
+      "canonical_owner": "Native workflow owner; File23 only where relevant",
+      "file23_consumer_boundary": "End-to-end UX route and state; no File23 shadow owner",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [],
+      "source_status": "journey-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "UX-09",
+      "kind": "ux_retained",
+      "source": "V12.3 Ch.8 pp.77-78",
+      "canonical_owner": "Native workflow owner; File23 only where relevant",
+      "file23_consumer_boundary": "End-to-end UX route and state; no File23 shadow owner",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [],
+      "source_status": "journey-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "UX-10",
+      "kind": "ux_retained",
+      "source": "V12.3 Ch.8 pp.77-78",
+      "canonical_owner": "Native workflow owner; File23 only where relevant",
+      "file23_consumer_boundary": "End-to-end UX route and state; no File23 shadow owner",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [],
+      "source_status": "journey-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "UX-11",
+      "kind": "ux_retained",
+      "source": "V12.3 Ch.8 pp.77-78",
+      "canonical_owner": "Native workflow owner; File23 only where relevant",
+      "file23_consumer_boundary": "End-to-end UX route and state; no File23 shadow owner",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [],
+      "source_status": "journey-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "UX-12",
+      "kind": "ux_retained",
+      "source": "V12.3 Ch.8 pp.77-78",
+      "canonical_owner": "Native workflow owner; File23 only where relevant",
+      "file23_consumer_boundary": "End-to-end UX route and state; no File23 shadow owner",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [],
+      "source_status": "journey-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "UX-13",
+      "kind": "ux_retained",
+      "source": "V12.3 Ch.8 pp.77-78",
+      "canonical_owner": "Native workflow owner; File23 only where relevant",
+      "file23_consumer_boundary": "End-to-end UX route and state; no File23 shadow owner",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [],
+      "source_status": "journey-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "UX-14",
+      "kind": "ux_retained",
+      "source": "V12.3 Ch.8 pp.77-78",
+      "canonical_owner": "Native workflow owner; File23 only where relevant",
+      "file23_consumer_boundary": "End-to-end UX route and state; no File23 shadow owner",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [],
+      "source_status": "journey-not-run",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-ACT-01",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "File02",
+      "file23_consumer_boundary": "File23 never stores passwords, OTP or recovery secrets",
+      "source_evidence": [
+        "docs/THREAT-MODEL.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "external-owner-contract-pending-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-ACT-02",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "File02/File24/File20",
+      "file23_consumer_boundary": "honor approved same-origin native account-safety links",
+      "source_evidence": [
+        "includes/class-spdb-safe-destination.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "external-owner-contract-pending-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-ACT-03",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "File02/File00",
+      "file23_consumer_boundary": "current session state and revocation rechecked for privileged operations",
+      "source_evidence": [
+        "includes/class-spdb-membership-guard.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "source-reviewed-runtime-unverified-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-ACT-04",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "CF01/File08/CF04",
+      "file23_consumer_boundary": "no patient chart in File23 publishing snapshots, analytics or exports",
+      "source_evidence": [
+        "includes/class-spdb-projection-validator.php",
+        "includes/class-spdb-export-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "source-reviewed-runtime-unverified-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-ACT-05",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "File02/File24/CF02",
+      "file23_consumer_boundary": "consumer-only Account Safety/report routes; no second session backend",
+      "source_evidence": [
+        "includes/class-spdb-module-manifest.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "external-owner-contract-pending-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-ACT-06",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "File02/File00",
+      "file23_consumer_boundary": "consume current File00 session_two_factor for sensitive exports",
+      "source_evidence": [
+        "includes/class-spdb-export-service.php",
+        "includes/class-spdb-membership-guard.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "source-reviewed-runtime-unverified-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-ACT-07",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "File02/File00",
+      "file23_consumer_boundary": "versioned acknowledgement is separate from MFA/account recovery/consent ledger",
+      "source_evidence": [
+        "docs/DATA-OWNERSHIP-MATRIX.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "external-owner-contract-pending-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-STO-01",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "CF04/domain owner",
+      "file23_consumer_boundary": "approved media references; no direct File23 upload grants",
+      "source_evidence": [
+        "includes/class-spdb-module-manifest.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "external-owner-contract-pending-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-STO-02",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "CF04",
+      "file23_consumer_boundary": "quarantine/pending media not promoted by File23",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "external-owner-contract-pending-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-STO-03",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "CF04",
+      "file23_consumer_boundary": "scanner unavailable must fail closed; File23 only consumes readiness",
+      "source_evidence": [
+        "includes/class-spdb-adapter-acceptance.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "external-owner-contract-pending-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-STO-04",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "CF04",
+      "file23_consumer_boundary": "consume approved media derivatives; no File23 conversion service",
+      "source_evidence": [
+        "includes/class-spdb-module-manifest.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "external-owner-contract-pending-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-STO-05",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "CF04/File23 own exports",
+      "file23_consumer_boundary": "File23 AES-GCM encrypted report artifacts with SHA-256 integrity verification",
+      "source_evidence": [
+        "includes/class-spdb-export-service.php",
+        "includes/class-spdb-report-pdf-renderer.php",
+        "composer.json",
+        "composer.lock",
+        "tests/v12-1-pdf-unicode-source-contract-tests.php",
+        "tests/v12-1-pdf-mpdf-integration-tests.php",
+        "docs/AUDIT-V12.1-UNICODE-PDF-AND-MARIADB-2026-11-13.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "source-reviewed-hosting-unverified-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-STO-06",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "CF04/domain owner",
+      "file23_consumer_boundary": "no canonical media state transition in File23",
+      "source_evidence": [
+        "docs/DATA-OWNERSHIP-MATRIX.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "external-owner-contract-pending-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-STO-07",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "CF04/File23 own exports",
+      "file23_consumer_boundary": "current approved owner/MFA, expiring HMAC, exact export-ID/reference and SHA-256 checks, explicit symlink refusal and webserver-guard validation; Hostinger origin/CDN still unverified",
+      "source_evidence": [
+        "includes/class-spdb-export-service.php",
+        "tests/v12-1-export-guard-integrity-tests.php",
+        "tests/v12-1-strict-private-download-path-tests.php",
+        "tests/v12-1-private-storage-directory-binding-tests.php",
+        "tests/v12-1-export-artifact-id-binding-tests.php",
+        "docs/AUDIT-V12.1-FILE23-SOURCE-REVIEWS-2026-11-13.md",
+        "docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md",
+        "includes/class-spdb-report-pdf-renderer.php",
+        "tests/v12-1-pdf-mpdf-integration-tests.php",
+        "tools/build-final-release.sh"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "source-reviewed-hosting-unverified-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-STO-08",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "CF04/File23 own exports",
+      "file23_consumer_boundary": "export integrity and error reporting, external storage controls unverified",
+      "source_evidence": [
+        "includes/class-spdb-export-service.php",
+        "includes/class-spdb-module-manifest.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "source-reviewed-hosting-unverified-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-STO-09",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "CF04/domain owner; File23 own exports",
+      "file23_consumer_boundary": "File23-owned ciphertext deletion, two-pass verified retention/erasure and frozen expiry plus max-row fence must precede export metadata cleanup; foreign tombstone ownership remains CF04; actual Hostinger DB/cron still unverified",
+      "source_evidence": [
+        "includes/class-spdb-background-jobs.php",
+        "includes/class-spdb-export-service.php",
+        "includes/class-spdb-operations-repository.php",
+        "includes/class-spdb-privacy-integration.php",
+        "tests/v12-1-retention-proof-boundary-tests.php",
+        "tests/v12-1-institutional-privacy-pagination-tests.php",
+        "tests/v12-1-export-artifact-id-binding-tests.php",
+        "tests/v12-1-privacy-deep-page-tests.php",
+        "docs/AUDIT-V12.1-FILE23-PRIVACY-RETENTION-2026-11-13.md",
+        "docs/AUDIT-V12.1-FILE23-EXPORT-ERASURE-SOURCE-2026-11-13.md",
+        "tests/v12-1-mariadb-private-erasure-integration.php",
+        ".github/workflows/file23-mariadb-source-integration.yml",
+        "docs/AUDIT-V12.1-UNICODE-PDF-AND-MARIADB-2026-11-13.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "source-reviewed-hosting-unverified-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.1-STO-10",
+      "kind": "retained_sto_act",
+      "source": "Inherited V12.1 Ch.12, retained V12.3",
+      "canonical_owner": "Infrastructure/CF04/domain owner",
+      "file23_consumer_boundary": "staging restoration and canonical permission/tombstone checks need real evidence",
+      "source_evidence": [
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-24"
+      ],
+      "source_status": "external-restore-evidence-pending-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-01",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File24/25 usability QA + File23 private studio",
+      "file23_consumer_boundary": "5-person Urdu formative assessment and 12–18-person formal acceptance of File23 journeys; samples, results and build-specific evidence remain external",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-16"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-02",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File20/25/24 accessible web; File23 own surface",
+      "file23_consumer_boundary": "Progressive enhancement, complete accessibility, narrow layouts and interaction modes for the private dashboard",
+      "source_evidence": [
+        "assets/css/dashboard.css",
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-16"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-03",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File24/25/CF05 performance; File23 local routes",
+      "file23_consumer_boundary": "Separately measured lab/field performance, privacy-safe sample and route payload budgets; no invented field results",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-17"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-04",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File05/06/12/21/26 canonical scholarly content/search",
+      "file23_consumer_boundary": "File23 only exposes author, source, review, revision/correction statuses and authorized canonical destinations",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-operations-service.php"
+      ],
+      "qa_refs": [
+        "QA-18"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-05",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File00/02/24 identity/privacy; File23 local exports",
+      "file23_consumer_boundary": "No bypass of account recovery, explicit consent, export/deletion, authorized scope, passkey/MFA or revoked sessions",
+      "source_evidence": [
+        "includes/class-spdb-membership-guard.php",
+        "includes/class-spdb-privacy-integration.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-06",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File08/14/16/CF01 clinical/AI owners",
+      "file23_consumer_boundary": "File23 AI/advisory presentation only; grounded evidence and uncertainty, qualified human decision, emergency diversion",
+      "source_evidence": [
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "includes/class-spdb-operations-service.php"
+      ],
+      "qa_refs": [
+        "QA-21"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-07",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File20 PWA/offline, File24 privacy",
+      "file23_consumer_boundary": "File23 never caches private work data offline; respects authorized public cache, logout and revoked session",
+      "source_evidence": [
+        "includes/class-spdb-dashboard-router.php",
+        "assets/css/dashboard-corrections.css"
+      ],
+      "qa_refs": [
+        "QA-22"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-08",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File01B/24 deploy and assurance owner",
+      "file23_consumer_boundary": "Explicit staged/canary/live gates with measured version, DB migration, rollback, RPO/RTO and live re-test",
+      "source_evidence": [
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md"
+      ],
+      "qa_refs": [
+        "QA-24"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-09",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "CF06/21/26 locale, publication and search owners",
+      "file23_consumer_boundary": "File23 reads only approved progressive source+9 language transitions; does not invent unstated locale approvals",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-18"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-10",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File24 assurance plus File23 source/status mapping",
+      "file23_consumer_boundary": "Returnable requirement/feature/status report for M01–M12, QA-15–QA-24, actual evidence; no source-only success inflated into live",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-24"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    }
+  ]
+}

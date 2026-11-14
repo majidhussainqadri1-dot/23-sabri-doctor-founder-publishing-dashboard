@@ -98,7 +98,10 @@ final class SPDB_Operations_Service {
 			'providers'        => $providers,
 			'provider_errors'  => $errors,
 			'generated_at_gmt' => gmdate( 'c' ),
-			'empty_reason'     => empty( $providers ) ? 'no_compatible_provider' : ( empty( $items ) ? 'no_eligible_items' : '' ),
+			// A configured provider that failed is not the same as a missing
+			// provider or an authorized, genuinely empty projection.
+			'empty_reason'     => ! empty( $items ) ? '' : ( ! empty( $errors ) ? 'provider_unavailable' : ( empty( $providers ) ? 'no_compatible_provider' : 'no_eligible_items' ) ),
+			'data_complete'    => empty( $errors ) && ! empty( $providers ) && ! $has_more,
 		);
 	}
 
@@ -160,12 +163,24 @@ final class SPDB_Operations_Service {
 			}
 		}
 
-		$source = 'live_provider';
+		// Never call a zero-result or failed-source response live provider data.
+		$source = ! empty( $metrics )
+			? 'live_provider'
+			: ( ! empty( $errors ) ? 'provider_unavailable' : ( empty( $providers ) ? 'no_compatible_provider' : 'no_eligible_metrics' ) );
 		if ( empty( $metrics ) ) {
 			$cached = $this->repository->list_metric_snapshots( get_current_user_id(), 'institution' === $scope, 500 );
-			if ( ! is_wp_error( $cached ) && ! empty( $cached ) ) {
+			if ( is_wp_error( $cached ) ) {
+				// An SQL failure is not an empty cache; fail closed rather than
+				// suppressing the error and presenting a fabricated live state.
+				return $cached;
+			}
+			if ( ! empty( $cached ) ) {
 				$source = 'bounded_cached_snapshot';
 				foreach ( $cached as $snapshot ) {
+					$generated_at = self::strict_cached_generated_at( (string) ( $snapshot['generated_at_gmt'] ?? '' ) );
+					if ( is_wp_error( $generated_at ) ) {
+						return $generated_at;
+					}
 					$effective_threshold = max( 20, $threshold, (int) $snapshot['privacy_threshold'] );
 					$metrics[] = array(
 						'provider_key'     => (string) $snapshot['provider_key'],
@@ -178,19 +193,26 @@ final class SPDB_Operations_Service {
 						'cohort_count'     => (int) $snapshot['cohort_count'],
 						'privacy_threshold'=> $effective_threshold,
 						'suppressed'       => (int) $snapshot['cohort_count'] < $effective_threshold,
-						'generated_at'     => gmdate( 'c', strtotime( (string) $snapshot['generated_at_gmt'] ) ?: time() ),
+						'generated_at'     => $generated_at,
 						'cached'           => true,
 					);
 				}
 			}
 		}
 
+		// A large federation may yield more validated aggregates than a
+		// single dashboard response can safely carry. Preserve the cap, but
+		// never identify the truncated 500-item subset as fully complete.
+		$metric_limit = 500;
+		$more_metrics = count( $metrics ) > $metric_limit;
 		return array(
 			'scope'            => $scope,
-			'metrics'          => array_slice( $metrics, 0, 500 ),
+			'metrics'          => array_slice( $metrics, 0, $metric_limit ),
 			'providers'        => $providers,
 			'provider_errors'  => $errors,
 			'source'           => $source,
+			'more_metrics_available' => $more_metrics,
+			'data_complete'    => empty( $errors ) && 'live_provider' === $source && ! $more_metrics,
 			'generated_at_gmt' => gmdate( 'c' ),
 			'privacy_notice'   => __( 'Values below the configured minimum cohort are suppressed. File 23 does not store raw analytics events; cached values are bounded, rebuildable provider aggregates.', 'sabri-publishing-dashboard' ),
 		);
@@ -224,6 +246,9 @@ final class SPDB_Operations_Service {
 
 		$rows    = array();
 		$columns = array( 'provider', 'type', 'title', 'status', 'updated_at' );
+		$partial = false;
+		$has_more = false;
+		$source_status = 'unavailable';
 		$query   = array_merge( $filters, array( 'scope' => $scope, 'per_page' => SPDB_Admin_Settings::get()['max_export_rows'] ) );
 
 		if ( in_array( $report_key, array( 'content_performance', 'monthly_summary', 'institution_publishing', 'doctor_contributions' ), true ) ) {
@@ -231,6 +256,8 @@ final class SPDB_Operations_Service {
 			if ( is_wp_error( $analytics ) ) {
 				return $analytics;
 			}
+			$source_status = (string) ( $analytics['source'] ?? 'unavailable' );
+			$partial = 'live_provider' !== $source_status || empty( $analytics['data_complete'] ) || ! empty( $analytics['provider_errors'] );
 			$columns = array( 'provider', 'metric', 'label', 'value', 'unit', 'interval', 'suppressed' );
 			foreach ( $analytics['metrics'] as $metric ) {
 				$rows[] = array(
@@ -249,6 +276,9 @@ final class SPDB_Operations_Service {
 			if ( is_wp_error( $projection ) ) {
 				return $projection;
 			}
+			$has_more = ! empty( $projection['has_more'] ) || (int) ( $projection['total'] ?? 0 ) > count( $projection['items'] );
+			$partial = $has_more || empty( $projection['data_complete'] ) || ! empty( $projection['provider_errors'] );
+			$source_status = ! empty( $projection['provider_errors'] ) ? 'provider_unavailable' : ( empty( $projection['providers'] ) ? 'no_compatible_provider' : 'live_provider' );
 			foreach ( $projection['items'] as $item ) {
 				$rows[] = array(
 					'provider'   => $item['provider_key'],
@@ -260,13 +290,27 @@ final class SPDB_Operations_Service {
 			}
 		}
 
+		$max_rows = (int) SPDB_Admin_Settings::get()['max_export_rows'];
+		if ( count( $rows ) > $max_rows ) {
+			$partial = true;
+			$has_more = true;
+		}
+		$rows = array_slice( $rows, 0, $max_rows );
+		$limitations = __( 'This report contains only privacy-filtered provider projections and aggregates. It is not a raw analytics or native-record export.', 'sabri-publishing-dashboard' );
+		if ( $partial ) {
+			$limitations .= ' ' . __( 'Warning: This report is incomplete because a native source was unavailable, additional eligible records exist, or cached data was substituted. Do not treat missing rows as zero.', 'sabri-publishing-dashboard' );
+		}
 		return array(
-			'report_key'       => $report_key,
-			'scope'            => $scope,
-			'columns'          => $columns,
-			'rows'             => array_slice( $rows, 0, (int) SPDB_Admin_Settings::get()['max_export_rows'] ),
-			'generated_at_gmt' => gmdate( 'c' ),
-			'limitations'      => __( 'This report contains only current privacy-filtered provider projections and aggregates. It is not a raw analytics or native-record export.', 'sabri-publishing-dashboard' ),
+			'report_key'            => $report_key,
+			'scope'                 => $scope,
+			'columns'               => $columns,
+			'rows'                  => $rows,
+			'included_rows'         => count( $rows ),
+			'completeness'          => $partial ? 'partial' : 'complete',
+			'more_records_available'=> $has_more,
+			'source_status'         => $source_status,
+			'generated_at_gmt'      => gmdate( 'c' ),
+			'limitations'           => $limitations,
 		);
 	}
 
@@ -411,6 +455,28 @@ final class SPDB_Operations_Service {
 			return 'gaps';
 		}
 		return 'notifications';
+	}
+
+	/**
+	 * A malformed cached date must not be replaced by the current time:
+	 * that would fabricate evidence freshness for an old or corrupt metric.
+	 * Always parse MySQL GMT in UTC, independent of the PHP site timezone.
+	 *
+	 * @return string|WP_Error
+	 */
+	private static function strict_cached_generated_at( string $value ) {
+		if ( 1 !== preg_match( '/\\A\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\z/', $value ) ) {
+			return self::error( 'spdb_metric_snapshot_timestamp_invalid', __( 'A cached analytics timestamp is invalid; live freshness cannot be established.', 'sabri-publishing-dashboard' ), 503 );
+		}
+		try {
+			$date = DateTimeImmutable::createFromFormat( '!Y-m-d H:i:s', $value, new DateTimeZone( 'UTC' ) );
+		} catch ( Throwable $error ) {
+			$date = false;
+		}
+		if ( false === $date || $date->format( 'Y-m-d H:i:s' ) !== $value ) {
+			return self::error( 'spdb_metric_snapshot_timestamp_invalid', __( 'A cached analytics timestamp is invalid; live freshness cannot be established.', 'sabri-publishing-dashboard' ), 503 );
+		}
+		return gmdate( 'c', $date->getTimestamp() );
 	}
 
 	private static function safe_date( $value ): string {

@@ -1,5 +1,42 @@
 # File 23 Status
 
+## V12.3 current checkpoint — 20 source findings/fixes; 210 requirement IDs; NO-GO
+
+- **Candidate:** Draft PR #33, unmerged; `main` still `dcae138e6073f4d0ff596623deb05b9940b8271b` v1.2.0, not established as Live.
+- **Source QA:** 20 individually evidenced defect regressions corrected on candidate source (DEF-001..020). Last 20-fix checkpoint `7df2d117db6e512892bb851710b63d54d62dc677`: five GitHub workflows passed (Baseline #43609383331; Full Plan #43609383410; Final Release #43609383321; MariaDB #43609383390; PDF runtime #43609383318). Final exact HEAD may change after this status.
+- **Requirements:** 210 scoped identity mappings, including all 20 central CEN policies and retained G01–G12; not 210 functioning features, not source acceptance, staging acceptance or verified completion percentage.
+- **Three largest new trust changes:** owner/approval/revocation check at queued automation execution; audit cannot reset on prior read error; native provider production acceptance cannot originate from staging. Additional new protections: strict queued rule version, cross-owner export denial, cross-owner idempotency key/payload denial.
+- **Remaining:** external File23 #30/#31/#32 and upstream File20 #45; 10 owner contracts, 13 historical limitations, 100,000-event audit scan budget; real 20,001+ privacy/host restore; PDF/RTL; two independent outside reviews; approved artifact, staging, Founder release and Live re-test.
+- **Mandatory reality fields:** Deployed Version **UNVERIFIED**; DB Version **UNVERIFIED**; Migration State **UNVERIFIED**; Live Verification Status **NOT VERIFIED**; 0 live verified fixes. **NO-GO; no merge, no staging install or production deployment.** Historical entries below describe earlier checkpoints and must not override this one.
+
+
+
+## 14 November 2026 — extended V12.3 red-first source work, no live attestation
+
+- **14/14 identified source-candidate defects** have matching corrective patches and runnable tests in Draft PR #33. Includes DEF-009 (failed provider/cache truth), DEF-010 (partial reports and CSV), DEF-011 (invalid cached UTC freshness), DEF-012 (500-of-600 metric truncation), DEF-013 (unbounded audit-chain SQL replaced by 500-row keyset/100,000-row budget), DEF-014 (native `has_more` falsely marked complete). The earlier DEF-001..008 remain separate.
+- **187 first-pass V12.3 mapped requirement IDs** are not a functional completion percentage. Real-provider, browser, File00/02/20/21/22/24, CF04 and clinical acceptance remains pending.
+- **Evidence chain:** Red-first regression IDs and exact correction commits in `docs/V12.3-DEFECT-LEDGER.json`; source-only synthetic tests in `tests/v12-3-provider-truth-tests.php` and `tests/v12-3-bounded-audit-health-tests.php`; two internal checks in `docs/V12.3-INTERNAL-SOURCE-REVIEW-C-D-2026-11-14.md` (**not independent external reviews**).
+- **Last green source checkpoint before these status notes:** `dc0feec4c66a2932a416a2b9722712c84967181a` passed five GitHub workflows (Baseline Integrity #43605632139, Full Plan #43605632180, Final Release #43605632235, MariaDB #43605632185, PDF Supply Chain #43605632165). Re-run/inspect **final** GitHub HEAD after each new source or documentation change.
+- **Release gate still NO-GO:** File23 #30/#31/#32 and File20 #45, ten native contract acceptance items, thirteen historical operation limits, >100k audit scan policy, two genuinely independent fresh reviewers, signed Hostinger Staging/backup/rollback and Founder promotion approval.
+- **Mandatory:** Deployed Version UNVERIFIED; DB Version UNVERIFIED; Migration State UNVERIFIED; Live Verification Status NOT VERIFIED; Live-verified fixes 0. No main merge, no Staging, no Live changes. Exact deployed code ابھی unverified ہے؛ repository-based diagnosis provisional ہے۔
+
+
+
+## 14 November 2026 — V12.3 source-only implementation checkpoint (Draft PR #33)
+
+- **Work branch:** `audit/file23-v12-3-evidence-first-20261114` based on child Draft PR #29 `f44ac45169c8c84c442184b5be2cb838adf12dae`. PR #26/#29 and `main` remain unmerged.
+- **WP-00:** a truth-separated source snapshot is in `docs/V12.3-LIVE-REALITY-FREEZE.json`. WordPress Jetpack site-scoped tools are disconnected; WPVibe account has no registered site and a connection attempt returned HTTP 530. This is **not a live outage diagnosis**. Exact deployed code, DB, migrations and parity remain **UNVERIFIED**.
+- **WP-01:** new additive 187-ID V12.3 first-pass identity mapping (128 inherited + 59 additional, including ten Chapter 10 corrections). These are not 187 certified features. Per-ID source and real-provider audits are still pending; no valid coding-completion percentage is claimed. During first-pass QA, 8 incorrect M-to-QA map links were corrected (documentation errors, not live bugs).
+- **WP-03/09:** four distinct browser source findings addressed: weak Math.random mutation-id fallback; repeated in-flight submit; digit-looking text coercion; boolean-looking text coercion. **WP-06:** one server date integrity issue corrected: GMT-labelled timestamps must parse in UTC independent of PHP timezone; reject blank required dates and invalid dates. **WP-03:** a separate strict account-ID defect corrected: malformed task/delegation IDs must never coerce to another real user. **WP-12:** task pagination now denies overflowing SQL offsets. **WP-11:** a separate source-health integrity gap corrected: SQL failures in tasks/delegations/rules cannot be presented as valid empty results; the UI shows explicit unavailability. Source files and behavioral negative tests updated with red-first evidence.
+- **WP-13:** `tests/v12-3-browser-mutation-regression.js` now runs in Baseline Integrity, Full Plan Completion and Final Release Candidate. `tests/v12-3-source-crosswalk-tests.php`, `tests/v12-3-gmt-datetime-tests.php`, `tests/v12-3-task-pagination-tests.php`, `tests/v12-3-strict-account-ids-tests.php`, and `tests/v12-3-fpi24-source-audit-tests.php` and `tests/v12-3-studio-source-health-tests.php` are included by existing PHP test discovery. Do not reuse a green historical commit as final exact-HEAD proof.
+- **Earlier source CI checkpoint:** `ac9dae742de2648659abed873a67ec63e79bfe56` passed five workflows for the first two fixes; the third change and all later documentation require a fresh exact-HEAD run.
+- **Unresolved external release gates:** File23 #30 with File20 #45 deployed-byte/schema/migration attestation; File23 #31 real Hostinger 20,001+ DB/Cron/rollback; File23 #32 true WordPress/Hostinger Unicode PDF; 10 provider contracts, 13 operational limits, two independent reviewers, staging Founder signoff and live retest.
+- **Count:** 8 source-only application fixes on PR #33; 1 PHP 8.0 test-harness correction; 8 prior mapping link corrections and 10 newly identified Chapter 10 mappings; 0 verified live fixes. No code merge, staging deployment, live deployment, database change or Hostinger rollback was performed.
+- **WP-07:** exact static source catalogue-to-evaluator mapping established for 24 FPI entries (12 P0, 10 P1, 2 P2); live provider/permission/UX acceptance not tested.
+- **Release decision: NO-GO.** Full 16-WP state and closure evidence: `docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md`.
+
+
+
 ## Current repository candidate
 
 - Version: `1.3.0`

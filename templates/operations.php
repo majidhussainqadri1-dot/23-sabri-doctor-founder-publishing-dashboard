@@ -26,7 +26,15 @@ $title_id = $instance_id . '-operations-title';
 			<article><span><?php esc_html_e( 'Provider errors', 'sabri-publishing-dashboard' ); ?></span><strong><?php echo esc_html( (string) count( $operational_result['provider_errors'] ?? array() ) ); ?></strong></article>
 		</div>
 		<?php if ( empty( $operational_result['items'] ) ) : ?>
-			<div class="spdb-empty-state" role="status"><h3><?php esc_html_e( 'No eligible native items', 'sabri-publishing-dashboard' ); ?></h3><p><?php echo esc_html( 'no_compatible_provider' === ( $operational_result['empty_reason'] ?? '' ) ? __( 'No compatible provider currently implements this projection contract.', 'sabri-publishing-dashboard' ) : __( 'No eligible items match the current authorization and filters.', 'sabri-publishing-dashboard' ) ); ?></p></div>
+			<div class="spdb-empty-state" role="status">
+				<?php if ( 'provider_unavailable' === ( $operational_result['empty_reason'] ?? '' ) ) : ?>
+					<h3><?php esc_html_e( 'Native source temporarily unavailable', 'sabri-publishing-dashboard' ); ?></h3>
+					<p><?php esc_html_e( 'One or more connected providers could not return a verified result. This is not proof that there are no items.', 'sabri-publishing-dashboard' ); ?></p>
+				<?php else : ?>
+					<h3><?php esc_html_e( 'No eligible native items', 'sabri-publishing-dashboard' ); ?></h3>
+					<p><?php echo esc_html( 'no_compatible_provider' === ( $operational_result['empty_reason'] ?? '' ) ? __( 'No compatible provider currently implements this projection contract.', 'sabri-publishing-dashboard' ) : __( 'No eligible items match the current authorization and filters.', 'sabri-publishing-dashboard' ) ); ?></p>
+				<?php endif; ?>
+			</div>
 		<?php else : ?>
 			<div class="spdb-operations-grid">
 				<?php foreach ( $operational_result['items'] as $item ) : ?>

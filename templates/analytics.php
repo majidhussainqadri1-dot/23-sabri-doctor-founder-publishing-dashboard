@@ -12,8 +12,23 @@ $intelligence_catalog = class_exists( 'SPDB_Publishing_Intelligence' ) ? SPDB_Pu
 		<div class="spdb-notice spdb-notice--warning" role="alert"><?php echo esc_html( $analytics_result->get_error_message() ); ?></div>
 	<?php else : ?>
 		<p><?php echo esc_html( (string) ( $analytics_result['privacy_notice'] ?? '' ) ); ?></p>
+		<?php if ( 'bounded_cached_snapshot' === ( $analytics_result['source'] ?? '' ) ) : ?>
+			<div class="spdb-notice spdb-notice--warning" role="status"><?php esc_html_e( 'These are bounded cached aggregates, not live provider metrics. Check the source timestamp before acting.', 'sabri-publishing-dashboard' ); ?></div>
+		<?php elseif ( ! empty( $analytics_result['provider_errors'] ) ) : ?>
+			<div class="spdb-notice spdb-notice--warning" role="alert"><?php esc_html_e( 'At least one native analytics provider failed. Results may be incomplete; no missing data has been treated as zero.', 'sabri-publishing-dashboard' ); ?></div>
+		<?php elseif ( ! empty( $analytics_result['metrics'] ) && empty( $analytics_result['data_complete'] ) ) : ?>
+			<div class="spdb-notice spdb-notice--warning" role="status"><?php esc_html_e( 'This is a bounded partial analytics result. More privacy-safe metrics may exist beyond the displayed limit.', 'sabri-publishing-dashboard' ); ?></div>
+		<?php endif; ?>
 		<?php if ( empty( $analytics_result['metrics'] ) ) : ?>
-			<div class="spdb-empty-state" role="status"><h3><?php esc_html_e( 'No eligible aggregate metrics', 'sabri-publishing-dashboard' ); ?></h3><p><?php esc_html_e( 'No compatible provider supplied privacy-safe metrics for this account and scope.', 'sabri-publishing-dashboard' ); ?></p></div>
+			<div class="spdb-empty-state" role="status">
+				<?php if ( 'provider_unavailable' === ( $analytics_result['source'] ?? '' ) ) : ?>
+					<h3><?php esc_html_e( 'Analytics source unavailable', 'sabri-publishing-dashboard' ); ?></h3>
+					<p><?php esc_html_e( 'A provider failed to supply metrics. The absence of results must not be interpreted as zero performance.', 'sabri-publishing-dashboard' ); ?></p>
+				<?php else : ?>
+					<h3><?php esc_html_e( 'No eligible aggregate metrics', 'sabri-publishing-dashboard' ); ?></h3>
+					<p><?php esc_html_e( 'No compatible provider supplied privacy-safe metrics for this account and scope.', 'sabri-publishing-dashboard' ); ?></p>
+				<?php endif; ?>
+			</div>
 		<?php else : ?>
 			<div class="spdb-operations-grid">
 				<?php foreach ( $analytics_result['metrics'] as $metric ) : ?>
@@ -23,6 +38,9 @@ $intelligence_catalog = class_exists( 'SPDB_Publishing_Intelligence' ) ? SPDB_Pu
 						<strong class="spdb-metric-value"><?php echo ! empty( $metric['suppressed'] ) ? esc_html__( 'Suppressed', 'sabri-publishing-dashboard' ) : esc_html( (string) $metric['value'] ); ?></strong>
 						<p><?php echo esc_html( $metric['definition'] ); ?></p>
 						<small><?php echo esc_html( sprintf( __( '%1$s · cohort %2$d · threshold %3$d', 'sabri-publishing-dashboard' ), $metric['interval'], $metric['cohort_count'], $metric['privacy_threshold'] ) ); ?></small>
+						<?php if ( ! empty( $metric['cached'] ) && ! empty( $metric['generated_at'] ) ) : ?>
+							<small><?php esc_html_e( 'Cached snapshot generated (UTC):', 'sabri-publishing-dashboard' ); ?> <time datetime="<?php echo esc_attr( (string) $metric['generated_at'] ); ?>"><?php echo esc_html( (string) $metric['generated_at'] ); ?></time></small>
+						<?php endif; ?>
 					</article>
 				<?php endforeach; ?>
 			</div>

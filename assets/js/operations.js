@@ -9,19 +9,16 @@
 	var config = window.SPDBOperations;
 	apiFetch.use( apiFetch.createNonceMiddleware( config.nonce ) );
 
-	function scalarValue( value ) {
-		if ( 'true' === value ) { return true; }
-		if ( 'false' === value ) { return false; }
-		if ( /^-?\d+$/.test( value ) ) { return Number( value ); }
-		return value;
-	}
-
 	function serialize( form ) {
 		var data = {};
 		var formData = new window.FormData( form );
 		formData.forEach( function ( rawValue, rawKey ) {
 			var key = String( rawKey );
-			var value = scalarValue( String( rawValue ) );
+			// FormData text must retain its exact value, including "true"/"false",
+			// leading zeroes and integers beyond the JS safe-number range.
+			// Checkbox inputs are explicitly normalized below; the native REST
+			// endpoint validates typed numeric fields against its own schema.
+			var value = String( rawValue );
 			if ( /\[\]$/.test( key ) ) {
 				key = key.replace( /\[\]$/, '' );
 				if ( ! Array.isArray( data[ key ] ) ) { data[ key ] = []; }
@@ -52,13 +49,16 @@
 	}
 
 	function randomHex( length ) {
+		// Operational idempotency must never degrade to Math.random().
+		// No CSPRNG means no privileged mutation request.
+		if ( ! window.crypto || 'function' !== typeof window.crypto.getRandomValues ) {
+			return null;
+		}
 		var bytes = new Uint8Array( Math.ceil( length / 2 ) );
-		if ( window.crypto && window.crypto.getRandomValues ) {
+		try {
 			window.crypto.getRandomValues( bytes );
-		} else {
-			for ( var i = 0; i < bytes.length; i++ ) {
-				bytes[ i ] = Math.floor( Math.random() * 256 );
-			}
+		} catch ( error ) {
+			return null;
 		}
 		return Array.prototype.map.call( bytes, function ( byte ) {
 			return byte.toString( 16 ).padStart( 2, '0' );
@@ -68,7 +68,11 @@
 	function idempotencyKey( form ) {
 		var existing = String( form.getAttribute( 'data-spdb-idempotency-key' ) || '' );
 		if ( existing ) { return existing; }
-		var key = 'spdb_' + randomHex( 32 );
+		var entropy = randomHex( 32 );
+		if ( ! entropy ) {
+			return null;
+		}
+		var key = 'spdb_' + entropy;
 		form.setAttribute( 'data-spdb-idempotency-key', key );
 		return key;
 	}
@@ -84,7 +88,17 @@
 
 		form.addEventListener( 'submit', function ( event ) {
 			event.preventDefault();
+			// Enter/keyboarding can emit another submit even while disabled.
+			// One logical submission must only dispatch once until settlement.
+			if ( 'true' === form.getAttribute( 'data-spdb-submitting' ) ) {
+				return;
+			}
 			if ( 'true' === form.getAttribute( 'data-confirm' ) && ! window.confirm( config.strings.confirm ) ) {
+				return;
+			}
+			var requestKey = idempotencyKey( form );
+			if ( ! requestKey ) {
+				announce( form, config.strings.secureUnavailable || config.strings.failed, true );
 				return;
 			}
 			var submit = form.querySelector( 'button[type="submit"]' );
@@ -92,7 +106,6 @@
 			form.setAttribute( 'data-spdb-submitting', 'true' );
 			announce( form, config.strings.working, false );
 
-			var requestKey = idempotencyKey( form );
 			apiFetch( {
 				path: endpoint( form ),
 				method: form.getAttribute( 'data-method' ) || 'POST',
