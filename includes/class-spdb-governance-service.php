@@ -49,7 +49,7 @@ final class SPDB_Governance_Service {
 		$user_id     = get_current_user_id();
 		$title       = self::plain_text( $input['title'] ?? '' );
 		$description = self::plain_text( $input['description'] ?? '' );
-		$assignee    = max( 0, (int) ( $input['assignee_user_id'] ?? $user_id ) );
+		$assignee    = self::strict_positive_user_id( $input['assignee_user_id'] ?? $user_id );
 		$scope       = sanitize_key( (string) ( $input['scope'] ?? 'own' ) );
 		$priority    = sanitize_key( (string) ( $input['priority'] ?? 'normal' ) );
 		$reason      = self::plain_text( $input['audit_reason'] ?? '' );
@@ -57,7 +57,7 @@ final class SPDB_Governance_Service {
 		if (
 			'' === $title || self::length( $title ) > 200
 			|| self::length( $description ) > 2000
-			|| $assignee < 1
+			|| null === $assignee
 			|| ! in_array( $scope, array( 'own', 'institution' ), true )
 			|| ! in_array( $priority, array( 'low', 'normal', 'high', 'urgent' ), true )
 			|| ! self::valid_reason( $reason )
@@ -156,7 +156,10 @@ final class SPDB_Governance_Service {
 			$changes['description'] = $description;
 		}
 		if ( isset( $input['assignee_user_id'] ) ) {
-			$assignee = max( 0, (int) $input['assignee_user_id'] );
+			$assignee = self::strict_positive_user_id( $input['assignee_user_id'] );
+			if ( null === $assignee ) {
+				return self::error( 'spdb_task_assignee_invalid', __( 'The task assignee ID must be an exact positive integer.', 'sabri-publishing-dashboard' ), 400 );
+			}
 			if ( 'own' === (string) ( $current['scope'] ?? '' ) && $assignee !== (int) ( $current['owner_user_id'] ?? 0 ) ) {
 				return self::error( 'spdb_task_assignee_forbidden', __( 'Personal tasks cannot be reassigned to another account.', 'sabri-publishing-dashboard' ), 403 );
 			}
@@ -194,7 +197,7 @@ final class SPDB_Governance_Service {
 			return self::error( 'spdb_delegation_mfa_required', __( 'A current two-factor-authenticated session is required.', 'sabri-publishing-dashboard' ), 403 );
 		}
 
-		$delegate = max( 0, (int) ( $input['delegate_user_id'] ?? 0 ) );
+		$delegate = self::strict_positive_user_id( $input['delegate_user_id'] ?? null );
 		$reason   = self::plain_text( $input['reason'] ?? '' );
 		$start    = $this->datetime( $input['starts_at_gmt'] ?? gmdate( 'c' ), false );
 		$expiry   = $this->datetime( $input['expires_at_gmt'] ?? null, false );
@@ -204,7 +207,7 @@ final class SPDB_Governance_Service {
 		$start_ts  = strtotime( $start . ' UTC' );
 		$expiry_ts = strtotime( $expiry . ' UTC' );
 		if (
-			$delegate < 1 || $delegate === $user_id
+			null === $delegate || $delegate === $user_id
 			|| ! SPDB_Membership_Guard::is_user_approved( $delegate )
 			|| ! self::valid_reason( $reason )
 			|| false === $start_ts || false === $expiry_ts
@@ -422,6 +425,24 @@ final class SPDB_Governance_Service {
 			return self::length( $value ) <= 1000 && 0 === preg_match( '/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', $value );
 		}
 		return is_scalar( $value ) || null === $value;
+	}
+
+	/**
+	 * IDs from a request must not be coerced to an existing account.
+	 * Reject leading zeroes, sign, exponent, whitespace, floats, booleans,
+	 * suffixes and values exceeding PHP_INT_MAX before authorization.
+	 *
+	 * @param mixed $value
+	 */
+	private static function strict_positive_user_id( $value ): ?int {
+		if ( is_int( $value ) ) {
+			return $value > 0 ? $value : null;
+		}
+		if ( ! is_string( $value ) || 1 !== preg_match( '/^[1-9][0-9]*$/D', $value ) ) {
+			return null;
+		}
+		$integer = (int) $value;
+		return $integer > 0 && (string) $integer === $value ? $integer : null;
 	}
 
 	private function eligible_task_assignee( int $user_id ): bool {
