@@ -49,8 +49,12 @@ $expected_counts = array(
     'v12_3_acceptance' => 10, 'ux_retained' => 14, 'v12_3_central_policy' => 9,
     'retained_decision' => 4,
 );
+ksort( $expected_counts );
+ksort( $kinds );
+$reported_counts = (array) ( $data['census']['by_kind'] ?? array() );
+ksort( $reported_counts );
 $check( $expected_counts === $kinds, 'Exact historical and additive census by category.' );
-$check( $expected_counts === ( $data['census']['by_kind'] ?? null ), 'Census metadata matches actual entries.' );
+$check( $expected_counts === $reported_counts, 'Census metadata matches actual entries.' );
 for ( $i = 1; $i <= 24; $i++ ) {
     $check( isset( $ids[sprintf( 'F23-FPI-%02d', $i )] ), 'Missing FPI ' . $i );
 }
