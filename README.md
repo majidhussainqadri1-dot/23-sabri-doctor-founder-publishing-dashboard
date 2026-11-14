@@ -1,5 +1,17 @@
 # File 23 — Doctor and Founder Publishing Dashboard
 
+## V12.3 current source-only status, 14 November 2026 — 20 fixes, 210 mapped IDs
+
+**Current in-progress candidate:** Draft PR #33 based on unmerged PR #29. **20 distinct red-first source defects** (DEF-001..020) have candidate corrective patches and tests in `docs/V12.3-DEFECT-LEDGER.json`. Source checkpoint `7df2d117db6e512892bb851710b63d54d62dc677` passed all five workflows; use exact current PR HEAD for any newer proof. No fix is verified on Hostinger Live.
+
+**V12.3 evidence crosswalk:** `docs/V12.3-REQUIREMENT-CROSSWALK.json` has **210 unique requirement identities**: original 187 plus 11 Chapter 12 central CEN policies and 12 retained G01–G12. They are *identity/source-path coverage*, **not** 210 completed features or a percentage of verified V12.3 behavior.
+
+**Latest source hardening DEF-015..020:** fresh queued-automation owner/approval/capability; strict immutable rule version; no audit chain genesis on failed SQL/malformed hash; exact-origin production provider acceptance both producer/registry; private export worker owner identity; idempotency owner and byte-equal payload in lookup/race. Synthetic PHP tests cover red-first/green checkpoints.
+
+**Release:** **NO-GO**. Read `docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md` and `docs/V12.3-INTERNAL-SOURCE-REVIEW-E-F-2026-11-14.md` for 16 work package states and independent review limits. Hostinger installed code/ZIP checksum, database/schema/migration, File20 attestation, 10 native owner contracts, File23 #30/#31/#32, 2 external reviews, Staging, Founder authorization and live parity/retest are **UNVERIFIED/PENDING**. No main merge or deploy. Earlier 14/187 and related values below are historical checkpoints.
+
+
+
 ## 14 November 2026 — later V12.3 source review (14 proven source corrections)
 
 **This is source-only PR #33 work, not a deploy.** Compared to the earlier eight-fix checkpoint, six additional reproducible source failures were discovered and corrected with red-first PHP/Node tests:
