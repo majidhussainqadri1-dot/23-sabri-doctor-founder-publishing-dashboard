@@ -98,7 +98,10 @@ final class SPDB_Operations_Service {
 			'providers'        => $providers,
 			'provider_errors'  => $errors,
 			'generated_at_gmt' => gmdate( 'c' ),
-			'empty_reason'     => empty( $providers ) ? 'no_compatible_provider' : ( empty( $items ) ? 'no_eligible_items' : '' ),
+			// A configured provider that failed is not the same as a missing
+			// provider or an authorized, genuinely empty projection.
+			'empty_reason'     => ! empty( $items ) ? '' : ( ! empty( $errors ) ? 'provider_unavailable' : ( empty( $providers ) ? 'no_compatible_provider' : 'no_eligible_items' ) ),
+			'data_complete'    => empty( $errors ) && ! empty( $providers ),
 		);
 	}
 
@@ -160,10 +163,18 @@ final class SPDB_Operations_Service {
 			}
 		}
 
-		$source = 'live_provider';
+		// Never call a zero-result or failed-source response live provider data.
+		$source = ! empty( $metrics )
+			? 'live_provider'
+			: ( ! empty( $errors ) ? 'provider_unavailable' : ( empty( $providers ) ? 'no_compatible_provider' : 'no_eligible_metrics' ) );
 		if ( empty( $metrics ) ) {
 			$cached = $this->repository->list_metric_snapshots( get_current_user_id(), 'institution' === $scope, 500 );
-			if ( ! is_wp_error( $cached ) && ! empty( $cached ) ) {
+			if ( is_wp_error( $cached ) ) {
+				// An SQL failure is not an empty cache; fail closed rather than
+				// suppressing the error and presenting a fabricated live state.
+				return $cached;
+			}
+			if ( ! empty( $cached ) ) {
 				$source = 'bounded_cached_snapshot';
 				foreach ( $cached as $snapshot ) {
 					$effective_threshold = max( 20, $threshold, (int) $snapshot['privacy_threshold'] );
@@ -191,6 +202,7 @@ final class SPDB_Operations_Service {
 			'providers'        => $providers,
 			'provider_errors'  => $errors,
 			'source'           => $source,
+			'data_complete'    => empty( $errors ) && 'live_provider' === $source,
 			'generated_at_gmt' => gmdate( 'c' ),
 			'privacy_notice'   => __( 'Values below the configured minimum cohort are suppressed. File 23 does not store raw analytics events; cached values are bounded, rebuildable provider aggregates.', 'sabri-publishing-dashboard' ),
 		);
