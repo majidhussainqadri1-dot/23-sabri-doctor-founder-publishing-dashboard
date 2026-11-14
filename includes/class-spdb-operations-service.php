@@ -177,6 +177,10 @@ final class SPDB_Operations_Service {
 			if ( ! empty( $cached ) ) {
 				$source = 'bounded_cached_snapshot';
 				foreach ( $cached as $snapshot ) {
+					$generated_at = self::strict_cached_generated_at( (string) ( $snapshot['generated_at_gmt'] ?? '' ) );
+					if ( is_wp_error( $generated_at ) ) {
+						return $generated_at;
+					}
 					$effective_threshold = max( 20, $threshold, (int) $snapshot['privacy_threshold'] );
 					$metrics[] = array(
 						'provider_key'     => (string) $snapshot['provider_key'],
@@ -189,7 +193,7 @@ final class SPDB_Operations_Service {
 						'cohort_count'     => (int) $snapshot['cohort_count'],
 						'privacy_threshold'=> $effective_threshold,
 						'suppressed'       => (int) $snapshot['cohort_count'] < $effective_threshold,
-						'generated_at'     => gmdate( 'c', strtotime( (string) $snapshot['generated_at_gmt'] ) ?: time() ),
+						'generated_at'     => $generated_at,
 						'cached'           => true,
 					);
 				}
@@ -445,6 +449,28 @@ final class SPDB_Operations_Service {
 			return 'gaps';
 		}
 		return 'notifications';
+	}
+
+	/**
+	 * A malformed cached date must not be replaced by the current time:
+	 * that would fabricate evidence freshness for an old or corrupt metric.
+	 * Always parse MySQL GMT in UTC, independent of the PHP site timezone.
+	 *
+	 * @return string|WP_Error
+	 */
+	private static function strict_cached_generated_at( string $value ) {
+		if ( 1 !== preg_match( '/\\A\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\z/', $value ) ) {
+			return self::error( 'spdb_metric_snapshot_timestamp_invalid', __( 'A cached analytics timestamp is invalid; live freshness cannot be established.', 'sabri-publishing-dashboard' ), 503 );
+		}
+		try {
+			$date = DateTimeImmutable::createFromFormat( '!Y-m-d H:i:s', $value, new DateTimeZone( 'UTC' ) );
+		} catch ( Throwable $error ) {
+			$date = false;
+		}
+		if ( false === $date || $date->format( 'Y-m-d H:i:s' ) !== $value ) {
+			return self::error( 'spdb_metric_snapshot_timestamp_invalid', __( 'A cached analytics timestamp is invalid; live freshness cannot be established.', 'sabri-publishing-dashboard' ), 503 );
+		}
+		return gmdate( 'c', $date->getTimestamp() );
 	}
 
 	private static function safe_date( $value ): string {
