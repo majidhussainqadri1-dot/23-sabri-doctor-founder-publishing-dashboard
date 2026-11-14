@@ -55,6 +55,7 @@ jobs:
           find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
           node --check assets/js/dashboard.js
           node --check assets/js/operations.js
+          node tests/v12-3-browser-mutation-regression.js
       - name: Run all standalone repository tests
         shell: bash
         run: |
