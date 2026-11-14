@@ -63,7 +63,14 @@ final class SPDB_Automation_Engine {
 		}
 		$payload = is_array( $job['payload'] ?? null ) ? $job['payload'] : array();
 		$rule_id = sanitize_key( (string) ( $payload['rule_id'] ?? '' ) );
-		$expected_version = max( 1, (int) ( $payload['rule_version'] ?? 0 ) );
+		$raw_version = $payload['rule_version'] ?? null;
+		// JSON-persisted background rule revisions must be canonical positive
+		// integers. Coercion would turn "3spoof", "03" or 3.5 into revision 3
+		// (and a missing version into revision 1), bypassing stale-job denial.
+		if ( ! is_int( $raw_version ) || $raw_version < 1 ) {
+			return $this->error( 'spdb_automation_job_invalid', __( 'The queued rule version is invalid.', 'sabri-publishing-dashboard' ), 400 );
+		}
+		$expected_version = $raw_version;
 		if ( '' === $rule_id ) {
 			return $this->error( 'spdb_automation_job_invalid', __( 'The automation job is invalid.', 'sabri-publishing-dashboard' ), 400 );
 		}
