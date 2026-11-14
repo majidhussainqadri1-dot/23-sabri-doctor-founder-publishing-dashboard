@@ -86,5 +86,25 @@ $res = $engine->execute( $job );
 $check( is_wp_error( $res ) && 'spdb_automation_owner_mismatch' === $res->get_error_code(), 'Mismatched WordPress user context must not execute a different owner job.' );
 $check( 1 === $filter_calls, 'Wrong current session must not invoke native provider.' );
 
+// The version is an immutable queued-job precondition, not a best-effort
+// integer cast. A noncanonical version must never reach a native handler.
+$GLOBALS['spdb_test_user_id'] = 7;
+$GLOBALS['spdb_v123_status'] = 'approved';
+$GLOBALS['spdb_test_capabilities']['spdb_manage_automation_rules'] = true;
+foreach ( array( '3spoof', '03', 3.5, null ) as $bad_version ) {
+	$bad_job = $job;
+	$bad_job['payload']['rule_version'] = $bad_version;
+	$res = $engine->execute( $bad_job );
+	$check( is_wp_error( $res ) && 'spdb_automation_job_invalid' === $res->get_error_code(), 'Malformed queued rule version must be rejected, not cast to 3.' );
+	$check( 1 === $filter_calls, 'Malformed queued version must not execute a native callback.' );
+}
+$missing_version = $job;
+unset( $missing_version['payload']['rule_version'] );
+$wpdb->rule['version'] = 1;
+$res = $engine->execute( $missing_version );
+$check( is_wp_error( $res ) && 'spdb_automation_job_invalid' === $res->get_error_code(), 'Missing queued version cannot silently become version 1.' );
+$check( 1 === $filter_calls, 'Missing version must not run the first rule revision.' );
+$wpdb->rule['version'] = 3;
+
 if ( $failed ) { fwrite( STDERR, "{$failed} / {$checks} V12.3 automation owner/revocation checks failed.\n" ); exit( 1 ); }
 echo "All {$checks} V12.3 automation owner/revocation checks passed (source only).\n";
