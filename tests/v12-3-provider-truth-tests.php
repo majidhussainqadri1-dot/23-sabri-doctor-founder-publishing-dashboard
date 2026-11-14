@@ -15,9 +15,10 @@ require_once __DIR__ . '/bootstrap.php';
 final class SPDB_V123_Truth_DB {
     public string $prefix = 'wp_';
     public bool $fail_reads = false;
+    public array $rows = array();
     public function prepare( string $sql, ...$args ): string { return $sql; }
     public function get_results( string $sql, $output = null ) {
-        return $this->fail_reads ? null : array();
+        return $this->fail_reads ? null : $this->rows;
     }
 }
 
@@ -110,6 +111,30 @@ $full_model = $more;
 $full_model['completeness'] = 'complete';
 $normal_csv = $render_csv->invoke( $renderer, $full_model );
 $check( false === strpos( $normal_csv, 'report_completeness_PARTIAL' ), 'Complete CSV must not receive an incorrect partial warning.' );
+
+// A malformed/stale cache timestamp must not be presented as generated NOW.
+// The repository normalization only checks text shape and can pass Feb 30.
+$metric_snapshot = array(
+    'snapshot_id' => 'bad_snapshot', 'provider_key' => 'file21', 'metric_key' => 'views',
+    'scope' => 'own', 'owner_user_id' => 7,
+    'period_start_gmt' => '2026-02-01 00:00:00', 'period_end_gmt' => '2026-02-28 00:00:00',
+    'definition_hash' => str_repeat( 'a', 64 ),
+    'value_json' => json_encode( array( 'value' => 42, 'unit' => 'count', 'label' => 'Views',
+        'definition' => 'Verified aggregate views', 'interval' => 'daily' ) ),
+    'cohort_count' => 30, 'privacy_threshold' => 20,
+    'generated_at_gmt' => '2026-02-30 12:00:00',
+    'expires_at_gmt' => '2099-01-01 00:00:00',
+);
+$database->rows = array( $metric_snapshot );
+$bad_freshness = $empty->analytics( array( 'scope' => 'own' ) );
+$check( is_wp_error( $bad_freshness ) && 'spdb_metric_snapshot_timestamp_invalid' === $bad_freshness->get_error_code(), 'Impossible cached GMT date must fail closed, not silently roll into a valid-looking date.' );
+$database->rows[0]['generated_at_gmt'] = '';
+$blank_freshness = $empty->analytics( array( 'scope' => 'own' ) );
+$check( is_wp_error( $blank_freshness ) && 'spdb_metric_snapshot_timestamp_invalid' === $blank_freshness->get_error_code(), 'Missing cached timestamp must never be replaced with current time.' );
+$database->rows[0]['generated_at_gmt'] = '2026-02-28 12:00:00';
+$valid_freshness = $empty->analytics( array( 'scope' => 'own' ) );
+$check( is_array( $valid_freshness ) && 'bounded_cached_snapshot' === ( $valid_freshness['source'] ?? '' ), 'Valid cached GMT timestamps remain available.' );
+$database->rows = array();
 
 if ( $failed ) { fwrite( STDERR, "{$failed} / {$checks} V12.3 provider truth checks failed.\n" ); exit( 1 ); }
 echo "All {$checks} V12.3 provider truth checks passed; Hostinger runtime remains unverified.\n";
