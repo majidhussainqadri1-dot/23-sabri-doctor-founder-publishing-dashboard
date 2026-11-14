@@ -22,6 +22,7 @@ final class SPDB_V123_Truth_DB {
 }
 
 final class SPDB_V123_Failed_Source implements SPDB_Provider_Adapter, SPDB_Operational_Projection_Provider {
+    public static bool $provide_page = false;
     public function get_provider_key(): string { return 'failed_source'; }
     public function get_provider_name(): string { return 'Synthetic Native Source'; }
     public function get_provider_version(): string { return '1.0.0'; }
@@ -38,7 +39,16 @@ final class SPDB_V123_Failed_Source implements SPDB_Provider_Adapter, SPDB_Opera
     public function get_allowed_operations( string $object_type, string $object_id ): array { return array(); }
     public function execute_operation( string $operation_key, string $object_type, string $object_id, array $payload ) { return new WP_Error( 'provider_unavailable', 'No writes' ); }
     public function get_operational_projection_domains(): array { return array( 'sources' ); }
-    public function list_operational_projections( string $domain, array $query ) { return new WP_Error( 'source_read_unavailable', 'Private native failure text must not leak.' ); }
+    public function list_operational_projections( string $domain, array $query ) {
+        if ( self::$provide_page ) {
+            return array( 'items' => array( array(
+                'object_type' => 'source_record', 'object_id' => 'src-1', 'native_version' => 'v1',
+                'title' => 'Source', 'status' => 'verified', 'updated_at' => '2026-11-14T00:00:00Z',
+                'privacy_class' => 'restricted'
+            ) ), 'total' => 2, 'has_more' => true, 'generated_at' => '2026-11-14T00:00:00Z' );
+        }
+        return new WP_Error( 'source_read_unavailable', 'Private native failure text must not leak.' );
+    }
 }
 
 $checks = 0;
@@ -50,6 +60,7 @@ $check = static function ( bool $valid, string $message ) use ( &$checks, &$fail
 
 $GLOBALS['spdb_test_capabilities']['spdb_view_own_content'] = true;
 $GLOBALS['spdb_test_capabilities']['spdb_view_own_analytics'] = true;
+$GLOBALS['spdb_test_capabilities']['spdb_export_reports'] = true;
 $database = new SPDB_V123_Truth_DB();
 $GLOBALS['wpdb'] = $database;
 $repository = new SPDB_Operations_Repository();
@@ -73,6 +84,17 @@ $projection = $service->projections( 'sources' );
 $check( is_array( $projection ) && 'source_read_unavailable' === ( $projection['provider_errors']['failed_source'] ?? '' ), 'Native source typed failure preserved without error message.' );
 $check( is_array( $projection ) && 'provider_unavailable' === ( $projection['empty_reason'] ?? '' ), 'Known failing provider cannot be falsely reported as absent.' );
 $check( is_array( $projection ) && false === ( $projection['data_complete'] ?? null ), 'Failed native projection never claims complete data.' );
+
+$partial_from_error = $service->report( 'source_completeness', 'own' );
+$check( is_array( $partial_from_error ) && 'partial' === ( $partial_from_error['completeness'] ?? '' ), 'Report with provider error must explicitly disclose partial completeness.' );
+$check( is_array( $partial_from_error ) && false !== stripos( (string) ( $partial_from_error['limitations'] ?? '' ), 'incomplete' ), 'Incomplete report must carry a human-readable limitation.' );
+
+SPDB_V123_Failed_Source::$provide_page = true;
+$more = $service->report( 'source_completeness', 'own' );
+$check( is_array( $more ) && 1 === count( $more['rows'] ?? array() ), 'Partial native page still exports its one allowed row.' );
+$check( is_array( $more ) && 'partial' === ( $more['completeness'] ?? '' ), 'Paged report cannot silently claim full coverage.' );
+$check( is_array( $more ) && true === ( $more['more_records_available'] ?? false ), 'Report must expose native has_more evidence.' );
+SPDB_V123_Failed_Source::$provide_page = false;
 
 if ( $failed ) { fwrite( STDERR, "{$failed} / {$checks} V12.3 provider truth checks failed.\n" ); exit( 1 ); }
 echo "All {$checks} V12.3 provider truth checks passed; Hostinger runtime remains unverified.\n";
