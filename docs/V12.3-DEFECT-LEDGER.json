@@ -4,8 +4,8 @@
   "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
   "separate_realities": true,
   "counting": {
-    "confirmed_new_source_findings": 13,
-    "source_fixes_on_work_branch": 13,
+    "confirmed_new_source_findings": 14,
+    "source_fixes_on_work_branch": 14,
     "negative_test_red_checkpoint": "4d3e7ca1979632b39ead1be08dff2b87db6f8030",
     "confirmed_red_ci": "Baseline Integrity #43592646413 (PHP 8.0/8.1/8.2/8.3 failures from new negative test)",
     "source_ci_green_checkpoint": "ac9dae742de2648659abed873a67ec63e79bfe56",
@@ -80,7 +80,9 @@
     "last_source_correction_sha": "002f694a825ebf1ce14d48ed2423a6742cce2123",
     "audit_bounded_red_sha": "6d4b84fddb4631ee738789f460e1f43f7d159cc8",
     "audit_bounded_green_sha": "eee9a558bee43b0e58b7c57d6fcfad36f07da94d",
-    "audit_bounded_green_workflows": 5
+    "audit_bounded_green_workflows": 5,
+    "projection_completeness_red_sha": "822f345bdcc1dc2209ec73b9de96ea0c11ee6c9c",
+    "projection_completeness_fix_sha": "c5af61665d713d7150fcdf3d45c048086541977e"
   },
   "records": [
     {
@@ -338,6 +340,25 @@
         "includes/class-spdb-operations-repository.php",
         "tests/v12-3-bounded-audit-health-tests.php"
       ],
+      "staging": "pending",
+      "live": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-014",
+      "kind": "native-projection-page-truth",
+      "severity": "P2",
+      "status": "source-corrected-baseline-and-fullplan-green-final-release-in-progress",
+      "finding": "Native projection returned has_more=true but data_complete=true whenever no source error and at least one compatible provider was recorded, falsely certifying an intermediate page as complete.",
+      "root_cause": "Projection data_complete computed using only provider count and errors, ignoring has_more returned by native provider or File23 cap.",
+      "red_test_sha": "822f345bdcc1dc2209ec73b9de96ea0c11ee6c9c",
+      "red_ci": "File 23 Full Plan Completion run #43605207692 failed exactly 1 of 32 V12.3 provider truth assertions before patch; all four PHP matrix jobs exposed failure.",
+      "source_correction_sha": "c5af61665d713d7150fcdf3d45c048086541977e",
+      "fix_paths": [
+        "includes/class-spdb-operations-service.php",
+        "tests/v12-3-provider-truth-tests.php"
+      ],
+      "acceptance": "data_complete=false whenever provider reports has_more=true, keeping a separate has_more notification; no silent full-result claim.",
+      "remaining": "Real native-provider pagination/cursor and Hostinger acceptance not tested.",
       "staging": "pending",
       "live": "unverified"
     }
