@@ -2934,7 +2934,7 @@
         "docs/STAGING-CHECKLIST.md"
       ],
       "qa_refs": [
-        "QA-19"
+        "QA-18"
       ],
       "source_status": "plan-mapped-not-executed",
       "individual_source_test": "not-yet-verified",
@@ -2954,7 +2954,7 @@
         "docs/STAGING-CHECKLIST.md"
       ],
       "qa_refs": [
-        "QA-20"
+        "QA-19"
       ],
       "source_status": "plan-mapped-not-executed",
       "individual_source_test": "not-yet-verified",
@@ -2974,7 +2974,7 @@
         "docs/STAGING-CHECKLIST.md"
       ],
       "qa_refs": [
-        "QA-21"
+        "QA-20"
       ],
       "source_status": "plan-mapped-not-executed",
       "individual_source_test": "not-yet-verified",
@@ -2994,7 +2994,7 @@
         "docs/STAGING-CHECKLIST.md"
       ],
       "qa_refs": [
-        "QA-22"
+        "QA-21"
       ],
       "source_status": "plan-mapped-not-executed",
       "individual_source_test": "not-yet-verified",
@@ -3014,7 +3014,7 @@
         "docs/STAGING-CHECKLIST.md"
       ],
       "qa_refs": [
-        "QA-23"
+        "QA-22"
       ],
       "source_status": "plan-mapped-not-executed",
       "individual_source_test": "not-yet-verified",
@@ -3034,7 +3034,7 @@
         "docs/STAGING-CHECKLIST.md"
       ],
       "qa_refs": [
-        "QA-24"
+        "QA-22"
       ],
       "source_status": "plan-mapped-not-executed",
       "individual_source_test": "not-yet-verified",
@@ -3054,7 +3054,7 @@
         "docs/STAGING-CHECKLIST.md"
       ],
       "qa_refs": [
-        "QA-25"
+        "QA-24"
       ],
       "source_status": "plan-mapped-not-executed",
       "individual_source_test": "not-yet-verified",
@@ -3074,7 +3074,7 @@
         "docs/STAGING-CHECKLIST.md"
       ],
       "qa_refs": [
-        "QA-26"
+        "QA-23"
       ],
       "source_status": "plan-mapped-not-executed",
       "individual_source_test": "not-yet-verified",
