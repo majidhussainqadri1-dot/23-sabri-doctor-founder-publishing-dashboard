@@ -132,6 +132,9 @@ $check( is_array( $partial_from_error ) && false !== stripos( (string) ( $partia
 SPDB_V123_Failed_Source::$provide_page = true;
 $more = $service->report( 'source_completeness', 'own' );
 $check( is_array( $more ) && 1 === count( $more['rows'] ?? array() ), 'Partial native page still exports its one allowed row.' );
+$nonterminal_page = $service->projections( 'sources' );
+$check( is_array( $nonterminal_page ) && true === ( $nonterminal_page['has_more'] ?? false ), 'Native pagination reports more rows.' );
+$check( is_array( $nonterminal_page ) && false === ( $nonterminal_page['data_complete'] ?? true ), 'A verified first page must not advertise a fully complete source projection.' );
 $check( is_array( $more ) && 'partial' === ( $more['completeness'] ?? '' ), 'Paged report cannot silently claim full coverage.' );
 $check( is_array( $more ) && true === ( $more['more_records_available'] ?? false ), 'Report must expose native has_more evidence.' );
 SPDB_V123_Failed_Source::$provide_page = false;
