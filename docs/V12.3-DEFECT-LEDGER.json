@@ -4,8 +4,8 @@
   "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
   "separate_realities": true,
   "counting": {
-    "confirmed_new_source_findings": 6,
-    "source_fixes_on_work_branch": 6,
+    "confirmed_new_source_findings": 7,
+    "source_fixes_on_work_branch": 7,
     "negative_test_red_checkpoint": "4d3e7ca1979632b39ead1be08dff2b87db6f8030",
     "confirmed_red_ci": "Baseline Integrity #43592646413 (PHP 8.0/8.1/8.2/8.3 failures from new negative test)",
     "source_ci_green_checkpoint": "ac9dae742de2648659abed873a67ec63e79bfe56",
@@ -49,7 +49,18 @@
       "File 23 Final Release Candidate": 43599096809,
       "File23 V12.1 Real MariaDB Source Integration": 43599096811,
       "File23 V12.1 Locked PDF Runtime Supply Chain": 43599096868
-    }
+    },
+    "account_ids_red_sha": "a88e10f7a4457a52a01f11a9494b3a7ba3305440",
+    "account_ids_red_ci": {
+      "baseline_run": 43599454728,
+      "final_release_run": 43599454740
+    },
+    "account_ids_source_fix_sha": "682de37092aa3c6b71fc3201d631bddbc0c58ed5",
+    "account_ids_source_ci_green_checkpoint": "5aa13820a58ac5f61c1a2700bde759ef64b7eff0",
+    "account_ids_green_baseline": 43599643838,
+    "account_ids_green_final_release": 43599643840,
+    "fpi24_structural_source_audit_added": true,
+    "fpi24_structural_source_test_pending_final_ci": true
   },
   "records": [
     {
@@ -166,6 +177,19 @@
       "test": "tests/v12-3-task-pagination-tests.php",
       "green_source_checkpoint": "95c9aeb16c25e3d8da7c2eef7322b2feb109b935",
       "host_acceptance": "pending"
+    },
+    {
+      "id": "F23-V12.3-DEF-007",
+      "kind": "source-identity-validation-canonicalization",
+      "severity": "P1",
+      "status": "source-fixed-baseline-and-final-release-green-at-checkpoint-live-unverified",
+      "finding": "Task assignee and delegation account IDs accepted noncanonical request values such as 7spoof, 07, floating 7.5 and oversized string through (int) coercion, potentially changing target user identity.",
+      "root_cause": "Raw nontrusted JSON account identifiers were cast to integer before authorization instead of being validated as canonical positive integer identities.",
+      "red_test": "tests/v12-3-strict-account-ids-tests.php red CI at a88e10f7a4457a52a01f11a9494b3a7ba3305440 Baseline #43599454728",
+      "patch": "includes/class-spdb-governance-service.php strict_positive_user_id; applied to task create/update and delegation create; reject noncanonical and overflow values before DB.",
+      "positive_control": "Valid canonical integer 7 reaches a synthetic fake repository; malformed task/delegation IDs deny with typed WP_Error and 0 writes.",
+      "green_source_checkpoint": "5aa13820a58ac5f61c1a2700bde759ef64b7eff0; Baseline #43599643838 and Final #43599643840 passed; full-plan run cancelled by newer push, not a failure",
+      "host_acceptance": "unverified"
     }
   ],
   "separate_findings": {
@@ -184,6 +208,15 @@
       "original_scope": "V12.3-01..V12.3-10 from Master Plan Ch.10",
       "result": "All ten added as owner-scoped, source-unverified, staging-pending, live-unverified records; no functionality claimed",
       "test": "tests/v12-3-source-crosswalk-tests.php"
+    },
+    "fpi24_source_mapping": {
+      "feature_count": 24,
+      "P0": 12,
+      "P1": 10,
+      "P2": 2,
+      "source_path": "docs/V12.3-FPI24-SOURCE-AUDIT.json",
+      "test": "tests/v12-3-fpi24-source-audit-tests.php",
+      "classification": "24 individual static source catalogue/evaluator mappings; not provider runtime/staging/live acceptance"
     }
   },
   "release": {
@@ -198,6 +231,6 @@
     "live_verified_fixes": 0,
     "latest_source_green_checkpoint": "e242784c116c706bad68e463acd264780b9469c4",
     "requirement_census": 187,
-    "source_fixed_total_on_draft_pr_33": 6
+    "source_fixed_total_on_draft_pr_33": 7
   }
 }
