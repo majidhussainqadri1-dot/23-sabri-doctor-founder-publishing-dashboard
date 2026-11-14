@@ -158,6 +158,7 @@ jobs:
           find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
           node --check assets/js/dashboard.js
           node --check assets/js/operations.js
+          node tests/v12-3-browser-mutation-regression.js
           for suite in tests/*-tests.php; do php -d display_errors=1 -d error_reporting=E_ALL "$suite"; done
           php tests/architecture-guard.php
       - name: Verify governing-plan, accessibility and private-cache boundaries
