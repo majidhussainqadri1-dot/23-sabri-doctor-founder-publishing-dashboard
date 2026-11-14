@@ -173,6 +173,7 @@ final class SPDB_Dashboard_Page {
 					'saved'   => __( 'Saved successfully.', 'sabri-publishing-dashboard' ),
 					'queued'  => __( 'The request was queued successfully.', 'sabri-publishing-dashboard' ),
 					'failed'  => __( 'The request could not be completed.', 'sabri-publishing-dashboard' ),
+					'secureUnavailable' => __( 'A secure browser connection is required before this operation can be submitted.', 'sabri-publishing-dashboard' ),
 					'confirm' => __( 'Confirm this audited operation?', 'sabri-publishing-dashboard' ),
 				),
 			)
