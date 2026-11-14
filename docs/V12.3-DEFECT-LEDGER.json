@@ -4,8 +4,8 @@
   "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
   "separate_realities": true,
   "counting": {
-    "confirmed_new_source_findings": 8,
-    "source_fixes_on_work_branch": 8,
+    "confirmed_new_source_findings": 11,
+    "source_fixes_on_work_branch": 11,
     "negative_test_red_checkpoint": "4d3e7ca1979632b39ead1be08dff2b87db6f8030",
     "confirmed_red_ci": "Baseline Integrity #43592646413 (PHP 8.0/8.1/8.2/8.3 failures from new negative test)",
     "source_ci_green_checkpoint": "ac9dae742de2648659abed873a67ec63e79bfe56",
@@ -74,7 +74,9 @@
       "File 23 Final Release Candidate": 43600226616,
       "File23 V12.1 Real MariaDB Source Integration": 43600226700,
       "File23 V12.1 Locked PDF Runtime Supply Chain": 43600226635
-    }
+    },
+    "latest_red_freshness_run": 43604084327,
+    "last_new_source_corrective_sha": "6d6878ebfad6958d89f709c41d3414bf1361e066"
   },
   "records": [
     {
@@ -216,6 +218,67 @@
       "patch": "Source-health per-list ready/unavailable, privacy-safe typed codes, data_complete false; templates/tasks.php announces unavailability instead of false-empty states in tasks/delegations/rules.",
       "test": "Synthetic database get_results failures and expected source-health status; CI checkpoint a82bbab73da079b3f8718a5fa39eb315e0ba9fff all five successful workflows.",
       "host_acceptance": "pending"
+    },
+    {
+      "id": "F23-V12.3-DEF-009",
+      "kind": "provider-projection-truth",
+      "severity": "P1",
+      "status": "fixed-in-source-source-ci-green-at-checkpoint-live-unverified",
+      "finding": "On SQL cached-metric read failure, analytics silently returned an empty live_provider response; a failing native operational provider was misreported as nonexistent/no eligible items",
+      "root_cause": "WP_Error from list_metric_snapshots was swallowed and default source was live_provider; empty_reason considered only successful providers",
+      "red_test_sha": "c31c83a310a03338b86fc49b2acc0c3f52a7365c",
+      "red_ci": "File23 Full Plan Completion #43603229920 and Final Release Candidate #43603229961 (5 of 8 source assertions failed)",
+      "source_correction_sha": "dd1d5792dedf67b523a651563bb07f99d3328a07",
+      "fix_paths": [
+        "includes/class-spdb-operations-service.php",
+        "templates/operations.php",
+        "templates/analytics.php"
+      ],
+      "tests": [
+        "tests/v12-3-provider-truth-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-010",
+      "kind": "export-report-completeness",
+      "severity": "P1",
+      "status": "fixed-in-source-candidate-hostinger-unverified",
+      "finding": "A provider error or native has_more true could produce a purported report without explicit partial/completeness or rows-remaining metadata; partial CSV was indistinguishable from complete results",
+      "root_cause": "report() silently converted first limited provider page into report rows and render_csv discarded limitations fields",
+      "red_test_sha": "9d9fe29b700e7a428ff43193f55a2fa18ddc60af",
+      "red_ci": "File 23 Full Plan Completion #43603572742 (4 of 13 report truth checks failed)",
+      "source_correction_sha": "6619e7c7035bbb3224da1fe51ccbfa52861281b0",
+      "fix_paths": [
+        "includes/class-spdb-operations-service.php",
+        "includes/class-spdb-export-service.php"
+      ],
+      "tests": [
+        "tests/v12-3-provider-truth-tests.php"
+      ],
+      "remaining": "Real Hostinger CSV/PDF/HTML/JSON/ICS acceptance; CSV schema adds a partial-status column when incomplete; any previously consuming integration must review it",
+      "staging": "pending",
+      "live": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-011",
+      "kind": "cached-analytics-freshness",
+      "severity": "P1",
+      "status": "fixed-in-source-baseline-ci-green-staging-unverified",
+      "finding": "An absent or impossible cached generated_at_gmt timestamp was silently replaced with the current wall-clock time or normalized to a different date, creating fabricated freshness",
+      "root_cause": "gmdate('c', strtotime(invalid) ?: time()) lacked strict UTC validation",
+      "red_test_sha": "d0f71aa181c10797e2400ade05ea246747f72690",
+      "red_ci": "File 23 Final Release Candidate #43604084327 failed 2 of 20 freshness checks before correction",
+      "source_correction_sha": "6d6878ebfad6958d89f709c41d3414bf1361e066",
+      "fix_paths": [
+        "includes/class-spdb-operations-service.php"
+      ],
+      "tests": [
+        "tests/v12-3-provider-truth-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified"
     }
   ],
   "separate_findings": {
