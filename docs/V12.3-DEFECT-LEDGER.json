@@ -4,8 +4,8 @@
   "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
   "separate_realities": true,
   "counting": {
-    "confirmed_new_source_findings": 7,
-    "source_fixes_on_work_branch": 7,
+    "confirmed_new_source_findings": 8,
+    "source_fixes_on_work_branch": 8,
     "negative_test_red_checkpoint": "4d3e7ca1979632b39ead1be08dff2b87db6f8030",
     "confirmed_red_ci": "Baseline Integrity #43592646413 (PHP 8.0/8.1/8.2/8.3 failures from new negative test)",
     "source_ci_green_checkpoint": "ac9dae742de2648659abed873a67ec63e79bfe56",
@@ -60,7 +60,21 @@
     "account_ids_green_baseline": 43599643838,
     "account_ids_green_final_release": 43599643840,
     "fpi24_structural_source_audit_added": true,
-    "fpi24_structural_source_test_pending_final_ci": true
+    "fpi24_structural_source_test_pending_final_ci": true,
+    "studio_false_empty_red_sha": "cc219a2c673bbbb1f5607ac7583b3d45acb1dfcf",
+    "studio_false_empty_red_ci": {
+      "baseline_run": 43600099487,
+      "full_plan_run": 43600099572,
+      "final_release_run": 43600099526
+    },
+    "studio_false_empty_green_sha": "a82bbab73da079b3f8718a5fa39eb315e0ba9fff",
+    "studio_false_empty_green_ci": {
+      "Baseline Integrity": 43600226663,
+      "File 23 Full Plan Completion": 43600226688,
+      "File 23 Final Release Candidate": 43600226616,
+      "File23 V12.1 Real MariaDB Source Integration": 43600226700,
+      "File23 V12.1 Locked PDF Runtime Supply Chain": 43600226635
+    }
   },
   "records": [
     {
@@ -190,6 +204,18 @@
       "positive_control": "Valid canonical integer 7 reaches a synthetic fake repository; malformed task/delegation IDs deny with typed WP_Error and 0 writes.",
       "green_source_checkpoint": "5aa13820a58ac5f61c1a2700bde759ef64b7eff0; Baseline #43599643838 and Final #43599643840 passed; full-plan run cancelled by newer push, not a failure",
       "host_acceptance": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-008",
+      "kind": "source-data-health-false-empty-state",
+      "severity": "P1",
+      "status": "source-fixed-five-ci-green-at-checkpoint-live-unverified",
+      "finding": "SPDB_Governance_Service::snapshot() converted SQL WP_Error/unavailable task, delegation and automation rule queries to empty arrays without signaling read failure; tasks UI inaccurately said 'No eligible tasks'.",
+      "root_cause": "Repository read failure was normalized to empty presentation arrays without source-state metadata or accessible error output.",
+      "red_test": "tests/v12-3-studio-source-health-tests.php, Baseline red on SHA cc219a2c673bbbb1f5607ac7583b3d45acb1dfcf run 43600099487",
+      "patch": "Source-health per-list ready/unavailable, privacy-safe typed codes, data_complete false; templates/tasks.php announces unavailability instead of false-empty states in tasks/delegations/rules.",
+      "test": "Synthetic database get_results failures and expected source-health status; CI checkpoint a82bbab73da079b3f8718a5fa39eb315e0ba9fff all five successful workflows.",
+      "host_acceptance": "pending"
     }
   ],
   "separate_findings": {
@@ -231,6 +257,7 @@
     "live_verified_fixes": 0,
     "latest_source_green_checkpoint": "e242784c116c706bad68e463acd264780b9469c4",
     "requirement_census": 187,
-    "source_fixed_total_on_draft_pr_33": 7
+    "source_fixed_total_on_draft_pr_33": 8,
+    "verified_source_green_checkpoint": "a82bbab73da079b3f8718a5fa39eb315e0ba9fff"
   }
 }
