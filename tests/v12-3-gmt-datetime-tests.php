@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/bootstrap.php';
 $service = (new ReflectionClass(SPDB_Governance_Service::class))->newInstanceWithoutConstructor();
 $parse = new ReflectionMethod(SPDB_Governance_Service::class, 'datetime');
+$parse->setAccessible(true); // PHP 8.0 requires explicit access for private reflection tests.
 $assertions = 0; $failed = 0;
 $assert = static function (bool $ok, string $why) use (&$assertions, &$failed): void {
     ++$assertions;
