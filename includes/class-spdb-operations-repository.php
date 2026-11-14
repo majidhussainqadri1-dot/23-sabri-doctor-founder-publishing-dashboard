@@ -935,7 +935,7 @@ final class SPDB_Operations_Repository {
 			self::array_output()
 		);
 		if ( is_array( $existing ) ) {
-			return $this->normalize_job_row( $existing );
+			return $this->validated_existing_job_reuse( $existing, $owner_user_id, $json );
 		}
 
 		$now = current_time( 'mysql', true );
@@ -962,11 +962,34 @@ final class SPDB_Operations_Repository {
 				self::array_output()
 			);
 			if ( is_array( $existing ) ) {
-				return $this->normalize_job_row( $existing );
+				return $this->validated_existing_job_reuse( $existing, $owner_user_id, $json );
 			}
 			return self::error( 'spdb_job_enqueue_failed', __( 'The background job could not be queued.', 'sabri-publishing-dashboard' ), 500 );
 		}
 		return $this->get_job( (string) $row['job_id'] );
+	}
+
+	/**
+	 * An idempotency key is not a cross-owner job lookup credential. Only the
+	 * same owner and byte-identical encoded action may reuse the queued item.
+	 * Apply this gate to both initial SELECT and INSERT-unique-key race paths.
+	 *
+	 * @param array<string,mixed> $existing Existing SQL row.
+	 * @return array<string,mixed>|WP_Error
+	 */
+	private function validated_existing_job_reuse( array $existing, int $owner_user_id, string $payload_json ) {
+		$stored_owner = $existing['owner_user_id'] ?? null;
+		if (
+			! ( is_string( $stored_owner ) || is_int( $stored_owner ) )
+			|| ! hash_equals( (string) $owner_user_id, (string) $stored_owner )
+		) {
+			return self::error( 'spdb_job_owner_conflict', __( 'A background job key belongs to another account.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		$stored_payload = $existing['payload_json'] ?? null;
+		if ( ! is_string( $stored_payload ) || ! hash_equals( $payload_json, $stored_payload ) ) {
+			return self::error( 'spdb_job_idempotency_payload_conflict', __( 'A background job key is already bound to another action.', 'sabri-publishing-dashboard' ), 409 );
+		}
+		return $this->normalize_job_row( $existing );
 	}
 
 	/** @return array<string,mixed>|WP_Error */
