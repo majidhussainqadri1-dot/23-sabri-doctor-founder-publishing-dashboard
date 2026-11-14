@@ -236,6 +236,9 @@ final class SPDB_Operations_Service {
 
 		$rows    = array();
 		$columns = array( 'provider', 'type', 'title', 'status', 'updated_at' );
+		$partial = false;
+		$has_more = false;
+		$source_status = 'unavailable';
 		$query   = array_merge( $filters, array( 'scope' => $scope, 'per_page' => SPDB_Admin_Settings::get()['max_export_rows'] ) );
 
 		if ( in_array( $report_key, array( 'content_performance', 'monthly_summary', 'institution_publishing', 'doctor_contributions' ), true ) ) {
@@ -243,6 +246,8 @@ final class SPDB_Operations_Service {
 			if ( is_wp_error( $analytics ) ) {
 				return $analytics;
 			}
+			$source_status = (string) ( $analytics['source'] ?? 'unavailable' );
+			$partial = 'live_provider' !== $source_status || empty( $analytics['data_complete'] ) || ! empty( $analytics['provider_errors'] );
 			$columns = array( 'provider', 'metric', 'label', 'value', 'unit', 'interval', 'suppressed' );
 			foreach ( $analytics['metrics'] as $metric ) {
 				$rows[] = array(
@@ -261,6 +266,9 @@ final class SPDB_Operations_Service {
 			if ( is_wp_error( $projection ) ) {
 				return $projection;
 			}
+			$has_more = ! empty( $projection['has_more'] ) || (int) ( $projection['total'] ?? 0 ) > count( $projection['items'] );
+			$partial = $has_more || empty( $projection['data_complete'] ) || ! empty( $projection['provider_errors'] );
+			$source_status = ! empty( $projection['provider_errors'] ) ? 'provider_unavailable' : ( empty( $projection['providers'] ) ? 'no_compatible_provider' : 'live_provider' );
 			foreach ( $projection['items'] as $item ) {
 				$rows[] = array(
 					'provider'   => $item['provider_key'],
@@ -272,13 +280,27 @@ final class SPDB_Operations_Service {
 			}
 		}
 
+		$max_rows = (int) SPDB_Admin_Settings::get()['max_export_rows'];
+		if ( count( $rows ) > $max_rows ) {
+			$partial = true;
+			$has_more = true;
+		}
+		$rows = array_slice( $rows, 0, $max_rows );
+		$limitations = __( 'This report contains only privacy-filtered provider projections and aggregates. It is not a raw analytics or native-record export.', 'sabri-publishing-dashboard' );
+		if ( $partial ) {
+			$limitations .= ' ' . __( 'Warning: This report is incomplete because a native source was unavailable, additional eligible records exist, or cached data was substituted. Do not treat missing rows as zero.', 'sabri-publishing-dashboard' );
+		}
 		return array(
-			'report_key'       => $report_key,
-			'scope'            => $scope,
-			'columns'          => $columns,
-			'rows'             => array_slice( $rows, 0, (int) SPDB_Admin_Settings::get()['max_export_rows'] ),
-			'generated_at_gmt' => gmdate( 'c' ),
-			'limitations'      => __( 'This report contains only current privacy-filtered provider projections and aggregates. It is not a raw analytics or native-record export.', 'sabri-publishing-dashboard' ),
+			'report_key'            => $report_key,
+			'scope'                 => $scope,
+			'columns'               => $columns,
+			'rows'                  => $rows,
+			'included_rows'         => count( $rows ),
+			'completeness'          => $partial ? 'partial' : 'complete',
+			'more_records_available'=> $has_more,
+			'source_status'         => $source_status,
+			'generated_at_gmt'      => gmdate( 'c' ),
+			'limitations'           => $limitations,
 		);
 	}
 
