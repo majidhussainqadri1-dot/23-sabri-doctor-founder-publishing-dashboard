@@ -848,12 +848,23 @@ final class SPDB_Export_Service {
 		}
 		$columns = is_array( $model['columns'] ?? null ) ? $model['columns'] : array();
 		$rows    = is_array( $model['rows'] ?? null ) ? $model['rows'] : array();
-		fputcsv( $stream, $columns );
+		// HTML/PDF display report limitations and JSON keeps the model fields.
+		// CSV needs a machine-readable, first-row-visible warning as well:
+		// never output a partial provider page as an indistinguishable full CSV.
+		$partial = 'partial' === ( $model['completeness'] ?? '' );
+		$csv_headers = $columns;
+		if ( $partial ) {
+			$csv_headers[] = 'report_completeness_PARTIAL';
+		}
+		fputcsv( $stream, $csv_headers );
 		foreach ( $rows as $row ) {
 			$line = array();
 			foreach ( $columns as $column ) {
 				$value  = is_array( $row ) ? ( $row[ $column ] ?? '' ) : '';
 				$line[] = is_scalar( $value ) ? self::spreadsheet_safe( (string) $value ) : '';
+			}
+			if ( $partial ) {
+				$line[] = 'INCOMPLETE_REPORT';
 			}
 			fputcsv( $stream, $line );
 		}
