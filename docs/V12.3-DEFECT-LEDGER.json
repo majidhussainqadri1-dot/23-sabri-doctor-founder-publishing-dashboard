@@ -31,7 +31,15 @@
     },
     "latest_source_green_checkpoint": "e242784c116c706bad68e463acd264780b9469c4",
     "latest_source_green_workflows": 5,
-    "php80_test_harness_errors_corrected": 1
+    "php80_test_harness_errors_corrected": 1,
+    "v12_3_chapter10_omitted_ids_detected_and_mapped": 10,
+    "v12_3_crosswalk_current_distinct_mapped_ids": 187,
+    "v12_3_crosswalk_red_test_sha": "b2ddb1c5dadf23ab9b8bd47ce2340c58d4962264",
+    "v12_3_crosswalk_red_ci": {
+      "full_plan_run": 43598643967,
+      "final_release_run": 43598643980,
+      "baseline_run": 43598643973
+    }
   },
   "records": [
     {
@@ -146,6 +154,13 @@
       "category": "test-fixture-error-not-application-bug",
       "fix": "ReflectionMethod::setAccessible(true) for PHP8.0",
       "sha": "e242784c116c706bad68e463acd264780b9469c4"
+    },
+    "v12_3_chapter_10_mapping_gap": {
+      "classification": "documentation-requirement-coverage-omission-not-runtime-bug",
+      "count": 10,
+      "original_scope": "V12.3-01..V12.3-10 from Master Plan Ch.10",
+      "result": "All ten added as owner-scoped, source-unverified, staging-pending, live-unverified records; no functionality claimed",
+      "test": "tests/v12-3-source-crosswalk-tests.php"
     }
   },
   "release": {
@@ -158,6 +173,7 @@
     "go_no_go": "NO-GO",
     "no_merge": true,
     "live_verified_fixes": 0,
-    "latest_source_green_checkpoint": "e242784c116c706bad68e463acd264780b9469c4"
+    "latest_source_green_checkpoint": "e242784c116c706bad68e463acd264780b9469c4",
+    "requirement_census": 187
   }
 }
