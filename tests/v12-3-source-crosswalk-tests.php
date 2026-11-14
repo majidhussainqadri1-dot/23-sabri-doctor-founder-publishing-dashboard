@@ -23,7 +23,7 @@ foreach ( array( 'deployed_version', 'deployed_checksum', 'db_version', 'migrati
     $check( 'unverified' === ( $data['reality'][ $field ] ?? null ), 'Live state must remain unverified: ' . $field );
 }
 $rows = $data['requirements'] ?? array();
-$check( is_array( $rows ) && 177 === count( $rows ), 'Exactly 177 scoped first-pass requirement identities.' );
+$check( is_array( $rows ) && 187 === count( $rows ), 'Exactly 187 scoped requirement identities, including ten chapter-10 V12.3 corrections.' );
 $ids = array();
 $by_id = array();
 $kinds = array();
@@ -47,7 +47,7 @@ $expected_counts = array(
     'inherited_cv' => 70, 'inherited_aj' => 16, 'fpi' => 24,
     'file23_central' => 1, 'retained_sto_act' => 17, 'v12_3_mission' => 12,
     'v12_3_acceptance' => 10, 'ux_retained' => 14, 'v12_3_central_policy' => 9,
-    'retained_decision' => 4,
+    'retained_decision' => 4, 'v12_3_chapter_10_correction' => 10,
 );
 ksort( $expected_counts );
 ksort( $kinds );
@@ -67,6 +67,12 @@ $qa_by_mission = array(
 foreach ( $qa_by_mission as $mission => $qa ) {
     $check( isset( $by_id[$mission] ), 'Missing mission ' . $mission );
     $check( array( $qa ) === ( $by_id[$mission]['qa_refs'] ?? null ), $mission . ' must map to ' . $qa );
+}
+for ( $i = 1; $i <= 10; ++$i ) {
+    $id = sprintf( 'V12.3-%02d', $i );
+    $check( isset( $by_id[$id] ), 'V12.3 Chapter 10 correction must be mapped: ' . $id );
+    $check( ! isset( $by_id[$id] ) || 'v12_3_chapter_10_correction' === ( $by_id[$id]['kind'] ?? null ),
+        $id . ' must retain its distinct source-correction classification.' );
 }
 for ( $n = 15; $n <= 24; ++$n ) {
     $check( isset( $by_id['QA-' . $n] ), 'QA-' . $n . ' exists.' );
