@@ -5,6 +5,11 @@
  *
  * Source-only dynamic regression; it does not certify any Hostinger runtime.
  */
+define( 'SMC_VERSION', '1.0.1' );
+function smc_user_status( int $id ): string { return 'approved'; }
+function smc_is_founder( int $id ): bool { return 7 === $id; }
+function smc_is_trusted_publisher( int $id ): bool { return false; }
+function get_locale(): string { return 'en_US'; }
 require_once __DIR__ . '/bootstrap.php';
 
 final class SPDB_V123_Truth_DB {
