@@ -12,7 +12,9 @@
 	function scalarValue( value ) {
 		if ( 'true' === value ) { return true; }
 		if ( 'false' === value ) { return false; }
-		if ( /^-?\d+$/.test( value ) ) { return Number( value ); }
+		// Generic form fields can be textual even when they contain digits.
+		// Number() would strip leading zeroes and round integers > 2^53.
+		// Native REST field validators own numeric parsing, not this serializer.
 		return value;
 	}
 
