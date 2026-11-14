@@ -96,5 +96,20 @@ $check( is_array( $more ) && 'partial' === ( $more['completeness'] ?? '' ), 'Pag
 $check( is_array( $more ) && true === ( $more['more_records_available'] ?? false ), 'Report must expose native has_more evidence.' );
 SPDB_V123_Failed_Source::$provide_page = false;
 
+// CSV has no HTML/PDF limitation paragraph; incomplete status must be visible
+// in its first row without adding invented report data.
+$reflection = new ReflectionClass( SPDB_Export_Service::class );
+$renderer = $reflection->newInstanceWithoutConstructor();
+$render_csv = $reflection->getMethod( 'render_csv' );
+$render_csv->setAccessible( true );
+$csv = $render_csv->invoke( $renderer, $more );
+$check( is_string( $csv ) && false !== strpos( strtok( substr( $csv, 3 ), "\n" ), 'report_completeness_PARTIAL' ), 'Partial CSV must carry first-row warning even when rows are empty.' );
+$check( is_string( $csv ) && false !== strpos( $csv, 'INCOMPLETE_REPORT' ), 'All partial CSV data rows must retain explicit incompleteness status.' );
+$check( is_string( $csv ) && false === strpos( $csv, 'Private native failure text' ), 'Native provider private error text must never enter exported CSV.' );
+$full_model = $more;
+$full_model['completeness'] = 'complete';
+$normal_csv = $render_csv->invoke( $renderer, $full_model );
+$check( false === strpos( $normal_csv, 'report_completeness_PARTIAL' ), 'Complete CSV must not receive an incorrect partial warning.' );
+
 if ( $failed ) { fwrite( STDERR, "{$failed} / {$checks} V12.3 provider truth checks failed.\n" ); exit( 1 ); }
 echo "All {$checks} V12.3 provider truth checks passed; Hostinger runtime remains unverified.\n";
