@@ -469,12 +469,23 @@ final class SPDB_Governance_Service {
 		if ( $nullable && ( null === $value || '' === $value ) ) {
 			return null;
 		}
-		if ( ! is_scalar( $value ) ) {
+		if ( ! is_string( $value ) || '' === trim( $value ) ) {
+			return self::error( 'spdb_datetime_invalid', __( 'A date/time value is invalid.', 'sabri-publishing-dashboard' ), 400 );
+		}
+		$raw = trim( $value );
+		// The authoring UI explicitly labels these timestamps GMT. A naive
+		// datetime-local string must therefore mean UTC, not the mutable
+		// PHP/server timezone. Explicit offsets remain authoritative.
+		if ( 1 !== preg_match( '/^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}(?::\\d{2}(?:\\.\\d{1,6})?)?(?:Z|[+-]\\d{2}:\\d{2})?$/', $raw ) ) {
 			return self::error( 'spdb_datetime_invalid', __( 'A date/time value is invalid.', 'sabri-publishing-dashboard' ), 400 );
 		}
 		try {
-			$date = new DateTimeImmutable( (string) $value );
+			$date = new DateTimeImmutable( $raw, new DateTimeZone( 'UTC' ) );
+			$parse_errors = DateTimeImmutable::getLastErrors();
 		} catch ( Throwable $exception ) {
+			return self::error( 'spdb_datetime_invalid', __( 'A date/time value is invalid.', 'sabri-publishing-dashboard' ), 400 );
+		}
+		if ( is_array( $parse_errors ) && ( $parse_errors['warning_count'] > 0 || $parse_errors['error_count'] > 0 ) ) {
 			return self::error( 'spdb_datetime_invalid', __( 'A date/time value is invalid.', 'sabri-publishing-dashboard' ), 400 );
 		}
 		return $date->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
