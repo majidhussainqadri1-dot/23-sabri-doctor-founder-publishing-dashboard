@@ -52,6 +52,45 @@ final class SPDB_V123_Failed_Source implements SPDB_Provider_Adapter, SPDB_Opera
     }
 }
 
+/**
+ * Six privacy-safe feeds of 100 metrics each exercise the enforced 500-item
+ * response boundary without introducing any personal/clinical events.
+ */
+final class SPDB_V123_Aggregate_Source implements SPDB_Provider_Adapter, SPDB_Analytics_Provider {
+    public function __construct( private string $key ) {}
+    public function get_provider_key(): string { return $this->key; }
+    public function get_provider_name(): string { return 'Synthetic aggregate source'; }
+    public function get_provider_version(): string { return '1.0.0'; }
+    public function get_minimum_contract_version(): string { return '2.0.0'; }
+    public function get_maximum_contract_version(): string { return '2.9.9'; }
+    public function get_declared_capability_state(): string { return SPDB_Adapter_Registry::CAPABILITY_READ_ONLY; }
+    public function get_object_types(): array { return array( 'metric' ); }
+    public function get_privacy_classifications(): array { return array( 'public_content' ); }
+    public function get_supported_capabilities(): array { return array( 'spdb_view_own_analytics' ); }
+    public function get_operation_definitions(): array { return array(); }
+    public function health_check(): array { return array( 'healthy' => true ); }
+    public function list_items( array $query ) { return array( 'items' => array(), 'total' => 0 ); }
+    public function get_item( string $object_type, string $object_id ) { return new WP_Error( 'unavailable', 'No individual items' ); }
+    public function get_allowed_operations( string $object_type, string $object_id ): array { return array(); }
+    public function execute_operation( string $operation_key, string $object_type, string $object_id, array $payload ) { return new WP_Error( 'read_only', 'No writes' ); }
+    public function get_spdb_aggregate_metrics( array $query ) {
+        $metrics = array();
+        for ( $i = 0; $i < 100; ++$i ) {
+            $metrics[] = array(
+                'metric_key' => 'count_' . $i,
+                'label' => 'Aggregated count ' . $i,
+                'definition' => 'Privacy-thresholded aggregate event count.',
+                'value' => $i,
+                'unit' => 'count',
+                'interval' => 'daily',
+                'cohort_count' => 40,
+                'privacy_threshold' => 20,
+            );
+        }
+        return array( 'metrics' => $metrics );
+    }
+}
+
 $checks = 0;
 $failed = 0;
 $check = static function ( bool $valid, string $message ) use ( &$checks, &$failed ): void {
@@ -135,6 +174,19 @@ $database->rows[0]['generated_at_gmt'] = '2026-02-28 12:00:00';
 $valid_freshness = $empty->analytics( array( 'scope' => 'own' ) );
 $check( is_array( $valid_freshness ) && 'bounded_cached_snapshot' === ( $valid_freshness['source'] ?? '' ), 'Valid cached GMT timestamps remain available.' );
 $database->rows = array();
+
+$many_registry = new SPDB_Adapter_Registry();
+for ( $i = 0; $i < 6; ++$i ) {
+    $registered = $many_registry->register( new SPDB_V123_Aggregate_Source( 'aggregate_' . $i ) );
+    $check( true === $registered, 'Aggregate feed ' . $i . ' must register.' );
+}
+$many = new SPDB_Operations_Service( $many_registry, $repository );
+$bounded = $many->analytics( array( 'scope' => 'own' ) );
+$check( is_array( $bounded ) && 500 === count( $bounded['metrics'] ?? array() ), 'REST aggregate metric count remains bounded at 500.' );
+$check( is_array( $bounded ) && false === ( $bounded['data_complete'] ?? null ), '500-of-600 response must not advertise complete provider analytics.' );
+$check( is_array( $bounded ) && true === ( $bounded['more_metrics_available'] ?? false ), '500-of-600 response must disclose additional metrics.' );
+$bounded_report = $many->report( 'content_performance', 'own' );
+$check( is_array( $bounded_report ) && 'partial' === ( $bounded_report['completeness'] ?? '' ), 'Aggregate report must inherit analytics truncation warning.' );
 
 if ( $failed ) { fwrite( STDERR, "{$failed} / {$checks} V12.3 provider truth checks failed.\n" ); exit( 1 ); }
 echo "All {$checks} V12.3 provider truth checks passed; Hostinger runtime remains unverified.\n";
