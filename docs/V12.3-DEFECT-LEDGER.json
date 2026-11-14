@@ -1,0 +1,87 @@
+{
+  "schema": "file23-v12.3-defect-ledger-v1",
+  "date": "2026-11-14",
+  "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
+  "separate_realities": true,
+  "counting": {
+    "confirmed_new_source_findings": 2,
+    "source_fixes_on_work_branch": 2,
+    "negative_test_red_checkpoint": "4d3e7ca1979632b39ead1be08dff2b87db6f8030",
+    "confirmed_red_ci": "Baseline Integrity #43592646413 (PHP 8.0/8.1/8.2/8.3 failures from new negative test)",
+    "source_ci_green_checkpoint": "ac9dae742de2648659abed873a67ec63e79bfe56",
+    "green_workflows_at_checkpoint": 5,
+    "new_v12_3_crosswalk_mapping_errors_corrected": 8,
+    "unresolved_external_file23_issues": 3,
+    "live_verified_fixes": 0
+  },
+  "records": [
+    {
+      "id": "F23-V12.3-DEF-001",
+      "kind": "source-client-security",
+      "severity": "P2",
+      "status": "fixed-in-source-checkpoint-ci-passed-live-unverified",
+      "finding": "Browser form mutation generated a supposedly high-entropy idempotency key with Math.random when secure CSPRNG was absent",
+      "evidence": "assets/js/operations.js at f44ac45169c8c84c442184b5be2cb838adf12dae; negative test initially failed in CI",
+      "root_cause": "non-cryptographic fallback behind window.crypto guard",
+      "patch": "assets/js/operations.js; fail closed without window.crypto.getRandomValues or if it throws",
+      "test": "tests/v12-3-browser-mutation-regression.js",
+      "blocking_live": "Actual deployed code and real user journey unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-002",
+      "kind": "source-client-concurrency",
+      "severity": "P2",
+      "status": "fixed-in-source-checkpoint-ci-passed-live-unverified",
+      "finding": "Multiple submit events could dispatch overlapping requests while initial request was in-flight despite disabled button",
+      "evidence": "assets/js/operations.js original submit handler lacked data-spdb-submitting early return",
+      "root_cause": "disabled button did not guard programmatic/keyboard duplicate submit events",
+      "patch": "assets/js/operations.js; deny duplicate while submitting and preserve idempotency key during logical operation",
+      "test": "tests/v12-3-browser-mutation-regression.js",
+      "blocking_live": "UI real browser/assistive tech confirmation pending"
+    },
+    {
+      "id": "F23-V12.3-EXT-030",
+      "kind": "external-attestation-gate",
+      "severity": "P0-for-release",
+      "status": "open",
+      "github_issue": "File23 #30 and File20 #45",
+      "root_cause": "real trusted deployed artifact/schema/migration attestation contract not yet executed on Hostinger",
+      "needed": "File20 owner+operator attests actual installed bytes, DB/schema, migrations and environment; negative drift tests",
+      "not_a_live_bug_proof": true
+    },
+    {
+      "id": "F23-V12.3-EXT-031",
+      "kind": "external-runtime-acceptance",
+      "severity": "P1-for-release",
+      "status": "open",
+      "github_issue": "File23 #31",
+      "root_cause": "20,001+ workload source model does not prove real Hostinger Cron, concurrency, hold, backup restore",
+      "needed": "real staging 20,001+ mixed owner rows, interrupted resumable cleanup, rollback, cron",
+      "not_a_live_bug_proof": true
+    },
+    {
+      "id": "F23-V12.3-EXT-032",
+      "kind": "external-runtime-acceptance",
+      "severity": "P1-for-release",
+      "status": "open",
+      "github_issue": "File23 #32",
+      "root_cause": "candidate Unicode PDF renderer/CI does not prove Hostinger visual/copy-paste/limits/permissions",
+      "needed": "actual deployed PDF-vs-CSV parity, Urdu+Arabic RTL, renderer, origin/CDN privacy and rights license",
+      "not_a_live_bug_proof": true
+    }
+  ],
+  "separate_findings": {
+    "crosswalk_initial_mission_qa_link_errors": 8,
+    "corrected_in": "docs/V12.3-REQUIREMENT-CROSSWALK.json",
+    "classification": "new plan-map authoring correction, not existing File23 application bug"
+  },
+  "release": {
+    "main_changed": false,
+    "production_changed": false,
+    "staging_changed": false,
+    "external_independent_review_1": "pending",
+    "external_independent_review_2": "pending",
+    "founder_signoff": "pending",
+    "go_no_go": "NO-GO"
+  }
+}
