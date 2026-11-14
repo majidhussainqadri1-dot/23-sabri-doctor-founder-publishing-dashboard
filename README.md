@@ -1,5 +1,15 @@
 # File 23 — Doctor and Founder Publishing Dashboard
 
+## V12.3 evidence-first work (14 November 2026, Draft PR #33)
+
+- The active governing source is Master Plan **V12.3**. The earlier 1.3.0 source/plan baseline is retained rather than silently renamed; `docs/V12.3-REQUIREMENT-CROSSWALK.json` maps 177 inherited/additive requirement IDs at **identity/path level, not behavioral acceptance**.
+- `tests/v12-3-source-crosswalk-tests.php` enforces the first-pass census, exact M01–M12 to QA-15–QA-24 mapping and the explicit absence of staging/live proof.
+- `assets/js/operations.js` now rejects sensitive mutation dispatch without secure browser randomness, blocks in-flight duplicate submits and preserves numeric-looking task and audit text. `tests/v12-3-browser-mutation-regression.js` is executed by baseline, full-plan and final-release CI.
+- WP-00, the 16-work-package status and known defects are tracked in `docs/V12.3-LIVE-REALITY-FREEZE.json`, `docs/V12.3-DEFECT-LEDGER.json` and `docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md`.
+- **No approval for merge/deploy:** true installed artifact/DB/migration identity, File20 attestation, File23 issues #30/#31/#32, 10 native-owner contract gates, 13 known operational limitations, 2 genuinely independent reviews, Founder authorization, staging and live retest all remain unresolved. Repository checks must be read at the latest exact SHA.
+
+
+
 Private, role-aware, federated publishing operations for the Sabri Social Homeopathy Platform.
 
 ## Governing boundary
