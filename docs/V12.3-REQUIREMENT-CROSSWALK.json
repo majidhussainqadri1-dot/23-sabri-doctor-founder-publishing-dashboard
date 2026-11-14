@@ -6,7 +6,7 @@
   "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
   "rule": "187 distinct mapped in-scope/owner-relationship requirement identities, not 187 fully coded features; per-ID source/staging/live proof pending.",
   "census": {
-    "total_mapped": 198,
+    "total_mapped": 210,
     "by_kind": {
       "inherited_cv": 70,
       "inherited_aj": 16,
@@ -18,7 +18,8 @@
       "ux_retained": 14,
       "v12_3_central_policy": 20,
       "retained_decision": 4,
-      "v12_3_chapter_10_correction": 10
+      "v12_3_chapter_10_correction": 10,
+      "v12_2_governance_retained": 12
     },
     "individually_tested_accepted": null,
     "source_completion_denominator": null,
@@ -3077,6 +3078,259 @@
         "QA-21"
       ],
       "source_status": "catalogue-present-real-contract-pending",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G01",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File14/Founder/Medical editorial approval",
+      "file23_consumer_boundary": "File23 must not change public medical/evidence claims without approved editorial context",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-21",
+        "QA-23"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G02",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File22 general-private notes; File23 view",
+      "file23_consumer_boundary": "File23 may project authorized pending tasks but must not own File22 general nonclinical notes or native versions",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20",
+        "QA-23"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G03",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File22/CF04 media lifecycle",
+      "file23_consumer_boundary": "File23 consumes owner media scan/rights/grant status; no duplicate public media clearance or binary store",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-20",
+        "QA-22"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G04",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File20/24 deployment evidence",
+      "file23_consumer_boundary": "Do not infer exact deployed code/schema/migration/runtime from GitHub; File23 staging and live provenance need trusted attestations",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-24"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G05",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File24 assurance / native owners",
+      "file23_consumer_boundary": "File23 ID-to-route-to-policy-to-owner-to-test trace; live permalink, deployed version and actual acceptance remain distinct",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-24"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G06",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File20 menu registry",
+      "file23_consumer_boundary": "File23 embedded role views use only File20 canonical navigation/back/home, across RTL/LTR and mobile",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-16"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G07",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File25 design/visual QA",
+      "file23_consumer_boundary": "Dashboard responsive light/dark/RTL/LTR/role/state design requires real visual acceptance on exact build",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-16"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G08",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File20 settings / File23 local settings",
+      "file23_consumer_boundary": "File23 local controls must expose effective owner state and errors; avoid duplicating File20 global settings",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-24"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G09",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File24 UX research",
+      "file23_consumer_boundary": "First impression and task success from actual users/devices, not source screenshots or synthetic only",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-16"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G10",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File24 performance / File23 local routes",
+      "file23_consumer_boundary": "Source lab budgets separated from real origin/mobile/desktop field p75; no fabricated performance",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-17",
+        "QA-24"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G11",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "CF06 locale / File21 translations",
+      "file23_consumer_boundary": "Canonical owner of original and nine unique locales; File23 locale projection without extra translator truth or fabricated completion",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-18",
+        "QA-23"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "G12",
+      "kind": "v12_2_governance_retained",
+      "source": "V12.3 Chapter 10 (G01-G12 retained from V12.2), tables 50-51",
+      "canonical_owner": "File24/25 accessibility and UX",
+      "file23_consumer_boundary": "File23 studio role/locale/keyboard/screen-reader/assistive-tech and failure-state journeys must be measured on active deployed version",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-16",
+        "QA-24"
+      ],
+      "source_status": "retained-governance-mapped-not-individually-verified",
       "individual_source_test": "not-yet-verified",
       "staging_acceptance": "pending",
       "live_verification": "unverified",
