@@ -4,8 +4,8 @@
   "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
   "separate_realities": true,
   "counting": {
-    "confirmed_new_source_findings": 12,
-    "source_fixes_on_work_branch": 12,
+    "confirmed_new_source_findings": 13,
+    "source_fixes_on_work_branch": 13,
     "negative_test_red_checkpoint": "4d3e7ca1979632b39ead1be08dff2b87db6f8030",
     "confirmed_red_ci": "Baseline Integrity #43592646413 (PHP 8.0/8.1/8.2/8.3 failures from new negative test)",
     "source_ci_green_checkpoint": "ac9dae742de2648659abed873a67ec63e79bfe56",
@@ -77,7 +77,10 @@
     },
     "latest_red_freshness_run": 43604084327,
     "last_new_source_corrective_sha": "6d6878ebfad6958d89f709c41d3414bf1361e066",
-    "last_source_correction_sha": "002f694a825ebf1ce14d48ed2423a6742cce2123"
+    "last_source_correction_sha": "002f694a825ebf1ce14d48ed2423a6742cce2123",
+    "audit_bounded_red_sha": "6d4b84fddb4631ee738789f460e1f43f7d159cc8",
+    "audit_bounded_green_sha": "eee9a558bee43b0e58b7c57d6fcfad36f07da94d",
+    "audit_bounded_green_workflows": 5
   },
   "records": [
     {
@@ -299,6 +302,42 @@
         "tests/v12-3-provider-truth-tests.php"
       ],
       "acceptance": "Retain 500 aggregate limit; expose more_metrics_available true and data_complete false, propagate incompleteness into reports; display cached source timestamps",
+      "staging": "pending",
+      "live": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-013",
+      "kind": "audit-chain-scale-and-read-boundary",
+      "severity": "P1",
+      "status": "fixed-in-source-five-ci-green-staging-unverified",
+      "finding": "SPDB_Operations_Repository::audit_health() loaded the entire append-only audit table via unbounded SELECT * ORDER BY id ASC, risking exhaustion for long-lived File23 audit records.",
+      "root_cause": "Unbounded materialization before hash-chain verification; no continuation cap or result budget.",
+      "red_test_sha": "6d4b84fddb4631ee738789f460e1f43f7d159cc8",
+      "red_ci": "Baseline Integrity run #43604866872 failed 6 of 7 source QA checks before repair",
+      "source_correction_sha": "eee9a558bee43b0e58b7c57d6fcfad36f07da94d",
+      "green_ci": {
+        "baseline": 43604987679,
+        "full_plan": 43604987724,
+        "final_release": 43604987646,
+        "mariadb": 43604987609,
+        "pdf": 43604987660
+      },
+      "fixes": [
+        "500-row keyset bounded SQL",
+        "carry previous/event hash through every page",
+        "reject altered event in later page",
+        "stop safely on later SQL error",
+        "200-page bounded verification plus final one-row completeness probe"
+      ],
+      "limits": [
+        "At most 100,000 audit events verified per invocation; larger tables return scan_budget_exceeded, not a forged healthy state",
+        "Concurrent append/retention and exact staging SQL isolation not yet tested",
+        "No real Hostinger audit table, backup or migration evidence"
+      ],
+      "source_paths": [
+        "includes/class-spdb-operations-repository.php",
+        "tests/v12-3-bounded-audit-health-tests.php"
+      ],
       "staging": "pending",
       "live": "unverified"
     }
