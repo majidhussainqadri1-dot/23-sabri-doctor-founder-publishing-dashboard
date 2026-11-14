@@ -4,8 +4,8 @@
   "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
   "separate_realities": true,
   "counting": {
-    "confirmed_new_source_findings": 3,
-    "source_fixes_on_work_branch": 3,
+    "confirmed_new_source_findings": 5,
+    "source_fixes_on_work_branch": 5,
     "negative_test_red_checkpoint": "4d3e7ca1979632b39ead1be08dff2b87db6f8030",
     "confirmed_red_ci": "Baseline Integrity #43592646413 (PHP 8.0/8.1/8.2/8.3 failures from new negative test)",
     "source_ci_green_checkpoint": "ac9dae742de2648659abed873a67ec63e79bfe56",
@@ -14,7 +14,24 @@
     "unresolved_external_file23_issues": 3,
     "live_verified_fixes": 0,
     "numeric_text_red_sha": "da158d144c72f94d69fe06467b161b411f95288d",
-    "numeric_text_red_ci": "Baseline Integrity #43593459926; known failure on text leading-zero assertion"
+    "numeric_text_red_ci": "Baseline Integrity #43593459926; known failure on text leading-zero assertion",
+    "new_2026_11_14_source_fixes": 2,
+    "previous_2026_11_14_source_fixes": 3,
+    "boolean_text_red_sha": "0c9a4718f2ae61952f9b5ba7a0f35e8a5114edfa",
+    "boolean_text_red_ci": {
+      "baseline_run": 43597751670,
+      "full_plan_run": 43597751676,
+      "final_release_run": 43597751665
+    },
+    "gmt_red_sha": "6f795fd0f09a6a7280938be1d3d1af154933526e",
+    "gmt_red_ci": {
+      "baseline_run": 43598007224,
+      "full_plan_run": 43598007186,
+      "final_release_run": 43598007241
+    },
+    "latest_source_green_checkpoint": "e242784c116c706bad68e463acd264780b9469c4",
+    "latest_source_green_workflows": 5,
+    "php80_test_harness_errors_corrected": 1
   },
   "records": [
     {
@@ -82,12 +99,54 @@
       "patch": "assets/js/operations.js preserves digit-only text; boolean true/false remain explicit",
       "test": "tests/v12-3-browser-mutation-regression.js validates task title 0000123, 9007199254740993 description, audit reason 0007",
       "live": "not tested"
+    },
+    {
+      "id": "F23-V12.3-DEF-004",
+      "kind": "source-client-data-integrity",
+      "severity": "P2",
+      "status": "fixed-in-source-exact-head-ci-passed-live-unverified",
+      "finding": "Generic FormData scalarValue() globally converted text 'true' and 'false' to booleans even in task title/description/audit reason",
+      "root_cause": "Unconditional Boolean coercion instead of per-control typed serialization",
+      "red_test": "tests/v12-3-browser-mutation-regression.js (CI red at 0c9a4718f2ae61952f9b5ba7a0f35e8a5114edfa)",
+      "patch": "assets/js/operations.js, keep input text verbatim and normalize actual checkboxes only",
+      "negative_tests": [
+        "'true' text title preserved as text",
+        "'false' description/audit preserved as text",
+        "checked/unchecked checkbox still Boolean"
+      ],
+      "source_green_checkpoint": "e242784c116c706bad68e463acd264780b9469c4",
+      "live_verification": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-005",
+      "kind": "source-timezone-and-calendar-integrity",
+      "severity": "P2",
+      "status": "fixed-in-source-exact-head-ci-passed-live-unverified",
+      "finding": "Naive GMT-labelled datetime-local strings are parsed in mutable PHP default timezone; blank required dates resolve to current time; impossible dates silently roll forward",
+      "root_cause": "DateTimeImmutable($value) without explicit UTC and without strict date/parse warning validation",
+      "red_test": "tests/v12-3-gmt-datetime-tests.php (CI red at 6f795fd0f09a6a7280938be1d3d1af154933526e)",
+      "patch": "includes/class-spdb-governance-service.php explicit UTC for naive labels, format allowlist, reject blank and invalid dates, preserve explicit offsets",
+      "negative_tests": [
+        "non-UTC PHP default Asia/Karachi",
+        "explicit +05:00 offset",
+        "blank required",
+        "February 31",
+        "Z/nullable behavior"
+      ],
+      "source_green_checkpoint": "e242784c116c706bad68e463acd264780b9469c4",
+      "live_verification": "unverified"
     }
   ],
   "separate_findings": {
     "crosswalk_initial_mission_qa_link_errors": 8,
     "corrected_in": "docs/V12.3-REQUIREMENT-CROSSWALK.json",
-    "classification": "new plan-map authoring correction, not existing File23 application bug"
+    "classification": "new plan-map authoring correction, not existing File23 application bug",
+    "php80_reflection_test_harness_compatibility": {
+      "count": 1,
+      "category": "test-fixture-error-not-application-bug",
+      "fix": "ReflectionMethod::setAccessible(true) for PHP8.0",
+      "sha": "e242784c116c706bad68e463acd264780b9469c4"
+    }
   },
   "release": {
     "main_changed": false,
@@ -96,6 +155,9 @@
     "external_independent_review_1": "pending",
     "external_independent_review_2": "pending",
     "founder_signoff": "pending",
-    "go_no_go": "NO-GO"
+    "go_no_go": "NO-GO",
+    "no_merge": true,
+    "live_verified_fixes": 0,
+    "latest_source_green_checkpoint": "e242784c116c706bad68e463acd264780b9469c4"
   }
 }
