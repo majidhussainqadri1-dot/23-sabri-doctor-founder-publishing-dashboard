@@ -82,6 +82,12 @@ final class SPDB_Adapter_Acceptance {
 		if ( SPDB_Adapter_Registry::ACCEPTANCE_STAGING_ACCEPTED === $state && 'production' === $environment ) {
 			return self::error( 'spdb_adapter_acceptance_staging_required', __( 'Staging acceptance must be recorded in a non-production environment.', 'sabri-publishing-dashboard' ), 409 );
 		}
+		// Production acceptance is never minted by a staging or development
+		// environment, even if a copied release option carries old approvals.
+		// The File20 exact-deployed attestation remains an additional gate.
+		if ( SPDB_Adapter_Registry::ACCEPTANCE_PRODUCTION_ACCEPTED === $state && 'production' !== $environment ) {
+			return self::error( 'spdb_adapter_acceptance_production_required', __( 'Production acceptance must be recorded on an authorized production environment.', 'sabri-publishing-dashboard' ), 409 );
+		}
 		if ( SPDB_Adapter_Registry::ACCEPTANCE_PRODUCTION_ACCEPTED === $state && ! self::file23_release_accepted() ) {
 			return self::error( 'spdb_adapter_acceptance_release_gate', __( 'File 23 staging and Founder release acceptance must be complete before production provider acceptance.', 'sabri-publishing-dashboard' ), 409 );
 		}
