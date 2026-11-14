@@ -9,21 +9,16 @@
 	var config = window.SPDBOperations;
 	apiFetch.use( apiFetch.createNonceMiddleware( config.nonce ) );
 
-	function scalarValue( value ) {
-		if ( 'true' === value ) { return true; }
-		if ( 'false' === value ) { return false; }
-		// Generic form fields can be textual even when they contain digits.
-		// Number() would strip leading zeroes and round integers > 2^53.
-		// Native REST field validators own numeric parsing, not this serializer.
-		return value;
-	}
-
 	function serialize( form ) {
 		var data = {};
 		var formData = new window.FormData( form );
 		formData.forEach( function ( rawValue, rawKey ) {
 			var key = String( rawKey );
-			var value = scalarValue( String( rawValue ) );
+			// FormData text must retain its exact value, including "true"/"false",
+			// leading zeroes and integers beyond the JS safe-number range.
+			// Checkbox inputs are explicitly normalized below; the native REST
+			// endpoint validates typed numeric fields against its own schema.
+			var value = String( rawValue );
 			if ( /\[\]$/.test( key ) ) {
 				key = key.replace( /\[\]$/, '' );
 				if ( ! Array.isArray( data[ key ] ) ) { data[ key ] = []; }
