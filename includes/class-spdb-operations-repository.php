@@ -1203,8 +1203,20 @@ final class SPDB_Operations_Repository {
 		}
 
 		try {
-			$previous = $wpdb->get_var( "SELECT event_hash FROM {$table} ORDER BY id DESC LIMIT 1 FOR UPDATE" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Static allowlisted table.
-			$previous = is_string( $previous ) && 64 === strlen( $previous ) ? $previous : str_repeat( '0', 64 );
+			$previous_raw = $wpdb->get_var( "SELECT event_hash FROM {$table} ORDER BY id DESC LIMIT 1 FOR UPDATE" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Static allowlisted table.
+			// A SELECT failure and a truly empty append-only ledger both
+			// return null from wpdb->get_var(). SQL error status is therefore
+			// part of the integrity precondition, not an optional diagnostic.
+			if ( ! empty( $wpdb->last_error ) ) {
+				return self::error( 'spdb_audit_previous_read_failed', __( 'The previous dashboard audit event could not be verified.', 'sabri-publishing-dashboard' ), 503 );
+			}
+			if ( null === $previous_raw ) {
+				$previous = str_repeat( '0', 64 );
+			} elseif ( is_string( $previous_raw ) && 1 === preg_match( '/\\A[a-f0-9]{64}\\z/', $previous_raw ) ) {
+				$previous = $previous_raw;
+			} else {
+				return self::error( 'spdb_audit_previous_hash_invalid', __( 'The stored previous audit hash is malformed; appending is disabled.', 'sabri-publishing-dashboard' ), 500 );
+			}
 			$event_id = self::id( 'audit' );
 			$created  = current_time( 'mysql', true );
 			$object_hash = hash( 'sha256', $object_reference );
