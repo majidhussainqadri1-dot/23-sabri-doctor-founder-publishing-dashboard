@@ -4,9 +4,9 @@
   "governing_source": "Sabri-Website-Master-Plan-V12.3.docx, pp.4-7,48,77-80,114-115,198-199,257-261",
   "baseline_source": "docs/GOVERNING-PLAN-2026-TRACEABILITY.json; additive rather than destructive",
   "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
-  "rule": "Mapping is not individual source verification; no measured completion percentage until per-ID behavioral audit.",
+  "rule": "187 distinct mapped in-scope/owner-relationship requirement identities, not 187 fully coded features; per-ID source/staging/live proof pending.",
   "census": {
-    "total_mapped": 177,
+    "total_mapped": 187,
     "by_kind": {
       "inherited_cv": 70,
       "inherited_aj": 16,
@@ -17,7 +17,8 @@
       "v12_3_acceptance": 10,
       "ux_retained": 14,
       "v12_3_central_policy": 9,
-      "retained_decision": 4
+      "retained_decision": 4,
+      "v12_3_chapter_10_correction": 10
     },
     "individually_tested_accepted": null,
     "source_completion_denominator": null,
@@ -4027,6 +4028,215 @@
         "QA-24"
       ],
       "source_status": "external-restore-evidence-pending-host-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-01",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File24/25 usability QA + File23 private studio",
+      "file23_consumer_boundary": "5-person Urdu formative assessment and 12–18-person formal acceptance of File23 journeys; samples, results and build-specific evidence remain external",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-16"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-02",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File20/25/24 accessible web; File23 own surface",
+      "file23_consumer_boundary": "Progressive enhancement, complete accessibility, narrow layouts and interaction modes for the private dashboard",
+      "source_evidence": [
+        "assets/css/dashboard.css",
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-16"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-03",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File24/25/CF05 performance; File23 local routes",
+      "file23_consumer_boundary": "Separately measured lab/field performance, privacy-safe sample and route payload budgets; no invented field results",
+      "source_evidence": [
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-17"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-04",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File05/06/12/21/26 canonical scholarly content/search",
+      "file23_consumer_boundary": "File23 only exposes author, source, review, revision/correction statuses and authorized canonical destinations",
+      "source_evidence": [
+        "includes/class-spdb-role-workspace-service.php",
+        "includes/class-spdb-operations-service.php"
+      ],
+      "qa_refs": [
+        "QA-18"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-05",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File00/02/24 identity/privacy; File23 local exports",
+      "file23_consumer_boundary": "No bypass of account recovery, explicit consent, export/deletion, authorized scope, passkey/MFA or revoked sessions",
+      "source_evidence": [
+        "includes/class-spdb-membership-guard.php",
+        "includes/class-spdb-privacy-integration.php"
+      ],
+      "qa_refs": [
+        "QA-19",
+        "QA-20"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-06",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File08/14/16/CF01 clinical/AI owners",
+      "file23_consumer_boundary": "File23 AI/advisory presentation only; grounded evidence and uncertainty, qualified human decision, emergency diversion",
+      "source_evidence": [
+        "includes/interface-spdb-ai-assistance-provider.php",
+        "includes/class-spdb-operations-service.php"
+      ],
+      "qa_refs": [
+        "QA-21"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-07",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File20 PWA/offline, File24 privacy",
+      "file23_consumer_boundary": "File23 never caches private work data offline; respects authorized public cache, logout and revoked session",
+      "source_evidence": [
+        "includes/class-spdb-dashboard-router.php",
+        "assets/css/dashboard-corrections.css"
+      ],
+      "qa_refs": [
+        "QA-22"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-08",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File01B/24 deploy and assurance owner",
+      "file23_consumer_boundary": "Explicit staged/canary/live gates with measured version, DB migration, rollback, RPO/RTO and live re-test",
+      "source_evidence": [
+        "docs/STAGING-BACKUP-RESTORE-MIGRATION-ROLLBACK-RUNBOOK.md"
+      ],
+      "qa_refs": [
+        "QA-24"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-09",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "CF06/21/26 locale, publication and search owners",
+      "file23_consumer_boundary": "File23 reads only approved progressive source+9 language transitions; does not invent unstated locale approvals",
+      "source_evidence": [
+        "includes/class-spdb-publishing-intelligence.php",
+        "docs/STAGING-CHECKLIST.md"
+      ],
+      "qa_refs": [
+        "QA-18"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "V12.3-10",
+      "kind": "v12_3_chapter_10_correction",
+      "source": "Sabri-Website-Master-Plan-V12.3.docx Chapter 10, V12.3-01..10 (pp. 91–97)",
+      "canonical_owner": "File24 assurance plus File23 source/status mapping",
+      "file23_consumer_boundary": "Returnable requirement/feature/status report for M01–M12, QA-15–QA-24, actual evidence; no source-only success inflated into live",
+      "source_evidence": [
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-24"
+      ],
+      "source_status": "plan-mapped-evidence-unverified",
       "individual_source_test": "not-yet-verified",
       "staging_acceptance": "pending",
       "live_verification": "unverified",
