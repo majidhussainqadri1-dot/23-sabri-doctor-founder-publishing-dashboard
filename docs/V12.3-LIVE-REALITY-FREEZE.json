@@ -1,0 +1,90 @@
+{
+  "schema": "file23-v12.3-live-reality-v1",
+  "observed_on": "2026-11-14",
+  "scope": "read-only GitHub and available WordPress/WPVibe connector probes",
+  "rules": [
+    "Repository HEAD is not evidence of deployed code",
+    "No live root cause without installed artifact/DB/migration evidence",
+    "Staging and live are separate realities"
+  ],
+  "repository": {
+    "main_sha": "dcae138e6073f4d0ff596623deb05b9940b8271b",
+    "main_source_plugin_version": "1.2.0",
+    "parent_pr_26_sha": "df59cb2be8c1a69dc3539bc7e0a58d5d79125ac3",
+    "parent_pr_26_merge": "unmerged",
+    "child_pr_29_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
+    "child_pr_29_merge": "unmerged",
+    "child_pr_29_status": "draft",
+    "v12_3_work_branch": "audit/file23-v12-3-evidence-first-20261114",
+    "v12_3_pr": 33
+  },
+  "site_connections": {
+    "wordpress_jetpack": {
+      "site": "https://www.sabrihomeopathy.com",
+      "mcp_access": "unavailable",
+      "reason": "site_disconnected",
+      "does_not_prove": "site outage or installed plugin"
+    },
+    "wpvibe": {
+      "registered_site": "none",
+      "site_connection_attempt": "failed",
+      "failure_code": "HTTP 530 on connection attempt",
+      "does_not_prove": "which origin/security/network hop failed or that the public site is down"
+    }
+  },
+  "staging": {
+    "status": "unverified",
+    "url": "not-provided",
+    "installed_artifact": "unverified",
+    "schema": "unverified",
+    "migration": "unverified"
+  },
+  "live": {
+    "site": "https://www.sabrihomeopathy.com",
+    "active_plugin_version": "unverified",
+    "active_plugin_status": "unverified",
+    "wordpress_version": "unverified",
+    "php_version": "unverified",
+    "installed_file_tree_checksum": "unverified",
+    "installed_zip_checksum": "unverified",
+    "logs": "unverified",
+    "cache_cdn_origin": "unverified",
+    "companion_plugin_contract_versions": "unverified",
+    "auth_mfa": "unverified"
+  },
+  "database": {
+    "engine": "unverified",
+    "schema_version": "unverified",
+    "table_columns_indexes": "unverified",
+    "wp_options": "unverified",
+    "migration_status": "unverified",
+    "cron_queue": "unverified"
+  },
+  "deployment_parity": {
+    "repository_to_staging": "unverified",
+    "staging_to_live": "unverified",
+    "same_version_altered_build_test": "unverified",
+    "trusted_file20_attestor": "unverified",
+    "file20_issue": 45,
+    "file23_issue": 30
+  },
+  "operations": {
+    "hostinger_mutation_performed": false,
+    "db_mutation_performed": false,
+    "main_merge_performed": false,
+    "live_fix_verified": 0
+  },
+  "next_required_evidence": [
+    "Authenticated read-only Hostinger WP-CLI plugin status/version and active runtime",
+    "Exact installed file tree and approved ZIP checksums; trusted File20 attestation",
+    "File23 tables, columns, indexes, schema options and migration state",
+    "Sanitized PHP/runtime errors, scheduled jobs, origin/CDN/cache headers",
+    "Real-provider versions, MFA/roles, staging backup and rollback evidence"
+  ],
+  "classification": {
+    "WP_00": "partial-repository-only",
+    "live_root_cause": "not-determined",
+    "release": "NO-GO"
+  },
+  "mandatory_statement": "Exact deployed code ابھی unverified ہے؛ repository-based diagnosis provisional ہے۔"
+}
