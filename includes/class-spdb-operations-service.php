@@ -200,13 +200,19 @@ final class SPDB_Operations_Service {
 			}
 		}
 
+		// A large federation may yield more validated aggregates than a
+		// single dashboard response can safely carry. Preserve the cap, but
+		// never identify the truncated 500-item subset as fully complete.
+		$metric_limit = 500;
+		$more_metrics = count( $metrics ) > $metric_limit;
 		return array(
 			'scope'            => $scope,
-			'metrics'          => array_slice( $metrics, 0, 500 ),
+			'metrics'          => array_slice( $metrics, 0, $metric_limit ),
 			'providers'        => $providers,
 			'provider_errors'  => $errors,
 			'source'           => $source,
-			'data_complete'    => empty( $errors ) && 'live_provider' === $source,
+			'more_metrics_available' => $more_metrics,
+			'data_complete'    => empty( $errors ) && 'live_provider' === $source && ! $more_metrics,
 			'generated_at_gmt' => gmdate( 'c' ),
 			'privacy_notice'   => __( 'Values below the configured minimum cohort are suppressed. File 23 does not store raw analytics events; cached values are bounded, rebuildable provider aggregates.', 'sabri-publishing-dashboard' ),
 		);
