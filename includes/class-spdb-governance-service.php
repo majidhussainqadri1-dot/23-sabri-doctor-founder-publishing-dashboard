@@ -31,12 +31,34 @@ final class SPDB_Governance_Service {
 		$delegations   = $this->repository->list_delegations( $user_id, $institutional );
 		$rules         = $this->repository->list_rules( $user_id, $institutional );
 
+		// Empty datasets and failed SQL reads are not equivalent. Continue
+		// exposing bounded arrays to the existing templates, but bind an
+		// explicit per-owner source-health signal so the UI cannot claim
+		// that unavailable queues contain no real records.
+		$read_results = array(
+			'tasks' => $tasks,
+			'delegations' => $delegations,
+			'automation_rules' => $rules,
+		);
+		$source_health = array();
+		$source_errors = array();
+		foreach ( $read_results as $name => $data ) {
+			$source_health[ $name ] = is_array( $data ) ? 'ready' : 'unavailable';
+			if ( is_wp_error( $data ) ) {
+				// Codes only; never surface SQL text, database details or private rows.
+				$source_errors[ $name ] = sanitize_key( $data->get_error_code() );
+			}
+		}
+
 		return array(
 			'tasks'            => is_array( $tasks ) ? $tasks : array(),
 			'delegations'      => is_array( $delegations ) ? $delegations : array(),
 			'automation_rules' => is_array( $rules ) ? $rules : array(),
 			'institutional'    => $institutional,
 			'settings'         => SPDB_Admin_Settings::get(),
+			'source_health'    => $source_health,
+			'source_error_codes' => $source_errors,
+			'data_complete'    => ! in_array( 'unavailable', $source_health, true ),
 		);
 	}
 
