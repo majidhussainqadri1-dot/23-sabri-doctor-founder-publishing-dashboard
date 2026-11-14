@@ -110,6 +110,13 @@ final class SPDB_Export_Service {
 			return true;
 		}
 		$owner_user_id = max( 0, (int) ( $job['owner_user_id'] ?? 0 ) );
+		// File23's background worker impersonates the queued job owner.
+		// Never render under one WordPress user and seal a different user's
+		// export record: a mismatched queue/export ID must fail before any
+		// status update, native provider read or ciphertext file operation.
+		if ( $owner_user_id < 1 || get_current_user_id() !== $owner_user_id ) {
+			return self::error( 'spdb_export_job_owner_mismatch', __( 'The queued export does not match its current authorized account context.', 'sabri-publishing-dashboard' ), 403 );
+		}
 		if ( ! $this->user_can_export( $owner_user_id ) ) {
 			return $this->fail_processing( $export_id, self::error( 'spdb_export_authorization_revoked', __( 'Export authorization is no longer valid for the requesting account.', 'sabri-publishing-dashboard' ), 403 ) );
 		}
