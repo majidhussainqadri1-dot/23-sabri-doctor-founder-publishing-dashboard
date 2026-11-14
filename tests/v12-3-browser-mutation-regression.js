@@ -10,7 +10,7 @@ const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname, '../assets/js/operations.js'), 'utf8');
 let checks = 0;
 function check(actual, expected, message) { assert.deepEqual(actual, expected, message); checks++; }
-function scenario(cryptoMode, entries = []) {
+function scenario(cryptoMode, entries = [], checkboxes = []) {
   const listeners = {};
   const attrs = {};
   const requests = [];
@@ -22,7 +22,7 @@ function scenario(cryptoMode, entries = []) {
     setAttribute(key, value) { attrs[key] = value; },
     removeAttribute(key) { delete attrs[key]; },
     querySelector(selector) { return selector === 'button[type="submit"]' ? button : null; },
-    querySelectorAll() { return []; },
+    querySelectorAll(selector) { return selector === 'input[type="checkbox"]' ? checkboxes : []; },
     closest() { return shell; },
     addEventListener(event, fn) { listeners[event] = fn; }
   };
@@ -89,6 +89,16 @@ function main() {
   check(booleanText.requests[0].data.title, 'true', 'Text task title true must not be coerced to a boolean');
   check(booleanText.requests[0].data.description, 'false', 'Text description false must not become boolean false');
   check(booleanText.requests[0].data.audit_reason, 'false', 'Audit reason false must retain exact text');
+  const checked = scenario('available', [['confirm_export', 'true']], [
+    {name: 'confirm_export', checked: true}
+  ]);
+  checked.submit();
+  check(checked.requests[0].data.confirm_export, true, 'A genuine checkbox remains a boolean true');
+  const unchecked = scenario('available', [], [
+    {name: 'confirm_export', checked: false}
+  ]);
+  unchecked.submit();
+  check(unchecked.requests[0].data.confirm_export, false, 'An unchecked boolean control remains false');
   console.log('All ' + checks + ' V12.3 browser mutation security checks passed.');
 }
 main();
