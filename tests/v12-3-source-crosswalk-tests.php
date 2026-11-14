@@ -23,7 +23,7 @@ foreach ( array( 'deployed_version', 'deployed_checksum', 'db_version', 'migrati
     $check( 'unverified' === ( $data['reality'][ $field ] ?? null ), 'Live state must remain unverified: ' . $field );
 }
 $rows = $data['requirements'] ?? array();
-$check( is_array( $rows ) && 198 === count( $rows ), 'Exactly 198 scoped identity mappings, including all 20 governing CEN policies.' );
+$check( is_array( $rows ) && 210 === count( $rows ), 'Exactly 210 scoped identity mappings, with all 20 CEN policies and retained G01-G12.' );
 $ids = array();
 $by_id = array();
 $kinds = array();
@@ -48,6 +48,7 @@ $expected_counts = array(
     'file23_central' => 1, 'retained_sto_act' => 17, 'v12_3_mission' => 12,
     'v12_3_acceptance' => 10, 'ux_retained' => 14, 'v12_3_central_policy' => 20,
     'retained_decision' => 4, 'v12_3_chapter_10_correction' => 10,
+    'v12_2_governance_retained' => 12,
 );
 ksort( $expected_counts );
 ksort( $kinds );
@@ -72,6 +73,16 @@ foreach ( $central_policies as $policy ) {
 }
 for ( $i = 1; $i <= 24; $i++ ) {
     $check( isset( $ids[sprintf( 'F23-FPI-%02d', $i )] ), 'Missing FPI ' . $i );
+}
+// V12.2 G01-G12 live in the V12.3 original Chapter 10 tables, and
+// G02/G04/G05/G07/G10/G12 apply directly to the File23 consumer boundary.
+for ( $i = 1; $i <= 12; ++$i ) {
+    $id = sprintf( 'G%02d', $i );
+    $check( isset( $by_id[$id] ), 'Retained V12.2/Governance requirement omitted: ' . $id );
+    $check(
+        ! isset( $by_id[$id] ) || 'v12_2_governance_retained' === ( $by_id[$id]['kind'] ?? null ),
+        $id . ' must remain classified as a retained governance decision.'
+    );
 }
 $qa_by_mission = array(
     'M01' => 'QA-15', 'M02' => 'QA-16', 'M03' => 'QA-17',
