@@ -45,6 +45,7 @@ jobs:
           find . -type f -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l
           node --check assets/js/dashboard.js
           node --check assets/js/operations.js
+          node tests/v12-3-browser-mutation-regression.js
           mapfile -t suites < <(find tests -maxdepth 1 -type f -name '*tests.php' | sort)
           test "${#suites[@]}" -ge 24
           for suite in "${suites[@]}"; do php -d display_errors=1 -d error_reporting=E_ALL "$suite"; done
