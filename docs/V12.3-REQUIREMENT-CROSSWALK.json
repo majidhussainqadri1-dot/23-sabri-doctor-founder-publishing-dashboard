@@ -6,7 +6,7 @@
   "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
   "rule": "187 distinct mapped in-scope/owner-relationship requirement identities, not 187 fully coded features; per-ID source/staging/live proof pending.",
   "census": {
-    "total_mapped": 187,
+    "total_mapped": 198,
     "by_kind": {
       "inherited_cv": 70,
       "inherited_aj": 16,
@@ -16,7 +16,7 @@
       "v12_3_mission": 12,
       "v12_3_acceptance": 10,
       "ux_retained": 14,
-      "v12_3_central_policy": 9,
+      "v12_3_central_policy": 20,
       "retained_decision": 4,
       "v12_3_chapter_10_correction": 10
     },
@@ -326,6 +326,29 @@
       "review_b": "pending"
     },
     {
+      "id": "CEN-ACC-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B2617",
+      "canonical_owner": "File24/File25",
+      "file23_consumer_boundary": "File23 role studio requires keyboard, focus, assistive technology, 200–400% zoom/reflow, RTL/LTR, low-bandwidth and stale-state disclosure",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-16",
+        "QA-22"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
       "id": "CEN-AGE-001",
       "kind": "v12_3_central_policy",
       "source": "V12.3 Ch.12 pp.259-261",
@@ -348,6 +371,27 @@
       "review_b": "pending"
     },
     {
+      "id": "CEN-BIZ-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B2617",
+      "canonical_owner": "File18 / Founder policy",
+      "file23_consumer_boundary": "A single free access tier; File23 must not create Pro/Premium analytics, creator paywall or paid visibility",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-23"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
       "id": "CEN-BRAND-001",
       "kind": "v12_3_central_policy",
       "source": "V12.3 Ch.12 pp.259-261",
@@ -362,6 +406,49 @@
         "QA-24"
       ],
       "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-DON-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B2617",
+      "canonical_owner": "File18 donations",
+      "file23_consumer_boundary": "Donations may not alter File23 ranking, operational priority, support, reach or creator access; no recurring preselection",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-20",
+        "QA-23"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-GOV-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B2617",
+      "canonical_owner": "Founder / File01",
+      "file23_consumer_boundary": "File23 source/projection/release follows the approved current governing hierarchy, without inferring live status from a document",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-24"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
       "individual_source_test": "not-yet-verified",
       "staging_acceptance": "pending",
       "live_verification": "unverified",
@@ -414,6 +501,49 @@
       "review_b": "pending"
     },
     {
+      "id": "CEN-NUM-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B21210",
+      "canonical_owner": "File26 / platform governance",
+      "file23_consumer_boundary": "Keep File26 canonical; CF01–CF06 remain planning identifiers until independently activated, not new File23-owned modules",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-24"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-OWN-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B2617",
+      "canonical_owner": "Native domain owners / File01",
+      "file23_consumer_boundary": "File23 is a view/consumer only; each business fact and workflow has exactly one canonical owner and no parallel table write",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-18",
+        "QA-23"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
       "id": "CEN-PRI-001",
       "kind": "v12_3_central_policy",
       "source": "V12.3 Ch.12 pp.259-261",
@@ -428,6 +558,28 @@
         "QA-24"
       ],
       "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-PRIV-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B21210",
+      "canonical_owner": "File24 privacy governance",
+      "file23_consumer_boundary": "No covert user health-interest profiling, cross-context tracking, donor-biased prioritization or sale of data through publishing analytics",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-20",
+        "QA-23"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
       "individual_source_test": "not-yet-verified",
       "staging_acceptance": "pending",
       "live_verification": "unverified",
@@ -494,6 +646,93 @@
         "QA-24"
       ],
       "source_status": "policy-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-REV-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B21210",
+      "canonical_owner": "Founder / File24 change governance",
+      "file23_consumer_boundary": "Changed scope, native owner, data, API, retention, ranking or finance requires a dated request, impact, migration/rollback and acceptance",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-24"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-SAFE-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B21210",
+      "canonical_owner": "File08/File16 clinical and Islamic safety",
+      "file23_consumer_boundary": "No File23 AI/analytics auto-diagnosis, prescription, potency/dose, emergency replacement or prohibited-content transaction",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-21",
+        "QA-23"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-SEARCH-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B2617",
+      "canonical_owner": "File26 search",
+      "file23_consumer_boundary": "File23 consumes fresh ACL/rights-aware native search projections, preserves canonical routes and never fabricates a zero result",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-18",
+        "QA-23"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
+      "individual_source_test": "not-yet-verified",
+      "staging_acceptance": "pending",
+      "live_verification": "unverified",
+      "defect_id": null,
+      "review_a": "pending",
+      "review_b": "pending"
+    },
+    {
+      "id": "CEN-SHELL-001",
+      "kind": "v12_3_central_policy",
+      "source": "V12.3 Ch.12 S00 B21210",
+      "canonical_owner": "File20 global shell",
+      "file23_consumer_boundary": "File23 supplies embedded role routes only and never duplicates the global application shell/navigation",
+      "source_evidence": [
+        "docs/REQUIREMENTS-TRACEABILITY-MATRIX.md",
+        "docs/V12.3-WP00-WP15-EXECUTION-REGISTER.md"
+      ],
+      "qa_refs": [
+        "QA-15",
+        "QA-22"
+      ],
+      "source_status": "central-policy-mapped-not-individually-verified",
       "individual_source_test": "not-yet-verified",
       "staging_acceptance": "pending",
       "live_verification": "unverified",
