@@ -101,7 +101,7 @@ final class SPDB_Operations_Service {
 			// A configured provider that failed is not the same as a missing
 			// provider or an authorized, genuinely empty projection.
 			'empty_reason'     => ! empty( $items ) ? '' : ( ! empty( $errors ) ? 'provider_unavailable' : ( empty( $providers ) ? 'no_compatible_provider' : 'no_eligible_items' ) ),
-			'data_complete'    => empty( $errors ) && ! empty( $providers ),
+			'data_complete'    => empty( $errors ) && ! empty( $providers ) && ! $has_more,
 		);
 	}
 
