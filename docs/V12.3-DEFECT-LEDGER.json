@@ -4,8 +4,8 @@
   "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
   "separate_realities": true,
   "counting": {
-    "confirmed_new_source_findings": 11,
-    "source_fixes_on_work_branch": 11,
+    "confirmed_new_source_findings": 12,
+    "source_fixes_on_work_branch": 12,
     "negative_test_red_checkpoint": "4d3e7ca1979632b39ead1be08dff2b87db6f8030",
     "confirmed_red_ci": "Baseline Integrity #43592646413 (PHP 8.0/8.1/8.2/8.3 failures from new negative test)",
     "source_ci_green_checkpoint": "ac9dae742de2648659abed873a67ec63e79bfe56",
@@ -76,7 +76,8 @@
       "File23 V12.1 Locked PDF Runtime Supply Chain": 43600226635
     },
     "latest_red_freshness_run": 43604084327,
-    "last_new_source_corrective_sha": "6d6878ebfad6958d89f709c41d3414bf1361e066"
+    "last_new_source_corrective_sha": "6d6878ebfad6958d89f709c41d3414bf1361e066",
+    "last_source_correction_sha": "002f694a825ebf1ce14d48ed2423a6742cce2123"
   },
   "records": [
     {
@@ -277,6 +278,27 @@
       "tests": [
         "tests/v12-3-provider-truth-tests.php"
       ],
+      "staging": "pending",
+      "live": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-012",
+      "kind": "aggregate-federation-completeness",
+      "severity": "P1",
+      "status": "source-corrected-exact-head-ci-pending",
+      "finding": "After six privacy-safe native sources supplied 600 valid metrics, the dashboard silently returned the first 500 while marking data_complete=true and no more_metrics_available flag",
+      "root_cause": "array_slice($metrics,0,500) applied without provenance/completeness calculation; analytics UI had no partial-limit alert",
+      "red_test_sha": "38863c9e2c78e008d74b78c3a0510949c16435ab",
+      "red_ci": "File 23 Final Release Candidate run #43604592503 — three expected failed assertions with 6 synthetic feeds and 600 metrics",
+      "fix_paths": [
+        "includes/class-spdb-operations-service.php",
+        "templates/analytics.php"
+      ],
+      "source_correction_sha": "002f694a825ebf1ce14d48ed2423a6742cce2123",
+      "tests": [
+        "tests/v12-3-provider-truth-tests.php"
+      ],
+      "acceptance": "Retain 500 aggregate limit; expose more_metrics_available true and data_complete false, propagate incompleteness into reports; display cached source timestamps",
       "staging": "pending",
       "live": "unverified"
     }
