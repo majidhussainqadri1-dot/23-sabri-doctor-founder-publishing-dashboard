@@ -10,7 +10,7 @@ const vm = require('node:vm');
 const source = fs.readFileSync(path.join(__dirname, '../assets/js/operations.js'), 'utf8');
 let checks = 0;
 function check(actual, expected, message) { assert.deepEqual(actual, expected, message); checks++; }
-function scenario(cryptoMode) {
+function scenario(cryptoMode, entries = []) {
   const listeners = {};
   const attrs = {};
   const requests = [];
@@ -30,7 +30,7 @@ function scenario(cryptoMode) {
   function apiFetch(request) { requests.push(request); return unresolved; }
   apiFetch.use = function () {};
   apiFetch.createNonceMiddleware = () => () => {};
-  class FakeFormData { forEach() {} }
+  class FakeFormData { forEach(callback) { entries.forEach(([key,value]) => callback(value, key)); } }
   const windowObject = {
     SPDBOperations: { nonce: 'test', strings: {
       working: 'Working', saved: 'Saved', queued: 'Queued', failed: 'Failed',
@@ -71,6 +71,15 @@ function main() {
   valid.submit();
   check(valid.requests.length, 1, 'Repeated submit must not dispatch a second mutation');
   check(valid.attrs['data-spdb-submitting'], 'true', 'In-flight flag survives duplicate');
+  const textual = scenario('available', [
+    ['title', '0000123'],
+    ['description', '9007199254740993'],
+    ['audit_reason', '0007']
+  ]);
+  textual.submit();
+  check(textual.requests[0].data.title, '0000123', 'Numeric-looking task titles are user text, not numbers');
+  check(textual.requests[0].data.description, '9007199254740993', 'Long numeric text cannot lose JS integer precision');
+  check(textual.requests[0].data.audit_reason, '0007', 'An audit reason must preserve textual leading zeros');
   console.log('All ' + checks + ' V12.3 browser mutation security checks passed.');
 }
 main();
