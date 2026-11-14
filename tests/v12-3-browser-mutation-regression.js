@@ -80,6 +80,15 @@ function main() {
   check(textual.requests[0].data.title, '0000123', 'Numeric-looking task titles are user text, not numbers');
   check(textual.requests[0].data.description, '9007199254740993', 'Long numeric text cannot lose JS integer precision');
   check(textual.requests[0].data.audit_reason, '0007', 'An audit reason must preserve textual leading zeros');
+  const booleanText = scenario('available', [
+    ['title', 'true'],
+    ['description', 'false'],
+    ['audit_reason', 'false']
+  ]);
+  booleanText.submit();
+  check(booleanText.requests[0].data.title, 'true', 'Text task title true must not be coerced to a boolean');
+  check(booleanText.requests[0].data.description, 'false', 'Text description false must not become boolean false');
+  check(booleanText.requests[0].data.audit_reason, 'false', 'Audit reason false must retain exact text');
   console.log('All ' + checks + ' V12.3 browser mutation security checks passed.');
 }
 main();
