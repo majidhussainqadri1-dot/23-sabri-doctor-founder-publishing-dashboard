@@ -4,8 +4,8 @@
   "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
   "separate_realities": true,
   "counting": {
-    "confirmed_new_source_findings": 14,
-    "source_fixes_on_work_branch": 14,
+    "confirmed_new_source_findings": 20,
+    "source_fixes_on_work_branch": 20,
     "negative_test_red_checkpoint": "4d3e7ca1979632b39ead1be08dff2b87db6f8030",
     "confirmed_red_ci": "Baseline Integrity #43592646413 (PHP 8.0/8.1/8.2/8.3 failures from new negative test)",
     "source_ci_green_checkpoint": "ac9dae742de2648659abed873a67ec63e79bfe56",
@@ -29,11 +29,11 @@
       "full_plan_run": 43598007186,
       "final_release_run": 43598007241
     },
-    "latest_source_green_checkpoint": "e242784c116c706bad68e463acd264780b9469c4",
+    "latest_source_green_checkpoint": "7df2d117db6e512892bb851710b63d54d62dc677",
     "latest_source_green_workflows": 5,
     "php80_test_harness_errors_corrected": 1,
     "v12_3_chapter10_omitted_ids_detected_and_mapped": 10,
-    "v12_3_crosswalk_current_distinct_mapped_ids": 187,
+    "v12_3_crosswalk_current_distinct_mapped_ids": 210,
     "v12_3_crosswalk_red_test_sha": "b2ddb1c5dadf23ab9b8bd47ce2340c58d4962264",
     "v12_3_crosswalk_red_ci": {
       "full_plan_run": 43598643967,
@@ -82,7 +82,11 @@
     "audit_bounded_green_sha": "eee9a558bee43b0e58b7c57d6fcfad36f07da94d",
     "audit_bounded_green_workflows": 5,
     "projection_completeness_red_sha": "822f345bdcc1dc2209ec73b9de96ea0c11ee6c9c",
-    "projection_completeness_fix_sha": "c5af61665d713d7150fcdf3d45c048086541977e"
+    "projection_completeness_fix_sha": "c5af61665d713d7150fcdf3d45c048086541977e",
+    "v12_3_central_policies_mapped": 20,
+    "v12_2_g01_g12_retained_mapped": 12,
+    "crosswalk_first_pass_not_feature_acceptance": true,
+    "external_gates_unchanged": true
   },
   "records": [
     {
@@ -361,6 +365,141 @@
       "remaining": "Real native-provider pagination/cursor and Hostinger acceptance not tested.",
       "staging": "pending",
       "live": "unverified"
+    },
+    {
+      "id": "F23-V12.3-DEF-015",
+      "kind": "queued-automation-authorization",
+      "severity": "P1",
+      "status": "candidate-source-fix-ci-5of5-green-hostinger-unverified",
+      "finding": "Queued automation could execute under a different WP current user and rule/job owner or after File00 approval/automation capability revocation.",
+      "root_cause": "Queued automation could execute under a different WP current user and rule/job owner or after File00 approval/automation capability revocation.",
+      "patch": "Fresh owner id equality across rule/job/current session and File00 approval + current spdb_manage_automation_rules permission before native action dispatch.",
+      "red_test_sha": "3087cd2f1d18888b2d7e871267547f6c48259586",
+      "red_ci": "Baseline Integrity #43607051949 (9/10 failed)",
+      "corrective_sha": "548ab6a79446bde445dd94d5e4e4655c2384ae64",
+      "source_paths": [
+        "includes/class-spdb-automation-engine.php",
+        "tests/v12-3-automation-owner-revocation-tests.php"
+      ],
+      "test_paths": [
+        "tests/v12-3-automation-owner-revocation-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified",
+      "live_verified": false
+    },
+    {
+      "id": "F23-V12.3-DEF-016",
+      "kind": "automation-queued-version-integrity",
+      "severity": "P1",
+      "status": "candidate-source-fix-ci-5of5-green-hostinger-unverified",
+      "finding": "Queued automation rule_version cast (int) accepted '3spoof', '03', 3.5 and missing version coerced to 1.",
+      "root_cause": "Queued automation rule_version cast (int) accepted '3spoof', '03', 3.5 and missing version coerced to 1.",
+      "patch": "Require actual positive integer rule_version rather than default/inexact coercion.",
+      "red_test_sha": "4b4193f7825efa759460a839510bc225f5d044b7",
+      "red_ci": "Full Plan #43607254016 (10/20 negative assertions failed)",
+      "corrective_sha": "8d833c9818d57eb4bafed5cd94b347ef31682a3b",
+      "source_paths": [
+        "includes/class-spdb-automation-engine.php",
+        "tests/v12-3-automation-owner-revocation-tests.php"
+      ],
+      "test_paths": [
+        "tests/v12-3-automation-owner-revocation-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified",
+      "live_verified": false
+    },
+    {
+      "id": "F23-V12.3-DEF-017",
+      "kind": "append-only-audit-integrity",
+      "severity": "P1",
+      "status": "candidate-source-fix-ci-5of5-green-hostinger-unverified",
+      "finding": "Prior audit event SELECT failure or malformed stored event_hash could be mistaken for empty ledger and restart hash chain.",
+      "root_cause": "Prior audit event SELECT failure or malformed stored event_hash could be mistaken for empty ledger and restart hash chain.",
+      "patch": "Fail-closed when wpdb last_error is set; allow genesis only for truly empty table; reject malformed prior SHA256 digest.",
+      "red_test_sha": "9cf4bcf90da2f21c2e658a6f8eb9cc8f2ca8f75f",
+      "red_ci": "Baseline #43607461404 (5/10 audit checks failed)",
+      "corrective_sha": "8fc1d1d5fd99c439f15fc5f24f7994fea627962d",
+      "source_paths": [
+        "includes/class-spdb-operations-repository.php",
+        "tests/v12-3-audit-append-truth-tests.php"
+      ],
+      "test_paths": [
+        "tests/v12-3-audit-append-truth-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified",
+      "live_verified": false
+    },
+    {
+      "id": "F23-V12.3-DEF-018",
+      "kind": "production-provider-acceptance-boundary",
+      "severity": "P1",
+      "status": "candidate-source-fix-ci-5of5-green-hostinger-unverified",
+      "finding": "Staging/development/missing-origin acceptance record with state production_accepted could be read as production write authority, and staging instance could mint production acceptance.",
+      "root_cause": "Staging/development/missing-origin acceptance record with state production_accepted could be read as production write authority, and staging instance could mint production acceptance.",
+      "patch": "Enforce origin environment at both acceptance binding (registry) and acceptance production record creation.",
+      "red_test_sha": "91e8fef842f008e408d8d11a6a224e0df8842022;0f40fbada4b7e154401d22043b5a60e59fd87969",
+      "red_ci": "Final Release #43608407267 (4/7 failed); Full Plan #43608634867 (4/6 failed)",
+      "corrective_sha": "b750f228daa8272e59a58dc0dc9db6e9bbc54321;c842458d151293a4dd29a463a96b25f09149dcd3",
+      "source_paths": [
+        "includes/class-spdb-adapter-registry.php",
+        "includes/class-spdb-adapter-acceptance.php",
+        "tests/v12-3-provider-acceptance-environment-tests.php",
+        "tests/v12-3-provider-acceptance-producer-tests.php"
+      ],
+      "test_paths": [
+        "tests/v12-3-provider-acceptance-environment-tests.php",
+        "tests/v12-3-provider-acceptance-producer-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified",
+      "live_verified": false
+    },
+    {
+      "id": "F23-V12.3-DEF-019",
+      "kind": "private-export-background-owner-binding",
+      "severity": "P1",
+      "status": "candidate-source-fix-ci-5of5-green-hostinger-unverified",
+      "finding": "Export processing could read a private owner export using a different WP-Cron current-user context, without a direct context/owner equality check.",
+      "root_cause": "Export processing could read a private owner export using a different WP-Cron current-user context, without a direct context/owner equality check.",
+      "patch": "Deny before report read, status change or ciphertext when get_current_user_id differs from canonical export owner.",
+      "red_test_sha": "fd8f068c897da57629778df034434926bbb9b4de",
+      "red_ci": "Baseline #43609001154 (5/6 failed)",
+      "corrective_sha": "310e4878fbd155bc23eb61204823af622e824056",
+      "source_paths": [
+        "includes/class-spdb-export-service.php",
+        "tests/v12-3-export-job-owner-tests.php"
+      ],
+      "test_paths": [
+        "tests/v12-3-export-job-owner-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified",
+      "live_verified": false
+    },
+    {
+      "id": "F23-V12.3-DEF-020",
+      "kind": "background-job-idempotency-scope",
+      "severity": "P1",
+      "status": "candidate-source-fix-ci-5of5-green-hostinger-unverified",
+      "finding": "A matching (job_type,idempotency_key) reused an existing foreign-owner job or conflicting payload, including after insert uniqueness race.",
+      "root_cause": "A matching (job_type,idempotency_key) reused an existing foreign-owner job or conflicting payload, including after insert uniqueness race.",
+      "patch": "Require exact owner ID and byte-identical stored payload in both initial lookup and post-conflict SELECT; reject cross-owner or changed action.",
+      "red_test_sha": "062443d9e0aa261f39cc818ff413c5077a1b6cf0",
+      "red_ci": "Baseline #43609255391 (4/8 failed)",
+      "corrective_sha": "7df2d117db6e512892bb851710b63d54d62dc677",
+      "source_paths": [
+        "includes/class-spdb-operations-repository.php",
+        "tests/v12-3-job-idempotency-scope-tests.php"
+      ],
+      "test_paths": [
+        "tests/v12-3-job-idempotency-scope-tests.php"
+      ],
+      "staging": "pending",
+      "live": "unverified",
+      "live_verified": false
     }
   ],
   "separate_findings": {
