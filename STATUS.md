@@ -1,5 +1,16 @@
 # File 23 Status
 
+## V12.3 current checkpoint — 20 source findings/fixes; 210 requirement IDs; NO-GO
+
+- **Candidate:** Draft PR #33, unmerged; `main` still `dcae138e6073f4d0ff596623deb05b9940b8271b` v1.2.0, not established as Live.
+- **Source QA:** 20 individually evidenced defect regressions corrected on candidate source (DEF-001..020). Last 20-fix checkpoint `7df2d117db6e512892bb851710b63d54d62dc677`: five GitHub workflows passed (Baseline #43609383331; Full Plan #43609383410; Final Release #43609383321; MariaDB #43609383390; PDF runtime #43609383318). Final exact HEAD may change after this status.
+- **Requirements:** 210 scoped identity mappings, including all 20 central CEN policies and retained G01–G12; not 210 functioning features, not source acceptance, staging acceptance or verified completion percentage.
+- **Three largest new trust changes:** owner/approval/revocation check at queued automation execution; audit cannot reset on prior read error; native provider production acceptance cannot originate from staging. Additional new protections: strict queued rule version, cross-owner export denial, cross-owner idempotency key/payload denial.
+- **Remaining:** external File23 #30/#31/#32 and upstream File20 #45; 10 owner contracts, 13 historical limitations, 100,000-event audit scan budget; real 20,001+ privacy/host restore; PDF/RTL; two independent outside reviews; approved artifact, staging, Founder release and Live re-test.
+- **Mandatory reality fields:** Deployed Version **UNVERIFIED**; DB Version **UNVERIFIED**; Migration State **UNVERIFIED**; Live Verification Status **NOT VERIFIED**; 0 live verified fixes. **NO-GO; no merge, no staging install or production deployment.** Historical entries below describe earlier checkpoints and must not override this one.
+
+
+
 ## 14 November 2026 — extended V12.3 red-first source work, no live attestation
 
 - **14/14 identified source-candidate defects** have matching corrective patches and runnable tests in Draft PR #33. Includes DEF-009 (failed provider/cache truth), DEF-010 (partial reports and CSV), DEF-011 (invalid cached UTC freshness), DEF-012 (500-of-600 metric truncation), DEF-013 (unbounded audit-chain SQL replaced by 500-row keyset/100,000-row budget), DEF-014 (native `has_more` falsely marked complete). The earlier DEF-001..008 remain separate.
