@@ -4,15 +4,17 @@
   "source_parent_sha": "f44ac45169c8c84c442184b5be2cb838adf12dae",
   "separate_realities": true,
   "counting": {
-    "confirmed_new_source_findings": 2,
-    "source_fixes_on_work_branch": 2,
+    "confirmed_new_source_findings": 3,
+    "source_fixes_on_work_branch": 3,
     "negative_test_red_checkpoint": "4d3e7ca1979632b39ead1be08dff2b87db6f8030",
     "confirmed_red_ci": "Baseline Integrity #43592646413 (PHP 8.0/8.1/8.2/8.3 failures from new negative test)",
     "source_ci_green_checkpoint": "ac9dae742de2648659abed873a67ec63e79bfe56",
     "green_workflows_at_checkpoint": 5,
     "new_v12_3_crosswalk_mapping_errors_corrected": 8,
     "unresolved_external_file23_issues": 3,
-    "live_verified_fixes": 0
+    "live_verified_fixes": 0,
+    "numeric_text_red_sha": "da158d144c72f94d69fe06467b161b411f95288d",
+    "numeric_text_red_ci": "Baseline Integrity #43593459926; known failure on text leading-zero assertion"
   },
   "records": [
     {
@@ -68,6 +70,18 @@
       "root_cause": "candidate Unicode PDF renderer/CI does not prove Hostinger visual/copy-paste/limits/permissions",
       "needed": "actual deployed PDF-vs-CSV parity, Urdu+Arabic RTL, renderer, origin/CDN privacy and rights license",
       "not_a_live_bug_proof": true
+    },
+    {
+      "id": "F23-V12.3-DEF-003",
+      "kind": "source-client-data-integrity",
+      "severity": "P2",
+      "status": "source-fixed-final-ci-pending",
+      "finding": "Generic operational form serializer passed every /^-?\\d+$/ string through Number(), stripping leading zeros and rounding integers larger than 2^53",
+      "evidence": "assets/js/operations.js original scalarValue() and negative CI at da158d144c72f94d69fe06467b161b411f95288d",
+      "root_cause": "Global numeric coercion applied to untyped text input instead of schema-aware native REST validation",
+      "patch": "assets/js/operations.js preserves digit-only text; boolean true/false remain explicit",
+      "test": "tests/v12-3-browser-mutation-regression.js validates task title 0000123, 9007199254740993 description, audit reason 0007",
+      "live": "not tested"
     }
   ],
   "separate_findings": {
