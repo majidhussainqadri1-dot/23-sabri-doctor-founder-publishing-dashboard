@@ -202,6 +202,12 @@ final class SPDB_Operations_Repository {
 		$table    = SPDB_Operations_Schema::table( 'tasks' );
 		$page     = max( 1, $page );
 		$per_page = min( 100, max( 1, $per_page ) );
+		// A caller may supply PHP_INT_MAX after REST integer coercion. Do not
+		// overflow OFFSET into a floating-point value or send an unbounded
+		// invalid pagination request to the database.
+		if ( $page > intdiv( PHP_INT_MAX, $per_page ) ) {
+			return self::error( 'spdb_tasks_page_invalid', __( 'The requested task page exceeds the safe pagination range.', 'sabri-publishing-dashboard' ), 422 );
+		}
 		$offset   = ( $page - 1 ) * $per_page;
 
 		if ( $institution ) {
