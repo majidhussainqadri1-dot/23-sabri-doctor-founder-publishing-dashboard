@@ -23,7 +23,7 @@ foreach ( array( 'deployed_version', 'deployed_checksum', 'db_version', 'migrati
     $check( 'unverified' === ( $data['reality'][ $field ] ?? null ), 'Live state must remain unverified: ' . $field );
 }
 $rows = $data['requirements'] ?? array();
-$check( is_array( $rows ) && 187 === count( $rows ), 'Exactly 187 scoped requirement identities, including ten chapter-10 V12.3 corrections.' );
+$check( is_array( $rows ) && 198 === count( $rows ), 'Exactly 198 scoped identity mappings, including all 20 governing CEN policies.' );
 $ids = array();
 $by_id = array();
 $kinds = array();
@@ -46,7 +46,7 @@ foreach ( (array) $rows as $entry ) {
 $expected_counts = array(
     'inherited_cv' => 70, 'inherited_aj' => 16, 'fpi' => 24,
     'file23_central' => 1, 'retained_sto_act' => 17, 'v12_3_mission' => 12,
-    'v12_3_acceptance' => 10, 'ux_retained' => 14, 'v12_3_central_policy' => 9,
+    'v12_3_acceptance' => 10, 'ux_retained' => 14, 'v12_3_central_policy' => 20,
     'retained_decision' => 4, 'v12_3_chapter_10_correction' => 10,
 );
 ksort( $expected_counts );
@@ -55,6 +55,21 @@ $reported_counts = (array) ( $data['census']['by_kind'] ?? array() );
 ksort( $reported_counts );
 $check( $expected_counts === $kinds, 'Exact historical and additive census by category.' );
 $check( $expected_counts === $reported_counts, 'Census metadata matches actual entries.' );
+// These 20 central V12.3 decisions govern the File23 consumer boundary
+// even when another File is their native canonical owner.
+$central_policies = array(
+    'ACC', 'AGE', 'BIZ', 'BRAND', 'DON', 'GOV', 'MED', 'NAV', 'NUM',
+    'OWN', 'PRI', 'PRIV', 'PUB', 'RANK', 'REL', 'REV', 'SAFE',
+    'SEARCH', 'SHELL', 'STATUS',
+);
+foreach ( $central_policies as $policy ) {
+    $id = 'CEN-' . $policy . '-001';
+    $check( isset( $by_id[$id] ), 'Missing V12.3 central policy: ' . $id );
+    $check(
+        ! isset( $by_id[$id] ) || 'v12_3_central_policy' === ( $by_id[$id]['kind'] ?? null ),
+        $id . ': central policy must be mapped under its own classification.'
+    );
+}
 for ( $i = 1; $i <= 24; $i++ ) {
     $check( isset( $ids[sprintf( 'F23-FPI-%02d', $i )] ), 'Missing FPI ' . $i );
 }
